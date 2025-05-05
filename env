@@ -1,0 +1,18 @@
+# Supabase Configuration
+SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhY2xsand2c2ljZXpta2pubGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMjk3NzIsImV4cCI6MjA1OTYwNTc3Mn0.56sdQFmC4sNAbyenWoDeiATGC1Vq2cXURTxJxLvZtrM
+
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# Client Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# Database Configuration
+DB_PROVIDER=supabase
+
+# API Configuration
+API_URL=http://localhost:3001
+
+JWT_SECRET=35a8a311b15a2b55954317d459ec06946d5e151a4c9e1c50b0e2702b9116dd3a
