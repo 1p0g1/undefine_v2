@@ -46,6 +46,8 @@ Un-Define v2 is a complete rebuild of the word-guessing game with a focus on cle
 - [x] Document leaderboard tie-breaker rules
 - [x] Create README in supabase/migrations/ for migration strategy
 - [x] Align TS schema types with new fields
+- [x] Supabase words table fully seeded and verified (2024-06-10)
+  - As of June 10, 2024, the Supabase `words` table is fully populated and confirmed via dashboard. No further seeding required; focus is now on leveraging this data in the app.
 
 ## 🚧 Phase 2: Backend Foundation
 

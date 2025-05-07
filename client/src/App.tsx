@@ -4,8 +4,6 @@ import { DefineBoxes } from './components/DefineBoxes';
 import { getVisibleClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
-import PowerGame from "./components/PowerGame";
-import { Routes, Route } from 'react-router-dom';
 
 function App() {
   const { gameState, startNewGame, submitGuess, solution, clues, guessStatus, showLeaderboard } =
@@ -421,9 +419,6 @@ function App() {
           font-style: italic;
         }
       `}</style>
-      <Routes>
-        <Route path="/power" element={<PowerGame />} />
-      </Routes>
     </div>
   );
 }

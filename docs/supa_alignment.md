@@ -439,3 +439,19 @@
 - Updated `index.html` to reference the new favicon.
 
 ---
+
+### Progress: Live Supabase Data for Hints (2024-06-10)
+
+- The backend and frontend are now leveraging live Supabase data from the `words` table to populate game hints.
+- The backend exposes `getRandomWord` for dev/testing, which fetches a random word and all required hint fields in the fixed order:
+  1. definition
+  2. equivalents
+  3. first_letter
+  4. in_a_sentence
+  5. number_of_letters
+  6. etymology
+- The code is structured to support future date-based daily word logic via a placeholder `getDailyWord` method.
+- The frontend integration now loads hints from Supabase, not mock data.
+- Table structure and field usage are fully aligned with the schema; unused fields (`id`, `difficulty`, `date`) are reserved for future features.
+
+---
