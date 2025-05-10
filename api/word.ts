@@ -1,5 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export default function handler(req, res) {
+  console.log("ENV SUPABASE_URL:", !!process.env.SUPABASE_URL);
+  console.log("ENV SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY);
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  res.status(200).json({ message: 'API route is working!' });
+  res.status(200).json({
+    message: "API route is working!",
+    env: {
+      SUPABASE_URL: !!process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+    },
+  });
 }
