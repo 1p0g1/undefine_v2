@@ -1,18 +1,9 @@
 {
-  "name": "undefine_v2",
-  "version": "0.1.0",
-  "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "name": "undefine-v2",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "vite --config client/vite.config.ts",
-    "build": "vite build --config client/vite.config.ts",
-    "start": "vite preview --config client/vite.config.ts"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "typescript": "^5.3.3"
+    "build": "echo 'No build needed for API test'",
+    "dev": "echo 'No dev needed for API test'"
   }
 }
