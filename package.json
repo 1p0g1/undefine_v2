@@ -7,9 +7,9 @@
     "server"
   ],
   "scripts": {
-    "dev": "npm --prefix client run dev",
-    "build": "npm --prefix client run build",
-    "start": "npm --prefix client run preview"
+    "dev": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "npm run preview --prefix client"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
