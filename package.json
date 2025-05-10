@@ -7,9 +7,9 @@
     "server"
   ],
   "scripts": {
-    "dev": "npm run dev --prefix client",
-    "build": "npm run build --prefix client",
-    "start": "npm run preview --prefix client"
+    "dev": "vite --config client/vite.config.ts",
+    "build": "vite build --config client/vite.config.ts",
+    "start": "vite preview --config client/vite.config.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
