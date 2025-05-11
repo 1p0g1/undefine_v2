@@ -28,6 +28,7 @@ const useGame = () => {
 
   const startNewGame = useCallback(async () => {
     try {
+      console.log('Fetching word…');
       const response = await fetch('/api/word', {
         headers: {
           'Content-Type': 'application/json',
