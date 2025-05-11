@@ -1,9 +1,8 @@
 {
   "name": "undefine-v2",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "build": "echo 'No build needed for API test'",
-    "dev": "echo 'No dev needed for API test'"
+    "build": "echo 'No build needed'"
   }
 }
