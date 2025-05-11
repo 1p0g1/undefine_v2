@@ -1,10 +1,7 @@
 {
-  "name": "undefine-v2",
-  "version": "1.0.0",
-  "type": "commonjs",
-  "scripts": {
-    "build": "echo 'No build needed'"
-  },
+  "name": "undefine",
+  "private": true,
+  "workspaces": ["client"],
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4"
   }
