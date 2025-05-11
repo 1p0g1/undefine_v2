@@ -1,4 +1,8 @@
-export default function handler(req, res) {
+/**
+ * @param req
+ * @param res
+ */
+function handler(req: any, res: any) {
   console.log("ENV SUPABASE_URL:", !!process.env.SUPABASE_URL);
   console.log("ENV SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY);
 
@@ -10,3 +14,5 @@ export default function handler(req, res) {
     },
   });
 }
+
+module.exports = handler;
