@@ -4,5 +4,8 @@
   "type": "commonjs",
   "scripts": {
     "build": "echo 'No build needed'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4"
   }
 }
