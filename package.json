@@ -1,8 +1,11 @@
 {
   "name": "undefine",
   "private": true,
-  "workspaces": ["client"],
+  "workspaces": [
+    "client"
+  ],
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.4"
+    "@supabase/supabase-js": "^2.49.4",
+    "uuid": "^11.1.0"
   }
 }
