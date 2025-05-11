@@ -36,8 +36,8 @@ async function handler(req: any, res: any) {
         },
       ]);
     if (insertError) {
-      console.error(insertError);
-      return res.status(500).json({ error: 'Error creating game session' });
+      console.error("Supabase insert error:", insertError.message);
+      return res.status(500).json({ error: `Error creating game session: ${insertError.message}` });
     }
 
     return res.status(200).json({ word, gameId });
