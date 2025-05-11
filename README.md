@@ -213,3 +213,7 @@ npm run build — Production build
 ✉️ License
 
 MIT
+
+---
+
+_Update: Minor edit to trigger a new commit for deployment sync._
