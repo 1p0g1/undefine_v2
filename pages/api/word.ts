@@ -28,14 +28,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    let word;
+    // Get today's date in UTC
+    const today = new Date();
+    const todayUTC = new Date(Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate()
+    )).toISOString().slice(0, 10);
+
+    console.log('Fetching word for date:', todayUTC);
+
+    let word: any; // Will be properly typed by Supabase response
 
     // First try to get today's word
     const { data: todayWord, error: todayWordError } = await supabase
       .from('words')
       .select('*')
-      .eq('date', today)
+      .eq('date', todayUTC)
       .single();
 
     if (todayWordError) {

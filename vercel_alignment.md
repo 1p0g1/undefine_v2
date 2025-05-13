@@ -486,29 +486,50 @@ ON CONFLICT DO NOTHING;
 
 ## Word-of-the-Day System
 
-### Word Selection Logic
-- `/api/word` endpoint fetches the word matching today's date from the `words` table
-- Date is formatted as ISO string (YYYY-MM-DD) using `toISOString().slice(0, 10)`
-- In production, returns 500 error if no word is found for today
-- In development, falls back to random word for testing purposes
-- Response includes full word data structure:
-  ```typescript
-  {
-    word: {
-      id: string;
-      word: string;
-      definition: string;
-      first_letter: string;
-      in_a_sentence: string;
-      equivalents: string;
-      number_of_letters: number;
-      etymology: string;
-      difficulty: string;
-      date: string;
-    };
-    gameId: string;
-  }
-  ```
+### `/api/word` Endpoint
+
+The `/api/word` endpoint is responsible for fetching the word-of-the-day and creating a new game session. It follows these steps:
+
+1. **Date Handling**:
+   - Uses UTC-based date calculation to ensure consistent word selection across timezones
+   - Formats date as `YYYY-MM-DD` using `Date.UTC()` for database queries
+   - Example: `2024-03-20` for March 20, 2024 UTC
+
+2. **Word Selection Logic**:
+   - Primary: Fetches word matching today's UTC date from `words` table
+   - Query: `.eq('date', todayUTC)` to ensure exact date match
+   - Fallback: In development only, falls back to random word if date match fails
+   - Error Handling: Returns 500 if word fetch fails in production
+
+3. **Game Session Creation**:
+   - Creates new session in `game_sessions` table
+   - Links session to selected word via `word_id`
+   - Initializes `clue_status` with all clues hidden
+   - Returns both word data and `gameId` to frontend
+
+4. **Response Structure**:
+   ```typescript
+   {
+     word: {
+       id: string;
+       word: string;
+       definition: string;
+       first_letter: string;
+       in_a_sentence: string;
+       equivalents: string[];
+       number_of_letters: number;
+       etymology: string;
+       difficulty: number;
+       date: string;
+     };
+     gameId: string;
+   }
+   ```
+
+5. **Environment-Specific Behavior**:
+   - Production: Always uses date-based word selection
+   - Development: Falls back to random word if date match fails
+   - Logging: Includes detailed error logging for debugging
 
 ### Local Testing
 - Development mode (`NODE_ENV === 'development'`) enables fallback to random word
