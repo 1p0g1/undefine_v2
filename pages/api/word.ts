@@ -1,5 +1,4 @@
-// Vercel-native serverless API route for fetching a random word from Supabase.
-// Replaces the old Node backend `/api/word` route.
+// Vercel-native serverless API route for fetching the word of the day from Supabase.
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -28,54 +27,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Get today's date in UTC
-    const today = new Date();
-    const todayUTC = new Date(Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate()
-    )).toISOString().slice(0, 10);
+    // Use UTC date string (YYYY-MM-DD)
+    const today = new Date().toISOString().split('T')[0];
+    console.log('[api/word] Fetching word for date:', today);
 
-    console.log('Fetching word for date:', todayUTC);
-
-    let word: any; // Will be properly typed by Supabase response
-    let isFallback = false;
-
-    // First try to get today's word
-    const { data: todayWord, error: todayWordError } = await supabase
+    // Query for today's word
+    const { data: word, error: wordError } = await supabase
       .from('words')
       .select('*')
-      .eq('date', todayUTC)
+      .eq('date', today)
       .single();
+    console.log('[api/word] Word query result:', word || wordError);
 
-    if (todayWordError) {
-      console.error('Error fetching today\'s word:', todayWordError);
-      
-      // Fall back to a random word in both development and production
-      console.log('Falling back to random word');
-      const { data: randomWord, error: randomWordError } = await supabase
-        .from('words')
-        .select('*')
-        .order('random()')
-        .limit(1)
-        .single();
-
-      if (randomWordError) {
-        console.error('Error fetching random word:', randomWordError);
-        return res.status(500).json({ error: 'Error fetching word' });
-      }
-      word = randomWord;
-      isFallback = true;
-    } else {
-      word = todayWord;
+    if (wordError || !word) {
+      console.error('[api/word] No word found for today:', wordError);
+      res.status(404).json({ error: 'No word found for today' });
+      console.log('[api/word] Response status: 404');
+      return;
     }
 
-    if (!word) {
-      console.error('No word found and fallback failed');
-      return res.status(500).json({ error: 'No word available' });
-    }
-
-    // Create game session
+    // Create game session linked to correct word_id
     const { data: session, error: sessionError } = await supabase
       .from('game_sessions')
       .insert([
@@ -91,12 +62,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (sessionError) {
-      console.error('Error creating game session:', sessionError);
-      return res.status(500).json({ error: 'Error creating game session' });
+      console.error('[api/word] Error creating game session:', sessionError);
+      res.status(500).json({ error: 'Error creating game session' });
+      console.log('[api/word] Response status: 500');
+      return;
     }
 
     // Return word and session data
-    return res.status(200).json({
+    res.status(200).json({
       word: {
         id: word.id,
         word: word.word,
@@ -110,10 +83,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         date: word.date,
       },
       gameId: session.id,
-      isFallback,
     });
+    console.log('[api/word] Response status: 200');
   } catch (error) {
-    console.error('Error in word endpoint:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('[api/word] Error in word endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+    console.log('[api/word] Response status: 500');
   }
 } 
