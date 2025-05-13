@@ -1,32 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest } from 'next';
-import type { LeaderboardResponse, ApiResponse, LeaderboardEntry } from 'types/api';
+import { NextApiRequest } from 'next';
+import { LeaderboardResponse, ApiResponse, LeaderboardEntry } from 'types/api';
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<LeaderboardResponse>
 ) {
+  // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get wordId from query parameters
   const { wordId, playerId } = req.query;
-
-  if (!wordId || typeof wordId !== 'string') {
-    return res.status(400).json({ error: 'wordId is required' });
+  if (!wordId) {
+    return res.status(400).json({ error: 'Missing wordId parameter' });
   }
 
   try {
-    // Get today's date in YYYY-MM-DD format
+    // Get today's date
     const today = new Date().toISOString().split('T')[0];
 
-    // First, get all entries for this word and date to find player's rank
-    const { data: allEntries, error: allEntriesError } = await supabase
+    // Fetch all entries for this word and date to calculate ranks
+    const { data: allEntries, error } = await supabase
       .from('leaderboard_summary')
       .select('*')
       .eq('word_id', wordId)
@@ -34,38 +35,33 @@ export default async function handler(
       .order('guesses_used', { ascending: true })
       .order('completion_time_seconds', { ascending: true });
 
-    if (allEntriesError) {
-      console.error('Error fetching all leaderboard entries:', allEntriesError);
-      return res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    if (error) {
+      console.error('Error fetching leaderboard:', error);
+      return res.status(500).json({ error: 'Failed to fetch leaderboard data' });
     }
 
-    // Find player's entry and rank if playerId is provided
+    // Find the player's entry and rank if they provided a playerId
     let playerEntry: LeaderboardEntry | null = null;
     let playerRank: number | null = null;
-    if (playerId && typeof playerId === 'string' && allEntries) {
-      playerEntry = allEntries.find(entry => entry.player_id === playerId) ?? null;
+
+    if (playerId && allEntries) {
+      // Find the player's entry
+      playerEntry = allEntries.find((entry) => entry.player_id === playerId) || null;
+      
+      // Calculate the player's rank if they have an entry
       if (playerEntry) {
-        const rank = allEntries.findIndex(entry => entry.player_id === playerId);
-        playerRank = rank >= 0 ? rank + 1 : null;
+        const index = allEntries.findIndex((entry) => entry.player_id === playerId);
+        playerRank = index !== -1 ? index + 1 : null;
       }
     }
 
-    // Get top 10 entries
-    const topEntries = allEntries?.slice(0, 10) ?? [];
-
-    // If player is not in top 10 but has an entry, add it to the response
-    const leaderboardEntries = [...topEntries];
-    if (playerEntry && !topEntries.some(entry => entry.player_id === playerId)) {
-      leaderboardEntries.push({
-        ...playerEntry,
-        is_current_player: true,
-      });
-    }
-
+    // Return only the top 10 entries
+    const topTen = allEntries ? allEntries.slice(0, 10) : [];
+    
     return res.status(200).json({
-      leaderboard: leaderboardEntries,
+      leaderboard: topTen,
       playerRank,
-      totalEntries: allEntries?.length ?? 0,
+      totalEntries: allEntries ? allEntries.length : 0
     });
   } catch (error) {
     console.error('Error in leaderboard endpoint:', error);

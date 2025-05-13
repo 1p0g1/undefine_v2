@@ -5,8 +5,8 @@ import type { NextApiRequest } from 'next';
 import type { StreakResponse, ApiResponse } from 'types/api';
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(
@@ -16,6 +16,7 @@ export default async function handler(
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
   try {
     let body = '';
     await new Promise<void>((resolve) => {
@@ -23,24 +24,26 @@ export default async function handler(
       req.on('end', () => resolve());
     });
     
-    const { player_id } = JSON.parse(body) as { player_id?: string };
+    const { player_id } = JSON.parse(body);
     if (!player_id) {
       return res.status(400).json({ error: 'Missing player_id' });
     }
 
     const { data, error } = await supabase
       .from('user_stats')
-      .select('current_streak,longest_streak')
+      .select('current_streak, longest_streak, games_played, games_won')
       .eq('player_id', player_id)
-      .maybeSingle();
+      .single();
 
-    if (error || !data) {
-      return res.status(404).json({ error: error?.message || 'No stats found' });
+    if (error && error.code !== 'PGRST116') { // Not found is okay
+      return res.status(500).json({ error: 'Failed to fetch user stats' });
     }
 
     return res.status(200).json({
-      currentStreak: data.current_streak ?? 0,
-      longestStreak: data.longest_streak ?? 0
+      currentStreak: data?.current_streak ?? 0,
+      longestStreak: data?.longest_streak ?? 0,
+      gamesPlayed: data?.games_played ?? 0,
+      gamesWon: data?.games_won ?? 0
     });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
