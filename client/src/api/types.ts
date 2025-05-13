@@ -7,18 +7,19 @@
  * Word response type from /api/word endpoint
  */
 export interface WordResponse {
-  id: string; // UUID from words table
-  word: string;
-  gameId: string;
-  clues: {
-    D: string;
-    E: string[];
-    F: string;
-    I: string;
-    N: number;
-    E2: string;
+  word: {
+    id: string;
+    word: string;
+    definition: string;
+    first_letter: string;
+    in_a_sentence: string;
+    equivalents: string;
+    number_of_letters: number;
+    etymology: string;
+    difficulty: string;
+    date: string;
   };
-  solution?: string; // DEV ONLY: present only in development mode
+  gameId: string;
 }
 
 /**
@@ -58,7 +59,16 @@ export interface GuessResponse {
  */
 export interface GameSessionState {
   gameId: string;
-  wordId: string; // UUID from words table
+  wordId: string;
+  wordText: string;
+  clues: {
+    D: string;
+    E: string;
+    F: string;
+    I: string;
+    N: string;
+    E2: string;
+  };
   guesses: string[];
   revealedClues: string[];
   clueStatus: Record<string, boolean>;

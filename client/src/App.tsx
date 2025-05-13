@@ -10,8 +10,6 @@ function App() {
     gameState,
     startNewGame,
     submitGuess,
-    solution,
-    clues,
     guessStatus,
     showLeaderboard,
     leaderboardData,
@@ -61,10 +59,9 @@ function App() {
     setGuess('');
   };
 
-  const visibleClues =
-    clues && solution && gameState && gameState.guesses
-      ? getVisibleClues(clues, gameState.guesses, solution)
-      : [];
+  const visibleClues = gameState.clues
+    ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
+    : [];
   const revealedClueKeys = visibleClues.map(c => c.key);
 
   // Compute box status for each box
@@ -200,20 +197,11 @@ function App() {
       {gameState.guesses.length > 0 && (
         <div className="past-guesses">Past guesses: {gameState.guesses.join(', ')}</div>
       )}
-      {/* Hints as structured rows */}
+      {/* Clues Section */}
       <div className="hint-blocks" style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
         {visibleClues.map((clue, idx) => {
-          const clueTitles = {
-            D: 'Definition',
-            E: 'Equivalents',
-            F: 'First Letter',
-            I: 'In a Sentence',
-            N: 'Number of Letters',
-            E2: 'Etymology',
-          };
-          const clueLetters = { D: 'D', E: 'E', F: 'F', I: 'I', N: 'N', E2: 'E' };
-          const title = clueTitles[clue.key as keyof typeof clueTitles] || clue.key;
-          const letter = clueLetters[clue.key as keyof typeof clueLetters] || '';
+          const letter = clue.key;
+          const title = clue.label;
           return (
             <div className="hint-row" key={clue.key}>
               <div className="hint-letter">{letter}</div>
@@ -225,195 +213,142 @@ function App() {
           );
         })}
       </div>
-      {/* Solution reveal */}
-      {gameState.isComplete && solution && (
+      {/* Solution Reveal */}
+      {gameState.isComplete && (
         <div
           className="solution-reveal"
           style={{ fontSize: 20, fontWeight: 700, margin: '1.2rem 0' }}
         >
-          The word was: {solution}
+          The word was: {gameState.wordText}
         </div>
       )}
-      {/* Play Again and View Results buttons after game completion */}
-      {gameState.isComplete && (
-        <div
+      {/* Action Buttons */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          justifyContent: 'center',
+          marginTop: '1rem',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowRules(true)}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 20,
-            marginTop: 20,
-            marginBottom: 16,
+            padding: '0.5rem 1rem',
+            borderRadius: '0.25rem',
+            backgroundColor: '#f3f4f6',
+            color: '#374151',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-primary)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            transition: 'background-color 0.2s',
           }}
         >
+          How to Play
+        </button>
+        {gameState.isComplete && (
           <button
             type="button"
-            className="play-again-btn"
-            style={{
-              minHeight: 48,
-              minWidth: 180,
-              padding: '0 1.5rem',
-              border: '2px solid var(--color-primary)',
-              borderRadius: 10,
-              background: '#fff',
-              color: 'var(--color-primary)',
-              fontFamily: 'var(--font-primary)',
-              fontWeight: 700,
-              fontSize: 17,
-              cursor: 'pointer',
-              margin: '0 auto',
-              outline: 'none',
-              boxShadow: '0 1px 4px rgba(26,35,126,0.06)',
-            }}
-            tabIndex={0}
-            role="button"
-            onClick={() => {
-              setShowSummary(false);
-              setCanReopenSummary(false);
-              startNewGame();
-            }}
-          >
-            Play Again
-          </button>
-          <button
-            type="button"
-            className="view-results-btn button-secondary"
-            style={{
-              minHeight: 48,
-              minWidth: 180,
-              padding: '0 1.5rem',
-              border: '2px solid var(--color-primary)',
-              borderRadius: 10,
-              background: '#fff',
-              color: 'var(--color-primary)',
-              fontFamily: 'var(--font-primary)',
-              fontWeight: 700,
-              fontSize: 17,
-              cursor: 'pointer',
-              margin: '0 auto',
-              outline: 'none',
-              boxShadow: '0 1px 4px rgba(26,35,126,0.06)',
-            }}
-            tabIndex={0}
-            role="button"
             onClick={showLeaderboardModal}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '0.25rem',
+              backgroundColor: '#1a237e',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-primary)',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              transition: 'background-color 0.2s',
+            }}
             aria-label="View Results"
           >
             View Results
           </button>
-        </div>
-      )}
-      {/* GameSummaryModal: appears 5s after game completion or via View Results */}
+        )}
+      </div>
+      {/* Game Summary Modal */}
       <GameSummaryModal
         open={showSummary}
         onClose={handleCloseSummary}
-        onPlayAgain={() => {
-          setShowSummary(false);
-          setCanReopenSummary(false);
-          startNewGame();
-        }}
-        leaderboard={leaderboardData}
-        playerRank={playerRank}
-        guessStatus={boxStatus}
-        word={solution || ''}
+        onPlayAgain={startNewGame}
+        word={gameState.wordText}
         time={`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}
         guessesUsed={gameState.guesses.length}
         fuzzyMatches={0}
         hintsUsed={0}
         date={new Date().toLocaleDateString('en-GB')}
+        guessStatus={guessStatus}
+        leaderboard={leaderboardData}
+        playerRank={playerRank}
         isLoading={isLeaderboardLoading}
         error={leaderboardError || undefined}
       />
-      {/* Fixed Guess Input Bar */}
+      {/* Guess Input Form */}
       <form
         onSubmit={handleGuessSubmit}
-        className="guess-area-fixed"
-        autoComplete="off"
         style={{
           position: 'fixed',
+          bottom: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          zIndex: 50,
-          width: '100vw',
-          maxWidth: '425px',
-          margin: '0 auto',
-          background: '#faf7f2',
-          boxShadow: '0 -2px 12px rgba(26,35,126,0.06)',
-          borderTop: '1.5px solid #e5e7eb',
-          padding: '0.75rem 1rem 0.75rem 1rem',
+          padding: '1rem',
+          backgroundColor: 'white',
+          borderTop: '1px solid #e5e7eb',
           display: 'flex',
-          alignItems: 'center',
           gap: '0.5rem',
-          minHeight: 56,
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <input
           type="text"
           value={guess}
           onChange={e => setGuess(e.target.value)}
-          className="guess-input"
           placeholder="Enter your guess"
-          disabled={gameState.isComplete}
           style={{
-            flex: 1,
-            fontSize: '1rem',
+            padding: '0.5rem',
+            borderRadius: '0.25rem',
+            border: '1px solid #d1d5db',
+            width: '100%',
+            maxWidth: '200px',
             fontFamily: 'var(--font-primary)',
-            fontStyle: 'italic',
-            border: 'none',
-            borderBottom: '2px solid #1a237e',
-            background: 'transparent',
-            outline: 'none',
-            textAlign: 'center',
-            padding: '0.5rem 0.5rem',
-            minHeight: 36,
-            color: '#1a237e',
+            fontSize: '0.875rem',
           }}
         />
         <button
           type="submit"
-          className="guess-btn-inline"
-          aria-label="Submit guess"
-          disabled={gameState.isComplete}
+          disabled={!guess.trim() || gameState.isComplete}
           style={{
-            height: '2.25rem',
-            minWidth: '2.25rem',
-            padding: '0 0.75rem',
-            borderRadius: '1.25rem',
-            background: '#1a237e',
-            color: '#fff',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.25rem',
+            backgroundColor: '#1a237e',
+            color: 'white',
             border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.25rem',
-            fontFamily: 'var(--font-primary)',
-            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 1px 4px rgba(26,35,126,0.08)',
-            transition: 'background 0.15s',
+            fontFamily: 'var(--font-primary)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            transition: 'background-color 0.2s',
+            opacity: !guess.trim() || gameState.isComplete ? 0.5 : 1,
           }}
         >
           <span
             style={{ fontSize: '1.25rem', lineHeight: 1, display: 'inline-block' }}
             aria-hidden="true"
           >
-            ↵
+            →
           </span>
         </button>
       </form>
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-        @media (max-width: 600px) {
-          .guess-area-fixed { max-width: 100vw !important; }
-        }
-        .guess-area-fixed input::placeholder {
-          color: #1a237e;
-          opacity: 0.7;
-          font-style: italic;
+          50% { opacity: 0; }
         }
       `}</style>
     </div>

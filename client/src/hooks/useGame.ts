@@ -11,6 +11,15 @@ const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
     gameId: '',
     wordId: '',
+    wordText: '',
+    clues: {
+      D: '',
+      E: '',
+      F: '',
+      I: '',
+      N: '',
+      E2: '',
+    },
     guesses: [],
     revealedClues: [],
     clueStatus: {},
@@ -22,10 +31,6 @@ const useGame = () => {
   const [guessStatus, setGuessStatus] = useState<
     ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[]
   >(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
-  // DEV ONLY: store solution in state for clue logic
-  const [solution, setSolution] = useState<string | undefined>(undefined); // DEV ONLY
-  // Store clues for clue logic
-  const [clues, setClues] = useState<WordResponse['clues'] | undefined>(undefined);
   // Track leaderboard modal
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   // Store leaderboard data
@@ -62,13 +67,21 @@ const useGame = () => {
       });
       if (!response.ok) {
         console.error('Error fetching /api/word:', response.status, response.statusText);
-        setClues(undefined);
         return;
       }
       const data: WordResponse = await response.json();
       setGameState({
         gameId: data.gameId,
-        wordId: data.id,
+        wordId: data.word.id,
+        wordText: data.word.word,
+        clues: {
+          D: data.word.definition,
+          E: data.word.equivalents,
+          F: data.word.first_letter,
+          I: data.word.in_a_sentence,
+          N: data.word.number_of_letters.toString(),
+          E2: data.word.etymology,
+        },
         guesses: [],
         revealedClues: [],
         clueStatus: {},
@@ -78,12 +91,8 @@ const useGame = () => {
       });
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setShowLeaderboard(false);
-      // DEV ONLY: set solution if present
-      if (data.solution) setSolution(data.solution); // DEV ONLY
-      setClues(data.clues);
     } catch (error) {
       console.error('Failed to start new game:', error);
-      setClues(undefined);
     }
   }, []);
 
@@ -103,8 +112,7 @@ const useGame = () => {
           const newGuesses = [...prevState.guesses, trimmedGuess];
           // Determine status for this guess
           let status: 'correct' | 'incorrect' | 'fuzzy' = 'incorrect';
-          // Fix: compare guess and solution with trim/lowercase
-          if (solution && trimmedGuess.toLowerCase() === solution.toLowerCase()) status = 'correct';
+          if (trimmedGuess.toLowerCase() === gameState.wordText.toLowerCase()) status = 'correct';
           else if (data.isFuzzy) status = 'fuzzy';
           // Update guessStatus array
           setGuessStatus(prev => {
@@ -130,15 +138,13 @@ const useGame = () => {
         console.error('Failed to submit guess:', error);
       }
     },
-    [gameState.gameId, gameState.guesses, gameState.isComplete, solution, fetchLeaderboard]
+    [gameState.gameId, gameState.guesses, gameState.isComplete, gameState.wordText, fetchLeaderboard]
   );
 
   return {
     gameState,
     startNewGame,
     submitGuess,
-    solution, // DEV ONLY: expose for clue logic
-    clues,
     guessStatus,
     showLeaderboard,
     leaderboardData,
@@ -168,7 +174,7 @@ export enum ClueKey {
  * E2: Etymology (after 5th incorrect guess)
  */
 export function getVisibleClues(
-  clues: WordResponse['clues'],
+  clues: GameSessionState['clues'],
   guesses: string[] = [],
   correctAnswer: string = ''
 ): { key: string; label: string; value: string }[] {
@@ -180,11 +186,11 @@ export function getVisibleClues(
   if (clues.D) {
     visibleClues.push({ key: ClueKey.Definition, label: 'Definition', value: clues.D });
   }
-  if (incorrectGuesses.length >= 1 && clues.E && clues.E.length > 0) {
+  if (incorrectGuesses.length >= 1 && clues.E) {
     visibleClues.push({
       key: ClueKey.Equivalents,
       label: 'Equivalents',
-      value: clues.E.join(', '),
+      value: clues.E,
     });
   }
   if (incorrectGuesses.length >= 2 && clues.F) {
@@ -193,23 +199,15 @@ export function getVisibleClues(
   if (incorrectGuesses.length >= 3 && clues.I) {
     visibleClues.push({ key: ClueKey.InSentence, label: 'In a Sentence', value: clues.I });
   }
-  if (incorrectGuesses.length >= 4 && clues.N !== undefined && clues.N !== null) {
+  if (incorrectGuesses.length >= 4 && clues.N) {
     visibleClues.push({
       key: ClueKey.NumLetters,
       label: 'Number of Letters',
-      value: clues.N.toString(),
+      value: clues.N,
     });
   }
   if (incorrectGuesses.length >= 5 && clues.E2) {
     visibleClues.push({ key: ClueKey.Etymology, label: 'Etymology', value: clues.E2 });
-  }
-  // DEV ONLY: log visible clues for debugging
-  if (typeof window !== 'undefined' && window.location.search.includes('dev=true')) {
-    // eslint-disable-next-line no-console
-    console.log(
-      'Visible clues:',
-      visibleClues.map(c => c.key)
-    );
   }
   return visibleClues;
 }
