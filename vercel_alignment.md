@@ -450,4 +450,38 @@ ON CONFLICT DO NOTHING;
   - Proper null/undefined handling
   - Consistent error responses
 
+## API Connection Strategy
+
+### Base URL Logic
+- The application uses a dynamic base URL system that adapts to both local development and production environments
+- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
+- In production (Vercel), the variable is not set, defaulting to an empty string, which results in relative paths
+- In local development, it defaults to `http://localhost:3001` if not set
+
+### Why Relative Paths in Production
+- Vercel serverless functions are deployed to the same domain as the frontend
+- Using relative paths ensures API calls work regardless of the deployment domain
+- Eliminates the need for CORS configuration
+- Simplifies deployment and environment management
+
+### Why No Hardcoded Localhost
+- Hardcoded localhost URLs break in production
+- Makes the application environment-dependent
+- Complicates testing and deployment
+- Can lead to security issues if accidentally deployed
+
+### Updated API Routes
+| Route | Status | Notes |
+|-------|--------|-------|
+| `/api/word` | ✅ Updated | Uses `fetchFromApi` wrapper |
+| `/api/guess` | ✅ Updated | Uses `fetchFromApi` wrapper |
+| `/api/leaderboard` | ✅ Updated | Uses `fetchFromApi` wrapper |
+| `/api/streak-status` | ✅ Updated | Uses `fetchFromApi` wrapper |
+| `/api/dev/reset-session` | ✅ Updated | Uses `fetchFromApi` wrapper |
+
+### Type Safety
+- All API responses are typed using interfaces from `types/api.ts`
+- The `fetchFromApi` wrapper ensures type safety through generics
+- Error handling is standardized across all API calls
+
 --- 

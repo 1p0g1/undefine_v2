@@ -1,6 +1,26 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
+/**
+ * Fetches from the API with proper error handling and type safety
+ * @param path The API path to fetch from
+ * @param options Optional fetch options
+ * @returns Promise with the typed response
+ */
+export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+  return response.json();
+};
 
 /**
  * API client for Un-Define v2
@@ -11,11 +31,7 @@ export const apiClient = {
    * @returns Promise with the word response
    */
   async getNewWord(): Promise<WordResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/word`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch new word');
-    }
-    return response.json();
+    return fetchFromApi<WordResponse>('/api/word');
   },
 
   /**
@@ -24,17 +40,10 @@ export const apiClient = {
    * @returns Promise with the guess response
    */
   async submitGuess(request: GuessRequest): Promise<GuessResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/guess`, {
+    return fetchFromApi<GuessResponse>('/api/guess', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(request),
     });
-    if (!response.ok) {
-      throw new Error('Failed to submit guess');
-    }
-    return response.json();
   },
 
   /**
@@ -48,10 +57,6 @@ export const apiClient = {
     if (playerId) {
       params.append('playerId', playerId);
     }
-    const response = await fetch(`${API_BASE_URL}/api/leaderboard?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch leaderboard');
-    }
-    return response.json();
+    return fetchFromApi<LeaderboardResponse>(`/api/leaderboard?${params.toString()}`);
   },
 };
