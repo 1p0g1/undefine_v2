@@ -39,6 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Fetching word for date:', todayUTC);
 
     let word: any; // Will be properly typed by Supabase response
+    let isFallback = false;
 
     // First try to get today's word
     const { data: todayWord, error: todayWordError } = await supabase
@@ -50,26 +51,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (todayWordError) {
       console.error('Error fetching today\'s word:', todayWordError);
       
-      // In development, fall back to a random word
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: falling back to random word');
-        const { data: randomWord, error: randomWordError } = await supabase
-          .from('words')
-          .select('*')
-          .order('random()')
-          .limit(1)
-          .single();
+      // Fall back to a random word in both development and production
+      console.log('Falling back to random word');
+      const { data: randomWord, error: randomWordError } = await supabase
+        .from('words')
+        .select('*')
+        .order('random()')
+        .limit(1)
+        .single();
 
-        if (randomWordError) {
-          console.error('Error fetching random word:', randomWordError);
-          return res.status(500).json({ error: 'Error fetching word' });
-        }
-        word = randomWord;
-      } else {
-        return res.status(500).json({ error: 'Error fetching today\'s word' });
+      if (randomWordError) {
+        console.error('Error fetching random word:', randomWordError);
+        return res.status(500).json({ error: 'Error fetching word' });
       }
+      word = randomWord;
+      isFallback = true;
     } else {
       word = todayWord;
+    }
+
+    if (!word) {
+      console.error('No word found and fallback failed');
+      return res.status(500).json({ error: 'No word available' });
     }
 
     // Create game session
@@ -107,6 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         date: word.date,
       },
       gameId: session.id,
+      isFallback,
     });
   } catch (error) {
     console.error('Error in word endpoint:', error);

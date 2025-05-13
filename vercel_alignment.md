@@ -315,11 +315,19 @@ ON CONFLICT DO NOTHING;
 ### Available Routes
 1. `/api/word` (GET)
    - Fetches today's word and creates a new game session
-   - Uses service role key for session creation
+   - Uses UTC-based date calculation for consistent word selection
+   - Falls back to random word if no word found for today
+   - Returns `isFallback: true` when using fallback word
+   - Creates game session with proper UUID relationships
+   - Response includes full word data and gameId
 
 2. `/api/guess` (POST)
    - Handles guess submission and game state updates
    - Uses service role key for leaderboard and stats updates
+   - Validates game session and word existence
+   - Updates game session with guesses and completion status
+   - Returns updated stats and game state
+   - Implements fuzzy matching for partial matches
 
 3. `/api/leaderboard` (GET)
    - Retrieves leaderboard data for a specific word
@@ -337,6 +345,22 @@ ON CONFLICT DO NOTHING;
 - Service role key is only used in server-side API routes
 - All routes validate request methods and required parameters
 - Development routes are protected in production
+- UUID relationships ensure data integrity
+- Proper error handling and logging in all routes
+
+### Word-of-the-Day System
+- Uses UTC dates for consistent word selection
+- Falls back to random word if no word found for today
+- Returns `isFallback` flag to indicate fallback usage
+- Maintains proper UUID relationships in game sessions
+- Comprehensive error logging for debugging
+
+### Game Session Management
+- Creates sessions with proper UUID relationships
+- Tracks guesses and completion status
+- Updates stats and leaderboard on completion
+- Implements fuzzy matching for partial matches
+- Maintains data integrity with proper error handling
 
 ## Supabase Environment Key Usage
 
