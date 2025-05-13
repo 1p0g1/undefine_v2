@@ -592,4 +592,26 @@ The `/api/word` endpoint is responsible for fetching the word-of-the-day and cre
 - Configure Vite proxy for local development
 - Maintain consistent error handling across environments
 
+## ⚠️ Important API Implementation Notes
+
+### API Routes Location
+- All API routes should be in the `/pages/api` directory, not the `/api` directory.
+- Older implementations in the `/api` directory have been removed to prevent conflicts.
+- The `/pages/api/word.ts` route is the **only** implementation that should be used.
+
+### Vercel Deployment
+- Vercel is configured to use the `/pages/api` routes via `vercel.json` configuration.
+- The `rewrites` config ensures all requests to `/api/*` routes use the `/pages/api/*` implementations.
+- If you're experiencing issues with the wrong word being shown, make sure:
+  1. No duplicate route exists in `/api/word.ts`
+  2. The `/pages/api/word.ts` implementation uses proper date-based queries
+  3. Vercel's function logs show the correct date and word lookup
+
+### Common Issues
+- The word selection uses `.eq('date', today)` with `today` being the current date in ISO format (YYYY-MM-DD).
+- If you're seeing "gleam" instead of the word for the current date, it's likely because:
+  1. A duplicate API route still exists that uses `.limit(1)` or `.order('random()')`
+  2. The date in Supabase doesn't match the expected format
+  3. No word exists for today's date in the Supabase `words` table
+
 --- 
