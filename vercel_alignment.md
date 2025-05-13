@@ -286,48 +286,31 @@ ON CONFLICT DO NOTHING;
 
 ## Environment Variables & Supabase Configuration
 
-### Frontend (Client-Side) Variables
-- `VITE_SUPABASE_URL`: Supabase project URL (for frontend access)
+### Frontend Variables (Vite)
+- `VITE_SUPABASE_URL`: Supabase project URL
 - `VITE_SUPABASE_ANON_KEY`: Public anon key for client-side operations
 
-### Backend (Server-Side) Variables
-- `SUPABASE_URL`: Supabase project URL (for API routes)
-- `SUPABASE_SERVICE_ROLE_KEY`: Private service role key for server-side operations with elevated privileges
-- `SUPABASE_ANON_KEY`: Public anon key (sometimes used by API routes for read-only operations)
+### Backend Variables (Vercel)
+- `VITE_SUPABASE_URL`: Same as frontend (shared)
+- `SUPABASE_SERVICE_ROLE_KEY`: Private service role key for server-side operations
 
-### Environment Variable Usage
-- Frontend code uses `VITE_` prefixed variables:
-  ```js
-  // In client-side code:
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-  ```
-
-- Backend API routes use non-VITE prefixed variables:
-  ```js
-  // In pages/api/* routes:
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  ```
-
-### Security Guidelines
-- Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code
-- Use `SUPABASE_SERVICE_ROLE_KEY` for server-side operations requiring elevated privileges
-- Use `SUPABASE_ANON_KEY` for server-side operations with only RLS-controlled access
+### Usage Guidelines
+- Frontend code uses `VITE_` prefixed variables with anon key
+- Backend API routes use service role key for elevated privileges
+- Never expose service role key in frontend code
+- Maintain consistent `VITE_` prefix for shared variables
 
 ### Vercel Configuration
 - Environment variables must be set in Vercel project settings
-- Both sets of variables (`VITE_` prefixed and non-prefixed) must be configured
 - Service role key is only available in serverless functions
+- Frontend build uses Vite's environment variable system
 
 ## API Routes
 
 ### Environment Variables
-- All API routes use `SUPABASE_URL` for the Supabase project URL
+- All API routes use `VITE_SUPABASE_URL` for the Supabase project URL
 - Server-side operations use `SUPABASE_SERVICE_ROLE_KEY` for elevated privileges
-- Read-only operations can use `SUPABASE_ANON_KEY` for RLS-controlled access
+- No API routes should use the anon key (`VITE_SUPABASE_ANON_KEY`)
 
 ### Available Routes
 1. `/api/word` (GET)
@@ -381,20 +364,20 @@ ON CONFLICT DO NOTHING;
 
 ## Supabase Environment Key Usage
 
-| Route            | Access Type | Key Used                   | Notes                                |
-|------------------|-------------|----------------------------|--------------------------------------|
-| /api/word        | WRITE       | SUPABASE_SERVICE_ROLE_KEY  | Needs to bypass RLS to create session|
-| /api/guess       | WRITE       | SUPABASE_SERVICE_ROLE_KEY  | Writes score + completion            |
-| /api/leaderboard | READ        | SUPABASE_SERVICE_ROLE_KEY  | Fetches leaderboard data             |
-| /api/streak-status| READ       | SUPABASE_SERVICE_ROLE_KEY  | Fetches player stats                 |
-| /api/dev/reset-session | WRITE | SUPABASE_SERVICE_ROLE_KEY  | Dev-only, needs full access          |
+| Route            | Access Type | Key Used                    | Notes                                |
+|------------------|-------------|-----------------------------|--------------------------------------|
+| /api/word        | WRITE       | SUPABASE_SERVICE_ROLE_KEY   | Needs to bypass RLS to create session|
+| /api/guess       | WRITE       | SUPABASE_SERVICE_ROLE_KEY   | Writes score + completion            |
+| /api/leaderboard | READ        | VITE_SUPABASE_ANON_KEY      | SELECT-only, safe via RLS            |
+| /api/streak-status| READ       | VITE_SUPABASE_ANON_KEY      | SELECT-only, safe via RLS            |
+| /api/dev/reset-session | WRITE | SUPABASE_SERVICE_ROLE_KEY | Dev-only, needs full access          |
 
 ### Security Considerations
 - Service role key (`SUPABASE_SERVICE_ROLE_KEY`) should only be used when:
   - Creating or updating game sessions
   - Writing scores and leaderboard entries
   - Performing dev operations
-- Anon key (`SUPABASE_ANON_KEY`) is sufficient for:
+- Anon key (`VITE_SUPABASE_ANON_KEY`) is sufficient for:
   - Reading leaderboard data
   - Fetching user stats
   - Any SELECT-only operations

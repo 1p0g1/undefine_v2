@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -27,10 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Log environment variables (without exposing secrets)
-    console.log('[api/word] Using SUPABASE_URL:', !!process.env.SUPABASE_URL);
-    console.log('[api/word] Using SUPABASE_SERVICE_ROLE_KEY:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-
     // Use UTC date string (YYYY-MM-DD)
     const today = new Date().toISOString().split('T')[0];
     console.log('[api/word] Fetching word for date:', today);

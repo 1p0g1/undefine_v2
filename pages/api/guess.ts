@@ -5,8 +5,8 @@ import type { NextApiRequest } from 'next';
 import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_ANON_KEY!
 );
 
 export default async function handler(

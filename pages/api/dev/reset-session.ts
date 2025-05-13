@@ -5,19 +5,17 @@ import type { NextApiRequest } from 'next';
 import type { ResetRequest, ResetResponse, ApiResponse } from 'types/api';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_ANON_KEY!
 );
 
 export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<ResetResponse>
 ) {
-  // Only allow in development
   if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({ error: 'Not available in production' });
+    return res.status(403).json({ error: 'Not allowed in production' });
   }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -34,23 +32,21 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing player_id' });
     }
 
-    // Delete any existing game sessions for this player
-    const { error } = await supabase
+    // Delete existing game session
+    const { error: deleteError } = await supabase
       .from('game_sessions')
       .delete()
       .eq('player_id', player_id);
 
-    if (error) {
-      console.error('Error deleting sessions:', error);
-      return res.status(500).json({ error: 'Failed to reset sessions' });
+    if (deleteError) {
+      return res.status(500).json({ error: 'Failed to delete game session' });
     }
 
     return res.status(200).json({
-      status: 'Game sessions reset',
-      word: word || 'random'
+      status: 'reset',
+      word: word ?? 'unknown'
     });
   } catch (err) {
-    console.error('Reset error:', err);
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 } 
