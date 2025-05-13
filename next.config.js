@@ -10,7 +10,7 @@ const nextConfig = {
     ];
   },
 
-  // Output standalone builds for easier deployment
+  // Enable standalone output for Vercel
   output: 'standalone',
 
   // Allow CORS for API routes
@@ -29,6 +29,16 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  // Add other config options
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+    mySecret: 'secret',
+  },
+  publicRuntimeConfig: {
+    // Will be available on both server and client
+    apiUrl: process.env.NEXT_PUBLIC_API_BASE_URL || '',
   },
 };
 

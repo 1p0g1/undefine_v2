@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Log the API base URL for debugging
-console.log('API Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL || 'Using relative path in production');
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+console.log('API Base URL:', apiBaseUrl || 'Using relative path in production');
 
 export default defineConfig({
   plugins: [react()],
@@ -21,5 +22,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+  },
+  define: {
+    // Make environment variables available to the client
+    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+    'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(apiBaseUrl),
   }
 });
