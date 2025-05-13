@@ -614,4 +614,38 @@ The `/api/word` endpoint is responsible for fetching the word-of-the-day and cre
   2. The date in Supabase doesn't match the expected format
   3. No word exists for today's date in the Supabase `words` table
 
+## Environment Variables Configuration
+
+### Local Development
+For local development, a `.env` file should be present at the root with the following variables:
+
+```
+# Supabase Configuration
+VITE_SUPABASE_URL=https://your-supabase-url.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Environment mode
+NODE_ENV=development
+
+# API Configuration - Use localhost for development
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+
+# Debug Configuration
+DEBUG=true
+```
+
+### Vercel Deployment
+For Vercel deployment, these environment variables should be set in the Vercel dashboard:
+
+1. `VITE_SUPABASE_URL` - Supabase project URL
+2. `VITE_SUPABASE_ANON_KEY` - Anon key for frontend access
+3. `SUPABASE_SERVICE_ROLE_KEY` - Service role key for backend access
+4. `NEXT_PUBLIC_API_BASE_URL` - Leave empty in production for relative paths
+
+### Security Notes
+- The `.env` file is `.gitignore`'d and should never be committed to the repository
+- `SUPABASE_SERVICE_ROLE_KEY` should always be kept secret and only used in server-side code
+- Frontend code should only use `VITE_` prefixed environment variables
+
 --- 
