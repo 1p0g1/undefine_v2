@@ -1,30 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
-
-interface LeaderboardEntry {
-  rank: number;
-  player: string;
-  time: string;
-  guesses: number;
-  fuzzy: number;
-  hints: number;
-  isSelf?: boolean;
-}
+import { LeaderboardEntry } from './api/types';
 
 interface GameSummaryModalProps {
   open: boolean;
   onClose: () => void;
   onPlayAgain: () => void;
   leaderboard: LeaderboardEntry[];
+  playerRank: number | null;
   guessStatus: GuessStatus[];
   word: string;
   time: string;
-  rank: number;
   guessesUsed: number;
   fuzzyMatches: number;
   hintsUsed: number;
   date: string;
+  isLoading?: boolean;
+  error?: string;
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -32,14 +25,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   onClose,
   onPlayAgain,
   leaderboard,
+  playerRank,
   guessStatus,
   word,
   time,
-  rank,
   guessesUsed,
   fuzzyMatches,
   hintsUsed,
   date,
+  isLoading = false,
+  error,
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -64,66 +59,38 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Modal content
-  const modalContent = (
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  };
+
+  const handleShare = () => {
+    const shareText = `I ranked #${playerRank || '?'} in today's Un·Define!\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nwww.undefine.io`;
+    navigator.clipboard.writeText(shareText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return createPortal(
     <div
-      className="gs-modal-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
       onClick={onClose}
-      aria-modal="true"
-      role="dialog"
     >
       <div
-        className="gs-modal-sheet animate-modal"
         ref={modalRef}
-        tabIndex={-1}
+        className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative"
         style={{
+          fontFamily: 'var(--font-primary)',
           background: 'var(--color-bg)',
-          borderRadius: '1.25rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-          width: '95vw',
-          maxWidth: 420,
-          minHeight: '60vh',
-          maxHeight: '90vh',
-          padding: '1.2rem 0.7rem 1.2rem 0.7rem',
-          outline: 'none',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          overflowY: 'auto',
-          animation: 'modalFadeIn 0.35s cubic-bezier(.4,1.4,.6,1)',
+          color: 'var(--color-primary)',
         }}
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="gs-modal-close"
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
           onClick={onClose}
-          aria-label="Close"
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            fontSize: 28,
-            background: 'none',
-            border: 'none',
-            color: 'var(--color-primary)',
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={{ fontFamily: 'var(--font-primary)' }}
         >
           &times;
         </button>
@@ -153,6 +120,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             <DefineBoxes
               gameState={{
                 gameId: '',
+                wordId: '',
                 guesses: [],
                 revealedClues: [],
                 clueStatus: {},
@@ -176,7 +144,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           }}
         >
           <div style={{ marginBottom: 2 }}>
-            Today you ranked <span style={{ fontWeight: 700 }}>#{rank}</span>
+            Today you ranked <span style={{ fontWeight: 700 }}>#{playerRank || '?'}</span>
           </div>
           <div>
             Guesses: <span style={{ fontWeight: 700 }}>{guessesUsed}/6</span>, Fuzzy:{' '}
@@ -187,90 +155,98 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           className="gs-modal-table-wrap"
           style={{ width: '100%', overflowX: 'auto', marginBottom: '1.2rem' }}
         >
-          <table
-            className="gs-modal-table"
-            style={{
-              width: '100%',
-              fontFamily: 'var(--font-primary)',
-              fontSize: 13,
-              borderCollapse: 'separate',
-              borderSpacing: 0,
-              textAlign: 'left',
-            }}
-          >
-            <thead>
-              <tr style={{ background: '#f3f4f6' }}>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Rank
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Player
-                </th>
-                <th
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    borderBottom: '1px solid #e5e7eb',
-                    textAlign: 'center',
-                  }}
-                >
-                  Time
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Guesses
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Fuzzy
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Hints
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.map((entry, idx) => (
-                <tr
-                  key={entry.rank}
-                  style={{
-                    background: idx % 2 === 1 ? '#f7faff' : undefined,
-                    fontWeight: entry.isSelf ? 600 : entry.rank === 1 ? 700 : 400,
-                    borderBottom: '1px solid #f0f0f0',
-                  }}
-                >
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                    <span
-                      style={{
-                        fontSize: 15,
-                        marginRight: 4,
-                        verticalAlign: 'top',
-                        display: 'inline-block',
-                      }}
-                    >
-                      {entry.rank === 1
-                        ? '🥇'
-                        : entry.rank === 2
-                          ? '🥈'
-                          : entry.rank === 3
-                            ? '🥉'
-                            : entry.rank}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                    {entry.player}
-                  </td>
-                  <td
-                    style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div className="loading-spinner" style={{ marginBottom: '1rem' }} />
+              Loading leaderboard...
+            </div>
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#ef4444' }}>
+              {error}
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              No entries yet. Be the first to complete today's word!
+            </div>
+          ) : (
+            <table
+              className="gs-modal-table"
+              style={{
+                width: '100%',
+                fontFamily: 'var(--font-primary)',
+                fontSize: 13,
+                borderCollapse: 'separate',
+                borderSpacing: 0,
+                textAlign: 'left',
+              }}
+            >
+              <thead>
+                <tr style={{ background: '#f3f4f6' }}>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Rank
+                  </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Player
+                  </th>
+                  <th
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderBottom: '1px solid #e5e7eb',
+                      textAlign: 'center',
+                    }}
                   >
-                    {entry.time}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                    {entry.guesses}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>{entry.fuzzy}</td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>{entry.hints}</td>
+                    Time
+                  </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Guesses
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leaderboard.map((entry, idx) => (
+                  <tr
+                    key={entry.id}
+                    style={{
+                      background: idx % 2 === 1 ? '#f7faff' : undefined,
+                      fontWeight: entry.is_current_player ? 600 : entry.rank === 1 ? 700 : 400,
+                      borderBottom: '1px solid #f0f0f0',
+                      animation: entry.is_current_player ? 'highlightRow 1s ease-out' : undefined,
+                    }}
+                  >
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          marginRight: 4,
+                          verticalAlign: 'top',
+                          display: 'inline-block',
+                        }}
+                      >
+                        {entry.rank === 1
+                          ? '🥇'
+                          : entry.rank === 2
+                            ? '🥈'
+                            : entry.rank === 3
+                              ? '🥉'
+                              : entry.rank}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                      {entry.player_name}
+                    </td>
+                    <td
+                      style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+                    >
+                      {formatTime(entry.completion_time_seconds)}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                      {entry.guesses_used}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
         <div
           className="gs-modal-actions"
@@ -283,6 +259,31 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             animation: 'fadeIn 0.5s',
           }}
         >
+          <button
+            className="gs-modal-share"
+            onClick={handleShare}
+            style={{
+              width: '100%',
+              minHeight: 48,
+              fontSize: 16,
+              fontFamily: 'var(--font-primary)',
+              background: '#fff',
+              color: 'var(--color-primary)',
+              border: '2px solid var(--color-primary)',
+              borderRadius: 10,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              fontWeight: 700,
+            }}
+          >
+            <span role="img" aria-label="Share" style={{ fontSize: 18 }}>
+              📢
+            </span>{' '}
+            Share Your Rank
+          </button>
           <button
             className="gs-modal-copy"
             onClick={handleCopy}
@@ -327,37 +328,30 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             Play Again
           </button>
         </div>
-        <style>{`
-          @keyframes modalFadeIn {
-            0% { opacity: 0; transform: scale(0.96) translateY(40px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-          }
-          @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-          }
-          .gs-modal-sheet:focus { outline: 2px solid var(--color-primary); }
-          @media (max-width: 600px) {
-            .gs-modal-sheet {
-              width: 98vw !important;
-              max-width: 99vw !important;
-              min-height: 80vh !important;
-              max-height: 98vh !important;
-              border-radius: 1.1rem !important;
-              padding: 0.7rem 0.1rem 1rem 0.1rem !important;
-            }
-            .gs-modal-header { font-size: 1.15rem !important; }
-            .gs-modal-actions button { font-size: 15px !important; }
-          }
-          @media (min-width: 601px) {
-            .gs-modal-sheet { font-size: 1.08rem; }
-            .gs-modal-table { font-size: 15px !important; }
-            .gs-modal-actions button { font-size: 17px !important; }
-          }
-        `}</style>
       </div>
-    </div>
+      <style>{`
+        @keyframes highlightRow {
+          0% { background-color: rgba(26, 35, 126, 0.1); }
+          100% { background-color: transparent; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .loading-spinner {
+          width: 24px;
+          height: 24px;
+          border: 3px solid #f3f4f6;
+          border-top-color: var(--color-primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>,
+    document.body
   );
-
-  return createPortal(modalContent, document.body);
 };

@@ -1,98 +1,103 @@
 // Vercel-native serverless API route for submitting a guess and updating game state in Supabase.
 // Replaces the old Node backend `/api/guess` route.
 import { createClient } from '@supabase/supabase-js';
+import type { NextApiRequest } from 'next';
+import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.VITE_SUPABASE_ANON_KEY!
 );
 
-/**
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse & { status: (code: number) => any, json: (body: any) => void }} res
- */
-export default async function handler(req, res) {
+export default async function handler(
+  req: NextApiRequest,
+  res: ApiResponse<GuessResponse>
+) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
   try {
     let body = '';
-    await new Promise((resolve) => {
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', resolve);
+    await new Promise<void>((resolve) => {
+      req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+      req.on('end', () => resolve());
     });
-    const { player_id, guess } = JSON.parse(body);
-    if (!player_id || !guess) {
-      return res.status(400).json({ error: 'Missing player_id or guess' });
+    
+    const { gameId, guess, playerId } = JSON.parse(body) as GuessRequest;
+    if (!gameId || !guess || !playerId) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Fetch today's word
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: wordData, error: wordError } = await supabase
+    // Get the game session
+    const { data: gameSession, error: gameError } = await supabase
+      .from('game_sessions')
+      .select('*')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !gameSession) {
+      return res.status(404).json({ error: 'Game session not found' });
+    }
+
+    // Get the word
+    const { data: word, error: wordError } = await supabase
       .from('words')
-      .select('word')
-      .eq('date', today)
-      .maybeSingle();
-    if (wordError || !wordData) {
-      return res.status(500).json({ error: wordError?.message || 'No word found for today' });
-    }
-    const correctWord = wordData.word.trim().toLowerCase();
-    const userGuess = guess.trim().toLowerCase();
-    const isCorrect = userGuess === correctWord;
+      .select('*')
+      .eq('id', gameSession.word_id)
+      .single();
 
-    // Update scores table
-    const { error: scoreError } = await supabase.from('scores').insert({
-      player_id,
-      word: correctWord,
-      guesses_used: 1, // For simplicity; adjust if tracking multiple guesses
-      was_correct: isCorrect,
-      completion_time_seconds: 0, // Placeholder; add timing if needed
-      submitted_at: new Date().toISOString(),
-    });
-    if (scoreError) {
-      return res.status(500).json({ error: scoreError.message });
+    if (wordError || !word) {
+      return res.status(404).json({ error: 'Word not found' });
     }
 
-    // Update user_stats (increment games_played, games_won, streaks, etc.)
-    // Fetch current stats
+    const isCorrect = guess.toLowerCase() === word.word.toLowerCase();
+    const isFuzzy = !isCorrect && guess.toLowerCase().includes(word.word.toLowerCase());
+    const fuzzyPositions = isFuzzy ? Array.from({ length: word.word.length }, (_, i) => i) : [];
+
+    // Update game session
+    const updatedGuesses = [...(gameSession.guesses || []), guess];
+    const isComplete = isCorrect || updatedGuesses.length >= 6;
+
+    const { error: updateError } = await supabase
+      .from('game_sessions')
+      .update({
+        guesses: updatedGuesses,
+        is_complete: isComplete,
+        completion_time_seconds: isComplete ? Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) : null
+      })
+      .eq('id', gameId);
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Failed to update game session' });
+    }
+
+    // Get updated stats
     const { data: stats, error: statsError } = await supabase
       .from('user_stats')
-      .select('*')
-      .eq('player_id', player_id)
-      .maybeSingle();
+      .select('games_played,games_won,current_streak,longest_streak')
+      .eq('player_id', playerId)
+      .single();
+
     if (statsError) {
-      return res.status(500).json({ error: statsError.message });
-    }
-    let updates = { games_played: 1, games_won: 0, current_streak: 0, longest_streak: 0 };
-    if (stats) {
-      updates.games_played = (stats.games_played || 0) + 1;
-      if (isCorrect) {
-        updates.games_won = (stats.games_won || 0) + 1;
-        updates.current_streak = (stats.current_streak || 0) + 1;
-        updates.longest_streak = Math.max(updates.current_streak, stats.longest_streak || 0);
-      } else {
-        updates.current_streak = 0;
-        updates.longest_streak = stats.longest_streak || 0;
-        updates.games_won = stats.games_won || 0;
-      }
-    } else if (isCorrect) {
-      updates.games_won = 1;
-      updates.current_streak = 1;
-      updates.longest_streak = 1;
-    }
-    const { error: updateStatsError } = await supabase
-      .from('user_stats')
-      .upsert({ player_id, ...updates }, { onConflict: 'player_id' });
-    if (updateStatsError) {
-      return res.status(500).json({ error: updateStatsError.message });
+      return res.status(500).json({ error: 'Failed to fetch stats' });
     }
 
     return res.status(200).json({
       isCorrect,
       guess,
-      correctWord,
-      stats: updates,
-      message: isCorrect ? 'Correct!' : 'Incorrect',
+      isFuzzy,
+      fuzzyPositions,
+      gameOver: isComplete,
+      revealedClues: [],
+      usedHint: false,
+      score: null,
+      stats: {
+        games_played: stats.games_played ?? 0,
+        games_won: stats.games_won ?? 0,
+        current_streak: stats.current_streak ?? 0,
+        longest_streak: stats.longest_streak ?? 0
+      }
     });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });

@@ -6,8 +6,19 @@ import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
 
 function App() {
-  const { gameState, startNewGame, submitGuess, solution, clues, guessStatus, showLeaderboard } =
-    useGame();
+  const {
+    gameState,
+    startNewGame,
+    submitGuess,
+    solution,
+    clues,
+    guessStatus,
+    showLeaderboard,
+    leaderboardData,
+    playerRank,
+    isLeaderboardLoading,
+    leaderboardError,
+  } = useGame();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -61,22 +72,6 @@ function App() {
   if (!gameState.isComplete && gameState.guesses.length < 6) {
     boxStatus[gameState.guesses.length] = 'active';
   }
-
-  // Mock leaderboard data for now
-  const leaderboard = [
-    { rank: 1, player: 'Alice', time: '01:23', guesses: 3, fuzzy: 1, hints: 0 },
-    { rank: 2, player: 'Bob', time: '01:45', guesses: 4, fuzzy: 0, hints: 1 },
-    {
-      rank: 3,
-      player: 'You',
-      time: `${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`,
-      guesses: gameState.guesses.length,
-      fuzzy: 0,
-      hints: 0,
-      isSelf: true,
-    },
-    { rank: 4, player: 'Carol', time: '02:10', guesses: 5, fuzzy: 2, hints: 1 },
-  ];
 
   const handleCloseSummary = () => {
     setShowSummary(false);
@@ -317,15 +312,17 @@ function App() {
           setCanReopenSummary(false);
           startNewGame();
         }}
-        leaderboard={leaderboard}
+        leaderboard={leaderboardData}
+        playerRank={playerRank}
         guessStatus={boxStatus}
         word={solution || ''}
         time={`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}
-        rank={3}
         guessesUsed={gameState.guesses.length}
         fuzzyMatches={0}
         hintsUsed={0}
         date={new Date().toLocaleDateString('en-GB')}
+        isLoading={isLeaderboardLoading}
+        error={leaderboardError || undefined}
       />
       {/* Fixed Guess Input Bar */}
       <form

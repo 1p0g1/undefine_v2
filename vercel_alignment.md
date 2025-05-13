@@ -255,4 +255,199 @@ ON CONFLICT DO NOTHING;
 
 ✅ This system is now stable, performant, and ready for full release.
 
+## Game Session Clue Status
+
+### Structure and Initialization
+- `clue_status` is initialized with a default structure matching game logic:
+  ```typescript
+  {
+    D: false, // Definition (always shown)
+    E: false, // Equivalents (after 1st incorrect guess)
+    F: false, // First Letter (after 2nd incorrect guess)
+    I: false, // In a Sentence (after 3rd incorrect guess)
+    N: false, // Number of Letters (after 4th incorrect guess)
+    E2: false // Etymology (after 5th incorrect guess)
+  }
+  ```
+
+### Why It's Needed
+- Supabase enforces a NOT NULL constraint on `clue_status`
+- Prevents null/undefined errors in frontend clue logic
+- Ensures consistent state tracking across game sessions
+- Matches the progressive clue reveal system
+
+### Integration with Game Logic
+- Frontend uses this structure to:
+  - Track which clues have been revealed
+  - Determine when to show new clues
+  - Maintain game state persistence
+- Updates occur after each incorrect guess
+- State is preserved in game session for resuming games
+
+## Environment Variables & Supabase Configuration
+
+### Frontend Variables (Vite)
+- `VITE_SUPABASE_URL`: Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Public anon key for client-side operations
+
+### Backend Variables (Vercel)
+- `VITE_SUPABASE_URL`: Same as frontend (shared)
+- `SUPABASE_SERVICE_ROLE_KEY`: Private service role key for server-side operations
+
+### Usage Guidelines
+- Frontend code uses `VITE_` prefixed variables with anon key
+- Backend API routes use service role key for elevated privileges
+- Never expose service role key in frontend code
+- Maintain consistent `VITE_` prefix for shared variables
+
+### Vercel Configuration
+- Environment variables must be set in Vercel project settings
+- Service role key is only available in serverless functions
+- Frontend build uses Vite's environment variable system
+
+## API Routes
+
+### Environment Variables
+- All API routes use `VITE_SUPABASE_URL` for the Supabase project URL
+- Server-side operations use `SUPABASE_SERVICE_ROLE_KEY` for elevated privileges
+- No API routes should use the anon key (`VITE_SUPABASE_ANON_KEY`)
+
+### Available Routes
+1. `/api/word` (GET)
+   - Fetches today's word and creates a new game session
+   - Uses service role key for session creation
+
+2. `/api/guess` (POST)
+   - Handles guess submission and game state updates
+   - Uses service role key for leaderboard and stats updates
+
+3. `/api/leaderboard` (GET)
+   - Retrieves leaderboard data for a specific word
+   - Uses service role key for full leaderboard access
+
+4. `/api/streak-status` (POST)
+   - Fetches player's streak information
+   - Uses service role key for stats access
+
+5. `/api/dev/reset-session` (POST)
+   - Development-only route for resetting game sessions
+   - Uses service role key for session management
+
+### Security Considerations
+- Service role key is only used in server-side API routes
+- All routes validate request methods and required parameters
+- Development routes are protected in production
+
+## Supabase Environment Key Usage
+
+| Route            | Access Type | Key Used                    | Notes                                |
+|------------------|-------------|-----------------------------|--------------------------------------|
+| /api/word        | WRITE       | SUPABASE_SERVICE_ROLE_KEY   | Needs to bypass RLS to create session|
+| /api/guess       | WRITE       | SUPABASE_SERVICE_ROLE_KEY   | Writes score + completion            |
+| /api/leaderboard | READ        | VITE_SUPABASE_ANON_KEY      | SELECT-only, safe via RLS            |
+| /api/streak-status| READ       | VITE_SUPABASE_ANON_KEY      | SELECT-only, safe via RLS            |
+| /api/dev/reset-session | WRITE | SUPABASE_SERVICE_ROLE_KEY | Dev-only, needs full access          |
+
+### Security Considerations
+- Service role key (`SUPABASE_SERVICE_ROLE_KEY`) should only be used when:
+  - Creating or updating game sessions
+  - Writing scores and leaderboard entries
+  - Performing dev operations
+- Anon key (`VITE_SUPABASE_ANON_KEY`) is sufficient for:
+  - Reading leaderboard data
+  - Fetching user stats
+  - Any SELECT-only operations
+- Minimizing service role key usage reduces security risk and blast radius
+- All tables should have proper RLS policies to restrict anon key access
+
+### Type Safety
+- All API routes use TypeScript types from `next`
+- Request/response types are properly defined
+- Optional chaining and nullish coalescing used for safety
+- Buffer handling for request body parsing
+
+## API Type Safety Improvements
+
+### Type Definitions
+- All `/api/` routes now use proper `NextApiRequest` and `NextApiResponse` typings
+- Added explicit interfaces for request/response types:
+  - `GuessRequest` and `GuessResponse` for `/api/guess`
+  - `ResetRequest` and `ResetResponse` for `/api/dev/reset-session`
+  - `StreakResponse` for `/api/streak-status`
+
+### Request Body Handling
+- Added type-safe request body parsing with explicit interfaces
+- Proper Buffer handling for request body chunks
+- Type assertions for JSON parsed data
+- Nullish coalescing for safe defaults
+
+### Error Handling
+- Consistent error response types across all routes
+- Type-safe error messages and status codes
+- Proper error propagation from Supabase operations
+
+### Development Setup
+- Installed and configured `@types/next` for improved linting
+- Added proper TypeScript configuration for API routes
+- Improved developer experience with better type inference
+
+### Security
+- Type-safe environment variable access
+- Proper null checks for required fields
+- Safe handling of optional parameters
+
+## ✅ Final API Type System Audit
+
+- All types consolidated in `types/api.ts`
+  - Common response types (`ErrorResponse`, `ApiResponse`)
+  - Request/response interfaces for all endpoints
+  - Shared types for game sessions and leaderboard
+  - Proper null/undefined handling with type guards
+
+- All API routes explicitly typed with Next.js interfaces
+  - Using `NextApiRequest` and `NextApiResponse`
+  - Consistent error handling across all routes
+  - Type-safe request body parsing
+  - Proper response type definitions
+
+- Interfaces include proper null/undefined guards
+  - Optional fields marked with `?`
+  - Nullable fields use union with `null`
+  - Default values provided where appropriate
+  - Type assertions only used when safe
+
+- Full lint pass completed — zero warnings or errors
+  - All implicit any types resolved
+  - Unused variables removed
+  - Consistent return types
+  - Proper error handling
+
+- API routes are now production-ready with full type coverage
+  - Type-safe database operations
+  - Consistent error responses
+  - Proper request validation
+  - Secure environment variable usage
+
+## ✅ TypeScript Path Resolution
+
+- `types/api.ts` added and path-alias configured via `tsconfig.json`
+  - Added `baseUrl` and `paths` configuration
+  - All API routes now use `types/api` import path
+  - Consistent type imports across all routes
+
+- Linter and build pass successfully
+  - No remaining TypeScript errors
+  - All imports resolve correctly
+  - Type safety maintained across API routes
+
+- All `/api/*` routes now import types via `types/api`
+  - Consistent import pattern
+  - No relative path imports needed
+  - Better maintainability
+
+- No remaining TypeScript errors
+  - Full type coverage
+  - Proper null/undefined handling
+  - Consistent error responses
+
 --- 

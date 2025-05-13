@@ -7,6 +7,8 @@
  * Word response type from /api/word endpoint
  */
 export interface WordResponse {
+  id: string; // UUID from words table
+  word: string;
   gameId: string;
   clues: {
     D: string;
@@ -25,6 +27,7 @@ export interface WordResponse {
 export interface GuessRequest {
   gameId: string;
   guess: string;
+  playerId: string;
 }
 
 /**
@@ -38,6 +41,16 @@ export interface GuessResponse {
   gameOver: boolean;
   revealedClues: string[];
   usedHint: boolean;
+  score?: {
+    id: string;
+    playerId: string;
+    wordId: string;
+    gameSessionId: string;
+    guessesUsed: number;
+    usedHint: boolean;
+    completionTimeSeconds: number;
+    submittedAt: string;
+  };
 }
 
 /**
@@ -45,10 +58,35 @@ export interface GuessResponse {
  */
 export interface GameSessionState {
   gameId: string;
+  wordId: string; // UUID from words table
   guesses: string[];
   revealedClues: string[];
   clueStatus: Record<string, boolean>;
   usedHint: boolean;
   isComplete: boolean;
   isWon: boolean;
+}
+
+/**
+ * Leaderboard entry type from /api/leaderboard endpoint
+ */
+export interface LeaderboardEntry {
+  id: string;
+  word_id: string;
+  player_id: string;
+  player_name: string;
+  rank: number;
+  guesses_used: number;
+  completion_time_seconds: number;
+  date: string;
+  created_at: string;
+  is_current_player?: boolean;
+}
+
+/**
+ * Leaderboard response type from /api/leaderboard endpoint
+ */
+export interface LeaderboardResponse {
+  leaderboard: LeaderboardEntry[];
+  playerRank: number | null;
 }

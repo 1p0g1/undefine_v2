@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
-import { GameSessionState, WordResponse, GuessResponse } from '../api/types';
+import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
+import { apiClient } from '../api/client';
+import { getPlayerId as getStoredPlayerId } from '../utils/player';
 
 function getPlayerId() {
   return localStorage.getItem('nickname') || 'anonymous';
@@ -8,6 +10,7 @@ function getPlayerId() {
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
     gameId: '',
+    wordId: '',
     guesses: [],
     revealedClues: [],
     clueStatus: {},
@@ -25,6 +28,28 @@ const useGame = () => {
   const [clues, setClues] = useState<WordResponse['clues'] | undefined>(undefined);
   // Track leaderboard modal
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  // Store leaderboard data
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [playerRank, setPlayerRank] = useState<number | null>(null);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+
+  // Function to fetch leaderboard data
+  const fetchLeaderboard = useCallback(async () => {
+    if (!gameState.wordId) return;
+    setIsLeaderboardLoading(true);
+    setLeaderboardError(null);
+    try {
+      const data = await apiClient.getLeaderboard(gameState.wordId, getStoredPlayerId());
+      setLeaderboardData(data.leaderboard);
+      setPlayerRank(data.playerRank);
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      setLeaderboardError('Failed to load leaderboard. Please try again.');
+    } finally {
+      setIsLeaderboardLoading(false);
+    }
+  }, [gameState.wordId]);
 
   const startNewGame = useCallback(async () => {
     try {
@@ -43,6 +68,7 @@ const useGame = () => {
       const data: WordResponse = await response.json();
       setGameState({
         gameId: data.gameId,
+        wordId: data.id,
         guesses: [],
         revealedClues: [],
         clueStatus: {},
@@ -64,34 +90,15 @@ const useGame = () => {
   const submitGuess = useCallback(
     async (guess: string) => {
       const trimmedGuess = guess.trim();
-      const playerId = getPlayerId();
-      if (!gameState.gameId || !trimmedGuess) {
-        console.error('Missing gameId or guess');
-        return;
-      }
-      if (gameState.guesses.length >= 6) return;
-      if (gameState.guesses.includes(trimmedGuess)) {
-        console.warn('Duplicate guess:', trimmedGuess);
-        return;
-      }
-      console.log('Submitting guess payload:', {
-        player_id: playerId,
-        gameId: gameState.gameId,
-        guess: trimmedGuess,
-      });
+      if (!trimmedGuess || gameState.isComplete) return;
+
       try {
-        const response = await fetch('/api/guess', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'player-id': playerId,
-          },
-          body: JSON.stringify({
-            gameId: gameState.gameId,
-            guess: trimmedGuess,
-          }),
+        const data = await apiClient.submitGuess({
+          gameId: gameState.gameId,
+          guess: trimmedGuess,
+          playerId: getPlayerId(),
         });
-        const data: GuessResponse = await response.json();
+
         setGameState((prevState: GameSessionState) => {
           const newGuesses = [...prevState.guesses, trimmedGuess];
           // Determine status for this guess
@@ -106,7 +113,11 @@ const useGame = () => {
             return updated;
           });
           // Show leaderboard if 6 guesses or game over
-          if (newGuesses.length >= 6 || status === 'correct') setShowLeaderboard(true);
+          if (newGuesses.length >= 6 || status === 'correct') {
+            setShowLeaderboard(true);
+            // Fetch updated leaderboard data
+            fetchLeaderboard();
+          }
           return {
             ...prevState,
             guesses: newGuesses,
@@ -119,7 +130,7 @@ const useGame = () => {
         console.error('Failed to submit guess:', error);
       }
     },
-    [gameState.gameId, gameState.guesses, gameState.isComplete, solution]
+    [gameState.gameId, gameState.guesses, gameState.isComplete, solution, fetchLeaderboard]
   );
 
   return {
@@ -130,6 +141,10 @@ const useGame = () => {
     clues,
     guessStatus,
     showLeaderboard,
+    leaderboardData,
+    playerRank,
+    isLeaderboardLoading,
+    leaderboardError,
   };
 };
 

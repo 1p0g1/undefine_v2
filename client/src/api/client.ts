@@ -1,4 +1,4 @@
-import { WordResponse, GuessRequest, GuessResponse } from './types';
+import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
 
@@ -33,6 +33,24 @@ export const apiClient = {
     });
     if (!response.ok) {
       throw new Error('Failed to submit guess');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get leaderboard data for a word
+   * @param wordId The word ID to get leaderboard for
+   * @param playerId Optional player ID to get their rank if not in top 10
+   * @returns Promise with the leaderboard response
+   */
+  async getLeaderboard(wordId: string, playerId?: string): Promise<LeaderboardResponse> {
+    const params = new URLSearchParams({ wordId });
+    if (playerId) {
+      params.append('playerId', playerId);
+    }
+    const response = await fetch(`${API_BASE_URL}/api/leaderboard?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch leaderboard');
     }
     return response.json();
   },
