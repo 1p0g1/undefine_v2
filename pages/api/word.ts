@@ -28,16 +28,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Get today's word
-    const { data: word, error: wordError } = await supabase
+    const today = new Date().toISOString().slice(0, 10);
+    let word;
+
+    // First try to get today's word
+    const { data: todayWord, error: todayWordError } = await supabase
       .from('words')
       .select('*')
-      .eq('date', new Date().toISOString().split('T')[0])
+      .eq('date', today)
       .single();
 
-    if (wordError) {
-      console.error('Error fetching word:', wordError);
-      return res.status(500).json({ error: 'Error fetching word' });
+    if (todayWordError) {
+      console.error('Error fetching today\'s word:', todayWordError);
+      
+      // In development, fall back to a random word
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: falling back to random word');
+        const { data: randomWord, error: randomWordError } = await supabase
+          .from('words')
+          .select('*')
+          .order('random()')
+          .limit(1)
+          .single();
+
+        if (randomWordError) {
+          console.error('Error fetching random word:', randomWordError);
+          return res.status(500).json({ error: 'Error fetching word' });
+        }
+        word = randomWord;
+      } else {
+        return res.status(500).json({ error: 'Error fetching today\'s word' });
+      }
+    } else {
+      word = todayWord;
     }
 
     // Create game session
@@ -62,19 +85,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Return word and session data
     return res.status(200).json({
-      id: word.id,
-      word: word.word,
-      gameId: session.id,
-      clues: {
-        D: word.definition,
-        E: word.equivalents,
-        F: word.first_letter,
-        I: word.in_sentence,
-        N: word.num_letters,
-        E2: word.etymology,
+      word: {
+        id: word.id,
+        word: word.word,
+        definition: word.definition,
+        first_letter: word.first_letter,
+        in_a_sentence: word.in_sentence,
+        equivalents: word.equivalents,
+        number_of_letters: word.num_letters,
+        etymology: word.etymology,
+        difficulty: word.difficulty,
+        date: word.date,
       },
-      // DEV ONLY: include solution in development
-      ...(process.env.NODE_ENV === 'development' && { solution: word.word }),
+      gameId: session.id,
     });
   } catch (error) {
     console.error('Error in word endpoint:', error);

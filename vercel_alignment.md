@@ -484,4 +484,67 @@ ON CONFLICT DO NOTHING;
 - The `fetchFromApi` wrapper ensures type safety through generics
 - Error handling is standardized across all API calls
 
+## Word-of-the-Day System
+
+### Word Selection Logic
+- `/api/word` endpoint fetches the word matching today's date from the `words` table
+- Date is formatted as ISO string (YYYY-MM-DD) using `toISOString().slice(0, 10)`
+- In production, returns 500 error if no word is found for today
+- In development, falls back to random word for testing purposes
+- Response includes full word data structure:
+  ```typescript
+  {
+    word: {
+      id: string;
+      word: string;
+      definition: string;
+      first_letter: string;
+      in_a_sentence: string;
+      equivalents: string;
+      number_of_letters: number;
+      etymology: string;
+      difficulty: string;
+      date: string;
+    };
+    gameId: string;
+  }
+  ```
+
+### Local Testing
+- Development mode (`NODE_ENV === 'development'`) enables fallback to random word
+- Useful for testing without setting up daily words
+- Logs warning when falling back to random word
+- Maintains production-like behavior for game sessions and scoring
+
+### Production Behavior
+- Strictly enforces date-based word selection
+- No fallback to random words
+- Ensures all players get the same word each day
+- Maintains game fairness and leaderboard integrity
+
+## API Base URL Configuration
+
+### Environment Variables
+- `NEXT_PUBLIC_API_BASE_URL` controls API endpoint base URL
+- In production (Vercel): Not set, defaults to empty string
+- In development: Set to `http://localhost:3001` in `.env.local`
+
+### Configuration by Environment
+| Environment | NEXT_PUBLIC_API_BASE_URL | Result |
+|-------------|--------------------------|---------|
+| Production  | Not set                  | Uses relative paths (e.g., `/api/word`) |
+| Development | `http://localhost:3001`  | Uses full URL (e.g., `http://localhost:3001/api/word`) |
+
+### Implementation Details
+- `fetchFromApi` wrapper in `apiClient.ts` handles base URL logic
+- Vite dev server proxy configured to handle relative paths in development
+- No CORS configuration needed in production
+- Type-safe API calls with proper error handling
+
+### Best Practices
+- Never hardcode localhost URLs in production code
+- Use relative paths in production for same-origin requests
+- Configure Vite proxy for local development
+- Maintain consistent error handling across environments
+
 --- 
