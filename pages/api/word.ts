@@ -2,8 +2,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+if (!process.env.SUPABASE_URL) {
+  console.error('[api/word] Missing SUPABASE_URL environment variable');
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('[api/word] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -44,67 +51,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (todayWordError) {
       console.error(`[api/word] Error fetching word for date ${today}:`, todayWordError);
       
-      // Try fetching any word as a last resort
-      console.log('[api/word] No word found for today, trying to find any word');
-      const { data: anyWord, error: anyWordError } = await supabase
-        .from('words')
-        .select('*')
-        .limit(1)
-        .single();
-      
-      if (anyWordError || !anyWord) {
-        console.error('[api/word] Failed to fetch any word:', anyWordError);
-        res.status(404).json({ error: 'No words found in database' });
-        console.log('[api/word] Response status: 404 (No words found)');
-        return;
-      }
-      
-      console.log('[api/word] Using fallback word:', anyWord.word);
-      
-      // Create game session with the fallback word
-      const { data: session, error: sessionError } = await supabase
-        .from('game_sessions')
-        .insert([
-          {
-            word_id: anyWord.id,
-            start_time: new Date().toISOString(),
-            clue_status: DEFAULT_CLUE_STATUS,
-            guesses: [],
-            is_complete: false,
+      // Only allow fallback in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[api/word] WARNING: Using fallback word in development mode');
+        
+        // Try fetching any word as a last resort
+        const { data: anyWord, error: anyWordError } = await supabase
+          .from('words')
+          .select('*')
+          .limit(1)
+          .single();
+        
+        if (anyWordError || !anyWord) {
+          console.error('[api/word] Failed to fetch any word:', anyWordError);
+          res.status(404).json({ error: 'No words found in database' });
+          console.log('[api/word] Response status: 404 (No words found)');
+          return;
+        }
+        
+        console.log('[api/word] Using fallback word:', anyWord.word);
+        
+        // Validate player_id from request
+        const player_id = req.headers['x-player-id'];
+        if (!player_id) {
+          console.error('[api/word] Missing player_id in request headers');
+          return res.status(400).json({ error: 'Missing player_id' });
+        }
+        
+        // Create game session with the fallback word
+        const { data: session, error: sessionError } = await supabase
+          .from('game_sessions')
+          .insert([
+            {
+              word_id: anyWord.id,
+              player_id,
+              start_time: new Date().toISOString(),
+              clue_status: DEFAULT_CLUE_STATUS,
+              guesses: [],
+              is_complete: false,
+            },
+          ])
+          .select()
+          .single();
+
+        if (sessionError) {
+          console.error('[api/word] Error creating game session:', sessionError);
+          res.status(500).json({ error: 'Error creating game session' });
+          console.log('[api/word] Response status: 500 (Session creation failed)');
+          return;
+        }
+
+        // Return fallback word with flag
+        res.status(200).json({
+          word: {
+            id: anyWord.id,
+            word: anyWord.word,
+            definition: anyWord.definition,
+            first_letter: anyWord.first_letter,
+            in_a_sentence: anyWord.in_sentence,
+            equivalents: anyWord.equivalents,
+            number_of_letters: anyWord.num_letters,
+            etymology: anyWord.etymology,
+            difficulty: anyWord.difficulty,
+            date: anyWord.date,
           },
-        ])
-        .select()
-        .single();
-
-      if (sessionError) {
-        console.error('[api/word] Error creating game session:', sessionError);
-        res.status(500).json({ error: 'Error creating game session' });
-        console.log('[api/word] Response status: 500 (Session creation failed)');
+          gameId: session.id,
+          isFallback: true,
+        });
+        console.log('[api/word] Response status: 200 (Using fallback word)');
         return;
       }
-
-      // Return fallback word with flag
-      res.status(200).json({
-        word: {
-          id: anyWord.id,
-          word: anyWord.word,
-          definition: anyWord.definition,
-          first_letter: anyWord.first_letter,
-          in_a_sentence: anyWord.in_sentence,
-          equivalents: anyWord.equivalents,
-          number_of_letters: anyWord.num_letters,
-          etymology: anyWord.etymology,
-          difficulty: anyWord.difficulty,
-          date: anyWord.date,
-        },
-        gameId: session.id,
-        isFallback: true,
-      });
-      console.log('[api/word] Response status: 200 (Using fallback word)');
-      return;
+      
+      // In production, return 404 if no word found
+      return res.status(404).json({ error: 'No word found for today' });
     }
     
     console.log('[api/word] Found word for today:', todayWord.word);
+    
+    // Validate player_id from request
+    const player_id = req.headers['x-player-id'];
+    if (!player_id) {
+      console.error('[api/word] Missing player_id in request headers');
+      return res.status(400).json({ error: 'Missing player_id' });
+    }
     
     // Create game session linked to today's word
     const { data: session, error: sessionError } = await supabase
@@ -112,6 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .insert([
         {
           word_id: todayWord.id,
+          player_id,
           start_time: new Date().toISOString(),
           clue_status: DEFAULT_CLUE_STATUS,
           guesses: [],
@@ -143,12 +173,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         date: todayWord.date,
       },
       gameId: session.id,
-      isFallback: false,
     });
     console.log('[api/word] Response status: 200 (Using today\'s word)');
-  } catch (error) {
-    console.error('[api/word] Error in word endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-    console.log('[api/word] Response status: 500 (Internal error)');
+  } catch (err) {
+    console.error('[api/word] Unexpected error:', err);
+    res.status(500).json({ error: 'Unexpected error' });
   }
 } 

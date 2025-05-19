@@ -5,8 +5,10 @@
     "client"
   ],
   "scripts": {
-    "lint": "tsc --noEmit",
-    "build": "cd client && npm run build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",

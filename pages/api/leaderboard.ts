@@ -1,10 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import type { LeaderboardResponse, ApiResponse, LeaderboardEntry } from 'types/api';
 
+if (!process.env.SUPABASE_URL) {
+  console.error('[api/leaderboard] Missing SUPABASE_URL environment variable');
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('[api/leaderboard] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(
