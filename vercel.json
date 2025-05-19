@@ -1,14 +1,11 @@
 {
-  // TODO: Consider adding rewrites for API routes if needed
-  // TODO: Verify this matches the client's build output path
-  // TODO: Consider adding headers for security
   "functions": {
     "pages/api/**/*": {
       "memory": 1024,
       "maxDuration": 10
     }
   },
-  "framework": "vite",
+  "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next"
 } 
