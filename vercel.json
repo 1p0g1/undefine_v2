@@ -1,32 +1,5 @@
 {
-  "version": 2,
-  "env": {
-    "VITE_SUPABASE_URL": "https://eaclljwvsicezmkjnlbm.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhY2xsand2c2ljZXpta2pubGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMjk3NzIsImV4cCI6MjA1OTYwNTc3Mn0.56sdQFmC4sNAbyenWoDeiATGC1Vq2cXURTxJxLvZtrM",
-    "NEXT_PUBLIC_API_BASE_URL": ""
-  },
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/pages/api/$1",
-      "headers": {
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,DELETE,PATCH,POST,PUT",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
 } 
