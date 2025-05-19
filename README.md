@@ -223,3 +223,13 @@ _Update: Another minor edit to trigger a new commit for deployment sync._
 _Update: Trigger commit for proxy config confirmation._
 
 _Update: Confirmed monorepo audit and Vercel deploy checklist._
+
+## Backend API
+
+The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is configured as a serverless function and automatically deployed by Vercel.
+
+Available endpoints:
+- `/api/word` - Get today's word
+- `/api/guess` - Submit a guess
+- `/api/streak-status` - Get user streak status
+- `/api/leaderboard` - Get game leaderboard
