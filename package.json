@@ -8,12 +8,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "type-check": "tsc --project tsconfig.node.json --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "@types/next": "^8.0.7",
     "next": "^15.3.2",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0"
   }
 }
