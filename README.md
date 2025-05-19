@@ -233,3 +233,6 @@ Available endpoints:
 - `/api/guess` - Submit a guess
 - `/api/streak-status` - Get user streak status
 - `/api/leaderboard` - Get game leaderboard
+- `/api/dev/reset-session` - (Development only) Reset session state
+
+Note: All API routes are properly configured and verified for Vercel serverless deployment.
