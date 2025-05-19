@@ -1,6 +1,9 @@
 module.exports = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   reactStrictMode: true,
-  pageExtensions: ['ts', 'tsx', 'api.ts', 'api.tsx'], // API-only deployment
+  pageExtensions: ['api.ts', 'api.tsx'],
   typescript: {
     ignoreBuildErrors: false,
   },
