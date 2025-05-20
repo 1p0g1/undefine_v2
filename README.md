@@ -229,10 +229,11 @@ _Update: Confirmed monorepo audit and Vercel deploy checklist._
 The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is configured as a serverless function and automatically deployed by Vercel.
 
 Available endpoints:
+- `/` - Root page indicating API-only backend
 - `/api/word` - Get today's word
 - `/api/guess` - Submit a guess
 - `/api/streak-status` - Get user streak status
 - `/api/leaderboard` - Get game leaderboard
 - `/api/dev/reset-session` - (Development only) Reset session state
 
-Note: All API routes are properly configured and verified for Vercel serverless deployment.
+Note: All API routes are properly configured and verified for Vercel serverless deployment. The project includes a root page component to ensure correct Next.js framework detection.
