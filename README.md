@@ -123,53 +123,15 @@ Treat ARCHITECTURE.md as the project source of truth.
 
 ⚖️ Environment Variables
 
-Name
-
-Required
-
-Description
-
-NODE_ENV
-
-No
-
-development or production
-
-PORT
-
-No
-
-Defaults to 3001
-
-SUPABASE_URL
-
-Yes
-
-Supabase project URL
-
-SUPABASE_ANON_KEY
-
-Yes
-
-Supabase anon key
-
-DB_PROVIDER
-
-Yes
-
-supabase or mock
-
-JWT_SECRET
-
-Yes (prod)
-
-JWT signing secret
-
-VITE_API_URL
-
-Client-only
-
-API endpoint for client
+Name | Required | Description
+--- | --- | ---
+NODE_ENV | No | development or production
+PORT | No | Defaults to 3001
+SUPABASE_URL | Yes | Supabase project URL
+SUPABASE_ANON_KEY | Yes | Supabase anon key
+DB_PROVIDER | Yes | supabase or mock
+JWT_SECRET | Yes (prod) | JWT signing secret
+NEXT_PUBLIC_API_BASE_URL | Yes | Base URL for backend API (e.g., https://your-api-domain.vercel.app) - no trailing slash or endpoints
 
 🛡️ RLS Status
 
