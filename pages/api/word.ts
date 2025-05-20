@@ -55,32 +55,58 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     // Ensure player exists in user_stats
     async function ensurePlayerExists(player_id: string) {
-      // First try to get existing stats
-      const { data: existingStats } = await supabase
-        .from('user_stats')
-        .select('player_id')
-        .eq('player_id', player_id)
-        .single();
-
-      if (!existingStats) {
-        // Create new user_stats entry if doesn't exist
-        const { error: createError } = await supabase
+      console.log('[api/word] Checking if player exists:', player_id);
+      
+      try {
+        // First try to get existing stats
+        const { data: existingStats, error: selectError } = await supabase
           .from('user_stats')
-          .insert([
-            {
+          .select('player_id')
+          .eq('player_id', player_id)
+          .single();
+
+        if (selectError) {
+          console.error('[api/word] Error checking existing player:', selectError);
+          throw new Error(`Failed to check existing player: ${selectError.message}`);
+        }
+
+        console.log('[api/word] Existing stats check result:', existingStats);
+
+        if (!existingStats) {
+          console.log('[api/word] Creating new user_stats entry');
+          
+          // Create new user_stats entry if doesn't exist
+          const { data: newStats, error: createError } = await supabase
+            .from('user_stats')
+            .insert({
               player_id,
               games_played: 0,
               games_won: 0,
               current_streak: 0,
               longest_streak: 0,
               average_completion_time: 0,
-            }
-          ]);
+            })
+            .select()
+            .single();
 
-        if (createError) {
-          console.error('[api/word] Error creating user_stats:', createError);
-          throw new Error('Failed to create user stats');
+          if (createError) {
+            console.error('[api/word] Error creating user_stats:', createError);
+            console.error('[api/word] Create payload:', {
+              player_id,
+              games_played: 0,
+              games_won: 0,
+              current_streak: 0,
+              longest_streak: 0,
+              average_completion_time: 0,
+            });
+            throw new Error(`Failed to create user stats: ${createError.message}`);
+          }
+
+          console.log('[api/word] Created new user_stats:', newStats);
         }
+      } catch (err) {
+        console.error('[api/word] Error in ensurePlayerExists:', err);
+        throw err; // Re-throw to be caught by the main error handler
       }
     }
 
