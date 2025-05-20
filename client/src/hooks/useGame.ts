@@ -103,8 +103,8 @@ const useGame = () => {
 
       try {
         const data = await apiClient.submitGuess({
-          gameId: gameState.gameId,
-          guess: trimmedGuess,
+            gameId: gameState.gameId,
+            guess: trimmedGuess,
           playerId: getPlayerId(),
         });
 

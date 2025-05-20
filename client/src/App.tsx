@@ -61,7 +61,7 @@ function App() {
 
   const visibleClues = gameState.clues
     ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
-    : [];
+      : [];
   const revealedClueKeys = visibleClues.map(c => c.key);
 
   // Compute box status for each box
@@ -223,32 +223,32 @@ function App() {
         </div>
       )}
       {/* Action Buttons */}
-      <div
-        style={{
-          display: 'flex',
+        <div
+          style={{
+            display: 'flex',
           gap: '0.5rem',
           justifyContent: 'center',
           marginTop: '1rem',
-        }}
-      >
-        <button
-          type="button"
+          }}
+        >
+          <button
+            type="button"
           onClick={() => setShowRules(true)}
-          style={{
+            style={{
             padding: '0.5rem 1rem',
             borderRadius: '0.25rem',
             backgroundColor: '#f3f4f6',
             color: '#374151',
             border: 'none',
             cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
+              fontFamily: 'var(--font-primary)',
             fontSize: '0.875rem',
             fontWeight: 500,
             transition: 'background-color 0.2s',
-          }}
+            }}
         >
           How to Play
-        </button>
+          </button>
         {gameState.isComplete && (
           <button
             type="button"
@@ -270,7 +270,7 @@ function App() {
             View Results
           </button>
         )}
-      </div>
+        </div>
       {/* Game Summary Modal */}
       <GameSummaryModal
         open={showSummary}

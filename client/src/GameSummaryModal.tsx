@@ -169,83 +169,83 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               No entries yet. Be the first to complete today's word!
             </div>
           ) : (
-            <table
-              className="gs-modal-table"
-              style={{
-                width: '100%',
-                fontFamily: 'var(--font-primary)',
-                fontSize: 13,
-                borderCollapse: 'separate',
-                borderSpacing: 0,
-                textAlign: 'left',
-              }}
-            >
-              <thead>
-                <tr style={{ background: '#f3f4f6' }}>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                    Rank
-                  </th>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                    Player
-                  </th>
-                  <th
-                    style={{
-                      padding: '0.5rem 0.75rem',
-                      borderBottom: '1px solid #e5e7eb',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Time
-                  </th>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                    Guesses
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.map((entry, idx) => (
-                  <tr
+          <table
+            className="gs-modal-table"
+            style={{
+              width: '100%',
+              fontFamily: 'var(--font-primary)',
+              fontSize: 13,
+              borderCollapse: 'separate',
+              borderSpacing: 0,
+              textAlign: 'left',
+            }}
+          >
+            <thead>
+              <tr style={{ background: '#f3f4f6' }}>
+                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Rank
+                </th>
+                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Player
+                </th>
+                <th
+                  style={{
+                    padding: '0.5rem 0.75rem',
+                    borderBottom: '1px solid #e5e7eb',
+                    textAlign: 'center',
+                  }}
+                >
+                  Time
+                </th>
+                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Guesses
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaderboard.map((entry, idx) => (
+                <tr
                     key={entry.id}
-                    style={{
-                      background: idx % 2 === 1 ? '#f7faff' : undefined,
+                  style={{
+                    background: idx % 2 === 1 ? '#f7faff' : undefined,
                       fontWeight: entry.is_current_player ? 600 : entry.rank === 1 ? 700 : 400,
-                      borderBottom: '1px solid #f0f0f0',
+                    borderBottom: '1px solid #f0f0f0',
                       animation: entry.is_current_player ? 'highlightRow 1s ease-out' : undefined,
-                    }}
-                  >
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                      <span
-                        style={{
-                          fontSize: 15,
-                          marginRight: 4,
-                          verticalAlign: 'top',
-                          display: 'inline-block',
-                        }}
-                      >
-                        {entry.rank === 1
-                          ? '🥇'
-                          : entry.rank === 2
-                            ? '🥈'
-                            : entry.rank === 3
-                              ? '🥉'
-                              : entry.rank}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                      {entry.player_name}
-                    </td>
-                    <td
-                      style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+                  }}
+                >
+                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                    <span
+                      style={{
+                        fontSize: 15,
+                        marginRight: 4,
+                        verticalAlign: 'top',
+                        display: 'inline-block',
+                      }}
                     >
+                      {entry.rank === 1
+                        ? '🥇'
+                        : entry.rank === 2
+                          ? '🥈'
+                          : entry.rank === 3
+                            ? '🥉'
+                            : entry.rank}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                      {entry.player_name}
+                  </td>
+                  <td
+                    style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+                  >
                       {formatTime(entry.completion_time_seconds)}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                  </td>
+                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
                       {entry.guesses_used}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           )}
         </div>
         <div
@@ -328,16 +328,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             Play Again
           </button>
         </div>
-      </div>
-      <style>{`
+        </div>
+        <style>{`
         @keyframes highlightRow {
           0% { background-color: rgba(26, 35, 126, 0.1); }
           100% { background-color: transparent; }
-        }
-        @keyframes fadeIn {
+          }
+          @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
+          }
         .loading-spinner {
           width: 24px;
           height: 24px;
@@ -349,8 +349,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
-        }
-      `}</style>
+          }
+        `}</style>
     </div>,
     document.body
   );

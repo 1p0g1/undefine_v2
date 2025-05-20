@@ -13,7 +13,8 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   const envState = {
     nodeEnv: process.env.NODE_ENV,
     hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnonKey: !!process.env.SUPABASE_ANON_KEY, // Add check for anon key
     supabaseUrl: process.env.SUPABASE_URL?.substring(0, 20) + '...' // Log partial URL for debugging
   };
   console.log('[api/word] Environment:', envState);
@@ -30,7 +31,7 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log('[api/word] Initializing Supabase client');
     const supabase = createClient(
       process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!, // Using service role key for backend operations
       {
         auth: {
           autoRefreshToken: false,
