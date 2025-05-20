@@ -84,7 +84,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .insert([
             {
               word_id: anyWord.id,
-              word: anyWord.word,
               player_id,
               start_time: new Date().toISOString(),
               clue_status: DEFAULT_CLUE_STATUS,
@@ -99,7 +98,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.error('[api/word] Error creating game session:', sessionError);
           console.error('[api/word] Attempted session data:', {
             word_id: anyWord.id,
-            word: anyWord.word,
             player_id,
             start_time: new Date().toISOString(),
           });
@@ -145,7 +143,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .insert([
         {
           word_id: todayWord.id,
-          word: todayWord.word,
           player_id,
           start_time: new Date().toISOString(),
           clue_status: DEFAULT_CLUE_STATUS,
@@ -160,7 +157,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[api/word] Error creating game session:', sessionError);
       console.error('[api/word] Attempted session data:', {
         word_id: todayWord.id,
-        word: todayWord.word,
         player_id,
         start_time: new Date().toISOString(),
       });
