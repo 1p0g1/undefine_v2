@@ -1,7 +1,10 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
+import { getPlayerId } from '../utils/player';
 
-// Use the full URL since env var might not be available, but without /api
-const BASE_URL = 'https://undefine-v2-back-i3qc28y96-paddys-projects-82cb6057.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!BASE_URL) {
+  console.error('NEXT_PUBLIC_API_BASE_URL environment variable is not set');
+}
 
 /**
  * Fetches from the API with proper error handling and type safety
@@ -16,14 +19,14 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   // Create new headers with our required values
   const headers = new Headers(existingHeaders);
   headers.set('Content-Type', 'application/json');
+  
+  // Add player-id last to ensure it's not overwritten
+  const playerId = getPlayerId();
+  if (playerId) {
+    headers.set('player-id', playerId);
+  }
 
-  const fullUrl = `${BASE_URL}${path}`;
-  console.log('Making API request to:', fullUrl, {
-    method: options.method || 'GET',
-    headers: Object.fromEntries(headers.entries()),
-  });
-
-  const response = await fetch(fullUrl, {
+  const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers,
   });
@@ -31,11 +34,10 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   if (!response.ok) {
     const errorText = await response.text();
     console.error('API Error:', {
-      url: fullUrl,
       status: response.status,
       statusText: response.statusText,
       error: errorText,
-      headers: Object.fromEntries(headers.entries()),
+      url: `${BASE_URL}${path}`,
     });
     throw new Error(`API request failed: ${errorText}`);
   }
@@ -70,10 +72,14 @@ export const apiClient = {
   /**
    * Get leaderboard data for a word
    * @param wordId The word ID to get leaderboard for
+   * @param playerId Optional player ID to get their rank if not in top 10
    * @returns Promise with the leaderboard response
    */
-  async getLeaderboard(wordId: string): Promise<LeaderboardResponse> {
+  async getLeaderboard(wordId: string, playerId?: string): Promise<LeaderboardResponse> {
     const params = new URLSearchParams({ wordId });
+    if (playerId) {
+      params.append('playerId', playerId);
+    }
     return fetchFromApi<LeaderboardResponse>(`/api/leaderboard?${params.toString()}`);
   },
 };
