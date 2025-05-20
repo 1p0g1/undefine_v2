@@ -2,6 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+// TODO: Remove hardcoded player_id after implementing proper session management
+const TEMP_PLAYER_ID = 'mvp-test-player-001';
+
 if (!process.env.SUPABASE_URL) {
   console.error('[api/word] Missing SUPABASE_URL environment variable');
 }
@@ -71,12 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         console.log('[api/word] Using fallback word:', anyWord.word);
         
-        // Validate player_id from request
-        const player_id = req.headers['x-player-id'];
-        if (!player_id) {
-          console.error('[api/word] Missing player_id in request headers');
-          return res.status(400).json({ error: 'Missing player_id' });
-        }
+        // Use hardcoded player_id for MVP testing
+        const player_id = TEMP_PLAYER_ID;
+        console.log('[api/word] Using temporary player_id:', player_id);
         
         // Create game session with the fallback word
         const { data: session, error: sessionError } = await supabase
@@ -128,12 +128,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     console.log('[api/word] Found word for today:', todayWord.word);
     
-    // Validate player_id from request
-    const player_id = req.headers['x-player-id'];
-    if (!player_id) {
-      console.error('[api/word] Missing player_id in request headers');
-      return res.status(400).json({ error: 'Missing player_id' });
-    }
+    // Use hardcoded player_id for MVP testing
+    const player_id = TEMP_PLAYER_ID;
+    console.log('[api/word] Using temporary player_id:', player_id);
     
     // Create game session linked to today's word
     const { data: session, error: sessionError } = await supabase
