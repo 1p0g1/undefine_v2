@@ -1,4 +1,5 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
+import { getPlayerId } from '../utils/player';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -13,6 +14,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      'player-id': getPlayerId(),
       ...options.headers,
     },
   });

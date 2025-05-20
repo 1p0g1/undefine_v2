@@ -1,11 +1,7 @@
 import { useState, useCallback } from 'react';
 import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
 import { apiClient } from '../api/client';
-import { getPlayerId as getStoredPlayerId } from '../utils/player';
-
-function getPlayerId() {
-  return localStorage.getItem('nickname') || 'anonymous';
-}
+import { getPlayerId } from '../utils/player';
 
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
@@ -45,7 +41,7 @@ const useGame = () => {
     setIsLeaderboardLoading(true);
     setLeaderboardError(null);
     try {
-      const data = await apiClient.getLeaderboard(gameState.wordId, getStoredPlayerId());
+      const data = await apiClient.getLeaderboard(gameState.wordId, getPlayerId());
       setLeaderboardData(data.leaderboard);
       setPlayerRank(data.playerRank);
     } catch (error) {
