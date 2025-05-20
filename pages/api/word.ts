@@ -10,11 +10,13 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   const TEMP_PLAYER_ID = 'mvp-test-player-001';
 
   // Log environment state
-  console.log('[api/word] Environment:', {
+  const envState = {
     nodeEnv: process.env.NODE_ENV,
     hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-  });
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseUrl: process.env.SUPABASE_URL?.substring(0, 20) + '...' // Log partial URL for debugging
+  };
+  console.log('[api/word] Environment:', envState);
 
   // Log missing environment variables but continue execution
   if (!process.env.SUPABASE_URL) {
@@ -28,7 +30,13 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log('[api/word] Initializing Supabase client');
     const supabase = createClient(
       process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
     console.log('[api/word] Supabase client initialized');
 
@@ -264,11 +272,15 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     const errorDetails = err instanceof Error ? {
       message: err.message,
       stack: err.stack,
-      name: err.name
+      name: err.name,
+      environment: envState // Include environment state in error
     } : err;
+    
+    // Always return error details for critical errors
     return res.status(500).json({ 
       error: 'Critical initialization error',
-      details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+      details: errorDetails,
+      environment: envState
     });
   }
 };
@@ -286,7 +298,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } : err;
     return res.status(500).json({ 
       error: 'Unhandled server error',
-      details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+      details: errorDetails // Always show details for debugging
     });
   }
 } 
