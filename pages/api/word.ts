@@ -27,6 +27,37 @@ const DEFAULT_CLUE_STATUS = {
   E2: false, // Etymology
 };
 
+// Ensure player exists in user_stats
+async function ensurePlayerExists(player_id: string) {
+  // First try to get existing stats
+  const { data: existingStats } = await supabase
+    .from('user_stats')
+    .select('player_id')
+    .eq('player_id', player_id)
+    .single();
+
+  if (!existingStats) {
+    // Create new user_stats entry if doesn't exist
+    const { error: createError } = await supabase
+      .from('user_stats')
+      .insert([
+        {
+          player_id,
+          games_played: 0,
+          games_won: 0,
+          current_streak: 0,
+          longest_streak: 0,
+          average_completion_time: 0,
+        }
+      ]);
+
+    if (createError) {
+      console.error('[api/word] Error creating user_stats:', createError);
+      throw new Error('Failed to create user stats');
+    }
+  }
+}
+
 /**
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse & { status: (code: number) => any, json: (body: any) => void }} res
@@ -37,6 +68,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Ensure player exists before proceeding
+    await ensurePlayerExists(TEMP_PLAYER_ID);
+
     // Explicitly get today's date in YYYY-MM-DD format
     const now = new Date();
     const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
