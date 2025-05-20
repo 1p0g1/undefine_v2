@@ -1,7 +1,7 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-// Use the full URL since env var might not be available
+// Use the full URL since env var might not be available, but without /api
 const BASE_URL = 'https://undefine-v2-back-i3qc28y96-paddys-projects-82cb6057.vercel.app';
 
 /**
@@ -22,9 +22,17 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const playerId = getPlayerId();
   if (playerId) {
     headers.set('player-id', playerId);
+  } else {
+    console.error('No player ID available');
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const fullUrl = `${BASE_URL}${path}`;
+  console.log('Making API request to:', fullUrl, {
+    method: options.method || 'GET',
+    headers: Object.fromEntries(headers.entries()),
+  });
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
   });
@@ -32,9 +40,11 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   if (!response.ok) {
     const errorText = await response.text();
     console.error('API Error:', {
+      url: fullUrl,
       status: response.status,
       statusText: response.statusText,
       error: errorText,
+      headers: Object.fromEntries(headers.entries()),
     });
     throw new Error(`API request failed: ${errorText}`);
   }
