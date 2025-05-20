@@ -1,8 +1,12 @@
 // Vercel-native serverless API route for fetching the word of the day from Supabase.
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { cors } from './middleware/cors';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Handle CORS
+  if (cors(req, res)) return;
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

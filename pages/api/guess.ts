@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest } from 'next';
 import type { GuessRequest, GuessResponse } from '../../client/src/api/types';
 import type { NextApiResponse } from 'next';
+import { cors } from './middleware/cors';
 
 if (!process.env.SUPABASE_URL) {
   console.error('[api/guess] Missing SUPABASE_URL environment variable');
@@ -21,6 +22,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<GuessResponse | { error: string }>
 ) {
+  // Handle CORS
+  if (cors(req, res)) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
