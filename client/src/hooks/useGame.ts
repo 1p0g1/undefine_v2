@@ -55,17 +55,8 @@ const useGame = () => {
   const startNewGame = useCallback(async () => {
     try {
       console.log('Fetching word…');
-      const response = await fetch('/api/word', {
-        headers: {
-          'Content-Type': 'application/json',
-          'player-id': getPlayerId(),
-        },
-      });
-      if (!response.ok) {
-        console.error('Error fetching /api/word:', response.status, response.statusText);
-        return;
-      }
-      const data: WordResponse = await response.json();
+      const data = await apiClient.getNewWord();
+      
       setGameState({
         gameId: data.gameId,
         wordId: data.word.id,
