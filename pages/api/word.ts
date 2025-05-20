@@ -54,17 +54,27 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       E2: false, // Etymology
     };
 
+    // Helper to validate UUID format
+    function isValidUUID(uuid: string) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(uuid);
+    }
+
     // Ensure player exists in user_stats
-    async function ensurePlayerExists(player_id: string) {
-      console.log('[api/word] Checking if player exists:', player_id);
+    async function ensurePlayerExists(player_id: string): Promise<boolean> {
+      console.log('[api/word] Checking player existence:', { player_id });
       
+      if (!player_id) {
+        throw new Error('player_id is required');
+      }
+
       try {
         // First try to get existing stats
         const { data: existingStats, error: selectError } = await supabase
           .from('user_stats')
-          .select('player_id')
+          .select('player_id, games_played')
           .eq('player_id', player_id)
-          .single();
+          .maybeSingle(); // Use maybeSingle to handle no results case
 
         if (selectError) {
           console.error('[api/word] Error checking existing player:', selectError);
@@ -74,9 +84,9 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
         console.log('[api/word] Existing stats check result:', existingStats);
 
         if (!existingStats) {
-          console.log('[api/word] Creating new user_stats entry');
+          console.log('[api/word] Creating new user_stats entry for player:', player_id);
           
-          // Create new user_stats entry if doesn't exist
+          // Create new user_stats entry
           const { data: newStats, error: createError } = await supabase
             .from('user_stats')
             .insert({
@@ -91,23 +101,22 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
             .single();
 
           if (createError) {
-            console.error('[api/word] Error creating user_stats:', createError);
-            console.error('[api/word] Create payload:', {
-              player_id,
-              games_played: 0,
-              games_won: 0,
-              current_streak: 0,
-              longest_streak: 0,
-              average_completion_time: 0,
+            console.error('[api/word] Error creating user_stats:', {
+              error: createError,
+              attempted_player_id: player_id
             });
             throw new Error(`Failed to create user stats: ${createError.message}`);
           }
 
-          console.log('[api/word] Created new user_stats:', newStats);
+          console.log('[api/word] Successfully created user_stats:', newStats);
+          return true;
         }
+
+        console.log('[api/word] Player exists with stats:', existingStats);
+        return true;
       } catch (err) {
-        console.error('[api/word] Error in ensurePlayerExists:', err);
-        throw err; // Re-throw to be caught by the main error handler
+        console.error('[api/word] Critical error in ensurePlayerExists:', err);
+        throw err;
       }
     }
 
@@ -147,14 +156,19 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log('[api/word] Game sessions table check passed');
 
     // Ensure player exists before proceeding
-    await ensurePlayerExists(TEMP_PLAYER_ID);
+    const player_id = TEMP_PLAYER_ID;
+    console.log('[api/word] Using player_id:', player_id);
+    
+    const playerExists = await ensurePlayerExists(player_id);
+    if (!playerExists) {
+      return res.status(400).json({ error: 'Failed to ensure player exists' });
+    }
 
     // Explicitly get today's date in YYYY-MM-DD format
     const now = new Date();
     const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
     
-    console.log('[api/word] Current server time:', now.toISOString());
-    console.log('[api/word] Requesting word for date:', today);
+    console.log('[api/word] Fetching word for date:', today);
 
     // First check if we have a word with today's exact date
     const { data: todayWord, error: todayWordError } = await supabase
@@ -163,151 +177,99 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       .eq('date', today)
       .single();
     
-    if (todayWordError) {
-      console.error(`[api/word] Error fetching word for date ${today}:`, todayWordError);
+    console.log('[api/word] Today\'s word query result:', {
+      hasWord: !!todayWord,
+      error: todayWordError,
+      date: today
+    });
+
+    let wordToUse;
+    
+    if (todayWordError || !todayWord) {
+      console.warn('[api/word] No word found for today, attempting fallback');
       
-      // Only allow fallback in development
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[api/word] WARNING: Using fallback word in development mode');
+      // Try fetching latest word as fallback
+      const { data: fallbackWord, error: fallbackError } = await supabase
+        .from('words')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
         
-        // Try fetching any word as a last resort
-        const { data: anyWord, error: anyWordError } = await supabase
-          .from('words')
-          .select('*')
-          .limit(1)
-          .single();
-        
-        if (anyWordError || !anyWord) {
-          console.error('[api/word] Failed to fetch any word:', anyWordError);
-          res.status(404).json({ error: 'No words found in database' });
-          console.log('[api/word] Response status: 404 (No words found)');
-          return;
-        }
-        
-        console.log('[api/word] Using fallback word:', anyWord.word);
-        
-        // Use hardcoded player_id for MVP testing
-        const player_id = TEMP_PLAYER_ID;
-        console.log('[api/word] Using temporary player_id:', player_id);
-        
-        // Create game session with the fallback word
-        const { data: session, error: sessionError } = await supabase
-          .from('game_sessions')
-          .insert([
-            {
-              word_id: anyWord.id,
-              player_id,
-              start_time: new Date().toISOString(),
-              clue_status: DEFAULT_CLUE_STATUS,
-              guesses: [],
-              is_complete: false,
-            },
-          ])
-          .select()
-          .single();
-
-        if (sessionError) {
-          console.error('[api/word] Error creating game session:', sessionError);
-          console.error('[api/word] Attempted session data:', {
-            word_id: anyWord.id,
-            player_id,
-            start_time: new Date().toISOString(),
-          });
-          res.status(500).json({ error: 'Error creating game session: ' + sessionError.message });
-          console.log('[api/word] Response status: 500 (Session creation failed)');
-          return;
-        }
-
-        // Return fallback word with flag
-        res.status(200).json({
-          word: {
-            id: anyWord.id,
-            word: anyWord.word,
-            definition: anyWord.definition,
-            first_letter: anyWord.first_letter,
-            in_a_sentence: anyWord.in_sentence,
-            equivalents: anyWord.equivalents,
-            number_of_letters: anyWord.num_letters,
-            etymology: anyWord.etymology,
-            difficulty: anyWord.difficulty,
-            date: anyWord.date,
-          },
-          gameId: session.id,
-          isFallback: true,
-        });
-        console.log('[api/word] Response status: 200 (Using fallback word)');
-        return;
+      if (fallbackError || !fallbackWord) {
+        console.error('[api/word] Failed to fetch fallback word:', fallbackError);
+        return res.status(404).json({ error: 'No words available in database' });
       }
       
-      // In production, return 404 if no word found
-      return res.status(404).json({ error: 'No word found for today' });
+      console.log('[api/word] Using fallback word from:', fallbackWord.date);
+      wordToUse = fallbackWord;
+    } else {
+      wordToUse = todayWord;
     }
+
+    // Validate required data before game session creation
+    if (!wordToUse?.id || !isValidUUID(wordToUse.id)) {
+      console.error('[api/word] Invalid word_id:', wordToUse?.id);
+      return res.status(400).json({ error: 'Invalid word_id' });
+    }
+
+    // Debug log before game session creation
+    console.log('[api/word] Creating game session with:', {
+      player_id,
+      word_id: wordToUse.id,
+      word_date: wordToUse.date,
+      start_time: new Date().toISOString()
+    });
     
-    console.log('[api/word] Found word for today:', todayWord.word);
-    
-    // Use hardcoded player_id for MVP testing
-    const player_id = TEMP_PLAYER_ID;
-    console.log('[api/word] Using temporary player_id:', player_id);
-    
-    // Create game session linked to today's word
+    // Create game session
     const { data: session, error: sessionError } = await supabase
       .from('game_sessions')
-      .insert([
-        {
-          word_id: todayWord.id,
-          player_id,
-          start_time: new Date().toISOString(),
-          clue_status: DEFAULT_CLUE_STATUS,
-          guesses: [],
-          is_complete: false,
-        },
-      ])
+      .insert({
+        word_id: wordToUse.id,
+        player_id,
+        start_time: new Date().toISOString(),
+        clue_status: DEFAULT_CLUE_STATUS,
+        guesses: [],
+        is_complete: false,
+      })
       .select()
       .single();
 
     if (sessionError) {
-      console.error('[api/word] Error creating game session:', sessionError);
-      console.error('[api/word] Attempted session data:', {
-        word_id: todayWord.id,
-        player_id,
-        start_time: new Date().toISOString(),
+      console.error('[api/word] Failed to create game session:', {
+        error: sessionError,
+        word_id: wordToUse.id,
+        player_id
       });
-      res.status(500).json({ error: 'Error creating game session: ' + sessionError.message });
-      console.log('[api/word] Response status: 500 (Session creation failed)');
-      return;
+      return res.status(500).json({ 
+        error: 'Failed to create game session',
+        details: sessionError.message
+      });
     }
 
-    // Return today's word
-    res.status(200).json({
+    // Return success response
+    return res.status(200).json({
       word: {
-        id: todayWord.id,
-        word: todayWord.word,
-        definition: todayWord.definition,
-        first_letter: todayWord.first_letter,
-        in_a_sentence: todayWord.in_sentence,
-        equivalents: todayWord.equivalents,
-        number_of_letters: todayWord.num_letters,
-        etymology: todayWord.etymology,
-        difficulty: todayWord.difficulty,
-        date: todayWord.date,
+        id: wordToUse.id,
+        word: wordToUse.word,
+        definition: wordToUse.definition,
+        first_letter: wordToUse.first_letter,
+        in_a_sentence: wordToUse.in_sentence,
+        equivalents: wordToUse.equivalents,
+        number_of_letters: wordToUse.num_letters,
+        etymology: wordToUse.etymology,
+        difficulty: wordToUse.difficulty,
+        date: wordToUse.date,
       },
       gameId: session.id,
+      isFallback: wordToUse !== todayWord
     });
-    console.log('[api/word] Response status: 200 (Using today\'s word)');
+
   } catch (err) {
-    console.error('[api/word] Critical initialization error:', err);
-    const errorDetails = err instanceof Error ? {
-      message: err.message,
-      stack: err.stack,
-      name: err.name,
-      environment: envState // Include environment state in error
-    } : err;
-    
-    // Always return error details for critical errors
+    console.error('[api/word] Unexpected error:', err);
     return res.status(500).json({ 
-      error: 'Critical initialization error',
-      details: errorDetails,
-      environment: envState
+      error: 'Unexpected error',
+      details: err instanceof Error ? err.message : 'Unknown error'
     });
   }
 };
