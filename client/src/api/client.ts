@@ -1,7 +1,8 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// Use the full URL since env var might not be available
+const BASE_URL = 'https://undefine-v2-back-i3qc28y96-paddys-projects-82cb6057.vercel.app';
 
 /**
  * Fetches from the API with proper error handling and type safety
@@ -10,17 +11,34 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
  * @returns Promise with the typed response
  */
 export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+  // Get existing headers from options
+  const existingHeaders = options.headers || {};
+  
+  // Create new headers with our required values
+  const headers = new Headers(existingHeaders);
+  headers.set('Content-Type', 'application/json');
+  
+  // Add player-id last to ensure it's not overwritten
+  const playerId = getPlayerId();
+  if (playerId) {
+    headers.set('player-id', playerId);
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'player-id': getPlayerId(),
-      ...options.headers,
-    },
+    headers,
   });
+
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText,
+    });
+    throw new Error(`API request failed: ${errorText}`);
   }
+
   return response.json();
 };
 
