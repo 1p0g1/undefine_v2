@@ -28,7 +28,6 @@ export interface WordResponse {
 export interface GuessRequest {
   gameId: string;
   guess: string;
-  playerId: string;
 }
 
 /**
@@ -42,16 +41,6 @@ export interface GuessResponse {
   gameOver: boolean;
   revealedClues: string[];
   usedHint: boolean;
-  score?: {
-    id: string;
-    playerId: string;
-    wordId: string;
-    gameSessionId: string;
-    guessesUsed: number;
-    usedHint: boolean;
-    completionTimeSeconds: number;
-    submittedAt: string;
-  };
 }
 
 /**
@@ -83,14 +72,11 @@ export interface GameSessionState {
 export interface LeaderboardEntry {
   id: string;
   word_id: string;
-  player_id: string;
-  player_name: string;
   rank: number;
   guesses_used: number;
   completion_time_seconds: number;
   date: string;
   created_at: string;
-  is_current_player?: boolean;
 }
 
 /**

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
 import { apiClient } from '../api/client';
-import { getPlayerId } from '../utils/player';
 
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
@@ -41,7 +40,7 @@ const useGame = () => {
     setIsLeaderboardLoading(true);
     setLeaderboardError(null);
     try {
-      const data = await apiClient.getLeaderboard(gameState.wordId, getPlayerId());
+      const data = await apiClient.getLeaderboard(gameState.wordId);
       setLeaderboardData(data.leaderboard);
       setPlayerRank(data.playerRank);
     } catch (error) {
@@ -90,9 +89,8 @@ const useGame = () => {
 
       try {
         const data = await apiClient.submitGuess({
-            gameId: gameState.gameId,
-            guess: trimmedGuess,
-          playerId: getPlayerId(),
+          gameId: gameState.gameId,
+          guess: trimmedGuess,
         });
 
         setGameState((prevState: GameSessionState) => {

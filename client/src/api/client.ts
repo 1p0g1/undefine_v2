@@ -1,5 +1,4 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
-import { getPlayerId } from '../utils/player';
 
 // Use the full URL since env var might not be available, but without /api
 const BASE_URL = 'https://undefine-v2-back-i3qc28y96-paddys-projects-82cb6057.vercel.app';
@@ -17,14 +16,6 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   // Create new headers with our required values
   const headers = new Headers(existingHeaders);
   headers.set('Content-Type', 'application/json');
-  
-  // Add player-id last to ensure it's not overwritten
-  const playerId = getPlayerId();
-  if (playerId) {
-    headers.set('player-id', playerId);
-  } else {
-    console.error('No player ID available');
-  }
 
   const fullUrl = `${BASE_URL}${path}`;
   console.log('Making API request to:', fullUrl, {
@@ -79,14 +70,10 @@ export const apiClient = {
   /**
    * Get leaderboard data for a word
    * @param wordId The word ID to get leaderboard for
-   * @param playerId Optional player ID to get their rank if not in top 10
    * @returns Promise with the leaderboard response
    */
-  async getLeaderboard(wordId: string, playerId?: string): Promise<LeaderboardResponse> {
+  async getLeaderboard(wordId: string): Promise<LeaderboardResponse> {
     const params = new URLSearchParams({ wordId });
-    if (playerId) {
-      params.append('playerId', playerId);
-    }
     return fetchFromApi<LeaderboardResponse>(`/api/leaderboard?${params.toString()}`);
   },
 };
