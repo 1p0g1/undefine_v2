@@ -84,6 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .insert([
             {
               word_id: anyWord.id,
+              word: anyWord.word,
               player_id,
               start_time: new Date().toISOString(),
               clue_status: DEFAULT_CLUE_STATUS,
@@ -96,7 +97,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (sessionError) {
           console.error('[api/word] Error creating game session:', sessionError);
-          res.status(500).json({ error: 'Error creating game session' });
+          console.error('[api/word] Attempted session data:', {
+            word_id: anyWord.id,
+            word: anyWord.word,
+            player_id,
+            start_time: new Date().toISOString(),
+          });
+          res.status(500).json({ error: 'Error creating game session: ' + sessionError.message });
           console.log('[api/word] Response status: 500 (Session creation failed)');
           return;
         }
@@ -138,6 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .insert([
         {
           word_id: todayWord.id,
+          word: todayWord.word,
           player_id,
           start_time: new Date().toISOString(),
           clue_status: DEFAULT_CLUE_STATUS,
@@ -150,7 +158,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (sessionError) {
       console.error('[api/word] Error creating game session:', sessionError);
-      res.status(500).json({ error: 'Error creating game session' });
+      console.error('[api/word] Attempted session data:', {
+        word_id: todayWord.id,
+        word: todayWord.word,
+        player_id,
+        start_time: new Date().toISOString(),
+      });
+      res.status(500).json({ error: 'Error creating game session: ' + sessionError.message });
       console.log('[api/word] Response status: 500 (Session creation failed)');
       return;
     }
