@@ -2,9 +2,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// TODO: Remove hardcoded player_id after implementing proper session management
+// See docs/mvp.md "Player ID Handling" section for details on this temporary solution
 const TEMP_PLAYER_ID = 'mvp-test-player-001';
 
+// Log missing environment variables but continue execution
 if (!process.env.SUPABASE_URL) {
   console.error('[api/word] Missing SUPABASE_URL environment variable');
 }
@@ -16,6 +17,9 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Add connection status check
+console.log('[api/word] Supabase client initialized with URL:', process.env.SUPABASE_URL);
 
 // Default clue status structure matching game logic
 const DEFAULT_CLUE_STATUS = {
@@ -68,6 +72,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Verify database tables exist
+    console.log('[api/word] Verifying database tables...');
+    
+    // Check words table
+    const { data: wordsCheck, error: wordsError } = await supabase
+      .from('words')
+      .select('count')
+      .limit(1);
+      
+    if (wordsError) {
+      console.error('[api/word] Error checking words table:', wordsError);
+      throw new Error(`Database table check failed: ${wordsError.message}`);
+    }
+    console.log('[api/word] Words table check passed');
+
+    // Check game_sessions table
+    const { data: sessionsCheck, error: sessionsError } = await supabase
+      .from('game_sessions')
+      .select('count')
+      .limit(1);
+      
+    if (sessionsError) {
+      console.error('[api/word] Error checking game_sessions table:', sessionsError);
+      throw new Error(`Database table check failed: ${sessionsError.message}`);
+    }
+    console.log('[api/word] Game sessions table check passed');
+
     // Ensure player exists before proceeding
     await ensurePlayerExists(TEMP_PLAYER_ID);
 
@@ -218,6 +249,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[api/word] Response status: 200 (Using today\'s word)');
   } catch (err) {
     console.error('[api/word] Unexpected error:', err);
-    res.status(500).json({ error: 'Unexpected error' });
+    // Add more detailed error information to help debugging
+    const errorDetails = err instanceof Error ? {
+      message: err.message,
+      stack: err.stack,
+      name: err.name,
+      // @ts-ignore - for any custom properties
+      code: err.code,
+      // @ts-ignore - for any custom properties
+      details: err.details
+    } : err;
+    
+    console.error('[api/word] Error details:', errorDetails);
+    res.status(500).json({ 
+      error: 'Unexpected error',
+      details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+    });
   }
 } 
