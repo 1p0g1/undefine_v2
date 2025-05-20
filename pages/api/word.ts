@@ -2,76 +2,88 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// See docs/mvp.md "Player ID Handling" section for details on this temporary solution
-const TEMP_PLAYER_ID = 'mvp-test-player-001';
+// Wrap the entire handler to catch initialization errors
+const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
+  console.log('[api/word] API route initialized');
+  
+  // See docs/mvp.md "Player ID Handling" section for details on this temporary solution
+  const TEMP_PLAYER_ID = 'mvp-test-player-001';
 
-// Log missing environment variables but continue execution
-if (!process.env.SUPABASE_URL) {
-  console.error('[api/word] Missing SUPABASE_URL environment variable');
-}
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[api/word] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-}
+  // Log environment state
+  console.log('[api/word] Environment:', {
+    nodeEnv: process.env.NODE_ENV,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  });
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-// Add connection status check
-console.log('[api/word] Supabase client initialized with URL:', process.env.SUPABASE_URL);
-
-// Default clue status structure matching game logic
-const DEFAULT_CLUE_STATUS = {
-  D: false, // Definition
-  E: false, // Equivalents
-  F: false, // First Letter
-  I: false, // In a Sentence
-  N: false, // Number of Letters
-  E2: false, // Etymology
-};
-
-// Ensure player exists in user_stats
-async function ensurePlayerExists(player_id: string) {
-  // First try to get existing stats
-  const { data: existingStats } = await supabase
-    .from('user_stats')
-    .select('player_id')
-    .eq('player_id', player_id)
-    .single();
-
-  if (!existingStats) {
-    // Create new user_stats entry if doesn't exist
-    const { error: createError } = await supabase
-      .from('user_stats')
-      .insert([
-        {
-          player_id,
-          games_played: 0,
-          games_won: 0,
-          current_streak: 0,
-          longest_streak: 0,
-          average_completion_time: 0,
-        }
-      ]);
-
-    if (createError) {
-      console.error('[api/word] Error creating user_stats:', createError);
-      throw new Error('Failed to create user stats');
-    }
+  // Log missing environment variables but continue execution
+  if (!process.env.SUPABASE_URL) {
+    console.error('[api/word] Missing SUPABASE_URL environment variable');
   }
-}
-
-/**
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse & { status: (code: number) => any, json: (body: any) => void }} res
- */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[api/word] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
   }
 
   try {
+    console.log('[api/word] Initializing Supabase client');
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    console.log('[api/word] Supabase client initialized');
+
+    // Add connection status check
+    console.log('[api/word] Supabase client initialized with URL:', process.env.SUPABASE_URL);
+
+    // Default clue status structure matching game logic
+    const DEFAULT_CLUE_STATUS = {
+      D: false, // Definition
+      E: false, // Equivalents
+      F: false, // First Letter
+      I: false, // In a Sentence
+      N: false, // Number of Letters
+      E2: false, // Etymology
+    };
+
+    // Ensure player exists in user_stats
+    async function ensurePlayerExists(player_id: string) {
+      // First try to get existing stats
+      const { data: existingStats } = await supabase
+        .from('user_stats')
+        .select('player_id')
+        .eq('player_id', player_id)
+        .single();
+
+      if (!existingStats) {
+        // Create new user_stats entry if doesn't exist
+        const { error: createError } = await supabase
+          .from('user_stats')
+          .insert([
+            {
+              player_id,
+              games_played: 0,
+              games_won: 0,
+              current_streak: 0,
+              longest_streak: 0,
+              average_completion_time: 0,
+            }
+          ]);
+
+        if (createError) {
+          console.error('[api/word] Error creating user_stats:', createError);
+          throw new Error('Failed to create user stats');
+        }
+      }
+    }
+
+    /**
+     * @param {import('http').IncomingMessage} req
+     * @param {import('http').ServerResponse & { status: (code: number) => any, json: (body: any) => void }} res
+     */
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
     // Verify database tables exist
     console.log('[api/word] Verifying database tables...');
     
@@ -248,21 +260,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     console.log('[api/word] Response status: 200 (Using today\'s word)');
   } catch (err) {
-    console.error('[api/word] Unexpected error:', err);
-    // Add more detailed error information to help debugging
+    console.error('[api/word] Critical initialization error:', err);
     const errorDetails = err instanceof Error ? {
       message: err.message,
       stack: err.stack,
-      name: err.name,
-      // @ts-ignore - for any custom properties
-      code: err.code,
-      // @ts-ignore - for any custom properties
-      details: err.details
+      name: err.name
     } : err;
-    
-    console.error('[api/word] Error details:', errorDetails);
-    res.status(500).json({ 
-      error: 'Unexpected error',
+    return res.status(500).json({ 
+      error: 'Critical initialization error',
+      details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+    });
+  }
+};
+
+// Catch any errors that might occur during handler execution
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    await apiHandler(req, res);
+  } catch (err) {
+    console.error('[api/word] Unhandled error:', err);
+    const errorDetails = err instanceof Error ? {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    } : err;
+    return res.status(500).json({ 
+      error: 'Unhandled server error',
       details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
     });
   }
