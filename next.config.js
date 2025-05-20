@@ -3,7 +3,7 @@ module.exports = {
     ignoreDuringBuilds: true,
   },
   reactStrictMode: true,
-  pageExtensions: ['api.ts', 'api.tsx'],
+  pageExtensions: ['ts', 'tsx'],
   typescript: {
     ignoreBuildErrors: false,
   },
