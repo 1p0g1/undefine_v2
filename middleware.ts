@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 
 // Allowed origins for CORS
 const allowedOrigins = [
-  'https://undefine-v2-front.vercel.app',
+  'https://undefine-v2-front-rifa8zgw3-paddys-projects-82cb6057.vercel.app', // Production frontend
+  'https://undefine-v2-front.vercel.app', // Production frontend (main domain)
   'http://localhost:3000',
   'http://localhost:5173', // Vite default port
 ];
