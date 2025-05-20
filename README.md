@@ -1,6 +1,61 @@
-Un-Define
+# Undefine v2
 
-A daily word-guessing game where players try to identify a hidden word based on six progressively revealed linguistic clues.
+A word game built with Next.js and Supabase.
+
+## Environment Setup
+
+1. Create a `.env` file in the project root with the following variables:
+   ```env
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+2. Get these values from your Supabase project:
+   - Go to https://app.supabase.com
+   - Navigate to Project Settings -> API
+   - Copy "Project URL" for `SUPABASE_URL`
+   - Copy "service_role key" for `SUPABASE_SERVICE_ROLE_KEY` (keep this secret!)
+   - Copy "anon/public" key for `SUPABASE_ANON_KEY`
+
+3. Verify your setup:
+   ```bash
+   # Start the development server
+   npm run dev
+
+   # Test environment configuration
+   curl http://localhost:3000/api/test/env
+   ```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
+
+## API Routes
+
+- `/api/word` - Get today's word
+- `/api/guess` - Submit a guess
+- `/api/test/env` - Test environment configuration
+- `/api/test/supabase` - Test Supabase connectivity
+
+## Project Structure
+
+- `/pages` - Next.js pages and API routes
+- `/lib` - Shared utilities and configuration
+- `/types` - TypeScript type definitions
+- `/scripts` - Development and maintenance scripts
 
 📚 Documentation
 
