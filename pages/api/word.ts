@@ -62,31 +62,51 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     // Ensure player exists in user_stats
     async function ensurePlayerExists(player_id: string): Promise<boolean> {
-      console.log('[api/word] Checking player existence:', { player_id });
+      console.log('\n[ensurePlayerExists] Starting check for player:', player_id);
       
       if (!player_id) {
         throw new Error('player_id is required');
       }
 
       try {
-        // First try to get existing stats
-        const { data: existingStats, error: selectError } = await supabase
+        // First check exact count of matching rows
+        const { data, error, count } = await supabase
           .from('user_stats')
-          .select('player_id, games_played')
-          .eq('player_id', player_id)
-          .maybeSingle(); // Use maybeSingle to handle no results case
+          .select('*', { count: 'exact', head: false })
+          .eq('player_id', player_id);
 
-        if (selectError) {
-          console.error('[api/word] Error checking existing player:', selectError);
-          throw new Error(`Failed to check existing player: ${selectError.message}`);
+        console.log('[ensurePlayerExists] Row count check results:', {
+          player_id,
+          count,
+          hasData: !!data,
+          dataLength: data?.length,
+          error: error?.message
+        });
+
+        // Log full details for debugging
+        console.log('[ensurePlayerExists] Full query results:', {
+          data,
+          error
+        });
+
+        if (error) {
+          console.error('[ensurePlayerExists] Error checking player count:', error);
+          throw new Error(`Failed to check player count: ${error.message}`);
         }
 
-        console.log('[api/word] Existing stats check result:', existingStats);
+        // Handle multiple rows case (indicates missing unique constraint)
+        if (count && count > 1) {
+          console.error('[ensurePlayerExists] Multiple rows found for player_id - table constraint issue:', {
+            player_id,
+            rowCount: count
+          });
+          throw new Error('Multiple user_stats entries found for player - database constraint issue');
+        }
 
-        if (!existingStats) {
-          console.log('[api/word] Creating new user_stats entry for player:', player_id);
+        // Handle no rows case (need to create new entry)
+        if (count === 0 || !data || data.length === 0) {
+          console.log('[ensurePlayerExists] No existing stats found, creating new entry');
           
-          // Create new user_stats entry
           const { data: newStats, error: createError } = await supabase
             .from('user_stats')
             .insert({
@@ -101,21 +121,23 @@ const apiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
             .single();
 
           if (createError) {
-            console.error('[api/word] Error creating user_stats:', {
+            console.error('[ensurePlayerExists] Failed to create user_stats:', {
               error: createError,
               attempted_player_id: player_id
             });
             throw new Error(`Failed to create user stats: ${createError.message}`);
           }
 
-          console.log('[api/word] Successfully created user_stats:', newStats);
+          console.log('[ensurePlayerExists] Successfully created new user_stats:', newStats);
           return true;
         }
 
-        console.log('[api/word] Player exists with stats:', existingStats);
+        // Single row exists case
+        console.log('[ensurePlayerExists] Found existing user_stats:', data[0]);
         return true;
+
       } catch (err) {
-        console.error('[api/word] Critical error in ensurePlayerExists:', err);
+        console.error('[ensurePlayerExists] Critical error:', err);
         throw err;
       }
     }
