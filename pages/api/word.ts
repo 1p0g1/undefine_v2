@@ -20,12 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Get player ID from headers
-    const playerId = req.headers['player-id'] || req.headers['Player-Id'] || req.headers['playerId'] || req.headers['playerid'];
-    if (!playerId || typeof playerId !== 'string') {
-      return res.status(400).json({ error: 'Missing player ID' });
-    }
-
     console.log('[api/word] Initializing Supabase client');
     const supabase = createClient(
       process.env.SUPABASE_URL!,
@@ -37,39 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     );
-
-    // Ensure user_stats record exists
-    console.log('[api/word] Ensuring user_stats record exists for player:', playerId);
-    const { data: existingStats, error: statsError } = await supabase
-      .from('user_stats')
-      .select('player_id')
-      .eq('player_id', playerId)
-      .single();
-
-    if (!existingStats) {
-      console.log('[api/word] Creating new user_stats record for player:', playerId);
-      const { error: createError } = await supabase
-        .from('user_stats')
-        .insert([{
-          player_id: playerId,
-          games_played: 0,
-          games_won: 0,
-          current_streak: 0,
-          longest_streak: 0,
-          total_guesses: 0,
-          average_guesses_per_game: 0,
-          average_completion_time: 0,
-          total_play_time_seconds: 0
-        }]);
-
-      if (createError) {
-        console.error('[api/word] Failed to create user stats:', createError);
-        return res.status(500).json({ 
-          error: 'Unexpected error', 
-          details: 'Failed to create user stats: ' + createError.message 
-        });
-  }
-    }
 
     // Get today's date in YYYY-MM-DD format
     const now = new Date();
@@ -106,33 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: 'No words available' });
       }
 
-      // Create game session for fallback word
-      const { data: gameSession, error: sessionError } = await supabase
-        .from('game_sessions')
-        .insert([{
-          player_id: playerId,
-          word_id: fallbackWord.id,
-          start_time: new Date().toISOString(),
-          guesses: [],
-          is_complete: false,
-          is_won: false,
-          clue_status: {
-            D: false,
-            E: false,
-            F: false,
-            I: false,
-            N: false,
-            E2: false
-          }
-        }])
-        .select()
-        .single();
-
-      if (sessionError) {
-        console.error('[api/word] Failed to create game session:', sessionError);
-        return res.status(500).json({ error: 'Failed to create game session' });
-      }
-
       return res.status(200).json({
         word: {
           id: fallbackWord.id,
@@ -146,39 +80,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           difficulty: fallbackWord.difficulty,
           date: fallbackWord.date
         },
-        gameId: gameSession.id,
+        gameId: 'temp-session-' + new Date().getTime(), // Temporary game ID
         isFallback: true
       });
     }
 
-    // Create game session for today's word
-    const { data: gameSession, error: sessionError } = await supabase
-      .from('game_sessions')
-      .insert([{
-        player_id: playerId,
-        word_id: todayWord.id,
-        start_time: new Date().toISOString(),
-        guesses: [],
-        is_complete: false,
-        is_won: false,
-        clue_status: {
-          D: false,
-          E: false,
-          F: false,
-          I: false,
-          N: false,
-          E2: false
-        }
-      }])
-      .select()
-      .single();
-
-    if (sessionError) {
-      console.error('[api/word] Failed to create game session:', sessionError);
-      return res.status(500).json({ error: 'Failed to create game session' });
-    }
-
-    // Return today's word with game session
+    // Return today's word
     return res.status(200).json({
       word: {
         id: todayWord.id,
@@ -192,7 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         difficulty: todayWord.difficulty,
         date: todayWord.date
       },
-      gameId: gameSession.id,
+      gameId: 'temp-session-' + new Date().getTime(), // Temporary game ID
       isFallback: false
     });
 
