@@ -1,10 +1,17 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
 if (!BASE_URL) {
   console.error('NEXT_PUBLIC_API_BASE_URL environment variable is not set');
 }
+
+/**
+ * Ensures path starts with a forward slash
+ */
+const normalizePath = (path: string) => {
+  return path.startsWith('/') ? path : `/${path}`;
+};
 
 /**
  * Fetches from the API with proper error handling and type safety
@@ -13,12 +20,17 @@ if (!BASE_URL) {
  * @returns Promise with the typed response
  */
 export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+  if (!BASE_URL) {
+    throw new Error('API Base URL is not configured');
+  }
+
   // Get existing headers from options
   const existingHeaders = options.headers || {};
   
   // Create new headers with our required values
   const headers = new Headers(existingHeaders);
   headers.set('Content-Type', 'application/json');
+  headers.set('Accept', 'application/json');
   
   // Add player-id last to ensure it's not overwritten
   const playerId = getPlayerId();
@@ -26,9 +38,14 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
     headers.set('player-id', playerId);
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const normalizedPath = normalizePath(path);
+  const url = `${BASE_URL}${normalizedPath}`;
+  
+  const response = await fetch(url, {
     ...options,
     headers,
+    mode: 'cors',
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -37,7 +54,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       status: response.status,
       statusText: response.statusText,
       error: errorText,
-      url: `${BASE_URL}${path}`,
+      url,
     });
     throw new Error(`API request failed: ${errorText}`);
   }
