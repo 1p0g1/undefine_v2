@@ -131,7 +131,7 @@ SUPABASE_URL | Yes | Supabase project URL
 SUPABASE_ANON_KEY | Yes | Supabase anon key
 DB_PROVIDER | Yes | supabase or mock
 JWT_SECRET | Yes (prod) | JWT signing secret
-NEXT_PUBLIC_API_BASE_URL | Yes | Base URL for backend API (e.g., https://your-api-domain.vercel.app) - no trailing slash or endpoints
+NEXT_PUBLIC_API_BASE_URL | Yes | Base URL for backend API (https://undefine-v2-back.vercel.app) - no trailing slash
 
 🛡️ RLS Status
 

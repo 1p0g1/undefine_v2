@@ -577,14 +577,14 @@ The `/api/word` endpoint is responsible for fetching the word-of-the-day and cre
 ### Configuration by Environment
 | Environment | NEXT_PUBLIC_API_BASE_URL | Result |
 |-------------|--------------------------|---------|
-| Production  | Not set                  | Uses relative paths (e.g., `/api/word`) |
-| Development | `http://localhost:3001`  | Uses full URL (e.g., `http://localhost:3001/api/word`) |
+| Production  | https://undefine-v2-back.vercel.app | Uses stable production URL |
+| Development | http://localhost:3001 | Uses local development server |
 
 ### Implementation Details
-- `fetchFromApi` wrapper in `apiClient.ts` handles base URL logic
-- Vite dev server proxy configured to handle relative paths in development
-- No CORS configuration needed in production
-- Type-safe API calls with proper error handling
+- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
+- No trailing slashes in URLs
+- Preview deployments use production backend
+- Local development uses localhost
 
 ### Best Practices
 - Never hardcode localhost URLs in production code
