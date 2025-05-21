@@ -1,9 +1,13 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
+import getConfig from 'next/config';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
+// Get runtime config
+const { publicRuntimeConfig } = getConfig() || {};
+const BASE_URL = publicRuntimeConfig?.apiBaseUrl?.replace(/\/$/, '');
+
 if (!BASE_URL) {
-  console.error('NEXT_PUBLIC_API_BASE_URL environment variable is not set');
+  console.error('API Base URL is not configured. Please check NEXT_PUBLIC_API_BASE_URL in your environment variables.');
 }
 
 /**
