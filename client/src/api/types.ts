@@ -20,6 +20,7 @@ export interface WordResponse {
     date: string;
   };
   gameId: string;
+  isFallback: boolean;
 }
 
 /**

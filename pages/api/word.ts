@@ -106,15 +106,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: 'No words available' });
       }
 
+      // Create game session for fallback word
+      const { data: gameSession, error: sessionError } = await supabase
+        .from('game_sessions')
+        .insert([{
+          player_id: playerId,
+          word_id: fallbackWord.id,
+          start_time: new Date().toISOString(),
+          guesses: [],
+          is_complete: false,
+          is_won: false,
+          clue_status: {
+            D: false,
+            E: false,
+            F: false,
+            I: false,
+            N: false,
+            E2: false
+          }
+        }])
+        .select()
+        .single();
+
+      if (sessionError) {
+        console.error('[api/word] Failed to create game session:', sessionError);
+        return res.status(500).json({ error: 'Failed to create game session' });
+      }
+
       return res.status(200).json({
-        word: fallbackWord,
+        word: {
+          id: fallbackWord.id,
+          word: fallbackWord.word,
+          definition: fallbackWord.definition,
+          first_letter: fallbackWord.first_letter,
+          in_a_sentence: fallbackWord.in_a_sentence,
+          equivalents: fallbackWord.equivalents,
+          number_of_letters: fallbackWord.number_of_letters,
+          etymology: fallbackWord.etymology,
+          difficulty: fallbackWord.difficulty,
+          date: fallbackWord.date
+        },
+        gameId: gameSession.id,
         isFallback: true
       });
     }
 
-    // Return today's word
+    // Create game session for today's word
+    const { data: gameSession, error: sessionError } = await supabase
+      .from('game_sessions')
+      .insert([{
+        player_id: playerId,
+        word_id: todayWord.id,
+        start_time: new Date().toISOString(),
+        guesses: [],
+        is_complete: false,
+        is_won: false,
+        clue_status: {
+          D: false,
+          E: false,
+          F: false,
+          I: false,
+          N: false,
+          E2: false
+        }
+      }])
+      .select()
+      .single();
+
+    if (sessionError) {
+      console.error('[api/word] Failed to create game session:', sessionError);
+      return res.status(500).json({ error: 'Failed to create game session' });
+    }
+
+    // Return today's word with game session
     return res.status(200).json({
-      word: todayWord,
+      word: {
+        id: todayWord.id,
+        word: todayWord.word,
+        definition: todayWord.definition,
+        first_letter: todayWord.first_letter,
+        in_a_sentence: todayWord.in_a_sentence,
+        equivalents: todayWord.equivalents,
+        number_of_letters: todayWord.number_of_letters,
+        etymology: todayWord.etymology,
+        difficulty: todayWord.difficulty,
+        date: todayWord.date
+      },
+      gameId: gameSession.id,
       isFallback: false
     });
 
