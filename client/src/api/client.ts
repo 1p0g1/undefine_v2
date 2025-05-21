@@ -44,8 +44,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const response = await fetch(url, {
     ...options,
     headers,
-    mode: 'cors',
-    credentials: 'include',
+    mode: 'cors'
   });
 
   if (!response.ok) {
@@ -55,6 +54,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       statusText: response.statusText,
       error: errorText,
       url,
+      playerId,
     });
     throw new Error(`API request failed: ${errorText}`);
   }
