@@ -15,6 +15,6 @@ module.exports = {
     JWT_SECRET: process.env.JWT_SECRET,
     DB_PROVIDER: process.env.DB_PROVIDER,
     // API Base URL
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL
+    VITE_NEXT_PUBLIC_API_BASE_URL: process.env.VITE_NEXT_PUBLIC_API_BASE_URL
   }
 }

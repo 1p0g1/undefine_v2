@@ -1,17 +1,19 @@
 // Vercel-native serverless API route for fetching the word of the day from Supabase.
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { cors } from './middleware/cors';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Handle CORS
-  if (cors(req, res)) return;
-
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // Get player ID from headers
+    const playerId = req.headers['player-id'];
+    if (!playerId || typeof playerId !== 'string') {
+      return res.status(400).json({ error: 'Missing player ID' });
+    }
+
     console.log('[api/word] Initializing Supabase client');
     const supabase = createClient(
       process.env.SUPABASE_URL!,
@@ -23,6 +25,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     );
+
+    // Ensure user_stats record exists
+    console.log('[api/word] Ensuring user_stats record exists for player:', playerId);
+    const { data: existingStats, error: statsError } = await supabase
+      .from('user_stats')
+      .select('player_id')
+      .eq('player_id', playerId)
+      .single();
+
+    if (!existingStats) {
+      console.log('[api/word] Creating new user_stats record for player:', playerId);
+      const { error: createError } = await supabase
+        .from('user_stats')
+        .insert([{
+          player_id: playerId,
+          games_played: 0,
+          games_won: 0,
+          current_streak: 0,
+          longest_streak: 0,
+          total_guesses: 0,
+          average_guesses_per_game: 0,
+          average_completion_time: 0,
+          total_play_time_seconds: 0
+        }]);
+
+      if (createError) {
+        console.error('[api/word] Failed to create user stats:', createError);
+        return res.status(500).json({ 
+          error: 'Unexpected error', 
+          details: 'Failed to create user stats: ' + createError.message 
+        });
+  }
+    }
 
     // Get today's date in YYYY-MM-DD format
     const now = new Date();
@@ -36,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .select('*')
       .eq('date', today)
       .single();
-    
+
     console.log('[api/word] Today\'s word query result:', {
       hasWord: !!todayWord,
       error: todayWordError?.message,

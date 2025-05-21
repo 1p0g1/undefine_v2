@@ -1,7 +1,7 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
+const BASE_URL = import.meta.env.VITE_NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
 if (!BASE_URL) {
   console.error('NEXT_PUBLIC_API_BASE_URL environment variable is not set');
 }
