@@ -12,6 +12,16 @@
   3. Store in localStorage (Wordle-style persistence)
   4. Add proper validation middleware
 
+### Environment Variable Handling
+- **Current Issue**: NEXT_PUBLIC_API_BASE_URL not being injected properly during build time
+- **Impact**: Frontend unable to connect to backend API in preview deployments
+- **Technical Details**: Environment variable needs to be available during build process for proper client-side bundling
+- **Required Fix**:
+  1. Ensure environment variables are properly set in Vercel before build
+  2. Verify variable injection in client-side bundle
+  3. Consider implementing runtime configuration fallback
+  4. Add build-time validation for required environment variables
+
 ## MVP Testing Priorities
 1. Verify API routes are working
 2. Test basic game mechanics
