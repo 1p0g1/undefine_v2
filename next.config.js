@@ -13,6 +13,8 @@ module.exports = {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
-    DB_PROVIDER: process.env.DB_PROVIDER
+    DB_PROVIDER: process.env.DB_PROVIDER,
+    // API Base URL
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL
   }
 }
