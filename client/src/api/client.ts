@@ -1,9 +1,9 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
 if (!BASE_URL) {
-  console.error('VITE_API_BASE_URL environment variable is not set');
+  console.error('NEXT_PUBLIC_API_BASE_URL environment variable is not set');
 }
 
 /**
@@ -44,7 +44,9 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const response = await fetch(url, {
     ...options,
     headers,
-    mode: 'cors'
+    mode: 'cors',
+    credentials: 'include',
+    cache: 'no-cache',
   });
 
   if (!response.ok) {
@@ -54,7 +56,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       statusText: response.statusText,
       error: errorText,
       url,
-      playerId,
+      headers: Object.fromEntries(headers.entries()),
     });
     throw new Error(`API request failed: ${errorText}`);
   }
