@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 // Allowed origins for CORS
 const allowedOrigins = [
   'https://undefine-v2-front.vercel.app', // Production frontend
-  'https://undefine-v2-front-clbfuwz73-paddys-projects-82cb6057.vercel.app', // Current preview
   'http://localhost:3000',
   'http://localhost:5173', // Vite default port
 ];
@@ -15,32 +14,25 @@ const allowedOrigins = [
  */
 function isAllowedOrigin(origin: string): boolean {
   const allowedPatterns = [
-    // Production domains
+    // Production domain
     'https://undefine-v2-front.vercel.app',
-    // Preview deployments
-    /^https:\/\/undefine-v2-front-[a-z0-9]+-paddys-projects-82cb6057\.vercel\.app$/,
     // Local development
     'http://localhost:3000',
     'http://localhost:5173',
   ];
 
-  return allowedPatterns.some(pattern => {
-    if (pattern instanceof RegExp) {
-      return pattern.test(origin);
-    }
-    return pattern === origin;
-  });
+  return allowedPatterns.some(pattern => pattern === origin);
 }
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
   // Get the origin from the request headers
   const origin = request.headers.get('origin') || '';
-  console.log('Incoming request from origin:', origin); // Add logging
+  console.log('Incoming request from origin:', origin);
   
   // Check if the origin is allowed
   const isAllowedOrigin = allowedOrigins.includes(origin);
-  console.log('Is origin allowed:', isAllowedOrigin); // Add logging
+  console.log('Is origin allowed:', isAllowedOrigin);
 
   // Get the response
   const response = NextResponse.next();
