@@ -1,31 +1,9 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 import { env } from '../env.client';
-import { validateApiResponse, WordResponseSchema, GuessResponseSchema, LeaderboardResponseSchema } from './validation';
 
 // Get API base URL from validated environment
 const BASE_URL = env.VITE_API_BASE_URL.replace(/\/$/, '');
-
-/**
- * Configuration for API requests
- */
-const API_CONFIG = {
-  maxRetries: 2,
-  initialRetryDelay: 1000, // 1 second
-  maxRetryDelay: 5000, // 5 seconds
-} as const;
-
-/**
- * Calculate delay for exponential backoff
- */
-function getRetryDelay(attempt: number): number {
-  const delay = Math.min(
-    API_CONFIG.initialRetryDelay * Math.pow(2, attempt - 1),
-    API_CONFIG.maxRetryDelay
-  );
-  // Add some jitter to prevent thundering herd
-  return delay + Math.random() * 100;
-}
 
 /**
  * Ensures path starts with a forward slash
@@ -36,8 +14,6 @@ const normalizePath = (path: string) => {
 
 /**
  * Fetches from the API with proper error handling and type safety
- * Includes retry logic with exponential backoff for failed requests
- * 
  * @param path The API path to fetch from
  * @param options Optional fetch options
  * @returns Promise with the typed response
@@ -65,55 +41,27 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const normalizedPath = normalizePath(path);
   const url = `${BASE_URL}${normalizedPath}`;
   
-  let lastError: Error | null = null;
-  
-  // Try the initial request plus retries
-  for (let attempt = 1; attempt <= API_CONFIG.maxRetries + 1; attempt++) {
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-        mode: 'cors',
-        credentials: 'include',
-        cache: 'no-cache',
-      });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    mode: 'cors',
+    credentials: 'include',
+    cache: 'no-cache',
+  });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-          url,
-          attempt,
-          headers: Object.fromEntries(headers.entries()),
-        });
-        
-        // Don't retry 4xx errors (except 429 rate limit)
-        if (response.status < 500 && response.status !== 429) {
-          throw new Error(`API request failed: ${errorText}`);
-        }
-        
-        throw new Error(`API request failed (${response.status}): ${errorText}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      lastError = error as Error;
-      
-      // If this was our last attempt, throw the error
-      if (attempt === API_CONFIG.maxRetries + 1) {
-        throw lastError;
-      }
-      
-      // Otherwise wait and retry
-      console.warn(`API request failed, retrying (attempt ${attempt}/${API_CONFIG.maxRetries + 1})...`, error);
-      await new Promise(resolve => setTimeout(resolve, getRetryDelay(attempt)));
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText,
+      url,
+      headers: Object.fromEntries(headers.entries()),
+    });
+    throw new Error(`API request failed: ${errorText}`);
   }
-  
-  // This should never happen due to the throw above, but TypeScript doesn't know that
-  throw lastError || new Error('API request failed');
+
+  return response.json();
 };
 
 /**
@@ -125,8 +73,7 @@ export const apiClient = {
    * @returns Promise with the word response
    */
   async getNewWord(): Promise<WordResponse> {
-    const response = await fetchFromApi<unknown>('/api/word');
-    return validateApiResponse(response, WordResponseSchema);
+    return fetchFromApi<WordResponse>('/api/word');
   },
 
   /**
@@ -135,11 +82,10 @@ export const apiClient = {
    * @returns Promise with the guess response
    */
   async submitGuess(request: GuessRequest): Promise<GuessResponse> {
-    const response = await fetchFromApi<unknown>('/api/guess', {
+    return fetchFromApi<GuessResponse>('/api/guess', {
       method: 'POST',
       body: JSON.stringify(request),
     });
-    return validateApiResponse(response, GuessResponseSchema);
   },
 
   /**
@@ -153,7 +99,6 @@ export const apiClient = {
     if (playerId) {
       params.append('playerId', playerId);
     }
-    const response = await fetchFromApi<unknown>(`/api/leaderboard?${params.toString()}`);
-    return validateApiResponse(response, LeaderboardResponseSchema);
+    return fetchFromApi<LeaderboardResponse>(`/api/leaderboard?${params.toString()}`);
   },
 };
