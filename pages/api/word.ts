@@ -11,7 +11,7 @@ if (typeof window !== 'undefined') {
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest } from 'next';
-import type { ApiResponse } from 'types/api';
+import type { ApiResponse, ErrorResponse } from 'types/api';
 import { WordResponse } from '../../shared-types/src/word';
 import { env } from '../../src/env.server';
 import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
@@ -92,9 +92,9 @@ export default async function handler(
 
   } catch (err) {
     console.error('[api/word] Unexpected error:', err);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Unexpected error',
       details: err instanceof Error ? err.message : 'Unknown error'
-    });
+    } as ErrorResponse);
   }
 } 

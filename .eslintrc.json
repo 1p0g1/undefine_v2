@@ -1,4 +1,34 @@
 {
   "extends": ["next", "next/core-web-vitals"],
-  "rules": {}
+  "rules": {
+    "no-restricted-globals": ["error", {
+      "name": "process",
+      "message": "Use import.meta.env.VITE_* instead of process.env in Vite projects."
+    }],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "MemberExpression[object.name='process'][property.name='env']",
+        "message": "Use import.meta.env.VITE_* instead of process.env in Vite projects."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["client/**/*"],
+      "rules": {
+        "no-restricted-globals": ["error", {
+          "name": "process",
+          "message": "Use import.meta.env.VITE_* instead of process.env in Vite projects."
+        }],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "MemberExpression[object.name='process'][property.name='env']",
+            "message": "Use import.meta.env.VITE_* instead of process.env in Vite projects."
+          }
+        ]
+      }
+    }
+  ]
 }

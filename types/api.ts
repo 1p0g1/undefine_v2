@@ -1,7 +1,10 @@
 import type { NextApiResponse } from 'next';
 
 // Common response type for error cases
-export type ErrorResponse = { error: string };
+export type ErrorResponse = {
+  error: string;
+  details?: string;
+};
 
 // Leaderboard types
 export interface LeaderboardEntry {
