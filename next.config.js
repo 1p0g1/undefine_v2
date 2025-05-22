@@ -7,10 +7,6 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  publicRuntimeConfig: {
-    // Public runtime config
-    apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || '',
-  },
   env: {
     // Backend environment variables (matching Vercel exactly)
     SUPABASE_URL: process.env.SUPABASE_URL,

@@ -1,8 +1,27 @@
-// Vercel-native serverless API route for fetching the word of the day from Supabase.
-import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest, NextApiResponse } from 'next';
+/**
+ * @fileoverview
+ * Next.js API route for fetching the word of the day from Supabase.
+ * This file should only be used server-side in API routes.
+ */
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+// Runtime check to prevent client-side usage
+if (typeof window !== 'undefined') {
+  throw new Error('[api/word] This file should only be used server-side.');
+}
+
+import { createClient } from '@supabase/supabase-js';
+import type { NextApiRequest } from 'next';
+import type { ApiResponse } from 'types/api';
+import { WordResponse } from '../../shared-types/src/word';
+import { env } from '../../src/env.server';
+import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
+
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+export default async function handler(
+  req: NextApiRequest,
+  res: ApiResponse<WordResponse>
+) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,16 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log('[api/word] Initializing Supabase client');
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
 
     // Get today's date in YYYY-MM-DD format
     const now = new Date();
@@ -68,38 +77,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       return res.status(200).json({
-        word: {
-          id: fallbackWord.id,
-          word: fallbackWord.word,
-          definition: fallbackWord.definition,
-          first_letter: fallbackWord.first_letter,
-          in_a_sentence: fallbackWord.in_a_sentence,
-          equivalents: fallbackWord.equivalents,
-          number_of_letters: fallbackWord.number_of_letters,
-          etymology: fallbackWord.etymology,
-          difficulty: fallbackWord.difficulty,
-          date: fallbackWord.date
-        },
-        gameId: 'temp-session-' + new Date().getTime(), // Temporary game ID
+        word: mapWordRowToResponse(fallbackWord),
+        gameId: 'temp-session-' + new Date().getTime(),
         isFallback: true
       });
     }
 
     // Return today's word
     return res.status(200).json({
-      word: {
-        id: todayWord.id,
-        word: todayWord.word,
-        definition: todayWord.definition,
-        first_letter: todayWord.first_letter,
-        in_a_sentence: todayWord.in_a_sentence,
-        equivalents: todayWord.equivalents,
-        number_of_letters: todayWord.number_of_letters,
-        etymology: todayWord.etymology,
-        difficulty: todayWord.difficulty,
-        date: todayWord.date
-      },
-      gameId: 'temp-session-' + new Date().getTime(), // Temporary game ID
+      word: mapWordRowToResponse(todayWord),
+      gameId: 'temp-session-' + new Date().getTime(),
       isFallback: false
     });
 

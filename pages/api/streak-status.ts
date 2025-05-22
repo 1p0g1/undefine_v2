@@ -1,20 +1,11 @@
 // Vercel-native serverless API route for fetching streak status from Supabase.
 // Replaces the old Node backend `/api/streak-status` route.
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import type { StreakResponse, ApiResponse } from 'types/api';
+import { env } from '../../src/env.server';
 
-if (!process.env.SUPABASE_URL) {
-  console.error('[api/streak-status] Missing SUPABASE_URL environment variable');
-}
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[api/streak-status] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-}
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 export default async function handler(
   req: NextApiRequest,

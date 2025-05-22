@@ -1,19 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { env } from '../../src/env.server';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Log environment state for debugging
   console.log('[api/test] Environment check:', {
-    hasUrl: !!process.env.SUPABASE_URL,
-    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    urlPrefix: process.env.SUPABASE_URL?.substring(0, 20) + '...'
+    hasUrl: !!env.SUPABASE_URL,
+    hasServiceKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+    urlPrefix: env.SUPABASE_URL.substring(0, 20) + '...'
   });
 
   try {
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
     console.log('[api/test] Attempting to query words table...');
     const { data, error } = await supabase.from('words').select('*').limit(1);
@@ -28,9 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true, 
       data,
       environment: {
-        hasUrl: !!process.env.SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        nodeEnv: process.env.NODE_ENV
+        hasUrl: !!env.SUPABASE_URL,
+        hasServiceKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+        nodeEnv: env.NODE_ENV
       }
     });
   } catch (err) {
