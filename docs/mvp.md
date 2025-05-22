@@ -13,7 +13,7 @@
   4. Add proper validation middleware
 
 ### Environment Variable Handling
-- **Current Status**: NEXT_PUBLIC_API_BASE_URL configuration standardized
+- **Current Status**: VITE_API_BASE_URL configuration standardized
 - **Production URL**: https://undefine-v2-back.vercel.app
 - **Development URL**: http://localhost:3001
 - **Implementation**:

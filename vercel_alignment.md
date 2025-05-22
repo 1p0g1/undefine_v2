@@ -478,7 +478,7 @@ ON CONFLICT DO NOTHING;
 
 ### Base URL Logic
 - The application uses a dynamic base URL system that adapts to both local development and production environments
-- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
+- Base URL is controlled by the `VITE_API_BASE_URL` environment variable
 - In production (Vercel), the variable is not set, defaulting to an empty string, which results in relative paths
 - In local development, it defaults to `http://localhost:3001` if not set
 
@@ -570,18 +570,18 @@ The `/api/word` endpoint is responsible for fetching the word-of-the-day and cre
 ## API Base URL Configuration
 
 ### Environment Variables
-- `NEXT_PUBLIC_API_BASE_URL` controls API endpoint base URL
+- `VITE_API_BASE_URL` controls API endpoint base URL
 - In production (Vercel): Not set, defaults to empty string
 - In development: Set to `http://localhost:3001` in `.env.local`
 
 ### Configuration by Environment
-| Environment | NEXT_PUBLIC_API_BASE_URL | Result |
+| Environment | VITE_API_BASE_URL | Result |
 |-------------|--------------------------|---------|
 | Production  | https://undefine-v2-back.vercel.app | Uses stable production URL |
 | Development | http://localhost:3001 | Uses local development server |
 
 ### Implementation Details
-- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
+- Base URL is controlled by the `VITE_API_BASE_URL` environment variable
 - No trailing slashes in URLs
 - Preview deployments use production backend
 - Local development uses localhost
