@@ -213,3 +213,9 @@ The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is c
 - Environment variables properly configured in Vercel dashboard
 
 Note: All API routes are properly configured and verified for Vercel serverless deployment. The project includes a root page component to ensure correct Next.js framework detection.
+
+## Deployment Notes
+
+- Frontend (client/): Uses Vite, requires VITE_* environment variables
+- Backend (root): Uses Next.js, uses standard Node environment variables
+- Deployment trigger: 2024-03-19
