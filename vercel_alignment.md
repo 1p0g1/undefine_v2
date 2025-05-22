@@ -2,6 +2,12 @@
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.
 
+⚠️ **Important Environment Variable Note**:
+The frontend (Vite) and backend (Next.js) are deployed as separate Vercel projects, each with their own environment variable conventions:
+- Frontend (client/): Uses `VITE_*` prefix (e.g., `VITE_API_BASE_URL`)
+- Backend (root): Uses standard Node/Next.js vars (e.g., `API_URL`, `SUPABASE_SERVICE_ROLE_KEY`)
+Do not refactor backend environment variables to use `VITE_` prefix — this will break Next.js server access.
+
 ---
 
 ## ✅ Deployment Alignment (Confirmed Working)
