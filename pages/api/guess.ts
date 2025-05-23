@@ -23,8 +23,22 @@ import type { NextApiRequest } from 'next';
 import type { GuessRequest, GuessResponse, ApiResponse, ErrorResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
+import { ClueKey } from '../../src/types/clues';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+/**
+ * Returns the clues to reveal based on the number of incorrect guesses
+ */
+function getRevealedClues(incorrectGuesses: number): string[] {
+  const revealedClues: string[] = [ClueKey.Definition]; // D is always revealed
+  if (incorrectGuesses >= 1) revealedClues.push(ClueKey.Equivalents);
+  if (incorrectGuesses >= 2) revealedClues.push(ClueKey.FirstLetter);
+  if (incorrectGuesses >= 3) revealedClues.push(ClueKey.InSentence);
+  if (incorrectGuesses >= 4) revealedClues.push(ClueKey.NumLetters);
+  if (incorrectGuesses >= 5) revealedClues.push(ClueKey.Etymology);
+  return revealedClues;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -119,6 +133,10 @@ export default async function handler(
     const isComplete = isCorrect || updatedGuesses.length >= 6;
     const completionTimeSeconds = isComplete ? Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) : null;
 
+    // Calculate incorrect guesses and revealed clues
+    const incorrectGuesses = updatedGuesses.filter(g => g.toLowerCase() !== word.word.toLowerCase()).length;
+    const revealedClues = getRevealedClues(incorrectGuesses);
+
     const { error: updateError } = await supabase
       .from('game_sessions')
       .update({
@@ -201,7 +219,7 @@ export default async function handler(
         isFuzzy,
         fuzzyPositions,
         gameOver: isComplete,
-        revealedClues: [],
+        revealedClues,
         usedHint: false,
         score: null,
         stats: {
@@ -220,7 +238,7 @@ export default async function handler(
       isFuzzy,
       fuzzyPositions,
       gameOver: isComplete,
-      revealedClues: [],
+      revealedClues,
       usedHint: false,
       score: null,
       stats: {

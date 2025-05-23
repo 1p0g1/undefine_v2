@@ -1,8 +1,7 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
-import { env } from '../env.client';
 
-// Get API base URL from validated environment - must be the Vercel deployment URL
+// Production backend URL
 const BASE_URL = 'https://undefine-v2-back.vercel.app';
 
 /**
@@ -40,7 +39,6 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
     const response = await fetch(url, {
       ...options,
       headers,
-      mode: 'cors',
       cache: 'no-cache',
     });
 

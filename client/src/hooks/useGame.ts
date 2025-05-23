@@ -90,8 +90,8 @@ const useGame = () => {
 
       try {
         const data = await apiClient.submitGuess({
-            gameId: gameState.gameId,
-            guess: trimmedGuess,
+          gameId: gameState.gameId,
+          guess: trimmedGuess,
           playerId: getPlayerId(),
         });
 
@@ -99,33 +99,36 @@ const useGame = () => {
           const newGuesses = [...prevState.guesses, trimmedGuess];
           // Determine status for this guess
           let status: 'correct' | 'incorrect' | 'fuzzy' = 'incorrect';
-          if (trimmedGuess.toLowerCase() === gameState.wordText.toLowerCase()) status = 'correct';
-          else if (data.isFuzzy) status = 'fuzzy';
+          if (data.isCorrect) {
+            status = 'correct';
+          } else if (data.isFuzzy) {
+            status = 'fuzzy';
+          }
+
           // Update guessStatus array
-          setGuessStatus(prev => {
-            const updated = [...prev];
-            updated[newGuesses.length - 1] = status;
-            return updated;
-          });
+          const newGuessStatus = [...guessStatus];
+          newGuessStatus[newGuesses.length - 1] = status;
+          setGuessStatus(newGuessStatus);
+
           // Show leaderboard if 6 guesses or game over
-          if (newGuesses.length >= 6 || status === 'correct') {
+          if (data.gameOver) {
             setShowLeaderboard(true);
-            // Fetch updated leaderboard data
             fetchLeaderboard();
           }
+
           return {
             ...prevState,
             guesses: newGuesses,
             revealedClues: data.revealedClues,
-            isComplete: status === 'correct' || newGuesses.length >= 6,
-            isWon: status === 'correct',
+            isComplete: data.gameOver,
+            isWon: data.isCorrect,
           };
         });
       } catch (error) {
         console.error('Failed to submit guess:', error);
       }
     },
-    [gameState.gameId, gameState.guesses, gameState.isComplete, gameState.wordText, fetchLeaderboard]
+    [gameState.gameId, gameState.isComplete, guessStatus, fetchLeaderboard]
   );
 
   return {
