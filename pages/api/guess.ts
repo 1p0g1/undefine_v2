@@ -1,9 +1,28 @@
-// Vercel-native serverless API route for submitting a guess and updating game state in Supabase.
-// Replaces the old Node backend `/api/guess` route.
+/**
+ * @fileoverview
+ * Next.js API route for submitting a guess and updating game state in Supabase.
+ * 
+ * @api {post} /api/guess Submit a guess
+ * @apiBody {string} player_id UUID of the player
+ * @apiBody {string} guess The word being guessed
+ * @apiBody {string} gameId Current game session ID
+ * @apiSuccess {Object} response
+ * @apiSuccess {boolean} response.isCorrect Whether the guess was correct
+ * @apiSuccess {string} response.guess The submitted guess
+ * @apiSuccess {boolean} response.isFuzzy Whether the guess was a fuzzy match
+ * @apiSuccess {number[]} response.fuzzyPositions Positions of fuzzy matches
+ * @apiSuccess {boolean} response.gameOver Whether the game is complete
+ * @apiSuccess {Object} response.stats Player statistics
+ * @apiError {Object} error Error response
+ * @apiError {string} error.error Error message
+ * @apiError {string} [error.details] Additional error details if available
+ */
+
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest } from 'next';
-import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
+import type { GuessRequest, GuessResponse, ApiResponse, ErrorResponse } from 'types/api';
 import { env } from '../../src/env.server';
+import { validate as isUUID } from 'uuid';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -11,8 +30,23 @@ export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<GuessResponse>
 ) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, player-id, Player-Id, playerId, playerid');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method not allowed',
+      details: 'Only POST requests are allowed'
+    });
   }
 
   try {
@@ -23,8 +57,29 @@ export default async function handler(
     });
     
     const { gameId, guess, playerId } = JSON.parse(body) as GuessRequest;
+
+    // Validate required fields
     if (!gameId || !guess || !playerId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        details: 'gameId, guess, and playerId are required'
+      });
+    }
+
+    // Validate player_id is UUID
+    if (!isUUID(playerId)) {
+      return res.status(400).json({
+        error: 'Invalid player ID',
+        details: 'player_id must be a valid UUID'
+      });
+    }
+
+    // Validate guess is non-empty string
+    if (typeof guess !== 'string' || !guess.trim()) {
+      return res.status(400).json({
+        error: 'Invalid guess',
+        details: 'guess must be a non-empty string'
+      });
     }
 
     // Get the game session
@@ -35,7 +90,10 @@ export default async function handler(
       .single();
 
     if (gameError || !gameSession) {
-      return res.status(404).json({ error: 'Game session not found' });
+      return res.status(404).json({ 
+        error: 'Game session not found',
+        details: gameError?.message
+      });
     }
 
     // Get the word
@@ -46,7 +104,10 @@ export default async function handler(
       .single();
 
     if (wordError || !word) {
-      return res.status(404).json({ error: 'Word not found' });
+      return res.status(404).json({ 
+        error: 'Word not found',
+        details: wordError?.message
+      });
     }
 
     const isCorrect = guess.toLowerCase() === word.word.toLowerCase();
@@ -69,7 +130,10 @@ export default async function handler(
       .eq('id', gameId);
 
     if (updateError) {
-      return res.status(500).json({ error: 'Failed to update game session' });
+      return res.status(500).json({ 
+        error: 'Failed to update game session',
+        details: updateError.message
+      });
     }
 
     // Get current stats
@@ -80,7 +144,10 @@ export default async function handler(
       .single();
 
     if (statsError) {
-      return res.status(500).json({ error: 'Failed to fetch stats' });
+      return res.status(500).json({ 
+        error: 'Failed to fetch stats',
+        details: statsError.message
+      });
     }
 
     // Update stats if game is complete
@@ -104,8 +171,11 @@ export default async function handler(
 
       if (statsUpdateError) {
         console.error('[api/guess] Failed to update user stats:', statsUpdateError);
-        return res.status(500).json({ error: 'Failed to update user stats' });
-    }
+        return res.status(500).json({ 
+          error: 'Failed to update user stats',
+          details: statsUpdateError.message
+        });
+      }
 
       // Also create a score entry
       const { error: scoreError } = await supabase
@@ -161,6 +231,10 @@ export default async function handler(
       }
     });
   } catch (err) {
-    return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+    console.error('[api/guess] Unexpected error:', err);
+    return res.status(500).json({ 
+      error: 'Unexpected error',
+      details: err instanceof Error ? err.message : 'Unknown error'
+    });
   }
 } 

@@ -2,6 +2,15 @@
  * @fileoverview
  * Next.js API route for fetching the word of the day from Supabase.
  * This file should only be used server-side in API routes.
+ * 
+ * @api {get} /api/word Get today's word
+ * @apiSuccess {Object} response
+ * @apiSuccess {Object} response.word The word object with clues
+ * @apiSuccess {string} response.gameId Unique session identifier
+ * @apiSuccess {boolean} response.isFallback Whether this is a fallback word
+ * @apiError {Object} error Error response
+ * @apiError {string} error.error Error message
+ * @apiError {string} [error.details] Additional error details if available
  */
 
 // Runtime check to prevent client-side usage
@@ -73,7 +82,10 @@ export default async function handler(
         
       if (fallbackError || !fallbackWord) {
         console.error('[api/word] Failed to fetch any word:', fallbackError);
-        return res.status(404).json({ error: 'No words available' });
+        return res.status(404).json({ 
+          error: 'No words available',
+          details: fallbackError?.message
+        });
       }
 
       return res.status(200).json({
@@ -92,9 +104,9 @@ export default async function handler(
 
   } catch (err) {
     console.error('[api/word] Unexpected error:', err);
-    return res.status(500).json({
+    return res.status(500).json({ 
       error: 'Unexpected error',
       details: err instanceof Error ? err.message : 'Unknown error'
-    } as ErrorResponse);
+    });
   }
 } 

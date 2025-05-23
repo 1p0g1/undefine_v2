@@ -11,7 +11,7 @@ const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required'),
   SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
   JWT_SECRET: z.string().min(1, 'JWT secret is required'),
-  DB_PROVIDER: z.enum(['supabase', 'mock'], 'DB provider must be either "supabase" or "mock"'),
+  DB_PROVIDER: z.literal('supabase').describe('Must be "supabase"'),
   
   // Optional variables with defaults
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
