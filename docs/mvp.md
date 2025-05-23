@@ -504,17 +504,24 @@ inpage.js:1 MetaMask: Connected to chain with ID "0x1".
 - Impact: Unrelated to our app's core functionality
 - Action: Consider removing MetaMask integration if not needed
 
-### 4. CORS Error (Critical)
+### 4. Updated CORS Error Analysis (Critical)
 ```
-Access to fetch at 'https://undefine-v2-back.vercel.app/api/word' from origin 'https://undefine-v2-front-imepl8el6-paddys-projects-82cb6057.vercel.app' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+Access to fetch at 'https://undefine-v2-back.vercel.app/api/word' from origin 'https://undefine-v2-front-m4v4bogyd-paddys-projects-82cb6057.vercel.app' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
 ```
 **Analysis**:
 - Location: Browser security policy
-- Type: CORS policy violation
-- Origin: undefine-v2-front-imepl8el6-paddys-projects-82cb6057.vercel.app (preview deployment)
+- Type: CORS policy violation with credentials
+- Origin: undefine-v2-front-m4v4bogyd-paddys-projects-82cb6057.vercel.app (preview deployment)
 - Target: https://undefine-v2-back.vercel.app/api/word
-- Root Cause: Missing CORS headers in backend response
+- Root Cause: Mismatch between credentials mode and CORS headers
+- Specific Issue: Using wildcard '*' with credentials mode 'include'
 - Impact: Blocks all API communication
+
+**Error Chain**:
+1. Frontend makes credentialed fetch request
+2. CORS preflight fails due to '*' origin with credentials
+3. Resource loading fails (net::ERR_FAILED)
+4. Game initialization fails (TypeError: Failed to fetch)
 
 ### 5. Resource Loading Failure
 ```
@@ -538,33 +545,74 @@ index-ChKEtz_O.js:40 Failed to start new game: TypeError: Failed to fetch
 - Error Chain: CORS → Failed fetch → Game initialization failure
 - Impact: Complete failure of core game functionality
 
-## Solutions Priority
+## Revised Solution Priority
 
-1. **CORS Configuration (Immediate)**
-   - Add minimal CORS headers to backend:
+1. **CORS Configuration with Credentials (Immediate)**
+   - Option A: Remove credentials mode from fetch:
    ```typescript
-   res.setHeader('Access-Control-Allow-Origin', '*');
-   res.setHeader('Access-Control-Allow-Methods', '*');
-   res.setHeader('Access-Control-Allow-Headers', '*');
+   fetch(url, { 
+     credentials: 'omit' // Or remove credentials option entirely
+   });
    ```
-   - Location: All API routes
-   - Rationale: Public game data doesn't require strict CORS
+   
+   - Option B: Use specific origin instead of wildcard:
+   ```typescript
+   // In API routes
+   const origin = req.headers.origin || 'https://undefine-v2-front.vercel.app';
+   res.setHeader('Access-Control-Allow-Origin', origin);
+   res.setHeader('Access-Control-Allow-Credentials', 'true');
+   ```
 
-2. **Error Handling (High)**
-   - Implement proper error boundaries in React
-   - Add retry logic for failed fetches
-   - Provide user feedback for connection issues
-   - Location: Frontend API client
+2. **Frontend Fetch Configuration (High)**
+   - Review all fetch calls
+   - Standardize credentials handling
+   - Add proper error handling
 
-3. **MetaMask Integration (Low)**
-   - Remove MetaMask integration if not required
-   - Or move to optional feature
-   - Update documentation accordingly
+3. **Environment-Aware CORS (Medium)**
+   - Handle development URLs
+   - Handle preview deployments
+   - Handle production URLs
 
-4. **API Deprecation (Medium)**
-   - Identify deprecated API usage
-   - Update to current versions
-   - Document API dependencies
+### Implementation Plan
+
+1. **Immediate Fix**:
+   Since we don't need credentials for our public word game, we should:
+   - Remove credentials mode from frontend fetch calls
+   - Keep the simple CORS configuration with '*'
+   - This is simpler than managing specific origins
+
+2. **Frontend Changes**:
+   ```typescript
+   // Update fetch configuration
+   const response = await fetch(url, {
+     method: 'GET',
+     headers: {
+       'Content-Type': 'application/json'
+     }
+     // No credentials option
+   });
+   ```
+
+3. **Error Handling**:
+   ```typescript
+   try {
+     const response = await fetch(url);
+     if (!response.ok) {
+       throw new Error(`HTTP error! status: ${response.status}`);
+     }
+     const data = await response.json();
+     return data;
+   } catch (error) {
+     console.error('API Error:', error);
+     // Show user-friendly error message
+     throw error;
+   }
+   ```
+
+4. **Monitoring**:
+   - Add error tracking for CORS issues
+   - Log failed requests
+   - Monitor preview deployments
 
 ## Implementation Steps
 
@@ -580,8 +628,11 @@ index-ChKEtz_O.js:40 Failed to start new game: TypeError: Failed to fetch
    ```typescript
    try {
      const response = await fetch(url);
-     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-     return await response.json();
+     if (!response.ok) {
+       throw new Error(`HTTP error! status: ${response.status}`);
+     }
+     const data = await response.json();
+     return data;
    } catch (error) {
      console.error('API Error:', error);
      // Show user-friendly error message

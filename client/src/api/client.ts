@@ -41,7 +41,6 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       ...options,
       headers,
       mode: 'cors',
-      credentials: 'include',
       cache: 'no-cache',
     });
 
