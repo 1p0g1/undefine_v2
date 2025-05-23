@@ -10,6 +10,45 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
 - Frontend always connects to production backend at undefine-v2-back.vercel.app
 - All testing should be done in production environment
 
+🎮 Game Logic
+
+1. Word Guessing:
+   - Players get 6 attempts to guess the word
+   - Each guess is evaluated for:
+     a) Exact match (correct word)
+     b) Fuzzy match (close but not exact)
+     c) No match
+
+2. Fuzzy Matching Implementation:
+   - Uses Levenshtein Distance algorithm
+   - A guess is considered "fuzzy" if:
+     - Not an exact match AND
+     - Edit distance <= min(3, word_length/2)
+   - Example thresholds:
+     - 6-letter word: max distance of 3
+     - 4-letter word: max distance of 2
+   
+   Fuzzy Position Matching:
+   - For each character in the guess:
+     - Exact position matches are marked
+     - Characters appearing anywhere in word are marked
+   - Examples:
+     - Word: "define" / Guess: "definy"
+       - Fuzzy match (distance = 2)
+       - Positions [0,1,2,3] marked (d,e,f,i)
+     - Word: "define" / Guess: "defxyz"
+       - No match (distance = 4)
+       - Too many changes needed
+
+3. Clue Revelation:
+   - Definition (D) always shown
+   - After each incorrect guess:
+     1. Equivalents (E)
+     2. First Letter (F)
+     3. In a Sentence (I)
+     4. Number of Letters (N)
+     5. Etymology (E2)
+
 Architecture:
 This is a monorepo project comprising two independently deployed applications on Vercel:
 

@@ -28,6 +28,54 @@ import { ClueKey } from '../../src/types/clues';
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 /**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // deletion
+        matrix[j - 1][i] + 1, // insertion
+        matrix[j - 1][i - 1] + substitutionCost // substitution
+      );
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Calculate fuzzy match positions between two strings
+ */
+function getFuzzyPositions(guess: string, word: string): number[] {
+  const positions: number[] = [];
+  const guessLower = guess.toLowerCase();
+  const wordLower = word.toLowerCase();
+  
+  // Check each character position
+  for (let i = 0; i < guess.length; i++) {
+    // Character matches exactly
+    if (i < word.length && guessLower[i] === wordLower[i]) {
+      positions.push(i);
+      continue;
+    }
+    
+    // Check if this character appears anywhere in the word
+    if (wordLower.includes(guessLower[i])) {
+      positions.push(i);
+    }
+  }
+  
+  return positions;
+}
+
+/**
  * Returns the clues to reveal based on the number of incorrect guesses
  */
 function getRevealedClues(incorrectGuesses: number): string[] {
@@ -44,11 +92,11 @@ export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<GuessResponse>
 ) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Set CORS headers - allow only our frontend domain
+  const origin = req.headers.origin || 'https://undefine-v2-front.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, player-id, Player-Id, playerId, playerid');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, player-id');
 
   // Handle preflight request
   if (req.method === 'OPTIONS') {
@@ -125,8 +173,11 @@ export default async function handler(
     }
 
     const isCorrect = guess.toLowerCase() === word.word.toLowerCase();
-    const isFuzzy = !isCorrect && guess.toLowerCase().includes(word.word.toLowerCase());
-    const fuzzyPositions = isFuzzy ? Array.from({ length: word.word.length }, (_, i) => i) : [];
+    
+    // Calculate fuzzy match if not correct
+    const distance = levenshteinDistance(guess.toLowerCase(), word.word.toLowerCase());
+    const isFuzzy = !isCorrect && distance <= Math.min(3, Math.floor(word.word.length / 2));
+    const fuzzyPositions = isFuzzy ? getFuzzyPositions(guess, word.word) : [];
 
     // Update game session
     const updatedGuesses = [...(gameSession.guesses || []), guess];

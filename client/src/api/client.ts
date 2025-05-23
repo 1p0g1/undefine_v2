@@ -39,6 +39,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
     const response = await fetch(url, {
       ...options,
       headers,
+      mode: 'cors',
       cache: 'no-cache',
     });
 
