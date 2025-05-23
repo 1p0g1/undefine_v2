@@ -49,6 +49,108 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
      4. Number of Letters (N)
      5. Etymology (E2)
 
+🔄 Guess Submission Flow
+
+1. Frontend (React + Vite):
+   ```typescript
+   // User submits guess via useGame hook
+   const submitGuess = async (guess: string) => {
+     // Send to backend via API client
+     const response = await apiClient.submitGuess({
+       gameId,    // Current game session ID
+       guess,     // User's guess
+       playerId   // UUID from localStorage
+     });
+     
+     // Update UI based on response
+     - Update box colors (correct/incorrect/fuzzy)
+     - Show new clues if incorrect
+     - Show leaderboard if game over
+   };
+   ```
+
+2. Backend (Next.js API):
+   ```typescript
+   // /api/guess endpoint
+   export default async function handler(req, res) {
+     // 1. Validate request
+     - Ensure POST method
+     - Validate gameId, guess, playerId
+     
+     // 2. Get game data from Supabase
+     - Fetch game session
+     - Fetch target word
+     
+     // 3. Evaluate guess
+     - Check for exact match
+     - Calculate fuzzy match if not exact
+     - Determine which clues to reveal
+     
+     // 4. Update Supabase
+     - Add guess to game_sessions.guesses array
+     - Update game completion status
+     - Update player stats
+     - Record score if game complete
+     
+     // 5. Send response
+     - isCorrect/isFuzzy status
+     - Revealed clues
+     - Game completion status
+     - Updated stats
+   }
+   ```
+
+3. Supabase Tables:
+   ```sql
+   -- game_sessions
+   - id: uuid (gameId)
+   - word_id: uuid (reference to words)
+   - player_id: uuid
+   - guesses: string[] (array of attempts)
+   - start_time: timestamp
+   - is_complete: boolean
+   - is_won: boolean
+   - completion_time_seconds: integer
+
+   -- words
+   - id: uuid
+   - word: string
+   - definition: string (D)
+   - equivalents: string (E)
+   - first_letter: string (F)
+   - in_a_sentence: string (I)
+   - number_of_letters: integer (N)
+   - etymology: string (E2)
+
+   -- user_stats
+   - player_id: uuid
+   - games_played: integer
+   - games_won: integer
+   - current_streak: integer
+   - longest_streak: integer
+   - total_guesses: integer
+   - average_guesses_per_game: float
+   ```
+
+4. Critical Flow Points:
+   a) Frontend must:
+      - Maintain game state (guesses, clues, completion)
+      - Update UI immediately after guess
+      - Handle API errors gracefully
+      - Store player ID persistently
+
+   b) Backend must:
+      - Validate all inputs
+      - Never expose correct word
+      - Update all tables atomically
+      - Return consistent response shape
+
+   c) Supabase must:
+      - Maintain referential integrity
+      - Track all game sessions
+      - Store player statistics
+      - Enable leaderboard queries
+
 Architecture:
 This is a monorepo project comprising two independently deployed applications on Vercel:
 
