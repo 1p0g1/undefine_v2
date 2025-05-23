@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Un-Define word game v2",
   "scripts": {
-    "dev:backend": "cd pages && next dev -p 3001",
+    "dev:backend": "next dev -p 3001",
     "dev:frontend": "cd client && npm run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "cd client && npm run build",
-    "start": "cd client && npm run start",
+    "build": "next build",
+    "start": "next start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

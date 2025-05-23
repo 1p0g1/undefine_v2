@@ -10,6 +10,62 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
 - Frontend always connects to production backend at undefine-v2-back.vercel.app
 - All testing should be done in production environment
 
+🏗️ Deployment Configuration
+
+1. Backend (undefine-v2-back):
+   - Repository Root Configuration:
+     ```json
+     {
+       "scripts": {
+         "build": "next build",
+         "start": "next start"
+       }
+     }
+     ```
+   - Build Command: `npm run build`
+   - Output Directory: `.next`
+   - Install Command: `npm install`
+   - Development Command: `npm run dev:backend`
+
+2. Frontend (undefine-v2-front):
+   - Client Directory Configuration:
+     ```json
+     {
+       "scripts": {
+         "build": "vite build",
+         "start": "vite preview"
+       }
+     }
+     ```
+   - Build Command: `cd client && npm run build`
+   - Output Directory: `client/dist`
+   - Install Command: `cd client && npm install`
+   - Development Command: `npm run dev:frontend`
+
+3. Environment Variables:
+   Backend (Vercel):
+   ```
+   SUPABASE_URL=<production_url>
+   SUPABASE_SERVICE_ROLE_KEY=<production_key>
+   SUPABASE_ANON_KEY=<public_key>
+   JWT_SECRET=<secret>
+   DB_PROVIDER=supabase
+   NODE_ENV=production
+   ```
+
+   Frontend (Vercel):
+   ```
+   VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
+   VITE_SUPABASE_URL=<production_url>
+   VITE_SUPABASE_ANON_KEY=<public_key>
+   ```
+
+4. Build Process:
+   - Backend and Frontend are built and deployed separately
+   - Each has its own Vercel project
+   - No cross-dependencies during build
+   - Frontend always points to production backend URL
+
 🎮 Game Logic
 
 1. Word Guessing:
