@@ -368,3 +368,102 @@ The `/api/word` endpoint now has:
    - Add unit tests for mapper
    - Add API route tests
    - Add type tests 
+
+## Frontend-Backend Connection Issues
+
+### CORS Configuration Steps
+
+1. Backend (Next.js API Routes):
+   ```typescript
+   // In all API route handlers
+   res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
+   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, player-id');
+   res.setHeader('Access-Control-Allow-Credentials', 'true');
+   ```
+
+2. Environment Variables:
+   ```bash
+   # Backend (.env)
+   FRONTEND_URL=https://undefine-v2-front.vercel.app
+
+   # Frontend (.env)
+   VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
+   ```
+
+3. Vercel Configuration:
+   - Add CORS configuration to `vercel.json`:
+   ```json
+   {
+     "headers": [
+       {
+         "source": "/api/(.*)",
+         "headers": [
+           { "key": "Access-Control-Allow-Origin", "value": "${FRONTEND_URL}" },
+           { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+           { "key": "Access-Control-Allow-Headers", "value": "Content-Type, player-id" },
+           { "key": "Access-Control-Allow-Credentials", "value": "true" }
+         ]
+       }
+     ]
+   }
+   ```
+
+### Development Setup
+
+1. Local Development:
+   ```bash
+   # Terminal 1 - Backend
+   cd undefine_v2
+   npm run dev:backend  # Runs on http://localhost:3001
+
+   # Terminal 2 - Frontend
+   cd undefine_v2/client
+   npm run dev  # Runs on http://localhost:5173
+   ```
+
+2. Environment Configuration:
+   ```bash
+   # Local development (.env.development)
+   FRONTEND_URL=http://localhost:5173
+   VITE_API_BASE_URL=http://localhost:3001
+   ```
+
+### Data Flow Verification
+
+1. Backend Health Check:
+   - Access `http://localhost:3001/api/word` directly
+   - Should return valid word data without CORS errors
+   - Verify all required fields are present
+
+2. Frontend Integration:
+   - Open browser dev tools (Network tab)
+   - Load frontend application
+   - Verify successful API calls to `/api/word`
+   - Check response contains complete word data
+
+3. Error Handling:
+   - Backend logs should show incoming requests
+   - Frontend should gracefully handle API errors
+   - CORS errors should be resolved
+   - Network tab should show 200 status codes
+
+### Troubleshooting Guide
+
+1. CORS Issues:
+   - Verify CORS headers in Network tab
+   - Check environment variables are set correctly
+   - Ensure backend is running and accessible
+   - Clear browser cache and hard reload
+
+2. Data Issues:
+   - Check backend logs for database connection
+   - Verify Supabase connection and queries
+   - Ensure word data is properly seeded
+   - Validate API response format
+
+3. Environment Issues:
+   - Confirm all required env vars are set
+   - Check for typos in URLs
+   - Verify correct ports are being used
+   - Ensure both services are running 

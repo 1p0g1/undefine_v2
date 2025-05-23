@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ErrorResponse } from '../../types/api';
 import { env } from '../../src/env.server';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -34,9 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (err) {
     console.error('[api/test] Unexpected error:', err);
-    return res.status(500).json({
+    return res.status(500).json({ 
       error: 'Unexpected error',
       details: err instanceof Error ? err.message : 'Unknown error'
-    } as ErrorResponse);
+    });
   }
 } 

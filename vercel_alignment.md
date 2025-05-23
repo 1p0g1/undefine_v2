@@ -2,12 +2,6 @@
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.
 
-⚠️ **Important Environment Variable Note**:
-The frontend (Vite) and backend (Next.js) are deployed as separate Vercel projects, each with their own environment variable conventions:
-- Frontend (client/): Uses `VITE_*` prefix (e.g., `VITE_API_BASE_URL`)
-- Backend (root): Uses standard Node/Next.js vars (e.g., `API_URL`, `SUPABASE_SERVICE_ROLE_KEY`)
-Do not refactor backend environment variables to use `VITE_` prefix — this will break Next.js server access.
-
 ---
 
 ## ✅ Deployment Alignment (Confirmed Working)
@@ -484,7 +478,7 @@ ON CONFLICT DO NOTHING;
 
 ### Base URL Logic
 - The application uses a dynamic base URL system that adapts to both local development and production environments
-- Base URL is controlled by the `VITE_API_BASE_URL` environment variable
+- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
 - In production (Vercel), the variable is not set, defaulting to an empty string, which results in relative paths
 - In local development, it defaults to `http://localhost:3001` if not set
 
@@ -576,18 +570,18 @@ The `/api/word` endpoint is responsible for fetching the word-of-the-day and cre
 ## API Base URL Configuration
 
 ### Environment Variables
-- `VITE_API_BASE_URL` controls API endpoint base URL
+- `NEXT_PUBLIC_API_BASE_URL` controls API endpoint base URL
 - In production (Vercel): Not set, defaults to empty string
 - In development: Set to `http://localhost:3001` in `.env.local`
 
 ### Configuration by Environment
-| Environment | VITE_API_BASE_URL | Result |
+| Environment | NEXT_PUBLIC_API_BASE_URL | Result |
 |-------------|--------------------------|---------|
 | Production  | https://undefine-v2-back.vercel.app | Uses stable production URL |
 | Development | http://localhost:3001 | Uses local development server |
 
 ### Implementation Details
-- Base URL is controlled by the `VITE_API_BASE_URL` environment variable
+- Base URL is controlled by the `NEXT_PUBLIC_API_BASE_URL` environment variable
 - No trailing slashes in URLs
 - Preview deployments use production backend
 - Local development uses localhost

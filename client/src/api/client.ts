@@ -2,8 +2,8 @@ import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from '
 import { getPlayerId } from '../utils/player';
 import { env } from '../env.client';
 
-// Get API base URL from validated environment
-const BASE_URL = env.VITE_API_BASE_URL.replace(/\/$/, '');
+// Get API base URL from validated environment - must be the Vercel deployment URL
+const BASE_URL = 'https://undefine-v2-back.vercel.app';
 
 /**
  * Ensures path starts with a forward slash
@@ -19,11 +19,6 @@ const normalizePath = (path: string) => {
  * @returns Promise with the typed response
  */
 export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  if (!BASE_URL) {
-    console.error('⚠️ API base URL is not configured');
-    throw new Error('API base URL is not configured. Set VITE_API_BASE_URL in your Vercel deployment or .env file.');
-  }
-
   // Get existing headers from options
   const existingHeaders = options.headers || {};
   
@@ -41,27 +36,34 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const normalizedPath = normalizePath(path);
   const url = `${BASE_URL}${normalizedPath}`;
   
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    mode: 'cors',
-    credentials: 'include',
-    cache: 'no-cache',
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('API Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      error: errorText,
-      url,
-      headers: Object.fromEntries(headers.entries()),
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      mode: 'cors',
+      credentials: 'include',
+      cache: 'no-cache',
     });
-    throw new Error(`API request failed: ${errorText}`);
-  }
 
-  return response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        url,
+      });
+      throw new Error(`API request failed: ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Fetch Error:', {
+      url,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    throw error;
+  }
 };
 
 /**

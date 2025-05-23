@@ -27,15 +27,18 @@ import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
+// Production frontend URL
+const FRONTEND_URL = 'https://undefine-v2-front.vercel.app';
+
 export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<WordResponse>
 ) {
-  // Set CORS headers
+  // Set CORS headers for Vercel deployment
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, player-id');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, player-id, Player-Id, playerId, playerid');
 
   // Handle preflight request
   if (req.method === 'OPTIONS') {

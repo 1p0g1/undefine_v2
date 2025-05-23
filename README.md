@@ -129,9 +129,9 @@ NODE_ENV | No | development or production
 PORT | No | Defaults to 3001
 SUPABASE_URL | Yes | Supabase project URL
 SUPABASE_ANON_KEY | Yes | Supabase anon key
-DB_PROVIDER | Yes | supabase or mock
+DB_PROVIDER | Yes | Must be "supabase"
 JWT_SECRET | Yes (prod) | JWT signing secret
-VITE_API_BASE_URL | Yes | Base URL for backend API (https://undefine-v2-back.vercel.app) - no trailing slash
+NEXT_PUBLIC_API_BASE_URL | Yes | Base URL for backend API (https://undefine-v2-back.vercel.app) - no trailing slash
 
 🛡️ RLS Status
 
@@ -213,9 +213,3 @@ The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is c
 - Environment variables properly configured in Vercel dashboard
 
 Note: All API routes are properly configured and verified for Vercel serverless deployment. The project includes a root page component to ensure correct Next.js framework detection.
-
-## Deployment Notes
-
-- Frontend (client/): Uses Vite, requires VITE_* environment variables
-- Backend (root): Uses Next.js, uses standard Node environment variables
-- Deployment trigger: 2024-03-19

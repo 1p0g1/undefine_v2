@@ -1,0 +1,1 @@
+(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[332],{3114:(n,_,e)=>{(window.__NEXT_P=window.__NEXT_P||[]).push(["/",function(){return e(4933)}])},4933:(n,_,e)=>{"use strict";function u(){return"API only backend project"}e.r(_),e.d(_,{default:()=>u})}},n=>{var _=_=>n(n.s=_);n.O(0,[636,593,792],()=>_(3114)),_N_E=n.O()}]);
