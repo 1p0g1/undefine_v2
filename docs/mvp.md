@@ -467,3 +467,134 @@ The `/api/word` endpoint now has:
    - Check for typos in URLs
    - Verify correct ports are being used
    - Ensure both services are running 
+
+## Frontend Error Analysis
+
+### 1. Deprecated API Warning
+```
+content.js:1 Deprecated API for given entry type.
+```
+**Analysis**: 
+- Location: content.js, line 1
+- Type: Deprecation warning
+- Possible Cause: Using an outdated API method in content scripts
+- Impact: Non-critical warning, functionality may still work
+- Solution: Identify the deprecated API call and update to current version
+
+### 2. Player ID Generation Sequence
+```
+index-ChKEtz_O.js:40 Fetching word…
+index-ChKEtz_O.js:40 [getPlayerId] Generating new player ID
+index-ChKEtz_O.js:40 [getPlayerId] New player ID stored successfully
+```
+**Analysis**:
+- Location: index-ChKEtz_O.js, line 40
+- Type: Info logging
+- Flow: Correct sequence of events (fetch → generate ID → store ID)
+- Note: Working as expected, not an error
+
+### 3. MetaMask Connection
+```
+inpage.js:1 MetaMask: Connected to chain with ID "0x1".
+```
+**Analysis**:
+- Location: inpage.js, line 1
+- Type: Info message
+- Context: MetaMask wallet connection to Ethereum mainnet
+- Impact: Unrelated to our app's core functionality
+- Action: Consider removing MetaMask integration if not needed
+
+### 4. CORS Error (Critical)
+```
+Access to fetch at 'https://undefine-v2-back.vercel.app/api/word' from origin 'https://undefine-v2-front-imepl8el6-paddys-projects-82cb6057.vercel.app' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+**Analysis**:
+- Location: Browser security policy
+- Type: CORS policy violation
+- Origin: undefine-v2-front-imepl8el6-paddys-projects-82cb6057.vercel.app (preview deployment)
+- Target: https://undefine-v2-back.vercel.app/api/word
+- Root Cause: Missing CORS headers in backend response
+- Impact: Blocks all API communication
+
+### 5. Resource Loading Failure
+```
+undefine-v2-back.vercel.app/api/word:1 Failed to load resource: net::ERR_FAILED
+```
+**Analysis**:
+- Location: Network request
+- Type: Resource loading error
+- Endpoint: /api/word
+- Root Cause: Consequence of CORS failure
+- Impact: Cannot fetch word data
+
+### 6. Fetch Error Chain
+```
+index-ChKEtz_O.js:40 Fetch Error: Object
+index-ChKEtz_O.js:40 Failed to start new game: TypeError: Failed to fetch
+```
+**Analysis**:
+- Location: index-ChKEtz_O.js, line 40
+- Type: Runtime error
+- Error Chain: CORS → Failed fetch → Game initialization failure
+- Impact: Complete failure of core game functionality
+
+## Solutions Priority
+
+1. **CORS Configuration (Immediate)**
+   - Add minimal CORS headers to backend:
+   ```typescript
+   res.setHeader('Access-Control-Allow-Origin', '*');
+   res.setHeader('Access-Control-Allow-Methods', '*');
+   res.setHeader('Access-Control-Allow-Headers', '*');
+   ```
+   - Location: All API routes
+   - Rationale: Public game data doesn't require strict CORS
+
+2. **Error Handling (High)**
+   - Implement proper error boundaries in React
+   - Add retry logic for failed fetches
+   - Provide user feedback for connection issues
+   - Location: Frontend API client
+
+3. **MetaMask Integration (Low)**
+   - Remove MetaMask integration if not required
+   - Or move to optional feature
+   - Update documentation accordingly
+
+4. **API Deprecation (Medium)**
+   - Identify deprecated API usage
+   - Update to current versions
+   - Document API dependencies
+
+## Implementation Steps
+
+1. Backend API Routes:
+   ```typescript
+   // In all API routes
+   res.setHeader('Access-Control-Allow-Origin', '*');
+   res.setHeader('Access-Control-Allow-Methods', '*');
+   res.setHeader('Access-Control-Allow-Headers', '*');
+   ```
+
+2. Frontend Error Handling:
+   ```typescript
+   try {
+     const response = await fetch(url);
+     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+     return await response.json();
+   } catch (error) {
+     console.error('API Error:', error);
+     // Show user-friendly error message
+     throw error;
+   }
+   ```
+
+3. Development Environment:
+   - Add proper logging levels
+   - Implement error tracking
+   - Add monitoring for API health
+
+4. Documentation:
+   - Update API documentation
+   - Document error codes
+   - Add troubleshooting guide 
