@@ -7,34 +7,34 @@ import { z } from 'zod';
 
 const serverEnvSchema = z.object({
   // Required variables
-  SUPABASE_URL: z.string().url('Invalid Supabase URL'),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required'),
-  SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
-  JWT_SECRET: z.string().min(1, 'JWT secret is required'),
-  DB_PROVIDER: z.literal('supabase').describe('Must be "supabase"'),
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string(),
+  SUPABASE_ANON_KEY: z.string(),
+  JWT_SECRET: z.string(),
+  DB_PROVIDER: z.literal('supabase'),  // Must be 'supabase' in production
   
   // Optional variables with defaults
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z.literal('production'),  // Must be 'production'
   PORT: z.string().transform(Number).default('3001'),
 });
 
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
+// Parse environment variables
+const parsedEnv = serverEnvSchema.safeParse({
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  JWT_SECRET: process.env.JWT_SECRET,
+  DB_PROVIDER: process.env.DB_PROVIDER,
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+});
 
-/**
- * Get validated server environment variables
- * @throws {Error} if validation fails
- */
-export function getServerEnv(): ServerEnv {
-  try {
-    return serverEnvSchema.parse(process.env);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const issues = error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('\n');
-      throw new Error(`Invalid server environment variables:\n${issues}`);
-    }
-    throw error;
-  }
+if (!parsedEnv.success) {
+  console.error(
+    '❌ Invalid environment variables:\n',
+    Object.entries(parsedEnv.error.flatten().fieldErrors).map(([k, v]) => `${k}: ${v?.join(', ')}`).join('\n')
+  );
+  throw new Error('Invalid environment variables');
 }
 
-// Export validated env object for convenience
-export const env = getServerEnv(); 
+export const env = parsedEnv.data; 

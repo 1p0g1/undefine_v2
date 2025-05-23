@@ -1,6 +1,15 @@
 ⚠️ REQUIRED READING FOR ALL PROMPTS - DO NOT MODIFY THIS SECTION ⚠️
 
 📌 Project Overview – Un-Define MVP CREED
+
+🚨 PRODUCTION FOCUS
+This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a priority.
+- All code changes should target production URLs and configurations
+- Do not waste time on development environment setup
+- Use production Supabase instance only
+- Frontend always connects to production backend at undefine-v2-back.vercel.app
+- All testing should be done in production environment
+
 Architecture:
 This is a monorepo project comprising two independently deployed applications on Vercel:
 

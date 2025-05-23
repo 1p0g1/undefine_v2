@@ -14,47 +14,35 @@ import { z } from 'zod';
 /// <reference types="vite/client" />
 
 const clientEnvSchema = z.object({
-  // Required variables
-  VITE_API_BASE_URL: z.string().url('Invalid API base URL'),
-  VITE_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
+  // Required variables - hardcoded for production
+  VITE_API_BASE_URL: z.string().url().default('https://undefine-v2-back.vercel.app'),
+  VITE_SUPABASE_URL: z.string().url(),
+  VITE_SUPABASE_ANON_KEY: z.string(),
 
   // Optional variables with defaults
-  MODE: z.enum(['development', 'production']).default('development'),
-  DEV: z.boolean().default(true),
-  PROD: z.boolean().default(false),
+  MODE: z.enum(['development', 'production']).default('production'),
+  DEV: z.boolean().default(false),
+  PROD: z.boolean().default(true),
   SSR: z.boolean().default(false),
 });
 
-export type ClientEnv = z.infer<typeof clientEnvSchema>;
+// Parse environment variables
+const parsedEnv = clientEnvSchema.safeParse({
+  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  MODE: import.meta.env.MODE,
+  DEV: import.meta.env.DEV,
+  PROD: import.meta.env.PROD,
+  SSR: import.meta.env.SSR,
+});
 
-/**
- * Get validated client environment variables
- * @throws {Error} if validation fails
- */
-export function getClientEnv(): ClientEnv {
-  try {
-    const env = clientEnvSchema.parse(import.meta.env);
-    
-    // Development-time warnings
-    if (env.DEV) {
-      if (!env.VITE_API_BASE_URL) {
-        console.warn('⚠️ VITE_API_BASE_URL is not set. Please check your Vercel deployment or .env configuration.');
-      }
-      if (env.VITE_API_BASE_URL === 'http://localhost:3001') {
-        console.info('ℹ️ Using development API URL: http://localhost:3001');
-      }
-    }
-    
-    return env;
-  } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      const issues = error.issues.map((issue: z.ZodIssue) => `${issue.path.join('.')}: ${issue.message}`).join('\n');
-      throw new Error(`Invalid client environment variables:\n${issues}`);
-    }
-    throw error;
-  }
+if (!parsedEnv.success) {
+  console.error(
+    '❌ Invalid environment variables:\n',
+    Object.entries(parsedEnv.error.flatten().fieldErrors).map(([k, v]) => `${k}: ${v?.join(', ')}`).join('\n')
+  );
+  throw new Error('Invalid environment variables');
 }
 
-// Export validated env object for convenience
-export const env = getClientEnv(); 
+export const env = parsedEnv.data; 
