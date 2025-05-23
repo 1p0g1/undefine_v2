@@ -141,3 +141,5 @@
 2. Create new docs if needed
 3. Update only when requested
 4. Follow existing formats
+
+29. **"Read MVP CREED First"**: ALWAYS read and follow the CREED section at the top of mvp.md before processing any prompt. This CREED contains critical architectural and environment configuration details that must be respected in all changes.

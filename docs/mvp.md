@@ -1,3 +1,43 @@
+⚠️ REQUIRED READING FOR ALL PROMPTS - DO NOT MODIFY THIS SECTION ⚠️
+
+📌 Project Overview – Un-Define MVP CREED
+Architecture:
+This is a monorepo project comprising two independently deployed applications on Vercel:
+
+Frontend: Vite + React
+- Deployed at undefine-v2-front.vercel.app
+- Uses Vite-style environment variables prefixed with VITE_
+- Communicates with backend via VITE_API_BASE_URL
+
+Backend: Next.js (API routes only)
+- Deployed at undefine-v2-back.vercel.app
+- Provides the /api/word and other serverless API routes
+- Interfaces with Supabase using SUPABASE_SERVICE_ROLE_KEY
+
+Environment Configuration:
+
+Frontend (Vite):
+- VITE_API_BASE_URL: Backend endpoint
+- VITE_SUPABASE_URL: Supabase project URL
+- VITE_SUPABASE_ANON_KEY: Supabase client key for public access
+
+Backend (Next.js):
+- SUPABASE_URL: Supabase project URL
+- SUPABASE_ANON_KEY: Public access key (if needed)
+- SUPABASE_SERVICE_ROLE_KEY: Secure access key for admin-level operations
+- JWT_SECRET: Used for signing/verifying auth tokens
+- DB_PROVIDER: Should be set to "supabase" only — "mock" is deprecated and unused
+
+Important Context:
+- Frontend uses Vite's import.meta.env access pattern for environment variables and must not use process.env.
+- Backend uses Node-style process.env access and validates config via Zod schemas.
+- All API interactions are secured via appropriate Supabase keys.
+- The frontend will eventually need to support POST requests (e.g., for submitting guesses).
+
+⚠️ END OF REQUIRED READING ⚠️
+
+---
+
 # MVP Development Plan
 
 ## Current Temporary Solutions
@@ -13,7 +53,7 @@
   4. Add proper validation middleware
 
 ### Environment Variable Handling
-- **Current Status**: VITE_API_BASE_URL configuration standardized
+- **Current Status**: NEXT_PUBLIC_API_BASE_URL configuration standardized
 - **Production URL**: https://undefine-v2-back.vercel.app
 - **Development URL**: http://localhost:3001
 - **Implementation**:
@@ -328,153 +368,3 @@ The `/api/word` endpoint now has:
    - Add unit tests for mapper
    - Add API route tests
    - Add type tests 
-
-### 🔒 Environment Variable Protection
-1. ESLint Rules Added
-   - Prevents `process.env` usage in client code
-   - Custom error messages guide to `import.meta.env.VITE_*`
-   - Applies to all client files via overrides
-   ```json
-   {
-     "no-restricted-globals": ["error", {
-       "name": "process",
-       "message": "Use import.meta.env.VITE_* instead of process.env in Vite projects."
-     }]
-   }
-   ```
-
-2. API Client Standardization
-   - All API calls now use `fetchFromApi` utility
-   - Consistent error handling and headers
-   - Proper CORS and credentials configuration
-   - Example migration in DevControls:
-   ```typescript
-   // ❌ Old: Direct fetch with relative URL
-   fetch('/api/dev/reset-session')
-   
-   // ✅ New: Using fetchFromApi with proper base URL
-   fetchFromApi('/api/dev/reset-session')
-   ```
-
-3. Development Experience
-   - Clear warnings for missing environment variables
-   - Helpful error messages with configuration hints
-   - Documentation in key files explaining proper usage
-   - Automatic validation of environment variable format 
-
-## API Client Improvements
-
-### 🔄 Retry Logic Implementation
-The API client now includes smart retry logic with exponential backoff:
-
-```typescript
-const API_CONFIG = {
-  maxRetries: 2,
-  initialRetryDelay: 1000, // 1 second
-  maxRetryDelay: 5000,    // 5 seconds
-};
-
-// Smart retry with backoff and jitter
-function getRetryDelay(attempt: number): number {
-  const delay = Math.min(
-    API_CONFIG.initialRetryDelay * Math.pow(2, attempt - 1),
-    API_CONFIG.maxRetryDelay
-  );
-  return delay + Math.random() * 100; // Add jitter
-}
-```
-
-Features:
-- Exponential backoff with configurable delays
-- Jitter to prevent thundering herd
-- Smart retry logic (skips 4xx except 429)
-- Detailed error logging with attempt tracking
-
-### 🛡️ Response Validation
-Added Zod-based response validation for type safety:
-
-```typescript
-// Validation helper
-function validateApiResponse<T>(data: unknown, schema: z.ZodType<T>): T {
-  return schema.parse(data); // With error handling
-}
-
-// Example usage in API client
-async getNewWord(): Promise<WordResponse> {
-  const response = await fetchFromApi<unknown>('/api/word');
-  return validateApiResponse(response, WordResponseSchema);
-}
-```
-
-Benefits:
-- Runtime type validation of API responses
-- Detailed validation error messages
-- Type-safe schema definitions
-- Consistent error handling
-
-### 🔍 Development Experience
-Enhanced developer tooling in DevControls:
-
-```typescript
-// API URL validation with warnings
-useEffect(() => {
-  if (!env.VITE_API_BASE_URL) {
-    setApiWarning('⚠️ VITE_API_BASE_URL not set');
-  } else {
-    // Validate URL format and environment
-    const url = new URL(env.VITE_API_BASE_URL);
-    if (env.DEV && !url.hostname.includes('localhost')) {
-      setApiWarning('ℹ️ Using non-localhost API URL in development');
-    }
-  }
-}, []);
-```
-
-Features:
-- Visual warnings for API configuration issues
-- Environment-specific checks
-- Current API URL display
-- Protocol and format validation
-
-### 🔒 Type Safety Improvements
-1. Request/Response Types
-   ```typescript
-   // Zod schemas matching TypeScript types
-   export const GuessResponseSchema = z.object({
-     isCorrect: z.boolean(),
-     score: z.number(),
-     guess: z.string(),
-     isFuzzy: z.boolean(),
-     fuzzyPositions: z.array(z.number()),
-     gameOver: z.boolean(),
-     revealedClues: z.array(z.string()),
-     usedHint: z.boolean(),
-   });
-   ```
-
-2. Error Handling
-   ```typescript
-   // Detailed error information
-   console.error('API Error:', {
-     status: response.status,
-     attempt: attempt,
-     error: errorText,
-     // ... other details
-   });
-   ```
-
-### 🚀 Future Improvements
-1. Error Boundaries
-   - Add React error boundaries
-   - Graceful failure handling
-   - User-friendly error messages
-
-2. Automated Testing
-   - Unit tests for retry logic
-   - Integration tests for API client
-   - Response validation tests
-
-3. Performance Monitoring
-   - Track retry statistics
-   - Monitor response times
-   - Log validation failures 
