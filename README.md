@@ -1,6 +1,6 @@
-Un-Define
+# Un-Define v2
 
-A daily word-guessing game where players try to identify a hidden word based on six progressively revealed linguistic clues.
+A word guessing game with progressive clue revelation.
 
 📚 Documentation
 
@@ -213,3 +213,25 @@ The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is c
 - Environment variables properly configured in Vercel dashboard
 
 Note: All API routes are properly configured and verified for Vercel serverless deployment. The project includes a root page component to ensure correct Next.js framework detection.
+
+## Development
+- Frontend: React + Vite
+- Backend: Next.js API Routes
+- Database: Supabase
+- Deployment: Vercel
+
+## Getting Started
+```bash
+# Install dependencies
+npm install
+
+# Start backend (localhost:3001)
+npm run dev:backend
+
+# Start frontend (localhost:5173)
+cd client && npm run dev
+```
+
+## Production
+- Backend: https://undefine-v2-back.vercel.app
+- Frontend: https://undefine-v2-front.vercel.app
