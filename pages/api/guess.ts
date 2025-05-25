@@ -23,7 +23,7 @@ import type { NextApiRequest } from 'next';
 import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
-import { ClueKey, CLUE_SEQUENCE } from '../../src/types/clues';
+import { ClueKey, CLUE_SEQUENCE } from '@/src/types/clues';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -342,7 +342,7 @@ export default async function handler(
       : null;
 
     // Get current revealed clues and determine next clue
-    const currentRevealedClues = gameSession.revealed_clues || [ClueKey.Definition];
+    const currentRevealedClues = gameSession.revealed_clues || ['definition'];
     let newRevealedClues = [...currentRevealedClues];
     
     if (!isCorrect && !isComplete) {
