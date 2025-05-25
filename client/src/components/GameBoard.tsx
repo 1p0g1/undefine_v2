@@ -7,7 +7,7 @@ import './GameBoard.css';
 
 interface GameBoardProps {
   gameState: GameSessionState;
-  guessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty')[];
+  guessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[];
   onGuess: (guess: string) => void;
   onPlayAgain?: () => void;
   fuzzyPositions?: number[];

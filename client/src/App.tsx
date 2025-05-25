@@ -4,6 +4,8 @@ import { DefineBoxes } from './components/DefineBoxes';
 import { getVisibleClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
+import { getPlayerId } from './utils/player';
+import { GameBoard } from './components/GameBoard';
 
 function App() {
   const {
@@ -17,7 +19,6 @@ function App() {
     isLeaderboardLoading,
     leaderboardError,
   } = useGame();
-  const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [canReopenSummary, setCanReopenSummary] = useState(false);
@@ -49,15 +50,6 @@ function App() {
       if (summaryTimeoutRef.current) clearTimeout(summaryTimeoutRef.current);
     };
   }, []);
-
-  const handleGuessSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = guess.trim();
-    if (!trimmed) return;
-    if (gameState.guesses.includes(trimmed)) return;
-    submitGuess(trimmed);
-    setGuess('');
-  };
 
   const visibleClues = gameState.clues
     ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
@@ -271,7 +263,12 @@ function App() {
           </button>
         )}
         </div>
-      {/* Game Summary Modal */}
+      <GameBoard
+        gameState={gameState}
+        guessStatus={guessStatus}
+        onGuess={submitGuess}
+        onPlayAgain={startNewGame}
+      />
       <GameSummaryModal
         open={showSummary}
         onClose={handleCloseSummary}
@@ -288,63 +285,6 @@ function App() {
         isLoading={isLeaderboardLoading}
         error={leaderboardError || undefined}
       />
-      {/* Guess Input Form */}
-      <form
-        onSubmit={handleGuessSubmit}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '1rem',
-          backgroundColor: 'white',
-          borderTop: '1px solid #e5e7eb',
-          display: 'flex',
-          gap: '0.5rem',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <input
-          type="text"
-          value={guess}
-          onChange={e => setGuess(e.target.value)}
-          placeholder="Enter your guess"
-          style={{
-            padding: '0.5rem',
-            borderRadius: '0.25rem',
-            border: '1px solid #d1d5db',
-            width: '100%',
-            maxWidth: '200px',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '0.875rem',
-          }}
-        />
-        <button
-          type="submit"
-          disabled={!guess.trim() || gameState.isComplete}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            backgroundColor: '#1a237e',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            transition: 'background-color 0.2s',
-            opacity: !guess.trim() || gameState.isComplete ? 0.5 : 1,
-          }}
-        >
-          <span
-            style={{ fontSize: '1.25rem', lineHeight: 1, display: 'inline-block' }}
-            aria-hidden="true"
-          >
-            →
-          </span>
-        </button>
-      </form>
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }

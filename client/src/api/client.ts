@@ -1,8 +1,8 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-// Production backend URL
-const BASE_URL = 'https://undefine-v2-back.vercel.app';
+// Use relative URL in development, absolute in production
+const BASE_URL = process.env.NODE_ENV === 'development' ? '' : 'https://undefine-v2-back.vercel.app';
 
 /**
  * Ensures path starts with a forward slash
@@ -29,12 +29,18 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   // Add player-id last to ensure it's not overwritten
   const playerId = getPlayerId();
   if (playerId) {
-    headers.set('Player-ID', playerId); // Match the case in CORS middleware
+    headers.set('Player-ID', playerId);
   }
 
   const normalizedPath = normalizePath(path);
   const url = `${BASE_URL}${normalizedPath}`;
   
+  console.log('Making API request to:', url, {
+    method: options.method || 'GET',
+    headers: Object.fromEntries(headers.entries()),
+    body: options.body ? JSON.parse(options.body as string) : undefined
+  });
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -83,6 +89,7 @@ export const apiClient = {
    * @returns Promise with the guess response
    */
   async submitGuess(request: GuessRequest): Promise<GuessResponse> {
+    console.log('Submitting guess request:', request);
     return fetchFromApi<GuessResponse>('/api/guess', {
       method: 'POST',
       body: JSON.stringify(request),
