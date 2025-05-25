@@ -14,8 +14,8 @@ import { z } from 'zod';
 /// <reference types="vite/client" />
 
 const clientEnvSchema = z.object({
-  // Required variables - hardcoded for production
-  VITE_API_BASE_URL: z.string().url().default('https://undefine-v2-back.vercel.app'),
+  // Required variables
+  VITE_API_BASE_URL: z.string().default(''),  // Empty string for relative URLs
   VITE_SUPABASE_URL: z.string().url(),
   VITE_SUPABASE_ANON_KEY: z.string(),
 

@@ -4,7 +4,17 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const ALLOWED_ORIGINS = [
   'https://undefine-v2-front.vercel.app', // Production
   'http://localhost:3000', // Local development
+  'http://localhost:5173', // Vite dev server
 ];
+
+// Allow all preview URLs in development
+const isAllowedOrigin = (origin: string) => {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (origin.includes('vercel.app')) return true; // Allow all Vercel preview URLs
+  if (origin.startsWith('http://localhost')) return true; // Allow all localhost origins
+  return false;
+};
 
 export type ApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>;
 
@@ -23,10 +33,11 @@ export function withCors(handler: ApiHandler): ApiHandler {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
     
     // Set origin if it's allowed
-    if (ALLOWED_ORIGINS.includes(origin) || 
-        origin.includes('vercel.app') || // Allow all Vercel preview URLs
-        origin.startsWith('http://localhost')) { // Allow all localhost origins
+    if (isAllowedOrigin(origin)) {
+      console.log('Setting CORS origin:', origin);
       res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      console.warn('Rejected origin:', origin);
     }
 
     // Handle preflight request

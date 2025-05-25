@@ -1,8 +1,9 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
+import { env } from '../env.client';
 
-// Use relative URL in development, absolute in production
-const BASE_URL = process.env.NODE_ENV === 'development' ? '' : 'https://undefine-v2-back.vercel.app';
+// Use empty string for relative URLs in production, configured URL in development
+const BASE_URL = env.VITE_API_BASE_URL;
 
 /**
  * Ensures path starts with a forward slash
@@ -61,7 +62,9 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       throw new Error(`API request failed: ${errorText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('API Response:', data);
+    return data;
   } catch (error) {
     console.error('Fetch Error:', {
       url,
