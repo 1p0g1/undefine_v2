@@ -24,6 +24,7 @@ import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
 import { ClueKey, CLUE_SEQUENCE } from '@/src/types/clues';
+import { withCors } from '@/middleware/cors';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -232,22 +233,10 @@ async function updateLeaderboardSummary(
   }
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: ApiResponse<GuessResponse>
 ) {
-  // Set CORS headers
-  const origin = req.headers.origin || 'https://undefine-v2-front.vercel.app';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, player-id');
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ 
       error: 'Method not allowed',
@@ -457,4 +446,6 @@ export default async function handler(
       details: err instanceof Error ? err.message : 'Unknown error'
     });
   }
-} 
+}
+
+export default withCors(handler); 
