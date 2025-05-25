@@ -24,27 +24,17 @@ import type { ApiResponse, ErrorResponse } from 'types/api';
 import { WordResponse } from '../../shared-types/src/word';
 import { env } from '../../src/env.server';
 import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
+import { withCors } from '@/middleware/cors';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Production frontend URL
 const FRONTEND_URL = 'https://undefine-v2-front.vercel.app';
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: ApiResponse<WordResponse>
 ) {
-  // Add CORS headers for public access
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
-
-  // Handle OPTIONS request for CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -111,4 +101,7 @@ export default async function handler(
       details: err instanceof Error ? err.message : 'Unknown error'
     });
   }
-} 
+}
+
+// Export the handler wrapped with CORS middleware
+export default withCors(handler); 

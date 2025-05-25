@@ -4,10 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { StreakResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
+import { withCors } from '@/middleware/cors';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: ApiResponse<StreakResponse>
 ) {
@@ -43,4 +44,7 @@ export default async function handler(
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
-} 
+}
+
+// Export the handler wrapped with CORS middleware
+export default withCors(handler); 

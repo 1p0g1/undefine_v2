@@ -1,0 +1,88 @@
+.clue-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.clue-card {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-secondary);
+  transition: all 0.3s ease;
+}
+
+.clue-card.hidden {
+  opacity: 0.5;
+  filter: blur(2px);
+}
+
+.clue-card.revealed {
+  opacity: 1;
+  filter: none;
+  transform: translateY(0);
+}
+
+.clue-card.correct {
+  background: var(--color-success-bg);
+  border: 2px solid var(--color-success);
+}
+
+.clue-card.incorrect {
+  background: var(--color-error-bg);
+  border: 2px solid var(--color-error);
+}
+
+.clue-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.clue-key {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.clue-label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.clue-content {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clue-value {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.clue-placeholder {
+  font-size: 2rem;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+/* Animation for revealing clues */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.clue-card.revealed {
+  animation: reveal 0.3s ease forwards;
+} 

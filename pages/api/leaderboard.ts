@@ -2,10 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { LeaderboardResponse, ApiResponse, LeaderboardEntry } from 'types/api';
 import { env } from '../../src/env.server';
+import { withCors } from '@/middleware/cors';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: ApiResponse<LeaderboardResponse>
 ) {
@@ -53,20 +54,20 @@ export default async function handler(
 
     // If player is not in top 10 but has an entry, add it to the response
     const leaderboardEntries = [...topEntries];
-    if (playerEntry && !topEntries.some(entry => entry.player_id === playerId)) {
-      leaderboardEntries.push({
-        ...playerEntry,
-        is_current_player: true,
-      });
+    if (playerEntry && !topEntries.find(entry => entry.player_id === playerId)) {
+      leaderboardEntries.push(playerEntry);
     }
 
     return res.status(200).json({
       leaderboard: leaderboardEntries,
       playerRank,
-      totalEntries: allEntries?.length ?? 0,
+      totalEntries: allEntries?.length ?? 0
     });
-  } catch (error) {
-    console.error('Error in leaderboard endpoint:', error);
+  } catch (err) {
+    console.error('Error in leaderboard handler:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
-} 
+}
+
+// Export the handler wrapped with CORS middleware
+export default withCors(handler); 

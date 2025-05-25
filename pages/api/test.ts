@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '../../src/env.server';
+import { withCors } from '@/middleware/cors';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Log environment state for debugging
   console.log('[api/test] Environment check:', {
     hasUrl: !!env.SUPABASE_URL,
@@ -38,4 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: err instanceof Error ? err.message : 'Unknown error'
     });
   }
-} 
+}
+
+// Export the handler wrapped with CORS middleware
+export default withCors(handler); 

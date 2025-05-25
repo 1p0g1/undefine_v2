@@ -29,7 +29,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   // Add player-id last to ensure it's not overwritten
   const playerId = getPlayerId();
   if (playerId) {
-    headers.set('player-id', playerId);
+    headers.set('Player-ID', playerId); // Match the case in CORS middleware
   }
 
   const normalizedPath = normalizePath(path);
@@ -40,6 +40,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       ...options,
       headers,
       mode: 'cors',
+      credentials: 'include',
       cache: 'no-cache',
     });
 

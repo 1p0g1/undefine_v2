@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Frontend domains that are allowed to access the API
 const ALLOWED_ORIGINS = [
-  'https://undefine-v2-front.vercel.app',
-  'https://undefine-v2-front-e9qvxwthw-paddys-projects-82cb6057.vercel.app', // Preview URL
+  'https://undefine-v2-front.vercel.app', // Production
   'http://localhost:3000', // Local development
 ];
 
@@ -18,16 +17,15 @@ export function withCors(handler: ApiHandler): ApiHandler {
     // Get origin from request headers
     const origin = req.headers.origin || '';
     
-    // Always set CORS headers for preflight
+    // Always set CORS headers
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
-
+    
     // Set origin if it's allowed
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (origin.includes('vercel.app')) {
-      // Allow Vercel preview deployments
+    if (ALLOWED_ORIGINS.includes(origin) || 
+        origin.includes('vercel.app') || // Allow all Vercel preview URLs
+        origin.startsWith('http://localhost')) { // Allow all localhost origins
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
 

@@ -448,4 +448,5 @@ async function handler(
   }
 }
 
+// Export the handler wrapped with CORS middleware
 export default withCors(handler); 
