@@ -20,10 +20,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest } from 'next';
-import type { GuessRequest, GuessResponse, ApiResponse, ErrorResponse } from 'types/api';
+import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
-import { ClueKey } from '../../src/types/clues';
+import { ClueKey, CLUE_SEQUENCE } from '../../src/types/clues';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -58,15 +58,11 @@ function getFuzzyPositions(guess: string, word: string): number[] {
   const guessLower = guess.toLowerCase();
   const wordLower = word.toLowerCase();
   
-  // Check each character position
   for (let i = 0; i < guess.length; i++) {
-    // Character matches exactly
     if (i < word.length && guessLower[i] === wordLower[i]) {
       positions.push(i);
       continue;
     }
-    
-    // Check if this character appears anywhere in the word
     if (wordLower.includes(guessLower[i])) {
       positions.push(i);
     }
@@ -76,29 +72,177 @@ function getFuzzyPositions(guess: string, word: string): number[] {
 }
 
 /**
- * Returns the clues to reveal based on the number of incorrect guesses
+ * Get the next clue to reveal based on current revealed clues
  */
-function getRevealedClues(incorrectGuesses: number): string[] {
-  const revealedClues: string[] = [ClueKey.Definition]; // D is always revealed
-  if (incorrectGuesses >= 1) revealedClues.push(ClueKey.Equivalents);
-  if (incorrectGuesses >= 2) revealedClues.push(ClueKey.FirstLetter);
-  if (incorrectGuesses >= 3) revealedClues.push(ClueKey.InSentence);
-  if (incorrectGuesses >= 4) revealedClues.push(ClueKey.NumLetters);
-  if (incorrectGuesses >= 5) revealedClues.push(ClueKey.Etymology);
-  return revealedClues;
+function getNextClueKey(revealedClues: ClueKey[]): ClueKey | null {
+  for (const clue of CLUE_SEQUENCE) {
+    if (!revealedClues.includes(clue)) {
+      return clue;
+    }
+  }
+  return null;
+}
+
+/**
+ * Calculate score based on game session
+ */
+function calculateScore(
+  guessesUsed: number,
+  completionTimeSeconds: number,
+  isWon: boolean
+): number {
+  if (!isWon) return 0;
+  const baseScore = 1000;
+  const guessDeduction = (guessesUsed - 1) * 100;
+  const timeDeduction = Math.floor(completionTimeSeconds / 10);
+  return Math.max(0, baseScore - guessDeduction - timeDeduction);
+}
+
+/**
+ * Update user stats based on game outcome
+ */
+async function updateUserStats(
+  playerId: string,
+  isWon: boolean,
+  guessesUsed: number,
+  completionTimeSeconds: number | null
+) {
+  if (!completionTimeSeconds) {
+    throw new Error('Completion time is required for updating stats');
+  }
+
+  const { data: stats, error: statsError } = await supabase
+    .from('user_stats')
+    .select('*')
+    .eq('player_id', playerId)
+    .single();
+
+  if (statsError) {
+    console.error('[updateUserStats] Failed to fetch stats:', statsError);
+    throw statsError;
+  }
+
+  const newStats = {
+    games_played: (stats?.games_played || 0) + 1,
+    games_won: isWon ? (stats?.games_won || 0) + 1 : (stats?.games_won || 0),
+    current_streak: isWon ? (stats?.current_streak || 0) + 1 : 0,
+    longest_streak: isWon 
+      ? Math.max(stats?.longest_streak || 0, (stats?.current_streak || 0) + 1) 
+      : (stats?.longest_streak || 0),
+    total_guesses: (stats?.total_guesses || 0) + guessesUsed,
+    average_guesses_per_game: ((stats?.total_guesses || 0) + guessesUsed) / ((stats?.games_played || 0) + 1),
+    total_play_time_seconds: (stats?.total_play_time_seconds || 0) + completionTimeSeconds,
+    updated_at: new Date().toISOString()
+  };
+
+  const { error: updateError } = await supabase
+    .from('user_stats')
+    .update(newStats)
+    .eq('player_id', playerId);
+
+  if (updateError) {
+    console.error('[updateUserStats] Failed to update stats:', updateError);
+    throw updateError;
+  }
+
+  return newStats;
+}
+
+/**
+ * Create a score entry for a completed game
+ */
+async function createScoreEntry(
+  playerId: string,
+  wordId: string,
+  guessesUsed: number,
+  completionTimeSeconds: number | null,
+  isWon: boolean
+) {
+  if (!completionTimeSeconds) {
+    throw new Error('Completion time is required for creating score entry');
+  }
+
+  const { error: scoreError } = await supabase
+    .from('scores')
+    .insert([{
+      player_id: playerId,
+      word_id: wordId,
+      guesses_used: guessesUsed,
+      completion_time_seconds: completionTimeSeconds,
+      was_correct: isWon,
+      submitted_at: new Date().toISOString()
+    }]);
+
+  if (scoreError) {
+    console.error('[createScoreEntry] Failed to create score:', scoreError);
+    throw scoreError;
+  }
+}
+
+/**
+ * Update leaderboard summary if score is in top 10
+ */
+async function updateLeaderboardSummary(
+  playerId: string,
+  wordId: string,
+  guessesUsed: number,
+  completionTimeSeconds: number | null
+) {
+  if (!completionTimeSeconds) {
+    throw new Error('Completion time is required for updating leaderboard');
+  }
+
+  // Get current top 10 for this word
+  const { data: leaderboard, error: leaderboardError } = await supabase
+    .from('leaderboard_summary')
+    .select('*')
+    .eq('word_id', wordId)
+    .order('completion_time_seconds', { ascending: true })
+    .order('guesses_used', { ascending: true })
+    .limit(10);
+
+  if (leaderboardError) {
+    console.error('[updateLeaderboardSummary] Failed to fetch leaderboard:', leaderboardError);
+    throw leaderboardError;
+  }
+
+  // Check if score qualifies for top 10
+  const isTop10 = leaderboard.length < 10 || 
+    completionTimeSeconds < leaderboard[leaderboard.length - 1].completion_time_seconds ||
+    (completionTimeSeconds === leaderboard[leaderboard.length - 1].completion_time_seconds && 
+     guessesUsed < leaderboard[leaderboard.length - 1].guesses_used);
+
+  if (isTop10) {
+    const { error: insertError } = await supabase
+      .from('leaderboard_summary')
+      .insert([{
+        player_id: playerId,
+        word_id: wordId,
+        rank: leaderboard.length + 1,
+        was_top_10: true,
+        best_time_seconds: completionTimeSeconds,
+        guesses_used: guessesUsed,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (insertError) {
+      console.error('[updateLeaderboardSummary] Failed to insert leaderboard entry:', insertError);
+      throw insertError;
+    }
+  }
 }
 
 export default async function handler(
   req: NextApiRequest,
   res: ApiResponse<GuessResponse>
 ) {
-  // Set CORS headers - allow only our frontend domain
+  // Set CORS headers
   const origin = req.headers.origin || 'https://undefine-v2-front.vercel.app';
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, player-id');
 
-  // Handle preflight request
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -112,6 +256,7 @@ export default async function handler(
   }
 
   try {
+    // Parse request body
     let body = '';
     await new Promise<void>((resolve) => {
       req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
@@ -144,7 +289,7 @@ export default async function handler(
       });
     }
 
-    // Get the game session
+    // Get the game session with row-level locking
     const { data: gameSession, error: gameError } = await supabase
       .from('game_sessions')
       .select('*')
@@ -158,10 +303,18 @@ export default async function handler(
       });
     }
 
+    // Validate game is not complete
+    if (gameSession.is_complete) {
+      return res.status(403).json({
+        error: 'Game already completed',
+        details: 'This game session has already been completed'
+      });
+    }
+
     // Get the word
     const { data: word, error: wordError } = await supabase
       .from('words')
-      .select('*')
+      .select('id, word')
       .eq('id', gameSession.word_id)
       .single();
 
@@ -172,131 +325,129 @@ export default async function handler(
       });
     }
 
-    const isCorrect = guess.toLowerCase() === word.word.toLowerCase();
+    const normalizedGuess = guess.toLowerCase().trim();
+    const normalizedWord = word.word.toLowerCase().trim();
+    const isCorrect = normalizedGuess === normalizedWord;
     
     // Calculate fuzzy match if not correct
-    const distance = levenshteinDistance(guess.toLowerCase(), word.word.toLowerCase());
+    const distance = levenshteinDistance(normalizedGuess, normalizedWord);
     const isFuzzy = !isCorrect && distance <= Math.min(3, Math.floor(word.word.length / 2));
-    const fuzzyPositions = isFuzzy ? getFuzzyPositions(guess, word.word) : [];
+    const fuzzyPositions = isFuzzy ? getFuzzyPositions(normalizedGuess, normalizedWord) : [];
 
-    // Update game session
-    const updatedGuesses = [...(gameSession.guesses || []), guess];
+    // Update game session state
+    const updatedGuesses = [...(gameSession.guesses || []), normalizedGuess];
     const isComplete = isCorrect || updatedGuesses.length >= 6;
-    const completionTimeSeconds = isComplete ? Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) : null;
+    const completionTimeSeconds = isComplete 
+      ? Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) 
+      : null;
 
-    // Calculate incorrect guesses and revealed clues
-    const incorrectGuesses = updatedGuesses.filter(g => g.toLowerCase() !== word.word.toLowerCase()).length;
-    const revealedClues = getRevealedClues(incorrectGuesses);
-
-    const { error: updateError } = await supabase
-      .from('game_sessions')
-      .update({
-        guesses: updatedGuesses,
-        is_complete: isComplete,
-        is_won: isCorrect,
-        completion_time_seconds: completionTimeSeconds
-      })
-      .eq('id', gameId);
-
-    if (updateError) {
-      return res.status(500).json({ 
-        error: 'Failed to update game session',
-        details: updateError.message
-      });
-    }
-
-    // Get current stats
-    const { data: stats, error: statsError } = await supabase
-      .from('user_stats')
-      .select('games_played,games_won,current_streak,longest_streak,total_guesses,average_guesses_per_game,total_play_time_seconds')
-      .eq('player_id', playerId)
-      .single();
-
-    if (statsError) {
-      return res.status(500).json({ 
-        error: 'Failed to fetch stats',
-        details: statsError.message
-      });
-    }
-
-    // Update stats if game is complete
-    if (isComplete) {
-      const newStats = {
-        games_played: (stats.games_played || 0) + 1,
-        games_won: isCorrect ? (stats.games_won || 0) + 1 : (stats.games_won || 0),
-        current_streak: isCorrect ? (stats.current_streak || 0) + 1 : 0,
-        longest_streak: isCorrect ? Math.max(stats.longest_streak || 0, (stats.current_streak || 0) + 1) : (stats.longest_streak || 0),
-        total_guesses: (stats.total_guesses || 0) + updatedGuesses.length,
-        average_guesses_per_game: ((stats.total_guesses || 0) + updatedGuesses.length) / ((stats.games_played || 0) + 1),
-        total_play_time_seconds: (stats.total_play_time_seconds || 0) + (completionTimeSeconds || 0),
-        last_played_word: word.word,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: statsUpdateError } = await supabase
-        .from('user_stats')
-        .update(newStats)
-        .eq('player_id', playerId);
-
-      if (statsUpdateError) {
-        console.error('[api/guess] Failed to update user stats:', statsUpdateError);
-        return res.status(500).json({ 
-          error: 'Failed to update user stats',
-          details: statsUpdateError.message
-        });
+    // Get current revealed clues and determine next clue
+    const currentRevealedClues = gameSession.revealed_clues || [ClueKey.Definition];
+    let newRevealedClues = [...currentRevealedClues];
+    
+    if (!isCorrect && !isComplete) {
+      const nextClue = getNextClueKey(currentRevealedClues);
+      if (nextClue) {
+        newRevealedClues.push(nextClue);
       }
+    }
 
-      // Also create a score entry
-      const { error: scoreError } = await supabase
-        .from('scores')
-        .insert([{
-          player_id: playerId,
-          word_id: word.id,
-          guesses_used: updatedGuesses.length,
-          completion_time_seconds: completionTimeSeconds,
-          was_correct: isCorrect,
-          submitted_at: new Date().toISOString()
-        }]);
+    // Update clue status
+    const newClueStatus = { ...gameSession.clue_status };
+    newRevealedClues.forEach(clue => {
+      newClueStatus[clue] = true;
+    });
 
-      if (scoreError) {
-        console.error('[api/guess] Failed to create score entry:', scoreError);
+    // Start a Supabase transaction
+    const { error: transactionError } = await supabase.rpc('handle_guess', {
+      p_game_id: gameId,
+      p_guess: normalizedGuess,
+      p_guesses: updatedGuesses,
+      p_revealed_clues: newRevealedClues,
+      p_clue_status: newClueStatus,
+      p_is_complete: isComplete,
+      p_is_won: isCorrect,
+      p_completion_time_seconds: completionTimeSeconds
+    });
+
+    if (transactionError) {
+      console.error('[api/guess] Transaction error:', transactionError);
+      return res.status(500).json({
+        error: 'Failed to update game state',
+        details: transactionError.message
+      });
+    }
+
+    let stats = null;
+    let score = null;
+
+    // If game is complete, update stats and create score entry
+    if (isComplete) {
+      try {
+        // Update user stats
+        stats = await updateUserStats(
+          playerId,
+          isCorrect,
+          updatedGuesses.length,
+          completionTimeSeconds
+        );
+
+        // Create score entry
+        await createScoreEntry(
+          playerId,
+          word.id,
+          updatedGuesses.length,
+          completionTimeSeconds,
+          isCorrect
+        );
+
+        // Update leaderboard if won
+        if (isCorrect) {
+          await updateLeaderboardSummary(
+            playerId,
+            word.id,
+            updatedGuesses.length,
+            completionTimeSeconds
+          );
+        }
+
+        // Calculate score
+        score = calculateScore(
+          updatedGuesses.length,
+          completionTimeSeconds || 0,
+          isCorrect
+        );
+      } catch (err) {
+        console.error('[api/guess] Failed to update stats/score:', err);
         // Don't fail the request, just log the error
       }
-
-      // Return updated stats
-      return res.status(200).json({
-        isCorrect,
-        guess,
-        isFuzzy,
-        fuzzyPositions,
-        gameOver: isComplete,
-        revealedClues,
-        usedHint: false,
-        score: null,
-        stats: {
-          games_played: newStats.games_played,
-          games_won: newStats.games_won,
-          current_streak: newStats.current_streak,
-          longest_streak: newStats.longest_streak
-        }
-      });
     }
 
-    // Return current stats if game is not complete
+    // Return response (never expose the actual word)
     return res.status(200).json({
       isCorrect,
-      guess,
+      guess: normalizedGuess,
       isFuzzy,
       fuzzyPositions,
       gameOver: isComplete,
-      revealedClues,
+      revealedClues: newRevealedClues,
       usedHint: false,
-      score: null,
-      stats: {
-        games_played: stats.games_played ?? 0,
-        games_won: stats.games_won ?? 0,
-        current_streak: stats.current_streak ?? 0,
-        longest_streak: stats.longest_streak ?? 0
+      score: score ? {
+        value: score,
+        guessesUsed: updatedGuesses.length,
+        completionTimeSeconds: completionTimeSeconds || 0,
+        isWon: isCorrect
+      } : null,
+      stats: stats ? {
+        games_played: stats.games_played,
+        games_won: stats.games_won,
+        current_streak: stats.current_streak,
+        longest_streak: stats.longest_streak
+      } : {
+        games_played: 0,
+        games_won: 0,
+        current_streak: 0,
+        longest_streak: 0
       }
     });
   } catch (err) {

@@ -12,117 +12,11 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
 
 🏗️ Deployment Configuration
 
-1. Backend (undefine-v2-back):
-   - Repository Root Configuration:
-     ```json
-     {
-       "scripts": {
-         "build": "next build",
-         "start": "next start"
-       }
-     }
-     ```
-   - Build Command: `npm run build`
-   - Output Directory: `.next`
-   - Install Command: `npm install`
-   - Development Command: `npm run dev:backend`
-
-2. Frontend (undefine-v2-front):
-   - Client Directory Configuration:
-     ```json
-     {
-       "scripts": {
-         "build": "vite build",
-         "start": "vite preview"
-       }
-     }
-     ```
-   - Build Command: `cd client && npm run build`
-   - Output Directory: `client/dist`
-   - Install Command: `cd client && npm install`
-   - Development Command: `npm run dev:frontend`
-
-3. Environment Variables:
-   Backend (Vercel):
-   ```
-   SUPABASE_URL=<production_url>
-   SUPABASE_SERVICE_ROLE_KEY=<production_key>
-   SUPABASE_ANON_KEY=<public_key>
-   JWT_SECRET=<secret>
-   DB_PROVIDER=supabase
-   NODE_ENV=production
-   ```
-
-   Frontend (Vercel):
-   ```
-   VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
-   VITE_SUPABASE_URL=<production_url>
-   VITE_SUPABASE_ANON_KEY=<public_key>
-   ```
-
-4. Build Process:
-   - Backend and Frontend are built and deployed separately
-   - Each has its own Vercel project
-   - No cross-dependencies during build
-   - Frontend always points to production backend URL
-
-🎮 Game Logic
-
-1. Word Guessing:
-   - Players get 6 attempts to guess the word
-   - Each guess is evaluated for:
-     a) Exact match (correct word)
-     b) Fuzzy match (close but not exact)
-     c) No match
-
-2. Fuzzy Matching Implementation:
-   - Uses Levenshtein Distance algorithm
-   - A guess is considered "fuzzy" if:
-     - Not an exact match AND
-     - Edit distance <= min(3, word_length/2)
-   - Example thresholds:
-     - 6-letter word: max distance of 3
-     - 4-letter word: max distance of 2
-   
-   Fuzzy Position Matching:
-   - For each character in the guess:
-     - Exact position matches are marked
-     - Characters appearing anywhere in word are marked
-   - Examples:
-     - Word: "define" / Guess: "definy"
-       - Fuzzy match (distance = 2)
-       - Positions [0,1,2,3] marked (d,e,f,i)
-     - Word: "define" / Guess: "defxyz"
-       - No match (distance = 4)
-       - Too many changes needed
-
-3. Clue Revelation:
-   - Definition (D) always shown
-   - After each incorrect guess:
-     1. Equivalents (E)
-     2. First Letter (F)
-     3. In a Sentence (I)
-     4. Number of Letters (N)
-     5. Etymology (E2)
-
-🔄 Guess Submission Flow
-
 1. Frontend (React + Vite):
    ```typescript
-   // User submits guess via useGame hook
-   const submitGuess = async (guess: string) => {
-     // Send to backend via API client
-     const response = await apiClient.submitGuess({
-       gameId,    // Current game session ID
-       guess,     // User's guess
-       playerId   // UUID from localStorage
-     });
-     
-     // Update UI based on response
-     - Update box colors (correct/incorrect/fuzzy)
-     - Show new clues if incorrect
-     - Show leaderboard if game over
-   };
+   // API Client Configuration
+   const BASE_URL = 'https://undefine-v2-back.vercel.app';
+   const CORS_ORIGIN = 'https://undefine-v2-front.vercel.app';
    ```
 
 2. Backend (Next.js API):
@@ -131,81 +25,142 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
    export default async function handler(req, res) {
      // 1. Validate request
      - Ensure POST method
-     - Validate gameId, guess, playerId
+     - Validate gameId, guess, playerId (UUID)
+     - Validate non-empty guess string
      
      // 2. Get game data from Supabase
-     - Fetch game session
-     - Fetch target word
+     - Fetch game session with row-level locking
+     - Validate game is not complete
+     - Fetch target word (id, word only)
      
      // 3. Evaluate guess
+     - Normalize guess and word (lowercase, trim)
      - Check for exact match
-     - Calculate fuzzy match if not exact
-     - Determine which clues to reveal
+     - Calculate fuzzy match if not exact (Levenshtein distance)
+     - Get fuzzy match positions
      
-     // 4. Update Supabase
-     - Add guess to game_sessions.guesses array
-     - Update game completion status
-     - Update player stats
-     - Record score if game complete
+     // 4. Update game state
+     - Add guess to guesses array
+     - Update revealed clues based on CLUE_SEQUENCE
+     - Update clue_status JSONB
+     - Set is_complete if won or max guesses reached
+     - Calculate completion time if game over
      
-     // 5. Send response
-     - isCorrect/isFuzzy status
-     - Revealed clues
-     - Game completion status
-     - Updated stats
+     // 5. Database updates (in transaction)
+     - Update game_sessions
+     - If complete:
+       * Create score entry
+       * Update user_stats
+       * Update leaderboard if top 10
+     
+     // 6. Send response (never expose word)
+     {
+       isCorrect: boolean,
+       guess: string,
+       isFuzzy: boolean,
+       fuzzyPositions: number[],
+       gameOver: boolean,
+       revealedClues: string[],
+       usedHint: boolean,
+       score?: {
+         value: number,
+         guessesUsed: number,
+         completionTimeSeconds: number,
+         isWon: boolean
+       },
+       stats: {
+         games_played: number,
+         games_won: number,
+         current_streak: number,
+         longest_streak: number
+       }
+     }
    }
    ```
 
 3. Supabase Tables:
    ```sql
    -- game_sessions
-   - id: uuid (gameId)
-   - word_id: uuid (reference to words)
-   - player_id: uuid
-   - guesses: string[] (array of attempts)
-   - start_time: timestamp
-   - is_complete: boolean
-   - is_won: boolean
-   - completion_time_seconds: integer
+   CREATE TABLE game_sessions (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     word_id UUID NOT NULL REFERENCES words(id),
+     player_id TEXT NOT NULL,
+     guesses TEXT[] DEFAULT '{}',
+     revealed_clues TEXT[] DEFAULT '{}',
+     clue_status JSONB DEFAULT '{"D": false, "E": false, "F": false, "I": false, "N": false, "E2": false}'::jsonb,
+     is_complete BOOLEAN DEFAULT FALSE,
+     is_won BOOLEAN DEFAULT FALSE,
+     start_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     end_time TIMESTAMP WITH TIME ZONE,
+     UNIQUE(player_id, word_id)
+   );
 
    -- words
-   - id: uuid
-   - word: string
-   - definition: string (D)
-   - equivalents: string (E)
-   - first_letter: string (F)
-   - in_a_sentence: string (I)
-   - number_of_letters: integer (N)
-   - etymology: string (E2)
+   CREATE TABLE words (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     word TEXT NOT NULL UNIQUE,
+     definition TEXT NOT NULL,
+     equivalents TEXT,
+     first_letter TEXT,
+     in_a_sentence TEXT,
+     number_of_letters INT,
+     etymology TEXT,
+     difficulty TEXT,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     is_word_of_day BOOLEAN DEFAULT FALSE,
+     word_of_day_date DATE
+   );
 
    -- user_stats
-   - player_id: uuid
-   - games_played: integer
-   - games_won: integer
-   - current_streak: integer
-   - longest_streak: integer
-   - total_guesses: integer
-   - average_guesses_per_game: float
+   CREATE TABLE user_stats (
+     player_id TEXT PRIMARY KEY,
+     games_played INTEGER DEFAULT 0,
+     games_won INTEGER DEFAULT 0,
+     current_streak INTEGER DEFAULT 0,
+     longest_streak INTEGER DEFAULT 0,
+     total_guesses INTEGER DEFAULT 0,
+     average_guesses_per_game FLOAT DEFAULT 0,
+     total_play_time_seconds INTEGER DEFAULT 0,
+     last_played_word TEXT,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+
+   -- scores
+   CREATE TABLE scores (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     player_id TEXT NOT NULL,
+     word_id UUID NOT NULL REFERENCES words(id),
+     guesses_used INTEGER NOT NULL,
+     completion_time_seconds INTEGER NOT NULL,
+     was_correct BOOLEAN DEFAULT FALSE,
+     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     UNIQUE(player_id, word_id)
+   );
+
+   -- leaderboard_summary
+   CREATE TABLE leaderboard_summary (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     player_id TEXT NOT NULL,
+     word_id UUID NOT NULL REFERENCES words(id),
+     rank INTEGER NOT NULL,
+     was_top_10 BOOLEAN DEFAULT FALSE,
+     best_time_seconds INTEGER,
+     guesses_used INTEGER NOT NULL,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     UNIQUE(player_id, word_id)
+   );
    ```
 
-4. Critical Flow Points:
-   a) Frontend must:
-      - Maintain game state (guesses, clues, completion)
-      - Update UI immediately after guess
-      - Handle API errors gracefully
-      - Store player ID persistently
-
-   b) Backend must:
-      - Validate all inputs
-      - Never expose correct word
-      - Update all tables atomically
-      - Return consistent response shape
-
-   c) Supabase must:
-      - Maintain referential integrity
-      - Track all game sessions
-      - Store player statistics
-      - Enable leaderboard queries
+4. Security & Data Integrity:
+   - All UUIDs validated before use
+   - Row-level locking prevents race conditions
+   - Transactions ensure atomic updates
+   - Word text never exposed in responses
+   - CORS limited to frontend origin
+   - Error details logged but sanitized in responses
+   - Proper foreign key constraints
+   - Unique constraints prevent duplicates
 
 Architecture:
 This is a monorepo project comprising two independently deployed applications on Vercel:
