@@ -237,6 +237,12 @@ async function handler(
   req: NextApiRequest,
   res: ApiResponse<GuessResponse>
 ) {
+  console.log('[api/guess] Received request:', {
+    method: req.method,
+    origin: req.headers.origin,
+    playerId: req.headers['player-id'],
+  });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ 
       error: 'Method not allowed',
@@ -252,10 +258,12 @@ async function handler(
       req.on('end', () => resolve());
     });
     
+    console.log('[api/guess] Request body:', body);
     const { gameId, guess, playerId } = JSON.parse(body) as GuessRequest;
 
     // Validate required fields
     if (!gameId || !guess || !playerId) {
+      console.warn('[api/guess] Missing required fields:', { gameId, guess, playerId });
       return res.status(400).json({ 
         error: 'Missing required fields',
         details: 'gameId, guess, and playerId are required'
@@ -264,6 +272,7 @@ async function handler(
 
     // Validate player_id is UUID
     if (!isUUID(playerId)) {
+      console.warn('[api/guess] Invalid player ID:', playerId);
       return res.status(400).json({
         error: 'Invalid player ID',
         details: 'player_id must be a valid UUID'

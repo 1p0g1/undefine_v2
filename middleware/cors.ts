@@ -4,17 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const ALLOWED_ORIGINS = [
   'https://undefine-v2-front.vercel.app', // Production
   'http://localhost:3000', // Local development
-  'http://localhost:5173', // Vite dev server
 ];
-
-// Allow all preview URLs in development
-const isAllowedOrigin = (origin: string) => {
-  if (!origin) return false;
-  if (ALLOWED_ORIGINS.includes(origin)) return true;
-  if (origin.includes('vercel.app')) return true; // Allow all Vercel preview URLs
-  if (origin.startsWith('http://localhost')) return true; // Allow all localhost origins
-  return false;
-};
 
 export type ApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>;
 
@@ -24,30 +14,32 @@ export type ApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<
  */
 export function withCors(handler: ApiHandler): ApiHandler {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    // Get origin from request headers
-    const origin = req.headers.origin || '';
-    
-    // Always set CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
-    
-    // Set origin if it's allowed
-    if (isAllowedOrigin(origin)) {
-      console.log('Setting CORS origin:', origin);
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-      console.warn('Rejected origin:', origin);
-    }
-
-    // Handle preflight request
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
-    }
-
-    // Call the actual handler
     try {
+      // Get origin from request headers
+      const origin = req.headers.origin || '';
+      
+      // Check if origin is allowed
+      const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin) || 
+        origin.includes('-vercel.app') || // Allow all Vercel preview URLs
+        origin.startsWith('http://localhost'); // Allow all localhost origins
+      
+      if (isAllowedOrigin) {
+        // Set CORS headers only if origin is allowed
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
+        
+        // Handle preflight request
+        if (req.method === 'OPTIONS') {
+          res.status(200).end();
+          return;
+        }
+      } else {
+        console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      }
+
+      // Call the actual handler
       await handler(req, res);
     } catch (error: unknown) {
       console.error('[CORS Middleware] Handler error:', error);
