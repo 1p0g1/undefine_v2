@@ -40,3 +40,31 @@ export function DefineBoxes({ gameState, revealedClues, guessStatus = [] }: Defi
     </div>
   );
 }
+
+// Static version for How to Play
+export function StaticDefineBoxes() {
+  return (
+    <DefineBoxes
+      gameState={{
+        gameId: '',
+        wordId: '',
+        wordText: '',
+        clues: {
+          D: '',
+          E: '',
+          F: null,
+          I: null,
+          N: '',
+          E2: null,
+        },
+        guesses: [],
+        revealedClues: [],
+        clueStatus: {},
+        usedHint: false,
+        isComplete: false,
+        isWon: false,
+      }}
+      revealedClues={[]}
+    />
+  );
+}

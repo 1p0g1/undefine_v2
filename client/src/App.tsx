@@ -4,8 +4,6 @@ import { DefineBoxes } from './components/DefineBoxes';
 import { getVisibleClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
-import { getPlayerId } from './utils/player';
-import { GameBoard } from './components/GameBoard';
 
 function App() {
   const {
@@ -19,6 +17,7 @@ function App() {
     isLeaderboardLoading,
     leaderboardError,
   } = useGame();
+  const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [canReopenSummary, setCanReopenSummary] = useState(false);
@@ -50,6 +49,23 @@ function App() {
       if (summaryTimeoutRef.current) clearTimeout(summaryTimeoutRef.current);
     };
   }, []);
+
+  const handleGuessSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted');
+    const trimmed = guess.trim();
+    if (!trimmed) {
+      console.log('Empty guess, ignoring');
+      return;
+    }
+    if (gameState.guesses.includes(trimmed)) {
+      console.log('Duplicate guess, ignoring:', trimmed);
+      return;
+    }
+    console.log('Submitting guess:', trimmed);
+    submitGuess(trimmed);
+    setGuess('');
+  };
 
   const visibleClues = gameState.clues
     ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
@@ -161,27 +177,44 @@ function App() {
       {showRules && (
         <div className="modal-overlay" onClick={() => setShowRules(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>How to Play</h2>
-            <p>
-              Un·Define is a clue-based word guessing game. Each letter in D·E·F·I·N·E reveals a
-              different hint:
-              <br />
-              <strong>D</strong>: Definition
-              <br />
-              <strong>E</strong>: Equivalents (Synonyms)
-              <br />
-              <strong>F</strong>: First Letter
-              <br />
-              <strong>I</strong>: In a Sentence
-              <br />
-              <strong>N</strong>: Number of Letters
-              <br />
-              <strong>E</strong>: Etymology
-              <br />
-              <br />
-              Use these clues to guess the word within 6 tries. Good luck!
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>How to Play</h2>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
+              Un·Define is a clue-based word guessing game. Look at the boxes above - each letter reveals a new hint to help you guess the word:
             </p>
-            <button onClick={() => setShowRules(false)}>Close</button>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'auto 1fr',
+              gap: '0.5rem 1rem',
+              marginBottom: '1.5rem',
+              fontSize: '1.1rem',
+              lineHeight: '1.6'
+            }}>
+              <strong>D</strong><span>Definition of the word</span>
+              <strong>E</strong><span>Equivalents (Synonyms)</span>
+              <strong>F</strong><span>First Letter</span>
+              <strong>I</strong><span>In a Sentence example</span>
+              <strong>N</strong><span>Number of Letters</span>
+              <strong>E</strong><span>Etymology (word origin)</span>
+            </div>
+            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
+              New hints are revealed after each incorrect guess. Try to guess the word within 6 attempts!
+            </p>
+            <button 
+              onClick={() => setShowRules(false)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: '#1a237e',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              Got it!
+            </button>
           </div>
         </div>
       )}
@@ -214,33 +247,68 @@ function App() {
           The word was: {gameState.wordText}
         </div>
       )}
+      {/* Guess Input Form */}
+      {!gameState.isComplete && (
+        <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '1rem auto' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+              placeholder="Enter your guess..."
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                borderRadius: '0.25rem',
+                border: '1px solid #e5e7eb',
+                fontSize: '1rem',
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+                backgroundColor: '#1a237e',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      )}
       {/* Action Buttons */}
-        <div
-          style={{
-            display: 'flex',
+      <div
+        style={{
+          display: 'flex',
           gap: '0.5rem',
           justifyContent: 'center',
           marginTop: '1rem',
-          }}
-        >
-          <button
-            type="button"
+        }}
+      >
+        <button
+          type="button"
           onClick={() => setShowRules(true)}
-            style={{
+          style={{
             padding: '0.5rem 1rem',
             borderRadius: '0.25rem',
             backgroundColor: '#f3f4f6',
             color: '#374151',
             border: 'none',
             cursor: 'pointer',
-              fontFamily: 'var(--font-primary)',
+            fontFamily: 'var(--font-primary)',
             fontSize: '0.875rem',
             fontWeight: 500,
             transition: 'background-color 0.2s',
-            }}
+          }}
         >
           How to Play
-          </button>
+        </button>
         {gameState.isComplete && (
           <button
             type="button"
@@ -262,13 +330,8 @@ function App() {
             View Results
           </button>
         )}
-        </div>
-      <GameBoard
-        gameState={gameState}
-        guessStatus={guessStatus}
-        onGuess={submitGuess}
-        onPlayAgain={startNewGame}
-      />
+      </div>
+      {/* Game Summary Modal */}
       <GameSummaryModal
         open={showSummary}
         onClose={handleCloseSummary}

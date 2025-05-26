@@ -125,6 +125,16 @@ html {
   border-style: dashed;
 }
 
+.define-box.static {
+  background: #fff;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.9;
+  transform: scale(0.85);
+}
+
 h1,
 h2,
 h3,
