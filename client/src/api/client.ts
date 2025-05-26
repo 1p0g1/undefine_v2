@@ -1,9 +1,15 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
-import { env } from '../env.client';
+import { isValidWordResponse } from '../../../shared-types/src/word';
 
-// Use empty string for relative URLs in production, configured URL in development
-const BASE_URL = env.VITE_API_BASE_URL;
+// Use environment variable for backend URL with fallback
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
+
+// Log initial configuration
+console.log('[API Client] Initialized with:', {
+  baseUrl: BASE_URL,
+  env: import.meta.env.MODE
+});
 
 /**
  * Ensures path starts with a forward slash
@@ -11,6 +17,21 @@ const BASE_URL = env.VITE_API_BASE_URL;
 const normalizePath = (path: string) => {
   return path.startsWith('/') ? path : `/${path}`;
 };
+
+/**
+ * Custom error class for API errors
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status?: number,
+    public statusText?: string,
+    public body?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 /**
  * Fetches from the API with proper error handling and type safety
@@ -27,7 +48,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   headers.set('Content-Type', 'application/json');
   headers.set('Accept', 'application/json');
   
-  // Add player-id last to ensure it's not overwritten
+  // Add player-id if available
   const playerId = getPlayerId();
   if (playerId) {
     headers.set('Player-ID', playerId);
@@ -36,41 +57,63 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   const normalizedPath = normalizePath(path);
   const url = `${BASE_URL}${normalizedPath}`;
   
-  console.log('Making API request to:', url, {
-    method: options.method || 'GET',
-    headers: Object.fromEntries(headers.entries()),
-    body: options.body ? JSON.parse(options.body as string) : undefined
-  });
-
+  const requestId = Math.random().toString(36).substring(7);
+  
   try {
+    console.log(`[API ${requestId}] Request:`, {
+      url,
+      method: options.method || 'GET',
+      headers: Object.fromEntries(headers.entries()),
+      body: options.body ? JSON.parse(options.body as string) : undefined
+    });
+
+    const startTime = performance.now();
+    
     const response = await fetch(url, {
       ...options,
       headers,
       mode: 'cors',
-      credentials: 'include',
       cache: 'no-cache',
+    });
+
+    const duration = Math.round(performance.now() - startTime);
+    console.log(`[API ${requestId}] Response received in ${duration}ms:`, {
+      status: response.status,
+      statusText: response.statusText,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API Error:', {
+      console.error(`[API ${requestId}] Error:`, {
         status: response.status,
         statusText: response.statusText,
         error: errorText,
         url,
       });
-      throw new Error(`API request failed: ${errorText}`);
+      throw new ApiError(
+        `API request failed: ${errorText}`,
+        response.status,
+        response.statusText,
+        errorText
+      );
     }
 
     const data = await response.json();
-    console.log('API Response:', data);
+    console.log(`[API ${requestId}] Success:`, { data });
     return data;
   } catch (error) {
-    console.error('Fetch Error:', {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    console.error(`[API ${requestId}] Fetch Error:`, {
       url,
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-    throw error;
+    throw new ApiError(
+      error instanceof Error ? error.message : 'Network request failed',
+      0,
+      'Network Error'
+    );
   }
 };
 
@@ -83,7 +126,14 @@ export const apiClient = {
    * @returns Promise with the word response
    */
   async getNewWord(): Promise<WordResponse> {
-    return fetchFromApi<WordResponse>('/api/word');
+    const response = await fetchFromApi<WordResponse>('/api/word');
+    
+    // Validate the word data
+    if (!response?.word || !isValidWordResponse(response.word)) {
+      throw new ApiError('Invalid word response: missing required fields');
+    }
+    
+    return response;
   },
 
   /**
@@ -92,7 +142,6 @@ export const apiClient = {
    * @returns Promise with the guess response
    */
   async submitGuess(request: GuessRequest): Promise<GuessResponse> {
-    console.log('Submitting guess request:', request);
     return fetchFromApi<GuessResponse>('/api/guess', {
       method: 'POST',
       body: JSON.stringify(request),
