@@ -3,22 +3,13 @@
  * ⚠️ Keep in sync with server/src/types/database.ts
  */
 
+import { WordResponseShape } from '../../../shared-types/src/word';
+
 /**
  * Word response type from /api/word endpoint
  */
 export interface WordResponse {
-  word: {
-    id: string;
-    word: string;
-    definition: string;
-    first_letter: string;
-    in_a_sentence: string;
-    equivalents: string;
-    number_of_letters: number;
-    etymology: string;
-    difficulty: string;
-    date: string;
-  };
+  word: WordResponseShape;
   gameId: string;
   isFallback: boolean;
 }
