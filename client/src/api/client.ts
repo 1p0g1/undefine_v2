@@ -1,6 +1,5 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
-import { isValidWordResponse } from '../../../shared-types/src/word';
 
 // Use environment variable for backend URL with fallback
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
@@ -128,9 +127,9 @@ export const apiClient = {
   async getNewWord(): Promise<WordResponse> {
     const response = await fetchFromApi<WordResponse>('/api/word');
     
-    // Validate the word data
-    if (!response?.word || !isValidWordResponse(response.word)) {
-      throw new ApiError('Invalid word response: missing required fields');
+    // Basic null check
+    if (!response?.word) {
+      throw new ApiError('Invalid word response: missing word data');
     }
     
     return response;
