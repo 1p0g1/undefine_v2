@@ -23,20 +23,29 @@ export function withCors(handler: ApiHandler): ApiHandler {
         origin.includes('-vercel.app') || // Allow all Vercel preview URLs
         origin.startsWith('http://localhost'); // Allow all localhost origins
       
+      // Always set CORS headers for preflight requests
+      if (req.method === 'OPTIONS') {
+        if (isAllowedOrigin) {
+          res.setHeader('Access-Control-Allow-Origin', origin);
+          res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
+          res.setHeader('Access-Control-Allow-Credentials', 'true');
+          res.status(200).end();
+        } else {
+          res.status(403).end();
+        }
+        return;
+      }
+      
+      // Set CORS headers for actual requests
       if (isAllowedOrigin) {
-        // Set CORS headers only if origin is allowed
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
-        
-        // Handle preflight request
-        if (req.method === 'OPTIONS') {
-          res.status(200).end();
-          return;
-        }
       } else {
         console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+        return res.status(403).json({ error: 'Origin not allowed' });
       }
 
       // Call the actual handler
