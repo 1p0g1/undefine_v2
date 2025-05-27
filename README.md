@@ -1,229 +1,158 @@
 # Un-Define v2
 
-A word guessing game with progressive clue revelation.
+Last Updated: May 2025
+Reference: cursor_project_rules/README.md
 
-📚 Documentation
+Un-Define is a daily word-guessing game with progressive clue revelation, inspired by Wordle — but designed with deeper logic and richer definitions. Players receive 6 clues in sequence, each revealed after an incorrect guess. The clues spell out the acronym DEFINE:
 
-Project Architecture - Technical design & schema
+- **D**: Definition (always shown first)
+- **E**: Equivalents (synonyms)
+- **F**: First Letter
+- **I**: In a Sentence (usage)
+- **N**: Number of Letters
+- **E**: Etymology
 
-Project Tracker - Task tracking
+Guess the word within 6 attempts to win. Anonymous gameplay, no login required.
 
-Release Notes - Version changelog
+## Status Overview
+Reference: cursor_project_rules/project_status.md
+✅ Frontend deployment
+✅ Backend deployment
+✅ Core game logic
+⚠️ RLS implementation pending
+🚧 Leaderboard functionality
 
-Testing Guide - How to test
+## 📁 Project Structure
+Reference: cursor_project_rules/architecture.md
+✅ React + Vite frontend
+✅ Next.js API backend
+✅ Supabase database
+✅ TypeScript monorepo
 
-Deployment Guide - Deploy to Render
+## 🔍 API Endpoints
+Reference: cursor_project_rules/api_spec.md
 
-Clean Up Checklist - Build fixes and cleanup
+| Endpoint | Method | Description | Status |
+|----------|--------|-------------|---------|
+| `/api/word` | GET | Get daily word | ✅ Active |
+| `/api/guess` | POST | Submit guess | ✅ Active |
+| `/api/streak-status` | POST | Get streaks | ✅ Active |
+| `/api/leaderboard` | GET | Daily rankings | 🚧 Schema Only |
+| `/api/dev/reset-session` | POST | Reset state | ⚠️ Dev Only* |
 
-Import Guide - Adding new words
+\* Blocked in production (`NODE_ENV !== 'production'`)
 
-🤖 Project Context
+## 🧠 Anonymous Player Model
 
-This is the undefine_v2 repo — a full rebuild with a fresh architecture, codebase, and logic.
+No authentication is used. Each player is tracked by a UUID stored in localStorage:
 
-Game logic is built cleanly from scratch
+- SSR-safe UUID generation
+- Linked to `user_stats.player_id` in Supabase
+- Supports incognito/private browsing
+- Enables persistent player stats and streaks
 
-All existing types and database contracts are preserved
+## 💾 Supabase Schema
 
-Project aims to be render-deployable and test-ready from day one
+Managed through SQL migrations. Tables include:
 
-🧠 Anonymous User Tracking (Wordle-style)
+- `words` — Stores daily words and clues
+- `game_sessions` — Tracks gameplay, guesses, clue states
+- `scores` — Stores final game stats
+- `leaderboard_summary` — Schema ready, not yet active
+- `user_stats` — Global stats per anonymous player
 
-No login required. Each player is tracked via a UUID stored in localStorage.
-- Secure, browser-safe player ID generation with SSR support
-- Fallback handling for private browsing and localStorage restrictions
-- Consistent player tracking across game sessions
-- Automatic UUID generation for new players
+See `docs/ARCHITECTURE.md` and `docs/supa_alignment.md` for schema and ERD.
 
-Linked to user_stats.player_id
+## 🔐 Row-Level Security (RLS)
 
-Tracks stats, games played, and leaderboard performance
+Currently **disabled** during development and testing.
 
-Supports persistent state with no authentication overhead
+RLS will be enabled in production:
+- Read/write access will require `player_id = auth.uid()` or JWT match
+- All repositories are written with future RLS compatibility in mind
+- Safe for development with RLS disabled
 
-🔍 Game Rules
+## 🧪 Testing & Dev Mode
 
-Each incorrect guess reveals a new clue, in DEFINE order:
+Enable dev mode by setting:
 
-D: Definition (always shown first)
+```ini
+DB_PROVIDER=mock
+```
 
-E: Equivalents (synonyms)
+- Uses MockClient
+- Shows "Test with Random Word" button in frontend
+- `/api/random` endpoint available
+- UUIDs reset with refresh
 
-F: First Letter
+## 🛠️ Utility Scripts
 
-I: In a Sentence (usage)
+Located in the `scripts/` directory:
 
-N: Number of Letters
+- `dev.sh` — Start backend only
+- `apply-migrations.sh` — Run Supabase migrations
+- `test-db-client.ts` — Test Supabase connection
+- `setup-testing-mode.sh` — Enable dev/test flags
+- `manage_words.sh` — Seed and import word data
+- `sync-vercel-env.js` — Sync .env vars to Vercel
 
-E2: Etymology
+## ⚠️ Cursor Protection
 
-Guess the word correctly within 6 guesses to win. Game ends when all 6 guesses are used or the correct word is guessed.
+Do not allow Cursor to modify:
 
-🚀 Project Structure
+- `docs/ARCHITECTURE.md`
+- `src/types.ts`
+- `src/config/db.ts`
+- `.env.*` files
+
+Treat `ARCHITECTURE.md` as the project source of truth.
+
+## ⚙️ Environment Variables
+Reference: cursor_project_rules/env_config.md
+
+### Frontend (`client/`)
+✅ Required Variables:
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_BASE_URL` | Backend URL (no trailing slash) |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public key |
+
+### Backend (`root/`)
+✅ Required Variables:
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin access key |
+| `JWT_SECRET` | Session signing (prod) |
+| `DB_PROVIDER` | 'supabase' or 'mock' |
+| `NODE_ENV` | 'development' or 'production' |
+| `FRONTEND_URL` | CORS origin URL |
+
+⚠️ Optional Variables:
+- `PORT` (default: 3001)
+- `SUPABASE_ANON_KEY` (public access)
+
+## ✨ Styling
+
+- Fonts: Libre Baskerville (primary), Special Elite (monospace)
+- Primary Blue: `#1a237e`
+- Game Over Red: `#dc2626`
+- Background: `#faf7f2`
+- Letter UI: 3.5rem boxes, red border + serif font when revealed
+
+## 🎓 Getting Started
 
-This is a TypeScript monorepo using workspace modules:
-
-client/ — React + Vite frontend
-
-server/ — Express + Node backend
-
-scripts/ — Utilities and dev tooling
-
-supabase/ — SQL schema, migrations
-
-docs/ — Markdown documentation
-
-data/ — CSV imports for word bank
-
-💲 Supabase Schema
-
-See docs/ARCHITECTURE.md for table-level SQL and relationships.
-All constraints, RLS policies, and foreign keys are managed via migrations.
-
-😐 Random Word Testing
-
-When in development mode, you can bypass the daily word logic:
-
-Use DB_PROVIDER=mock to enable MockClient
-
-Frontend will show a "Test with Random Word" button
-
-Or access via /api/random
-
-🛠️ Utility Scripts
-
-Located in the scripts/ directory:
-
-dev.sh — Start backend only
-
-apply-migrations.sh — Apply Supabase migrations
-
-test-db-client.ts — Test Supabase connection
-
-setup-testing-mode.sh — Set testing flags
-
-manage_words.sh — Seed and import word data
-
-sync-render-env.js — Push env vars to Render
-
-🚫 Cursor Protection
-
-Do not allow Cursor to overwrite these files:
-
-docs/ARCHITECTURE.md
-
-src/types.ts
-
-src/config/db.ts
-
-.env.\* files
-
-Treat ARCHITECTURE.md as the project source of truth.
-
-⚖️ Environment Variables
-
-Name | Required | Description
---- | --- | ---
-NODE_ENV | No | development or production
-PORT | No | Defaults to 3001
-SUPABASE_URL | Yes | Supabase project URL
-SUPABASE_ANON_KEY | Yes | Supabase anon key
-DB_PROVIDER | Yes | Must be "supabase"
-JWT_SECRET | Yes (prod) | JWT signing secret
-NEXT_PUBLIC_API_BASE_URL | Yes | Base URL for backend API (https://undefine-v2-back.vercel.app) - no trailing slash
-
-🛡️ RLS Status
-
-Supabase Row Level Security (RLS) is enabled on all tables
-
-Current rule: read/write allowed only where player_id = auth.uid() or JWT matches
-
-Safe to enable post-MVP; not mandatory for local development
-
-✨ Styling
-
-Font: Libre Baskerville + Special Elite (Google Fonts)
-
-Colours: Primary blue #1a237e, red #dc2626, off-white #faf7f2
-
-Letter UI: 3.5rem boxes, serif text, red when revealed
-
-🎓 Getting Started
-
-# 1. Clone the repo
-
-$ git clone https://github.com/1p0g1/undefine_v2
-$ cd undefine_v2
-
-# 2. Install deps
-
-$ npm install
-
-# 3. Set up env vars
-
-$ cp .env.example .env.development
-
-# 4. Start dev mode
-
-$ npm run dev
-
-🔄 Available Scripts
-
-npm run dev — Start frontend & backend in dev
-
-npm run simple:dev — Backend only
-
-npm run build — Production build
-
-✉️ License
-
-MIT
-
----
-
-_Update: Minor edit to trigger a new commit for deployment sync._
-
-_Update: Another minor edit to trigger a new commit for deployment sync._
-
-_Update: Trigger commit for proxy config confirmation._
-
-_Update: Confirmed monorepo audit and Vercel deploy checklist._
-
-## Backend API
-
-The backend uses Next.js API routes located in `/pages/api/`. Each endpoint is configured as a serverless function and automatically deployed by Vercel.
-
-### API Configuration
-- **Production Backend**: https://undefine-v2-back.vercel.app
-- **Development Backend**: http://localhost:3001
-- **Frontend URL**: https://undefine-v2-front.vercel.app
-
-### Available Endpoints
-- `/api/word` - Get today's word
-- `/api/guess` - Submit a guess
-- `/api/streak-status` - Get user streak status
-- `/api/leaderboard` - Get game leaderboard
-- `/api/dev/reset-session` - (Development only) Reset session state
-
-### Environment Configuration
-- Production uses stable Vercel project URLs
-- Development uses local server
-- No preview deployment URLs used
-- Environment variables properly configured in Vercel dashboard
-
-Note: All API routes are properly configured and verified for Vercel serverless deployment. The project includes a root page component to ensure correct Next.js framework detection.
-
-## Development
-- Frontend: React + Vite
-- Backend: Next.js API Routes
-- Database: Supabase
-- Deployment: Vercel
-
-## Getting Started
 ```bash
+# Clone the repo
+git clone https://github.com/1p0g1/undefine_v2
+cd undefine_v2
+
 # Install dependencies
 npm install
+
+# Set up environment variables
+cp .env.example .env.development
 
 # Start backend (localhost:3001)
 npm run dev:backend
@@ -232,6 +161,18 @@ npm run dev:backend
 cd client && npm run dev
 ```
 
-## Production
-- Backend: https://undefine-v2-back.vercel.app
-- Frontend: https://undefine-v2-front.vercel.app
+## 🚀 Production URLs
+Reference: cursor_project_rules/deployment.md
+✅ Frontend: https://undefine-v2-front.vercel.app
+✅ Backend: https://undefine-v2-back.vercel.app
+
+## 🧾 License
+MIT © 2025
+
+---
+## Completion Status (May 2025)
+Reference: cursor_project_rules/completion_criteria.md
+✅ Core functionality complete
+✅ Environment configuration validated
+⚠️ RLS implementation pending
+🚧 Leaderboard in development
