@@ -6,31 +6,33 @@ export function withCors(handler: Handler): Handler {
   return async (req, res) => {
     const origin = req.headers.origin || '';
 
-    const allowedOrigins = [
-      'https://undefine-v2-front.vercel.app', // production frontend
-    ];
+    // Debug logging
+    console.log('[withCors] Received Origin:', origin);
 
-    const isAllowedOrigin =
-      allowedOrigins.includes(origin) ||
-      /^https:\/\/undefine-v2-front-[a-z0-9]+-paddys-projects-82cb6057\.vercel\.app$/.test(origin); // matches preview deploys
+    // Temporarily simplified origin check
+    const isAllowedOrigin = origin?.endsWith('.vercel.app') || origin === 'https://undefine-v2-front.vercel.app';
+    
+    // More debug logging
+    console.log('[withCors] Allowed:', isAllowedOrigin);
 
-    if (isAllowedOrigin) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
+    if (!isAllowedOrigin) {
+      console.log('[withCors] Rejected origin:', origin);
+      return res.status(403).json({ error: "Origin not allowed" });
     }
 
+    // Set CORS headers for allowed origins
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
 
-    // Debug logging
-    console.log('[CORS]', { origin, isAllowedOrigin });
-
-    // CORS preflight response
+    // Handle preflight
     if (req.method === 'OPTIONS') {
       res.status(204).end();
       return;
     }
 
+    // Process the actual request
     return handler(req, res);
   };
 } 
