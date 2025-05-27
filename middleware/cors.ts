@@ -1,64 +1,38 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-// Frontend domains that are allowed to access the API
-const ALLOWED_ORIGINS = [
-  'https://undefine-v2-front.vercel.app', // Production
-  'http://localhost:3000', // Local development
-];
+export function middleware(request: NextRequest) {
+  const allowedOrigins = ['https://undefine-v2-front.vercel.app'];
+  const origin = request.headers.get('origin') || '';
+  const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
 
-export type ApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>;
-
-/**
- * CORS middleware for API routes
- * Handles preflight requests and sets appropriate headers
- */
-export function withCors(handler: ApiHandler): ApiHandler {
-  return async (req: NextApiRequest, res: NextApiResponse) => {
-    try {
-      // Get origin from request headers
-      const origin = req.headers.origin || '';
-      
-      // Check if origin is allowed
-      const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin) || 
-        origin.includes('-vercel.app') || // Allow all Vercel preview URLs
-        origin.startsWith('http://localhost'); // Allow all localhost origins
-      
-      // Always set CORS headers for preflight requests
-      if (req.method === 'OPTIONS') {
-        if (isAllowedOrigin) {
-          res.setHeader('Access-Control-Allow-Origin', origin);
-          res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
-          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
-          res.setHeader('Access-Control-Allow-Credentials', 'true');
-          res.status(200).end();
-        } else {
-          res.status(403).end();
-        }
-        return;
-      }
-      
-      // Set CORS headers for actual requests
-      if (isAllowedOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
-      } else {
-        console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
-        return res.status(403).json({ error: 'Origin not allowed' });
-      }
-
-      // Call the actual handler
-      await handler(req, res);
-    } catch (error: unknown) {
-      console.error('[CORS Middleware] Handler error:', error);
-      // Don't expose error details in production
-      res.status(500).json({ 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' 
-          ? error instanceof Error ? error.message : String(error)
-          : undefined
-      });
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    const response = new NextResponse(null, { status: 204 });
+    
+    if (isAllowed) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Player-ID');
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      response.headers.set('Access-Control-Max-Age', '86400');
     }
-  };
-} 
+    
+    return response;
+  }
+
+  // Handle actual requests
+  const response = NextResponse.next();
+  
+  if (isAllowed) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+
+  return response;
+}
+
+// Only run middleware on API routes
+export const config = {
+  matcher: '/api/:path*',
+}; 
