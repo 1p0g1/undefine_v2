@@ -9,6 +9,17 @@
 - `src/types.ts` - Core type definitions
 - `.env*` files - Environment configurations
 
+### Documentation Check Rule
+
+EVERY response MUST check these documents in this order:
+1. `docs/mvp.md` - Primary source of truth for project requirements
+2. `docs/implementation-plan.mdc` - Current progress and implementation details
+3. `docs/ARCHITECTURE.md` - Technical architecture and patterns
+4. `docs/supa_alignment.md` - Database schema and relationships
+5. `docs/README.md` - Documentation hierarchy and guidelines
+
+This check must be performed BEFORE any code changes or suggestions are made.
+
 ### Live Tracking
 
 - `docs/v2_Project_Tracker.md` - Task progress (update only when requested)

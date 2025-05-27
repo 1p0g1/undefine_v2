@@ -1,5 +1,7 @@
 ⚠️ REQUIRED READING FOR ALL PROMPTS - DO NOT MODIFY THIS SECTION ⚠️
 
+Last Updated: May 2024
+
 📌 Project Overview – Un-Define MVP CREED
 
 🚨 PRODUCTION FOCUS
@@ -16,166 +18,68 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
    ```typescript
    // API Client Configuration
    const BASE_URL = 'https://undefine-v2-back.vercel.app';
-   const CORS_ORIGIN = 'https://undefine-v2-front.vercel.app';
+   const FRONTEND_URL = 'https://undefine-v2-front.vercel.app';
    ```
 
 2. Backend (Next.js API):
    ```typescript
-   // /api/guess endpoint
-   export default async function handler(req, res) {
-     // 1. Validate request
-     - Ensure POST method
-     - Validate gameId, guess, playerId (UUID)
-     - Validate non-empty guess string
-     
-     // 2. Get game data from Supabase
-     - Fetch game session with row-level locking
-     - Validate game is not complete
-     - Fetch target word (id, word only)
-     
-     // 3. Evaluate guess
-     - Normalize guess and word (lowercase, trim)
-     - Check for exact match
-     - Calculate fuzzy match if not exact (Levenshtein distance)
-     - Get fuzzy match positions
-     
-     // 4. Update game state
-     - Add guess to guesses array
-     - Update revealed clues based on CLUE_SEQUENCE
-     - Update clue_status JSONB
-     - Set is_complete if won or max guesses reached
-     - Calculate completion time if game over
-     
-     // 5. Database updates (in transaction)
-     - Update game_sessions
-     - If complete:
-       * Create score entry
-       * Update user_stats
-       * Update leaderboard if top 10
-     
-     // 6. Send response (never expose word)
-     {
-       isCorrect: boolean,
-       guess: string,
-       isFuzzy: boolean,
-       fuzzyPositions: number[],
-       gameOver: boolean,
-       revealedClues: string[],
-       usedHint: boolean,
-       score?: {
-         value: number,
-         guessesUsed: number,
-         completionTimeSeconds: number,
-         isWon: boolean
-       },
-       stats: {
-         games_played: number,
-         games_won: number,
-         current_streak: number,
-         longest_streak: number
+   // CORS Implementation (lib/withCors.ts)
+   export function withCors(handler: Handler): Handler {
+     return async (req, res) => {
+       const origin = req.headers.origin || '';
+       const isAllowed = allowedOrigins.includes(origin) ||
+         /^https:\/\/undefine-v2-front-[a-z0-9]+-paddys-projects-82cb6057\.vercel\.app$/.test(origin);
+
+       if (isAllowed) {
+         res.setHeader('Access-Control-Allow-Origin', origin);
+         // ... other CORS headers
        }
-     }
+       return handler(req, res);
+     };
    }
+
+   // Usage in API routes
+   export default withCors(async function handler(req, res) {
+     // Route implementation
+   });
    ```
 
-3. Supabase Tables:
-   ```sql
-   -- game_sessions
-   CREATE TABLE game_sessions (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     word_id UUID NOT NULL REFERENCES words(id),
-     player_id TEXT NOT NULL,
-     guesses TEXT[] DEFAULT '{}',
-     revealed_clues TEXT[] DEFAULT '{}',
-     clue_status JSONB DEFAULT '{"D": false, "E": false, "F": false, "I": false, "N": false, "E2": false}'::jsonb,
-     is_complete BOOLEAN DEFAULT FALSE,
-     is_won BOOLEAN DEFAULT FALSE,
-     start_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     end_time TIMESTAMP WITH TIME ZONE,
-     UNIQUE(player_id, word_id)
-   );
+3. Game Logic Location:
+   ```typescript
+   // src/game/word.ts - Word selection and validation
+   import { selectWord, validateWord } from '@/game/word';
 
-   -- words
-   CREATE TABLE words (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     word TEXT NOT NULL UNIQUE,
-     definition TEXT NOT NULL,
-     equivalents TEXT,
-     first_letter TEXT,
-     in_a_sentence TEXT,
-     number_of_letters INT,
-     etymology TEXT,
-     difficulty TEXT,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     is_word_of_day BOOLEAN DEFAULT FALSE,
-     word_of_day_date DATE
-   );
-
-   -- user_stats
-   CREATE TABLE user_stats (
-     player_id TEXT PRIMARY KEY,
-     games_played INTEGER DEFAULT 0,
-     games_won INTEGER DEFAULT 0,
-     current_streak INTEGER DEFAULT 0,
-     longest_streak INTEGER DEFAULT 0,
-     total_guesses INTEGER DEFAULT 0,
-     average_guesses_per_game FLOAT DEFAULT 0,
-     total_play_time_seconds INTEGER DEFAULT 0,
-     last_played_word TEXT,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-
-   -- scores
-   CREATE TABLE scores (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     player_id TEXT NOT NULL,
-     word_id UUID NOT NULL REFERENCES words(id),
-     guesses_used INTEGER NOT NULL,
-     completion_time_seconds INTEGER NOT NULL,
-     was_correct BOOLEAN DEFAULT FALSE,
-     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     UNIQUE(player_id, word_id)
-   );
-
-   -- leaderboard_summary
-   CREATE TABLE leaderboard_summary (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     player_id TEXT NOT NULL,
-     word_id UUID NOT NULL REFERENCES words(id),
-     rank INTEGER NOT NULL,
-     was_top_10 BOOLEAN DEFAULT FALSE,
-     best_time_seconds INTEGER,
-     guesses_used INTEGER NOT NULL,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     UNIQUE(player_id, word_id)
-   );
+   // src/game/guess.ts - Guess processing and clue generation
+   import { processGuess, generateClue } from '@/game/guess';
    ```
 
-4. Security & Data Integrity:
-   - All UUIDs validated before use
-   - Row-level locking prevents race conditions
-   - Transactions ensure atomic updates
-   - Word text never exposed in responses
-   - CORS limited to frontend origin
-   - Error details logged but sanitized in responses
-   - Proper foreign key constraints
-   - Unique constraints prevent duplicates
+4. Database Schema:
+   For the complete and authoritative database schema, see `docs/supa_alignment.md`. Key highlights:
 
-Architecture:
-This is a monorepo project comprising two independently deployed applications on Vercel:
+   1. **Core Tables**
+      - `words`: Daily word bank with clues
+      - `game_sessions`: Active gameplay tracking
+      - `scores`: Completion metrics
+      - `user_stats`: Player statistics
+      - `leaderboard_summary`: Daily rankings
 
-Frontend: Vite + React
-- Deployed at undefine-v2-front.vercel.app
-- Uses Vite-style environment variables prefixed with VITE_
-- Communicates with backend via VITE_API_BASE_URL
+   2. **Key Relationships**
+      - Each score links to a game session and word
+      - Game sessions track player progress on words
+      - Leaderboard entries reference players and words
+      - User stats aggregate player performance
 
-Backend: Next.js (API routes only)
-- Deployed at undefine-v2-back.vercel.app
-- Provides the /api/word and other serverless API routes
-- Interfaces with Supabase using SUPABASE_SERVICE_ROLE_KEY
+   3. **Important Fields**
+      - Timestamps use `timestamptz` type
+      - Completion time is stored as `completion_time_sec` (integer)
+      - Foreign keys use `uuid` for words and `text` for player IDs
+      - Arrays use PostgreSQL `_text` type
+      - JSON data uses `jsonb` type
 
-Environment Configuration:
+5. API Response Shapes:
+   See `docs/api_responses.md` for canonical API response shapes.
+
+6. Environment Configuration:
 
 Frontend (Vite):
 - VITE_API_BASE_URL: Backend endpoint
@@ -187,13 +91,15 @@ Backend (Next.js):
 - SUPABASE_ANON_KEY: Public access key (if needed)
 - SUPABASE_SERVICE_ROLE_KEY: Secure access key for admin-level operations
 - JWT_SECRET: Used for signing/verifying auth tokens
-- DB_PROVIDER: Should be set to "supabase" only — "mock" is deprecated and unused
+- DB_PROVIDER: Must be "supabase" only
+- FRONTEND_URL: Frontend URL for CORS validation
 
 Important Context:
-- Frontend uses Vite's import.meta.env access pattern for environment variables and must not use process.env.
-- Backend uses Node-style process.env access and validates config via Zod schemas.
-- All API interactions are secured via appropriate Supabase keys.
-- The frontend will eventually need to support POST requests (e.g., for submitting guesses).
+- Frontend uses Vite's import.meta.env access pattern for environment variables and must not use process.env
+- Backend uses Node-style process.env access and validates config via Zod schemas
+- All API interactions are secured via appropriate Supabase keys
+- Preview deployments are supported via regex pattern in CORS configuration
+- Game logic is encapsulated in src/game/ modules
 
 ⚠️ END OF REQUIRED READING ⚠️
 
@@ -268,6 +174,7 @@ const serverEnvSchema = z.object({
   DB_PROVIDER: z.enum(['supabase', 'mock']),
   NODE_ENV: z.enum(['development', 'production', 'test']),
   PORT: z.string().transform(Number),
+  FRONTEND_URL: z.string().url(),
 });
 ```
 
@@ -551,262 +458,3 @@ The `/api/word` endpoint now has:
    # Frontend (.env)
    VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
    ```
-
-3. Vercel Configuration:
-   - Add CORS configuration to `vercel.json`:
-   ```json
-   {
-     "headers": [
-       {
-         "source": "/api/(.*)",
-         "headers": [
-           { "key": "Access-Control-Allow-Origin", "value": "${FRONTEND_URL}" },
-           { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-           { "key": "Access-Control-Allow-Headers", "value": "Content-Type, player-id" },
-           { "key": "Access-Control-Allow-Credentials", "value": "true" }
-         ]
-       }
-     ]
-   }
-   ```
-
-### Development Setup
-
-1. Local Development:
-   ```bash
-   # Terminal 1 - Backend
-   cd undefine_v2
-   npm run dev:backend  # Runs on http://localhost:3001
-
-   # Terminal 2 - Frontend
-   cd undefine_v2/client
-   npm run dev  # Runs on http://localhost:5173
-   ```
-
-2. Environment Configuration:
-   ```bash
-   # Local development (.env.development)
-   FRONTEND_URL=http://localhost:5173
-   VITE_API_BASE_URL=http://localhost:3001
-   ```
-
-### Data Flow Verification
-
-1. Backend Health Check:
-   - Access `http://localhost:3001/api/word` directly
-   - Should return valid word data without CORS errors
-   - Verify all required fields are present
-
-2. Frontend Integration:
-   - Open browser dev tools (Network tab)
-   - Load frontend application
-   - Verify successful API calls to `/api/word`
-   - Check response contains complete word data
-
-3. Error Handling:
-   - Backend logs should show incoming requests
-   - Frontend should gracefully handle API errors
-   - CORS errors should be resolved
-   - Network tab should show 200 status codes
-
-### Troubleshooting Guide
-
-1. CORS Issues:
-   - Verify CORS headers in Network tab
-   - Check environment variables are set correctly
-   - Ensure backend is running and accessible
-   - Clear browser cache and hard reload
-
-2. Data Issues:
-   - Check backend logs for database connection
-   - Verify Supabase connection and queries
-   - Ensure word data is properly seeded
-   - Validate API response format
-
-3. Environment Issues:
-   - Confirm all required env vars are set
-   - Check for typos in URLs
-   - Verify correct ports are being used
-   - Ensure both services are running 
-
-## Frontend Error Analysis
-
-### 1. Deprecated API Warning
-```
-content.js:1 Deprecated API for given entry type.
-```
-**Analysis**: 
-- Location: content.js, line 1
-- Type: Deprecation warning
-- Possible Cause: Using an outdated API method in content scripts
-- Impact: Non-critical warning, functionality may still work
-- Solution: Identify the deprecated API call and update to current version
-
-### 2. Player ID Generation Sequence
-```
-index-ChKEtz_O.js:40 Fetching word…
-index-ChKEtz_O.js:40 [getPlayerId] Generating new player ID
-index-ChKEtz_O.js:40 [getPlayerId] New player ID stored successfully
-```
-**Analysis**:
-- Location: index-ChKEtz_O.js, line 40
-- Type: Info logging
-- Flow: Correct sequence of events (fetch → generate ID → store ID)
-- Note: Working as expected, not an error
-
-### 3. MetaMask Connection
-```
-inpage.js:1 MetaMask: Connected to chain with ID "0x1".
-```
-**Analysis**:
-- Location: inpage.js, line 1
-- Type: Info message
-- Context: MetaMask wallet connection to Ethereum mainnet
-- Impact: Unrelated to our app's core functionality
-- Action: Consider removing MetaMask integration if not needed
-
-### 4. Updated CORS Error Analysis (Critical)
-```
-Access to fetch at 'https://undefine-v2-back.vercel.app/api/word' from origin 'https://undefine-v2-front-m4v4bogyd-paddys-projects-82cb6057.vercel.app' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
-```
-**Analysis**:
-- Location: Browser security policy
-- Type: CORS policy violation with credentials
-- Origin: undefine-v2-front-m4v4bogyd-paddys-projects-82cb6057.vercel.app (preview deployment)
-- Target: https://undefine-v2-back.vercel.app/api/word
-- Root Cause: Mismatch between credentials mode and CORS headers
-- Specific Issue: Using wildcard '*' with credentials mode 'include'
-- Impact: Blocks all API communication
-
-**Error Chain**:
-1. Frontend makes credentialed fetch request
-2. CORS preflight fails due to '*' origin with credentials
-3. Resource loading fails (net::ERR_FAILED)
-4. Game initialization fails (TypeError: Failed to fetch)
-
-### 5. Resource Loading Failure
-```
-undefine-v2-back.vercel.app/api/word:1 Failed to load resource: net::ERR_FAILED
-```
-**Analysis**:
-- Location: Network request
-- Type: Resource loading error
-- Endpoint: /api/word
-- Root Cause: Consequence of CORS failure
-- Impact: Cannot fetch word data
-
-### 6. Fetch Error Chain
-```
-index-ChKEtz_O.js:40 Fetch Error: Object
-index-ChKEtz_O.js:40 Failed to start new game: TypeError: Failed to fetch
-```
-**Analysis**:
-- Location: index-ChKEtz_O.js, line 40
-- Type: Runtime error
-- Error Chain: CORS → Failed fetch → Game initialization failure
-- Impact: Complete failure of core game functionality
-
-## Revised Solution Priority
-
-1. **CORS Configuration with Credentials (Immediate)**
-   - Option A: Remove credentials mode from fetch:
-   ```typescript
-   fetch(url, { 
-     credentials: 'omit' // Or remove credentials option entirely
-   });
-   ```
-   
-   - Option B: Use specific origin instead of wildcard:
-   ```typescript
-   // In API routes
-   const origin = req.headers.origin || 'https://undefine-v2-front.vercel.app';
-   res.setHeader('Access-Control-Allow-Origin', origin);
-   res.setHeader('Access-Control-Allow-Credentials', 'true');
-   ```
-
-2. **Frontend Fetch Configuration (High)**
-   - Review all fetch calls
-   - Standardize credentials handling
-   - Add proper error handling
-
-3. **Environment-Aware CORS (Medium)**
-   - Handle development URLs
-   - Handle preview deployments
-   - Handle production URLs
-
-### Implementation Plan
-
-1. **Immediate Fix**:
-   Since we don't need credentials for our public word game, we should:
-   - Remove credentials mode from frontend fetch calls
-   - Keep the simple CORS configuration with '*'
-   - This is simpler than managing specific origins
-
-2. **Frontend Changes**:
-   ```typescript
-   // Update fetch configuration
-   const response = await fetch(url, {
-     method: 'GET',
-     headers: {
-       'Content-Type': 'application/json'
-     }
-     // No credentials option
-   });
-   ```
-
-3. **Error Handling**:
-   ```typescript
-   try {
-     const response = await fetch(url);
-     if (!response.ok) {
-       throw new Error(`HTTP error! status: ${response.status}`);
-     }
-     const data = await response.json();
-     return data;
-   } catch (error) {
-     console.error('API Error:', error);
-     // Show user-friendly error message
-     throw error;
-   }
-   ```
-
-4. **Monitoring**:
-   - Add error tracking for CORS issues
-   - Log failed requests
-   - Monitor preview deployments
-
-## Implementation Steps
-
-1. Backend API Routes:
-   ```typescript
-   // In all API routes
-   res.setHeader('Access-Control-Allow-Origin', '*');
-   res.setHeader('Access-Control-Allow-Methods', '*');
-   res.setHeader('Access-Control-Allow-Headers', '*');
-   ```
-
-2. Frontend Error Handling:
-   ```typescript
-   try {
-     const response = await fetch(url);
-     if (!response.ok) {
-       throw new Error(`HTTP error! status: ${response.status}`);
-     }
-     const data = await response.json();
-     return data;
-   } catch (error) {
-     console.error('API Error:', error);
-     // Show user-friendly error message
-     throw error;
-   }
-   ```
-
-3. Development Environment:
-   - Add proper logging levels
-   - Implement error tracking
-   - Add monitoring for API health
-
-4. Documentation:
-   - Update API documentation
-   - Document error codes
-   - Add troubleshooting guide 

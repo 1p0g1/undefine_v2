@@ -1,80 +1,90 @@
 # Supabase Schema Alignment & Backend Audit
 
+Last Updated: May 2024
+
 ## Table Overview
 
 ### words
 
 - **Purpose:** Master table of daily or fallback words.
 - **Fields:**
-  - id (uuid): Primary key
-  - word (text): The word itself
-  - definition (text): Main clue
-  - etymology (text): Word origin
-  - first_letter (text): First letter clue
-  - in_a_sentence (text): Usage clue
-  - number_of_letters (int8): Word length
-  - equivalents (text): Synonyms
-  - difficulty (text): Difficulty rating
-  - date (date): Date for daily word selection
+  - id (uuid) 🔑: Primary key
+  - word (text) ◆: The word itself
+  - definition (text) ◆: Main clue
+  - etymology (text) ◇: Word origin
+  - first_letter (text) ◇: First letter clue
+  - in_a_sentence (text) ◇: Usage clue
+  - number_of_letters (int8) ◇: Word length
+  - equivalents (text) ◇: Synonyms
+  - difficulty (text) ◇: Difficulty rating
+  - date (date) ◇: Date for daily word selection
 
 ### game_sessions
 
 - **Purpose:** Tracks each user's interaction with the word of the day.
 - **Fields:**
-  - id (uuid): Primary key
-  - word_id (uuid): FK to words
-  - word (varchar): Redundant, for quick lookup
-  - start_time (timestamptz): When session started
-  - end_time (timestamptz): When session ended
-  - guesses (\_text): Array of guesses
-  - guesses_used (int4): Number of guesses used
-  - revealed_clues (\_text): Array of revealed clues
-  - clue_status (jsonb): Status of each clue
-  - is_complete (bool): Game finished
-  - is_won (bool): Game won
-  - created_at (timestamptz): Row created
-  - updated_at (timestamptz): Row updated
-  - state (text): Misc state
-  - player_id (text): FK to user_stats
+  - id (uuid) 🔑: Primary key
+  - start_time (timestamptz) ◆: When session started
+  - end_time (timestamptz) ◇: When session ended
+  - guesses (_text) ◆: Array of guesses
+  - guesses_used (int4) ◆: Number of guesses used
+  - revealed_clues (_text) ◆: Array of revealed clues
+  - clue_status (jsonb) ◆: Status of each clue
+  - is_complete (bool) ◆: Game finished
+  - is_won (bool) ◆: Game won
+  - created_at (timestamptz) ◆: Row created
+  - updated_at (timestamptz) ◆: Row updated
+  - state (text) ◇: Misc state
+  - player_id (text) ◆: FK to user_stats
+  - word_id (uuid) ◆: FK to words
 
 ### scores
 
 - **Purpose:** Final submission info per user, stores completion metrics.
 - **Fields:**
-  - id (uuid): Primary key
-  - player_id (text): FK to user_stats
-  - nickname (text): Player nickname
-  - word (text): The word
-  - guesses_used (int4): Number of guesses used
-  - used_hint (bool): Whether a hint was used
-  - completion_time_seconds (int4): Time to complete
-  - was_correct (bool): If the guess was correct
-  - submitted_at (timestamp): When submitted
+  - id (uuid) 🔑: Primary key
+  - player_id (text) ◆: FK to user_stats
+  - nickname (text) ◇: Player nickname
+  - guesses_used (int4) ◆: Number of guesses used
+  - used_hint (bool) ◆: Whether a hint was used
+  - completion_time_sec (int4) ◆: Time to complete
+  - submitted_at (timestamptz) ◆: When submitted
+  - word_id (uuid) ◆: FK to words
+  - game_session_id (uuid) ◆: FK to game_sessions
 
 ### leaderboard_summary
 
 - **Purpose:** Daily top 10 rankings and best performances per player/word.
 - **Fields:**
-  - id (uuid): Primary key
-  - player_id (text): FK to user_stats
-  - word (text): The word
-  - rank (int4): Leaderboard rank
-  - was_top_10 (bool): Top 10 flag
-  - best_time (int4): Best time in seconds
-  - guesses_used (int4): Number of guesses used
-  - date (date): Date of leaderboard entry
+  - id (uuid) 🔑: Primary key
+  - player_id (text) ◆: FK to user_stats
+  - rank (int4) ◆: Leaderboard rank
+  - was_top_10 (bool) ◆: Top 10 flag
+  - best_time (int4) ◇: Best time in seconds
+  - guesses_used (int4) ◆: Number of guesses used
+  - date (date) ◆: Date of leaderboard entry
+  - word_id (uuid) ◆: FK to words
 
 ### user_stats
 
 - **Purpose:** Aggregated performance over time, used for streaks and stats.
 - **Fields:**
-  - player_id (text): Primary key
-  - top_10_count (int4): Number of top 10s
-  - best_rank (int4): Best leaderboard rank
-  - longest_streak (int4): Longest win streak
-  - current_streak (int4): Current win streak
-  - average_completion_time (float8): Avg. time
-  - last_played_word (text): Last word played
+  - player_id (text) 🔑: Primary key
+  - top_10_count (int4) ◆: Number of top 10s
+  - best_rank (int4) ◆: Best leaderboard rank
+  - longest_streak (int4) ◆: Longest win streak
+  - current_streak (int4) ◆: Current win streak
+  - average_completion_time (float8) ◆: Avg. time
+  - last_played_word (text) ◇: Last word played
+  - games_played (int4) ◆: Total games played
+  - created_at (timestamptz) ◆: Row created
+  - updated_at (timestamptz) ◆: Row updated
+
+## Legend
+- 🔑 Primary Key
+- ◆ Non-nullable field
+- ◇ Nullable field
+- FK: Foreign Key reference
 
 ---
 
