@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../../../src/env.server';
-import { withCors } from '@/middleware/cors';
+import { withCors } from '@/lib/withCors';
 
 // Initialize Supabase client with validated env variables
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

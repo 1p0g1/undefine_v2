@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest } from 'next';
 import type { ResetRequest, ResetResponse, ApiResponse } from 'types/api';
 import { env } from '../../../src/env.server';
-import { withCors } from '@/middleware/cors';
+import { withCors } from '@/lib/withCors';
 
 // Strict development-only check
 if (env.NODE_ENV === 'production') {
