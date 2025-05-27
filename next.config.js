@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -14,5 +16,9 @@ module.exports = {
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
     DB_PROVIDER: process.env.DB_PROVIDER,
-  }
+  },
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    return config;
+  },
 }
