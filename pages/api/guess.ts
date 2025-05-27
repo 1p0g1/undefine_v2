@@ -19,12 +19,13 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
 import { ClueKey, CLUE_SEQUENCE } from '@/src/types/clues';
-import { withCors } from '@/middleware/cors';
+import { withCors } from '@/lib/withCors';
+import { submitGuess } from '@/game/guess';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -233,229 +234,23 @@ async function updateLeaderboardSummary(
   }
 }
 
-async function handler(
-  req: NextApiRequest,
-  res: ApiResponse<GuessResponse>
-) {
-  console.log('[api/guess] Received request:', {
-    method: req.method,
-    origin: req.headers.origin,
-    playerId: req.headers['player-id'],
-  });
-
+export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      error: 'Method not allowed',
-      details: 'Only POST requests are allowed'
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Parse request body
-    let body = '';
-    await new Promise<void>((resolve) => {
-      req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
-      req.on('end', () => resolve());
-    });
-    
-    console.log('[api/guess] Request body:', body);
-    const { gameId, guess, playerId } = JSON.parse(body) as GuessRequest;
+    const { guess, gameId } = req.body;
+    const playerId = req.headers['player-id'] as string;
 
-    // Validate required fields
-    if (!gameId || !guess || !playerId) {
-      console.warn('[api/guess] Missing required fields:', { gameId, guess, playerId });
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        details: 'gameId, guess, and playerId are required'
-      });
+    if (!guess || !gameId || !playerId) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Validate player_id is UUID
-    if (!isUUID(playerId)) {
-      console.warn('[api/guess] Invalid player ID:', playerId);
-      return res.status(400).json({
-        error: 'Invalid player ID',
-        details: 'player_id must be a valid UUID'
-      });
-    }
-
-    // Validate guess is non-empty string
-    if (typeof guess !== 'string' || !guess.trim()) {
-      return res.status(400).json({
-        error: 'Invalid guess',
-        details: 'guess must be a non-empty string'
-      });
-    }
-
-    // Get the game session with row-level locking
-    const { data: gameSession, error: gameError } = await supabase
-      .from('game_sessions')
-      .select('*')
-      .eq('id', gameId)
-      .single();
-
-    if (gameError || !gameSession) {
-      return res.status(404).json({ 
-        error: 'Game session not found',
-        details: gameError?.message
-      });
-    }
-
-    // Validate game is not complete
-    if (gameSession.is_complete) {
-      return res.status(403).json({
-        error: 'Game already completed',
-        details: 'This game session has already been completed'
-      });
-    }
-
-    // Get the word
-    const { data: word, error: wordError } = await supabase
-      .from('words')
-      .select('id, word')
-      .eq('id', gameSession.word_id)
-      .single();
-
-    if (wordError || !word) {
-      return res.status(404).json({ 
-        error: 'Word not found',
-        details: wordError?.message
-      });
-    }
-
-    const normalizedGuess = guess.toLowerCase().trim();
-    const normalizedWord = word.word.toLowerCase().trim();
-    const isCorrect = normalizedGuess === normalizedWord;
-    
-    // Calculate fuzzy match if not correct
-    const distance = levenshteinDistance(normalizedGuess, normalizedWord);
-    const isFuzzy = !isCorrect && distance <= Math.min(3, Math.floor(word.word.length / 2));
-    const fuzzyPositions = isFuzzy ? getFuzzyPositions(normalizedGuess, normalizedWord) : [];
-
-    // Update game session state
-    const updatedGuesses = [...(gameSession.guesses || []), normalizedGuess];
-    const isComplete = isCorrect || updatedGuesses.length >= 6;
-    const completionTimeSeconds = isComplete 
-      ? Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) 
-      : null;
-
-    // Get current revealed clues and determine next clue
-    const currentRevealedClues = gameSession.revealed_clues || ['definition'];
-    let newRevealedClues = [...currentRevealedClues];
-    
-    if (!isCorrect && !isComplete) {
-      const nextClue = getNextClueKey(currentRevealedClues);
-      if (nextClue) {
-        newRevealedClues.push(nextClue);
-      }
-    }
-
-    // Update clue status
-    const newClueStatus = { ...gameSession.clue_status };
-    newRevealedClues.forEach(clue => {
-      newClueStatus[clue] = true;
-    });
-
-    // Start a Supabase transaction
-    const { error: transactionError } = await supabase.rpc('handle_guess', {
-      p_game_id: gameId,
-      p_guess: normalizedGuess,
-      p_guesses: updatedGuesses,
-      p_revealed_clues: newRevealedClues,
-      p_clue_status: newClueStatus,
-      p_is_complete: isComplete,
-      p_is_won: isCorrect,
-      p_completion_time_seconds: completionTimeSeconds
-    });
-
-    if (transactionError) {
-      console.error('[api/guess] Transaction error:', transactionError);
-      return res.status(500).json({
-        error: 'Failed to update game state',
-        details: transactionError.message
-      });
-    }
-
-    let stats = null;
-    let score = null;
-
-    // If game is complete, update stats and create score entry
-    if (isComplete) {
-      try {
-        // Update user stats
-        stats = await updateUserStats(
-          playerId,
-          isCorrect,
-          updatedGuesses.length,
-          completionTimeSeconds
-        );
-
-        // Create score entry
-        await createScoreEntry(
-          playerId,
-          word.id,
-          updatedGuesses.length,
-          completionTimeSeconds,
-          isCorrect
-        );
-
-        // Update leaderboard if won
-        if (isCorrect) {
-          await updateLeaderboardSummary(
-            playerId,
-            word.id,
-            updatedGuesses.length,
-            completionTimeSeconds
-          );
-        }
-
-        // Calculate score
-        score = calculateScore(
-          updatedGuesses.length,
-          completionTimeSeconds || 0,
-          isCorrect
-        );
-      } catch (err) {
-        console.error('[api/guess] Failed to update stats/score:', err);
-        // Don't fail the request, just log the error
-      }
-    }
-
-    // Return response (never expose the actual word)
-    return res.status(200).json({
-      isCorrect,
-      guess: normalizedGuess,
-      isFuzzy,
-      fuzzyPositions,
-      gameOver: isComplete,
-      revealedClues: newRevealedClues,
-      usedHint: false,
-      score: score ? {
-        value: score,
-        guessesUsed: updatedGuesses.length,
-        completionTimeSeconds: completionTimeSeconds || 0,
-        isWon: isCorrect
-      } : null,
-      stats: stats ? {
-        games_played: stats.games_played,
-        games_won: stats.games_won,
-        current_streak: stats.current_streak,
-        longest_streak: stats.longest_streak
-      } : {
-        games_played: 0,
-        games_won: 0,
-        current_streak: 0,
-        longest_streak: 0
-      }
-    });
-  } catch (err) {
-    console.error('[api/guess] Unexpected error:', err);
-    return res.status(500).json({ 
-      error: 'Unexpected error',
-      details: err instanceof Error ? err.message : 'Unknown error'
-    });
+    const result = await submitGuess({ guess, gameId, playerId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[/api/guess] Error:', error);
+    res.status(500).json({ error: 'Failed to submit guess' });
   }
-}
-
-// Export the handler wrapped with CORS middleware
-export default withCors(handler); 
+}); 

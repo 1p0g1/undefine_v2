@@ -19,87 +19,30 @@ if (typeof window !== 'undefined') {
 }
 
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import type { ApiResponse, ErrorResponse } from 'types/api';
 import { WordResponse } from '../../shared-types/src/word';
 import { env } from '../../src/env.server';
 import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
-import { withCors } from '@/middleware/cors';
+import { withCors } from '@/lib/withCors';
+import { getNewWord } from '@/game/word';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Production frontend URL
 const FRONTEND_URL = 'https://undefine-v2-front.vercel.app';
 
-async function handler(
-  req: NextApiRequest,
-  res: ApiResponse<WordResponse>
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    console.log('[api/word] Initializing Supabase client');
-
-    // Get today's date in YYYY-MM-DD format
-    const now = new Date();
-    const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-    
-    console.log('[api/word] Fetching word for date:', today);
-
-    // Try to get today's word
-    const { data: todayWord, error: todayWordError } = await supabase
-      .from('words')
-      .select('*')
-      .eq('date', today)
-      .single();
-
-    console.log('[api/word] Today\'s word query result:', {
-      hasWord: !!todayWord,
-      error: todayWordError?.message,
-      date: today
-    });
-
-    // If no word for today, get the most recent word
-    if (todayWordError || !todayWord) {
-      console.log('[api/word] No word for today, fetching most recent word');
-      
-      const { data: fallbackWord, error: fallbackError } = await supabase
-        .from('words')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (fallbackError || !fallbackWord) {
-        console.error('[api/word] Failed to fetch any word:', fallbackError);
-        return res.status(404).json({ 
-          error: 'No words available',
-          details: fallbackError?.message
-        });
-      }
-
-      return res.status(200).json({
-        word: mapWordRowToResponse(fallbackWord),
-        gameId: 'temp-session-' + new Date().getTime(),
-        isFallback: true
-      });
-    }
-
-    // Return today's word
-    return res.status(200).json({
-      word: mapWordRowToResponse(todayWord),
-      gameId: 'temp-session-' + new Date().getTime(),
-      isFallback: false
-    });
-
-  } catch (err) {
-    console.error('[api/word] Unexpected error:', err);
-    return res.status(500).json({ 
-      error: 'Unexpected error',
-      details: err instanceof Error ? err.message : 'Unknown error'
-    });
+    const word = await getNewWord();
+    res.status(200).json(word);
+  } catch (error) {
+    console.error('[/api/word] Error:', error);
+    res.status(500).json({ error: 'Failed to get word' });
   }
 }
 
