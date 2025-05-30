@@ -62,6 +62,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Create a new game session
     console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
     const start_time = new Date().toISOString();
+    const clue_status = createDefaultClueStatus();
+    
+    console.log('[/api/word] Initializing game session with:', {
+      playerId,
+      wordId: word.word.id,
+      start_time,
+      clue_status
+    });
+
     const { data: session, error: sessionError } = await supabase
       .from('game_sessions')
       .insert({
@@ -69,7 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         word_id: word.word.id,
         guesses: [],
         revealed_clues: [],
-        clue_status: createDefaultClueStatus(),
+        clue_status,
         is_complete: false,
         is_won: false,
         start_time

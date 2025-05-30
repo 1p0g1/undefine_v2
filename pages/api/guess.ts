@@ -253,12 +253,13 @@ export default withCors(async function handler(
     const { data: gameSession, error: sessionError } = await supabase
       .from('game_sessions')
       .select(`
+        id,
         word_id,
         revealed_clues,
         guesses,
         is_complete,
         start_time,
-        words (
+        words:word_id (
           word,
           definition,
           etymology,

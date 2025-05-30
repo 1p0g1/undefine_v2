@@ -7,11 +7,17 @@ import { normalizeText, normalizedEquals } from '@/src/utils/text';
 const processGuess = async (
   guess: string,
   targetWord: string,
-  currentClues: ClueKey[]
+  currentClues: ClueKey[],
+  start_time: string
 ): Promise<GuessResponse> => {
   // Validate clue sequence
   if (!validateClueSequence(currentClues)) {
     throw new Error('Invalid clue sequence');
+  }
+
+  // Validate start_time is a valid ISO string
+  if (!Date.parse(start_time)) {
+    throw new Error('Invalid start_time format');
   }
 
   const normalizedGuess = normalizeText(guess);
@@ -87,16 +93,16 @@ export const submitGuess = async (
 ): Promise<GuessResponse> => {
   // Handle single object parameter
   if (typeof params === 'object') {
-    const { guess } = params;
-    if (!targetWord || !currentClues) {
+    const { guess, start_time } = params;
+    if (!targetWord || !currentClues || !start_time) {
       throw new Error('Missing required parameters for submitGuess');
     }
-    return processGuess(guess, targetWord, currentClues);
+    return processGuess(guess, targetWord, currentClues, start_time);
   }
   
   // Handle three separate parameters
   if (!targetWord || !currentClues) {
     throw new Error('Missing required parameters for submitGuess');
   }
-  return processGuess(params, targetWord, currentClues);
+  throw new Error('Legacy parameter format is no longer supported');
 }; 
