@@ -3,7 +3,7 @@ import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { normalizedEquals } from '../../../src/utils/text';
-import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
+import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, CLUE_KEY_MAP, ShortClueKey } from '../../../shared-types/src/clues';
 import { ScoreResult } from '../../../shared-types/src/scoring';
 
 const useGame = () => {
@@ -12,12 +12,12 @@ const useGame = () => {
     wordId: '',
     wordText: '',
     clues: {
-      D: '',
-      E: '',
-      F: '',
-      I: '',
-      N: '',
-      E2: '',
+      definition: '',
+      equivalents: '',
+      first_letter: '',
+      in_a_sentence: '',
+      number_of_letters: '',
+      etymology: '',
     },
     guesses: [],
     revealedClues: [],
@@ -69,12 +69,12 @@ const useGame = () => {
         wordId: data.word.id,
         wordText: data.word.word,
         clues: {
-          D: data.word.definition,
-          E: data.word.equivalents.join(', '), // Convert array to string
-          F: data.word.first_letter,
-          I: data.word.in_a_sentence,
-          N: data.word.number_of_letters.toString(),
-          E2: data.word.etymology,
+          definition: data.word.definition,
+          equivalents: Array.isArray(data.word.equivalents) ? data.word.equivalents.join(', ') : '',
+          first_letter: data.word.first_letter,
+          in_a_sentence: data.word.in_a_sentence,
+          number_of_letters: data.word.number_of_letters.toString(),
+          etymology: data.word.etymology,
         },
         guesses: [],
         revealedClues: [],
@@ -174,56 +174,56 @@ const useGame = () => {
  * E2: Etymology (after 5th incorrect guess)
  */
 export function getVisibleClues(
-  clues: GameSessionState['clues'],
+  clues: Record<ClueKey, string>,
   guesses: string[] = [],
   correctAnswer: string = ''
-): { key: string; label: string; value: string }[] {
+): { key: ShortClueKey; label: string; value: string }[] {
   if (!clues) return [];
   // Count incorrect guesses only
   const incorrectGuesses = guesses.filter(g => !normalizedEquals(g, correctAnswer));
-  const visibleClues: { key: string; label: string; value: string }[] = [];
+  const visibleClues: { key: ShortClueKey; label: string; value: string }[] = [];
 
   // Always show definition
   visibleClues.push({ 
-    key: CLUE_KEY_MAP.D, 
+    key: 'D', 
     label: CLUE_LABELS[CLUE_KEY_MAP.D], 
-    value: clues.D 
+    value: clues[CLUE_KEY_MAP.D] 
   });
 
   // Show remaining clues based on incorrect guesses
   if (incorrectGuesses.length >= 1) {
     visibleClues.push({
-      key: CLUE_KEY_MAP.E,
+      key: 'E',
       label: CLUE_LABELS[CLUE_KEY_MAP.E],
-      value: clues.E,
+      value: clues[CLUE_KEY_MAP.E],
     });
   }
   if (incorrectGuesses.length >= 2) {
     visibleClues.push({ 
-      key: CLUE_KEY_MAP.F, 
+      key: 'F', 
       label: CLUE_LABELS[CLUE_KEY_MAP.F], 
-      value: clues.F 
+      value: clues[CLUE_KEY_MAP.F] 
     });
   }
   if (incorrectGuesses.length >= 3) {
     visibleClues.push({ 
-      key: CLUE_KEY_MAP.I, 
+      key: 'I', 
       label: CLUE_LABELS[CLUE_KEY_MAP.I], 
-      value: clues.I 
+      value: clues[CLUE_KEY_MAP.I] 
     });
   }
   if (incorrectGuesses.length >= 4) {
     visibleClues.push({
-      key: CLUE_KEY_MAP.N,
+      key: 'N',
       label: CLUE_LABELS[CLUE_KEY_MAP.N],
-      value: clues.N,
+      value: clues[CLUE_KEY_MAP.N],
     });
   }
   if (incorrectGuesses.length >= 5) {
     visibleClues.push({ 
-      key: CLUE_KEY_MAP.E2, 
+      key: 'E2', 
       label: CLUE_LABELS[CLUE_KEY_MAP.E2], 
-      value: clues.E2 
+      value: clues[CLUE_KEY_MAP.E2] 
     });
   }
   return visibleClues;

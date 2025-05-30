@@ -225,13 +225,10 @@ function App() {
       {/* Clues Section */}
       <div className="hint-blocks" style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
         {visibleClues.map((clue, idx) => {
-          const letter = clue.key;
-          const title = clue.label;
           return (
             <div className="hint-row" key={clue.key}>
-              <div className="hint-letter">{letter}</div>
+              <div className="hint-letter">{clue.key}</div>
               <div className="hint-box">
-                <div className="hint-title">{title}</div>
                 <div className="hint-text">{clue.value}</div>
               </div>
             </div>

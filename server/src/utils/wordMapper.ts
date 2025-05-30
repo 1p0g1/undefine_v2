@@ -6,13 +6,16 @@ import { WordRow, WordResponseShape } from '../../../shared-types/src/word';
  * @returns The shaped word response
  */
 export function mapWordRowToResponse(word: WordRow): WordResponseShape {
+  // Ensure equivalents is always an array
+  const equivalents = word.equivalents || [];
+
   return {
     id: word.id,
     word: word.word,
     definition: word.definition,
     first_letter: word.first_letter,
     in_a_sentence: word.in_a_sentence,
-    equivalents: word.equivalents,
+    equivalents,
     number_of_letters: word.number_of_letters,
     etymology: word.etymology,
     difficulty: word.difficulty,
