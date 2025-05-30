@@ -50,7 +50,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   // Add player-id if available
   const playerId = getPlayerId();
   if (playerId) {
-    headers.set('Player-ID', playerId);
+    headers.set('player-id', playerId);
   }
 
   const normalizedPath = normalizePath(path);

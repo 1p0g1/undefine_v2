@@ -40,13 +40,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     // Get player ID from header
-    const playerId = req.headers['Player-ID'] as string;
+    const playerId = req.headers['player-id'] as string;
+    console.log('[/api/word] Headers:', req.headers);
     if (!playerId) {
+      console.error('[/api/word] Missing player-id header');
       return res.status(400).json({ error: 'Missing player ID' });
     }
 
     // Get today's word
     const word = await getNewWord();
+    if (!word?.word?.id) {
+      console.error('[/api/word] Invalid word response:', word);
+      return res.status(500).json({ error: 'Failed to get valid word' });
+    }
 
     // Create a new game session
     console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
@@ -67,8 +73,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .single();
 
     if (sessionError) {
-      console.error('[/api/word] Failed to create game session:', sessionError);
-      return res.status(500).json({ error: 'Failed to create game session' });
+      console.error('[/api/word] Failed to create game session:', {
+        error: sessionError,
+        details: sessionError.details,
+        hint: sessionError.hint,
+        code: sessionError.code
+      });
+      return res.status(500).json({ 
+        error: 'Failed to create game session',
+        details: sessionError.message
+      });
     }
 
     // Return word data with session ID

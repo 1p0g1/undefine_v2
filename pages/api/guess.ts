@@ -219,16 +219,21 @@ interface GameSessionWithWord extends GameSession {
   };
 }
 
-export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse<GuessResponse | { error: string }>) {
+export default withCors(async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<GuessResponse | { error: string, details?: string }>
+) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { guess, gameId } = req.body;
-    const playerId = req.headers['Player-ID'] as string;
+    const playerId = req.headers['player-id'] as string;
+    console.log('[/api/guess] Request:', { guess, gameId, playerId, headers: req.headers });
 
     if (!guess || !gameId || !playerId) {
+      console.error('[/api/guess] Missing required fields:', { guess, gameId, playerId });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -246,11 +251,22 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
         )
       `)
       .eq('id', gameId)
+      .eq('player_id', playerId)
       .single() as { data: GameSessionWithWord | null, error: any };
 
     if (sessionError || !gameSession) {
-      console.error('[/api/guess] Failed to fetch game session:', sessionError);
-      return res.status(500).json({ error: 'Failed to fetch game session' });
+      console.error('[/api/guess] Failed to fetch game session:', {
+        error: sessionError,
+        details: sessionError?.details,
+        hint: sessionError?.hint,
+        code: sessionError?.code,
+        gameId,
+        playerId
+      });
+      return res.status(500).json({ 
+        error: 'Failed to fetch game session',
+        details: sessionError?.message
+      });
     }
 
     if (gameSession.is_complete) {
