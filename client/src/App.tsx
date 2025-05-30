@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import useGame from './hooks/useGame';
 import { DefineBoxes } from './components/DefineBoxes';
 import { getVisibleClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
+import DebugPanel from './components/DebugPanel';
+import { normalizeText } from '../../src/utils/text';
 
 function App() {
   const {
@@ -16,6 +18,7 @@ function App() {
     playerRank,
     isLeaderboardLoading,
     leaderboardError,
+    scoreDetails
   } = useGame();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
@@ -24,6 +27,7 @@ function App() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     startNewGame();
@@ -50,20 +54,33 @@ function App() {
     };
   }, []);
 
+  // Toggle debug panel with Ctrl+Shift+D
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setShowDebug(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleGuessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted');
-    const trimmed = guess.trim();
-    if (!trimmed) {
+    const normalizedGuess = normalizeText(guess);
+    if (!normalizedGuess) {
       console.log('Empty guess, ignoring');
       return;
     }
-    if (gameState.guesses.includes(trimmed)) {
-      console.log('Duplicate guess, ignoring:', trimmed);
+    if (gameState.guesses.includes(normalizedGuess)) {
+      console.log('Duplicate guess, ignoring:', normalizedGuess);
       return;
     }
-    console.log('Submitting guess:', trimmed);
-    submitGuess(trimmed);
+    console.log('Submitting guess:', normalizedGuess);
+    submitGuess(normalizedGuess);
     setGuess('');
   };
 
@@ -345,6 +362,7 @@ function App() {
         isLoading={isLeaderboardLoading}
         error={leaderboardError || undefined}
       />
+      <DebugPanel gameState={gameState} isVisible={showDebug} />
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }

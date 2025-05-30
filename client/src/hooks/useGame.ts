@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
-import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
+import { GameSessionState, LeaderboardEntry } from '../../../shared-types/src/game';
+import { WordResponse } from '../../../shared-types/src/word';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { normalizedEquals } from '../../../src/utils/text';
-import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, CLUE_KEY_MAP, ShortClueKey } from '../../../shared-types/src/clues';
+import { normalizedEquals, normalizeText } from '../../../src/utils/text';
+import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, ShortClueKey, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
 import { ScoreResult } from '../../../shared-types/src/scoring';
+import { env } from '../env.client';
 
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
@@ -22,23 +24,22 @@ const useGame = () => {
     guesses: [],
     revealedClues: [],
     clueStatus: createDefaultClueStatus(),
-    usedHint: false,
     isComplete: false,
     isWon: false,
     score: null
   });
+
   // Track guess status for each box (max 6)
   const [guessStatus, setGuessStatus] = useState<
     ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[]
   >(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+
   // Track leaderboard modal
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  // Store leaderboard data
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [playerRank, setPlayerRank] = useState<number | null>(null);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
-  // Track score details
   const [scoreDetails, setScoreDetails] = useState<ScoreResult | null>(null);
 
   // Function to fetch leaderboard data
@@ -52,7 +53,7 @@ const useGame = () => {
       setLeaderboardData(data.leaderboard);
       setPlayerRank(data.playerRank);
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      console.error('[Game] Failed to fetch leaderboard:', error);
       setLeaderboardError('Failed to load leaderboard. Please try again.');
     } finally {
       setIsLeaderboardLoading(false);
@@ -61,93 +62,184 @@ const useGame = () => {
 
   const startNewGame = useCallback(async () => {
     try {
-      console.log('Fetching word…');
+      console.log('[Game] Fetching word…');
       const data = await apiClient.getNewWord();
+      
+      // Debug log in development
+      if (import.meta.env.DEV) {
+        console.log('[Debug] Word Response:', {
+          word: data.word,
+          gameId: data.gameId,
+          isFallback: data.isFallback
+        });
+      }
+
+      // Ensure all clues are strings
+      const processedClues = {
+        definition: String(data.word.definition || ''),
+        equivalents: Array.isArray(data.word.equivalents) ? data.word.equivalents.join(', ') : String(data.word.equivalents || ''),
+        first_letter: String(data.word.first_letter || ''),
+        in_a_sentence: String(data.word.in_a_sentence || ''),
+        number_of_letters: String(data.word.number_of_letters || ''),
+        etymology: String(data.word.etymology || '')
+      };
+
+      // Debug log in development
+      if (import.meta.env.DEV) {
+        console.log('[Debug] Processed Clues:', processedClues);
+      }
       
       setGameState({
         gameId: data.gameId,
         wordId: data.word.id,
         wordText: data.word.word,
-        clues: {
-          definition: data.word.definition,
-          equivalents: Array.isArray(data.word.equivalents) ? data.word.equivalents.join(', ') : '',
-          first_letter: data.word.first_letter,
-          in_a_sentence: data.word.in_a_sentence,
-          number_of_letters: data.word.number_of_letters.toString(),
-          etymology: data.word.etymology,
-        },
+        clues: processedClues,
         guesses: [],
         revealedClues: [],
         clueStatus: createDefaultClueStatus(),
-        usedHint: false,
         isComplete: false,
         isWon: false,
         score: null
       });
+      
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setShowLeaderboard(false);
       setScoreDetails(null);
     } catch (error) {
-      console.error('Failed to start new game:', error);
+      console.error('[Game] Failed to start new game:', error);
     }
   }, []);
 
   const submitGuess = useCallback(
     async (guess: string) => {
-      const trimmedGuess = guess.trim();
-      if (!trimmedGuess || gameState.isComplete) return;
+      const normalizedGuess = normalizeText(guess);
+      
+      // Early defensive returns
+      if (!normalizedGuess) {
+        console.warn('[Game] Empty guess submitted');
+        return;
+      }
+      if (gameState.isComplete) {
+        console.warn('[Game] Attempted to submit guess for completed game');
+        return;
+      }
+      if (!gameState.gameId || !gameState.wordId) {
+        console.error('[Game] Invalid game state - missing gameId or wordId');
+        return;
+      }
 
       try {
         const playerId = getPlayerId();
         if (!playerId) {
-          console.error('No player ID available');
+          console.error('[Game] No player ID available');
           return;
         }
 
-        const data = await apiClient.submitGuess({
+        // Validate and format request payload
+        const guessRequest = {
           gameId: gameState.gameId,
-          guess: trimmedGuess,
+          wordId: gameState.wordId,
+          guess: normalizedGuess,
           playerId,
-        });
+          start_time: new Date().toISOString()
+        };
+        
+        // Debug log in development
+        if (import.meta.env.DEV) {
+          console.log('[Debug] Submitting guess:', {
+            ...guessRequest,
+            currentState: {
+              guessCount: gameState.guesses.length,
+              revealedClues: gameState.revealedClues,
+              isComplete: gameState.isComplete
+            }
+          });
+        }
+
+        const data = await apiClient.submitGuess(guessRequest);
+
+        // Debug log in development
+        if (import.meta.env.DEV) {
+          console.log('[Debug] Guess response:', {
+            ...data,
+            stateBeforeUpdate: {
+              guessCount: gameState.guesses.length,
+              revealedClues: gameState.revealedClues
+            }
+          });
+        }
 
         setGameState((prevState: GameSessionState) => {
-          const newGuesses = [...prevState.guesses, trimmedGuess];
-          // Determine status for this guess
+          const newGuesses = [...prevState.guesses, normalizedGuess];
+          
+          // Determine guess status using normalizedEquals
           let status: 'correct' | 'incorrect' | 'fuzzy' = 'incorrect';
-          if (data.isCorrect) {
+          if (normalizedEquals(normalizedGuess, gameState.wordText)) {
             status = 'correct';
           } else if (data.isFuzzy) {
             status = 'fuzzy';
           }
 
-          // Update guessStatus array
+          // Update guess status array
           const newGuessStatus = [...guessStatus];
           newGuessStatus[newGuesses.length - 1] = status;
           setGuessStatus(newGuessStatus);
 
-          // Show leaderboard if 6 guesses or game over
+          // Handle game completion
           if (data.gameOver) {
             setShowLeaderboard(true);
             fetchLeaderboard();
-            if (data.score) {
-              setScoreDetails(data.score);
+            
+            // Dev warning for missing score when game is complete
+            if (import.meta.env.DEV && !data.score) {
+              console.warn('[Game] Score is null for completed game', {
+                isCorrect: data.isCorrect,
+                guessCount: newGuesses.length
+              });
             }
+            
+            setScoreDetails(data.score);
+          }
+
+          // Ensure revealedClues is always an array
+          const safeRevealedClues = Array.isArray(data.revealedClues) 
+            ? data.revealedClues 
+            : prevState.revealedClues;
+
+          // Dev warning for unexpected revealedClues state
+          if (import.meta.env.DEV && !Array.isArray(data.revealedClues)) {
+            console.warn('[Game] Received invalid revealedClues from server', {
+              received: data.revealedClues,
+              using: safeRevealedClues
+            });
           }
 
           return {
             ...prevState,
             guesses: newGuesses,
-            revealedClues: data.revealedClues,
+            revealedClues: safeRevealedClues,
             isComplete: data.gameOver,
             isWon: data.isCorrect,
             score: data.score?.score || null
           };
         });
       } catch (error) {
-        console.error('Failed to submit guess:', error);
+        console.error('[Game] Failed to submit guess:', error);
+        // Log detailed error info in development
+        if (import.meta.env.DEV) {
+          console.error('[Debug] Error context:', {
+            gameState: {
+              gameId: gameState.gameId,
+              wordId: gameState.wordId,
+              guessCount: gameState.guesses.length,
+              isComplete: gameState.isComplete
+            },
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
       }
     },
-    [gameState.gameId, gameState.isComplete, guessStatus, fetchLeaderboard]
+    [gameState.gameId, gameState.wordId, gameState.isComplete, gameState.guesses.length, gameState.wordText, guessStatus, fetchLeaderboard]
   );
 
   return {
