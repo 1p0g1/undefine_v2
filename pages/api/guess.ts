@@ -20,27 +20,34 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import type { GuessRequest, GuessResponse, ApiResponse } from 'types/api';
 import { env } from '../../src/env.server';
 import { validate as isUUID } from 'uuid';
-import { ClueKey, CLUE_SEQUENCE } from '@/src/types/clues';
+import { ClueKey, CLUE_SEQUENCE } from '@/shared-types/src/clues';
 import { withCors } from '@/lib/withCors';
-import { submitGuess } from '@/game/guess';
+import { submitGuess } from '@/src/game/guess';
+import type { GuessRequest, GuessResponse, GameSession } from '@/src/types/guess';
+import { normalizeText } from '@/src/utils/text';
+import { calculateScore, type ScoreResult } from '@/shared-types/src/scoring';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 /**
- * Calculate Levenshtein distance between two strings
+ * Calculate Levenshtein distance between two strings after normalization
+ * Note: This is currently unused as we use fuzzy position matching instead
+ * Keeping for potential future use in difficulty calculation or word suggestions
  */
 function levenshteinDistance(a: string, b: string): number {
-  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+  const normalizedA = normalizeText(a);
+  const normalizedB = normalizeText(b);
+  
+  const matrix = Array(normalizedB.length + 1).fill(null).map(() => Array(normalizedA.length + 1).fill(null));
 
-  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let i = 0; i <= normalizedA.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= normalizedB.length; j++) matrix[j][0] = j;
 
-  for (let j = 1; j <= b.length; j++) {
-    for (let i = 1; i <= a.length; i++) {
-      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+  for (let j = 1; j <= normalizedB.length; j++) {
+    for (let i = 1; i <= normalizedA.length; i++) {
+      const substitutionCost = normalizedA[i - 1] === normalizedB[j - 1] ? 0 : 1;
       matrix[j][i] = Math.min(
         matrix[j][i - 1] + 1, // deletion
         matrix[j - 1][i] + 1, // insertion
@@ -49,28 +56,7 @@ function levenshteinDistance(a: string, b: string): number {
     }
   }
 
-  return matrix[b.length][a.length];
-}
-
-/**
- * Calculate fuzzy match positions between two strings
- */
-function getFuzzyPositions(guess: string, word: string): number[] {
-  const positions: number[] = [];
-  const guessLower = guess.toLowerCase();
-  const wordLower = word.toLowerCase();
-  
-  for (let i = 0; i < guess.length; i++) {
-    if (i < word.length && guessLower[i] === wordLower[i]) {
-      positions.push(i);
-      continue;
-    }
-    if (wordLower.includes(guessLower[i])) {
-      positions.push(i);
-    }
-  }
-  
-  return positions;
+  return matrix[normalizedB.length][normalizedA.length];
 }
 
 /**
@@ -86,28 +72,14 @@ function getNextClueKey(revealedClues: ClueKey[]): ClueKey | null {
 }
 
 /**
- * Calculate score based on game session
- */
-function calculateScore(
-  guessesUsed: number,
-  completionTimeSeconds: number,
-  isWon: boolean
-): number {
-  if (!isWon) return 0;
-  const baseScore = 1000;
-  const guessDeduction = (guessesUsed - 1) * 100;
-  const timeDeduction = Math.floor(completionTimeSeconds / 10);
-  return Math.max(0, baseScore - guessDeduction - timeDeduction);
-}
-
-/**
  * Update user stats based on game outcome
  */
 async function updateUserStats(
   playerId: string,
   isWon: boolean,
   guessesUsed: number,
-  completionTimeSeconds: number | null
+  completionTimeSeconds: number | null,
+  scoreResult: ScoreResult
 ) {
   if (!completionTimeSeconds) {
     throw new Error('Completion time is required for updating stats');
@@ -134,6 +106,7 @@ async function updateUserStats(
     total_guesses: (stats?.total_guesses || 0) + guessesUsed,
     average_guesses_per_game: ((stats?.total_guesses || 0) + guessesUsed) / ((stats?.games_played || 0) + 1),
     total_play_time_seconds: (stats?.total_play_time_seconds || 0) + completionTimeSeconds,
+    total_score: (stats?.total_score || 0) + scoreResult.score,
     updated_at: new Date().toISOString()
   };
 
@@ -158,7 +131,8 @@ async function createScoreEntry(
   wordId: string,
   guessesUsed: number,
   completionTimeSeconds: number | null,
-  isWon: boolean
+  isWon: boolean,
+  scoreResult: ScoreResult
 ) {
   if (!completionTimeSeconds) {
     throw new Error('Completion time is required for creating score entry');
@@ -172,6 +146,11 @@ async function createScoreEntry(
       guesses_used: guessesUsed,
       completion_time_seconds: completionTimeSeconds,
       was_correct: isWon,
+      score: scoreResult.score,
+      base_score: scoreResult.baseScore,
+      guess_penalty: scoreResult.guessPenalty,
+      time_penalty: scoreResult.timePenalty,
+      hint_penalty: scoreResult.hintPenalty,
       submitted_at: new Date().toISOString()
     }]);
 
@@ -188,19 +167,19 @@ async function updateLeaderboardSummary(
   playerId: string,
   wordId: string,
   guessesUsed: number,
-  completionTimeSeconds: number | null
+  completionTimeSeconds: number | null,
+  scoreResult: ScoreResult
 ) {
   if (!completionTimeSeconds) {
     throw new Error('Completion time is required for updating leaderboard');
   }
 
-  // Get current top 10 for this word
   const { data: leaderboard, error: leaderboardError } = await supabase
     .from('leaderboard_summary')
     .select('*')
     .eq('word_id', wordId)
+    .order('score', { ascending: false })
     .order('completion_time_seconds', { ascending: true })
-    .order('guesses_used', { ascending: true })
     .limit(10);
 
   if (leaderboardError) {
@@ -208,11 +187,10 @@ async function updateLeaderboardSummary(
     throw leaderboardError;
   }
 
-  // Check if score qualifies for top 10
   const isTop10 = leaderboard.length < 10 || 
-    completionTimeSeconds < leaderboard[leaderboard.length - 1].completion_time_seconds ||
-    (completionTimeSeconds === leaderboard[leaderboard.length - 1].completion_time_seconds && 
-     guessesUsed < leaderboard[leaderboard.length - 1].guesses_used);
+    scoreResult.score > leaderboard[leaderboard.length - 1].score ||
+    (scoreResult.score === leaderboard[leaderboard.length - 1].score && 
+     completionTimeSeconds < leaderboard[leaderboard.length - 1].completion_time_seconds);
 
   if (isTop10) {
     const { error: insertError } = await supabase
@@ -222,8 +200,9 @@ async function updateLeaderboardSummary(
         word_id: wordId,
         rank: leaderboard.length + 1,
         was_top_10: true,
-        best_time_seconds: completionTimeSeconds,
+        score: scoreResult.score,
         guesses_used: guessesUsed,
+        completion_time_seconds: completionTimeSeconds,
         created_at: new Date().toISOString()
       }]);
 
@@ -234,7 +213,7 @@ async function updateLeaderboardSummary(
   }
 }
 
-export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse<GuessResponse | { error: string }>) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -247,7 +226,91 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const result = await submitGuess({ guess, gameId, playerId });
+    const { data: gameSession, error: sessionError } = await supabase
+      .from('game_sessions')
+      .select('word_id, word, revealed_clues, guesses, is_complete, start_time, used_hint')
+      .eq('id', gameId)
+      .single();
+
+    if (sessionError) {
+      console.error('[/api/guess] Failed to fetch game session:', sessionError);
+      return res.status(500).json({ error: 'Failed to fetch game session' });
+    }
+
+    if (gameSession.is_complete) {
+      return res.status(400).json({ error: 'Game session is already complete' });
+    }
+
+    const result = await submitGuess({
+      guess,
+      gameId,
+      playerId
+    }, gameSession.word, gameSession.revealed_clues || []);
+
+    // Calculate completion time and score if game is over
+    const completionTimeSeconds = result.gameOver ? 
+      Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) : null;
+
+    const scoreResult = result.gameOver ? calculateScore({
+      guessesUsed: (gameSession.guesses || []).length + 1,
+      completionTimeSeconds: completionTimeSeconds || 0,
+      usedHint: gameSession.used_hint || false,
+      isWon: result.isCorrect
+    }) : null;
+
+    // Update game session with new state
+    const { error: updateError } = await supabase
+      .from('game_sessions')
+      .update({
+        guesses: [...(gameSession.guesses || []), result.guess],
+        revealed_clues: result.revealedClues,
+        is_complete: result.gameOver,
+        is_won: result.isCorrect,
+        end_time: result.gameOver ? new Date().toISOString() : null,
+        score: scoreResult?.score || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', gameId);
+
+    if (updateError) {
+      console.error('[/api/guess] Failed to update game session:', updateError);
+      return res.status(500).json({ error: 'Failed to update game session' });
+    }
+
+    // If game is complete, update stats and create score entry
+    if (result.gameOver && completionTimeSeconds && scoreResult) {
+      const stats = await updateUserStats(
+        playerId,
+        result.isCorrect,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        scoreResult
+      );
+
+      await createScoreEntry(
+        playerId,
+        gameSession.word_id,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        result.isCorrect,
+        scoreResult
+      );
+
+      await updateLeaderboardSummary(
+        playerId,
+        gameSession.word_id,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        scoreResult
+      );
+
+      return res.status(200).json({
+        ...result,
+        score: scoreResult,
+        stats
+      });
+    }
+
     res.status(200).json(result);
   } catch (error) {
     console.error('[/api/guess] Error:', error);

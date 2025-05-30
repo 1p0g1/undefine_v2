@@ -76,6 +76,8 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
       - Arrays use PostgreSQL `_text` type
       - JSON data uses `jsonb` type
 
+   Note: The `used_hint` field has been removed from the schema and is no longer used in the backend.
+
 5. API Response Shapes:
    See `docs/api_responses.md` for canonical API response shapes.
 
@@ -136,11 +138,26 @@ Important Context:
 4. Validate basic scoring system
 
 ## Post-MVP Authentication Plan
-1. Implement proper player tracking
+## Current Implementation & Future Goals
+
+### Current Player Tracking
+- Player IDs are stored using `localStorage.nickname`
+- Player records are upserted in Supabase via `ensurePlayerStatsExists()`
+- No authentication required for basic gameplay
+- Session persistence via localStorage
+
+### Post-MVP Goals
+1. Implement proper session management
 2. Add session validation middleware
 3. Secure all API routes with proper player context
 4. Add rate limiting and abuse prevention
-5. Implement proper error handling for missing/invalid player_ids 
+5. Implement proper error handling for missing/invalid player_ids
+
+### Game Completion Flow
+On game completion, scores and user stats are updated via `finaliseGameSession()` which:
+- Uses `scoresRepository.ts` to record completion metrics
+- Uses `userStatsRepository.ts` to update player statistics
+- Handles atomic updates to maintain data consistency
 
 ## Environment Configuration
 
@@ -458,3 +475,33 @@ The `/api/word` endpoint now has:
    # Frontend (.env)
    VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
    ```
+
+## Deployment Verification
+✅ Before deploying, verify against:
+- `docs/Cleanup_Checklist.md` for environment and configuration checks
+- `docs/supa_alignment.md` for database schema compliance
+
+This ensures:
+1. All environment variables are properly set
+2. Database schema matches current implementation
+3. No deprecated fields or logic remain active
+4. All repositories align with current schema
+
+### Word API Implementation
+The `/api/word` endpoint:
+- Fetches a live word from Supabase `words` table
+- Creates a new `game_sessions` row with proper timestamps
+- Returns:
+  ```typescript
+  {
+    word: WordResponseShape, // Mapped from Supabase word
+    gameId: string,         // From new game_sessions row
+    isFallback: boolean     // Always false in production
+  }
+  ```
+
+The endpoint ensures:
+- One active session per player
+- Proper timestamps (start_time, end_time)
+- Consistent word selection from Supabase
+- Type-safe responses via shared types

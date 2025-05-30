@@ -18,6 +18,13 @@ interface GameSummaryModalProps {
   date: string;
   isLoading?: boolean;
   error?: string;
+  score?: {
+    baseScore: number;
+    guessPenalty: number;
+    timePenalty: number;
+    hintPenalty: number;
+    score: number;
+  };
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -35,6 +42,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   date,
   isLoading = false,
   error,
+  score,
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -150,6 +158,23 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             Guesses: <span style={{ fontWeight: 700 }}>{guessesUsed}/6</span>, Fuzzy:{' '}
             <span style={{ fontWeight: 700 }}>{fuzzyMatches}/6</span>
           </div>
+          {score && (
+            <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '0.5rem' }}>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Score Breakdown</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', fontSize: '0.9rem' }}>
+                <div>Base Score:</div>
+                <div>{score.baseScore}</div>
+                <div>Guess Penalty:</div>
+                <div style={{ color: '#ef4444' }}>-{score.guessPenalty}</div>
+                <div>Time Penalty:</div>
+                <div style={{ color: '#ef4444' }}>-{score.timePenalty}</div>
+                <div>Hint Penalty:</div>
+                <div style={{ color: '#ef4444' }}>-{score.hintPenalty}</div>
+                <div style={{ fontWeight: 700 }}>Final Score:</div>
+                <div style={{ fontWeight: 700 }}>{score.score}</div>
+              </div>
+            </div>
+          )}
         </div>
         <div
           className="gs-modal-table-wrap"

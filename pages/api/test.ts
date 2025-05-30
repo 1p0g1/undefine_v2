@@ -39,7 +39,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       details: err instanceof Error ? err.message : 'Unknown error'
     });
   }
-}
+} 
 
 // Export the handler wrapped with CORS middleware
 export default withCors(handler); 

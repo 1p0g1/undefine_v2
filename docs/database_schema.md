@@ -82,6 +82,11 @@ guesses_used INTEGER NOT NULL,
 used_hint BOOLEAN DEFAULT FALSE,
 completion_time_seconds INTEGER NOT NULL,
 was_correct BOOLEAN DEFAULT FALSE,
+score INTEGER NOT NULL,
+base_score INTEGER NOT NULL,
+guess_penalty INTEGER NOT NULL,
+time_penalty INTEGER NOT NULL,
+hint_penalty INTEGER NOT NULL,
 nickname TEXT,
 submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 UNIQUE(player_id, word_id)
@@ -90,6 +95,7 @@ UNIQUE(player_id, word_id)
 CREATE INDEX idx_scores_player_id ON scores(player_id);
 CREATE INDEX idx_scores_word_id ON scores(word_id);
 CREATE INDEX idx_scores_submitted_at ON scores(submitted_at);
+CREATE INDEX idx_scores_score ON scores(score DESC);
 
 leaderboard_summary
 
@@ -101,7 +107,8 @@ player_id TEXT NOT NULL,
 word_id UUID NOT NULL REFERENCES words(id),
 rank INTEGER NOT NULL,
 was_top_10 BOOLEAN DEFAULT FALSE,
-best_time_seconds INTEGER,
+score INTEGER NOT NULL,
+completion_time_seconds INTEGER NOT NULL,
 guesses_used INTEGER NOT NULL,
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 UNIQUE(player_id, word_id)
@@ -110,6 +117,7 @@ UNIQUE(player_id, word_id)
 CREATE INDEX idx_leaderboard_summary_player_id ON leaderboard_summary(player_id);
 CREATE INDEX idx_leaderboard_summary_word_id ON leaderboard_summary(word_id);
 CREATE INDEX idx_leaderboard_summary_rank ON leaderboard_summary(rank);
+CREATE INDEX idx_leaderboard_summary_score ON leaderboard_summary(score DESC);
 
 TypeScript Types
 
@@ -150,6 +158,11 @@ guesses_used: number;
 used_hint: boolean;
 completion_time_seconds: number;
 was_correct: boolean;
+score: number;
+base_score: number;
+guess_penalty: number;
+time_penalty: number;
+hint_penalty: number;
 nickname?: string | null;
 submitted_at: string;
 }
@@ -175,14 +188,15 @@ player_id: string;
 word_id: string;
 rank: number;
 was_top_10: boolean;
-best_time_seconds?: number | null;
+score: number;
+completion_time_seconds: number;
 guesses_used: number;
 created_at: string;
 }
 
 Database Functions
 
-get_word_of_day() — returns today’s daily word.
+get_word_of_day() — returns today's daily word.
 
 has_played_today(player_id) — checks if a player has already played.
 
@@ -206,7 +220,7 @@ Backups
 
 Supabase handles daily backups
 
-You can restore using the dashboard’s point-in-time recovery
+You can restore using the dashboard's point-in-time recovery
 
 Performance Notes
 

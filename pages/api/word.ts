@@ -44,7 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.error('[/api/word] Error:', error);
     res.status(500).json({ error: 'Failed to get word' });
   }
-}
+    }
 
 // Export the handler wrapped with CORS middleware
 export default withCors(handler); 

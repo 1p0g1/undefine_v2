@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react';
 import { GameSessionState, WordResponse, LeaderboardEntry } from '../api/types';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
+import { normalizedEquals } from '../../../src/utils/text';
+import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
+import { ScoreResult } from '../../../shared-types/src/scoring';
 
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>({
@@ -18,10 +21,11 @@ const useGame = () => {
     },
     guesses: [],
     revealedClues: [],
-    clueStatus: {},
+    clueStatus: createDefaultClueStatus(),
     usedHint: false,
     isComplete: false,
     isWon: false,
+    score: null
   });
   // Track guess status for each box (max 6)
   const [guessStatus, setGuessStatus] = useState<
@@ -34,6 +38,8 @@ const useGame = () => {
   const [playerRank, setPlayerRank] = useState<number | null>(null);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  // Track score details
+  const [scoreDetails, setScoreDetails] = useState<ScoreResult | null>(null);
 
   // Function to fetch leaderboard data
   const fetchLeaderboard = useCallback(async () => {
@@ -41,7 +47,8 @@ const useGame = () => {
     setIsLeaderboardLoading(true);
     setLeaderboardError(null);
     try {
-      const data = await apiClient.getLeaderboard(gameState.wordId, getPlayerId());
+      const playerId = getPlayerId();
+      const data = await apiClient.getLeaderboard(gameState.wordId, playerId);
       setLeaderboardData(data.leaderboard);
       setPlayerRank(data.playerRank);
     } catch (error) {
@@ -63,7 +70,7 @@ const useGame = () => {
         wordText: data.word.word,
         clues: {
           D: data.word.definition,
-          E: data.word.equivalents,
+          E: data.word.equivalents.join(', '), // Convert array to string
           F: data.word.first_letter,
           I: data.word.in_a_sentence,
           N: data.word.number_of_letters.toString(),
@@ -71,13 +78,15 @@ const useGame = () => {
         },
         guesses: [],
         revealedClues: [],
-        clueStatus: {},
+        clueStatus: createDefaultClueStatus(),
         usedHint: false,
         isComplete: false,
         isWon: false,
+        score: null
       });
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setShowLeaderboard(false);
+      setScoreDetails(null);
     } catch (error) {
       console.error('Failed to start new game:', error);
     }
@@ -89,10 +98,16 @@ const useGame = () => {
       if (!trimmedGuess || gameState.isComplete) return;
 
       try {
+        const playerId = getPlayerId();
+        if (!playerId) {
+          console.error('No player ID available');
+          return;
+        }
+
         const data = await apiClient.submitGuess({
           gameId: gameState.gameId,
           guess: trimmedGuess,
-          playerId: getPlayerId(),
+          playerId,
         });
 
         setGameState((prevState: GameSessionState) => {
@@ -114,6 +129,9 @@ const useGame = () => {
           if (data.gameOver) {
             setShowLeaderboard(true);
             fetchLeaderboard();
+            if (data.score) {
+              setScoreDetails(data.score);
+            }
           }
 
           return {
@@ -122,6 +140,7 @@ const useGame = () => {
             revealedClues: data.revealedClues,
             isComplete: data.gameOver,
             isWon: data.isCorrect,
+            score: data.score?.score || null
           };
         });
       } catch (error) {
@@ -141,18 +160,9 @@ const useGame = () => {
     playerRank,
     isLeaderboardLoading,
     leaderboardError,
+    scoreDetails
   };
 };
-
-// Enum for clue keys
-export enum ClueKey {
-  Definition = 'D',
-  Equivalents = 'E',
-  FirstLetter = 'F',
-  InSentence = 'I',
-  NumLetters = 'N',
-  Etymology = 'E2',
-}
 
 /**
  * Returns the clues to display based on the number of incorrect guesses.
@@ -170,34 +180,51 @@ export function getVisibleClues(
 ): { key: string; label: string; value: string }[] {
   if (!clues) return [];
   // Count incorrect guesses only
-  const incorrectGuesses = guesses.filter(g => g.toLowerCase() !== correctAnswer.toLowerCase());
+  const incorrectGuesses = guesses.filter(g => !normalizedEquals(g, correctAnswer));
   const visibleClues: { key: string; label: string; value: string }[] = [];
-  // Always show D
-  if (clues.D) {
-    visibleClues.push({ key: ClueKey.Definition, label: 'Definition', value: clues.D });
-  }
-  if (incorrectGuesses.length >= 1 && clues.E) {
+
+  // Always show definition
+  visibleClues.push({ 
+    key: CLUE_KEY_MAP.D, 
+    label: CLUE_LABELS[CLUE_KEY_MAP.D], 
+    value: clues.D 
+  });
+
+  // Show remaining clues based on incorrect guesses
+  if (incorrectGuesses.length >= 1) {
     visibleClues.push({
-      key: ClueKey.Equivalents,
-      label: 'Equivalents',
+      key: CLUE_KEY_MAP.E,
+      label: CLUE_LABELS[CLUE_KEY_MAP.E],
       value: clues.E,
     });
   }
-  if (incorrectGuesses.length >= 2 && clues.F) {
-    visibleClues.push({ key: ClueKey.FirstLetter, label: 'First Letter', value: clues.F });
+  if (incorrectGuesses.length >= 2) {
+    visibleClues.push({ 
+      key: CLUE_KEY_MAP.F, 
+      label: CLUE_LABELS[CLUE_KEY_MAP.F], 
+      value: clues.F 
+    });
   }
-  if (incorrectGuesses.length >= 3 && clues.I) {
-    visibleClues.push({ key: ClueKey.InSentence, label: 'In a Sentence', value: clues.I });
+  if (incorrectGuesses.length >= 3) {
+    visibleClues.push({ 
+      key: CLUE_KEY_MAP.I, 
+      label: CLUE_LABELS[CLUE_KEY_MAP.I], 
+      value: clues.I 
+    });
   }
-  if (incorrectGuesses.length >= 4 && clues.N) {
+  if (incorrectGuesses.length >= 4) {
     visibleClues.push({
-      key: ClueKey.NumLetters,
-      label: 'Number of Letters',
+      key: CLUE_KEY_MAP.N,
+      label: CLUE_LABELS[CLUE_KEY_MAP.N],
       value: clues.N,
     });
   }
-  if (incorrectGuesses.length >= 5 && clues.E2) {
-    visibleClues.push({ key: ClueKey.Etymology, label: 'Etymology', value: clues.E2 });
+  if (incorrectGuesses.length >= 5) {
+    visibleClues.push({ 
+      key: CLUE_KEY_MAP.E2, 
+      label: CLUE_LABELS[CLUE_KEY_MAP.E2], 
+      value: clues.E2 
+    });
   }
   return visibleClues;
 }

@@ -4,6 +4,9 @@
  */
 
 import { WordResponseShape } from '../../../shared-types/src/word';
+import { ClueKey } from '../../../shared-types/src/clues';
+import { GuessRequest, GuessResponse, GameSessionState } from '../../../shared-types/src/game';
+import { ScoreResult } from '../../../shared-types/src/scoring';
 
 /**
  * Word response type from /api/word endpoint
@@ -14,60 +17,7 @@ export interface WordResponse {
   isFallback: boolean;
 }
 
-/**
- * Guess request type for /api/guess endpoint
- */
-export interface GuessRequest {
-  gameId: string;
-  guess: string;
-  playerId: string;
-}
-
-/**
- * Guess response type from /api/guess endpoint
- */
-export interface GuessResponse {
-  isCorrect: boolean;
-  guess: string;
-  isFuzzy: boolean;
-  fuzzyPositions: number[];
-  gameOver: boolean;
-  revealedClues: string[];
-  usedHint: boolean;
-  score?: {
-    id: string;
-    playerId: string;
-    wordId: string;
-    gameSessionId: string;
-    guessesUsed: number;
-    usedHint: boolean;
-    completionTimeSeconds: number;
-    submittedAt: string;
-  };
-}
-
-/**
- * Game session state type for frontend state management
- */
-export interface GameSessionState {
-  gameId: string;
-  wordId: string;
-  wordText: string;
-  clues: {
-    D: string;
-    E: string;
-    F: string;
-    I: string;
-    N: string;
-    E2: string;
-  };
-  guesses: string[];
-  revealedClues: string[];
-  clueStatus: Record<string, boolean>;
-  usedHint: boolean;
-  isComplete: boolean;
-  isWon: boolean;
-}
+export type { GuessRequest, GuessResponse, GameSessionState, ScoreResult };
 
 /**
  * Leaderboard entry type from /api/leaderboard endpoint
@@ -80,6 +30,7 @@ export interface LeaderboardEntry {
   rank: number;
   guesses_used: number;
   completion_time_seconds: number;
+  score: number;
   date: string;
   created_at: string;
   is_current_player?: boolean;
