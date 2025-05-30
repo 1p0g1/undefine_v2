@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { GameSessionState, LeaderboardEntry } from '../../../shared-types/src/game';
 import { WordResponse } from '../../../shared-types/src/word';
 import { apiClient } from '../api/client';
@@ -8,27 +8,60 @@ import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, ShortClue
 import { ScoreResult } from '../../../shared-types/src/scoring';
 import { env } from '../env.client';
 
+const STORAGE_KEY = 'undefine_game_state';
+
 const useGame = () => {
-  const [gameState, setGameState] = useState<GameSessionState>({
-    gameId: '',
-    wordId: '',
-    wordText: '',
-    clues: {
-      definition: '',
-      equivalents: '',
-      first_letter: '',
-      in_a_sentence: '',
-      number_of_letters: '',
-      etymology: '',
-    },
-    guesses: [],
-    revealedClues: [],
-    clueStatus: createDefaultClueStatus(),
-    isComplete: false,
-    isWon: false,
-    score: null,
-    startTime: ''
+  // Initialize state from localStorage if available
+  const [gameState, setGameState] = useState<GameSessionState>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Validate required fields
+        if (parsed.gameId && parsed.wordId && parsed.startTime) {
+          console.log('[Game] Restored state from storage:', {
+            gameId: parsed.gameId,
+            wordId: parsed.wordId,
+            startTime: parsed.startTime
+          });
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('[Game] Failed to restore state from storage:', error);
+    }
+    
+    // Default state if no valid saved state
+    return {
+      gameId: '',
+      wordId: '',
+      wordText: '',
+      clues: {
+        definition: '',
+        equivalents: '',
+        first_letter: '',
+        in_a_sentence: '',
+        number_of_letters: '',
+        etymology: '',
+      },
+      guesses: [],
+      revealedClues: [],
+      clueStatus: createDefaultClueStatus(),
+      isComplete: false,
+      isWon: false,
+      score: null,
+      startTime: ''
+    };
   });
+
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    } catch (error) {
+      console.error('[Game] Failed to persist state to storage:', error);
+    }
+  }, [gameState]);
 
   // Track guess status for each box (max 6)
   const [guessStatus, setGuessStatus] = useState<
@@ -66,6 +99,11 @@ const useGame = () => {
       console.log('[Game] Fetching word…');
       const data = await apiClient.getNewWord();
       
+      // Validate required fields in response
+      if (!data.gameId || !data.word?.id || !data.start_time) {
+        throw new Error('Invalid response from /api/word: missing required fields');
+      }
+      
       // Debug log in development
       if (import.meta.env.DEV) {
         console.log('[Debug] Word Response:', {
@@ -91,7 +129,7 @@ const useGame = () => {
         console.log('[Debug] Processed Clues:', processedClues);
       }
       
-      setGameState({
+      const newState = {
         gameId: data.gameId,
         wordId: data.word.id,
         wordText: data.word.word,
@@ -103,13 +141,22 @@ const useGame = () => {
         isWon: false,
         score: null,
         startTime: data.start_time
+      };
+
+      // Log state update
+      console.log('[Game] Updating game state:', {
+        gameId: newState.gameId,
+        wordId: newState.wordId,
+        startTime: newState.startTime
       });
       
+      setGameState(newState);
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setShowLeaderboard(false);
       setScoreDetails(null);
     } catch (error) {
       console.error('[Game] Failed to start new game:', error);
+      throw error; // Re-throw to let parent handle the error
     }
   }, []);
 
@@ -117,25 +164,28 @@ const useGame = () => {
     async (guess: string) => {
       const normalizedGuess = normalizeText(guess);
       
-      // Early defensive returns
+      // Early defensive returns with better error messages
       if (!normalizedGuess) {
         console.warn('[Game] Empty guess submitted');
-        return;
+        throw new Error('Guess cannot be empty');
       }
       if (gameState.isComplete) {
         console.warn('[Game] Attempted to submit guess for completed game');
-        return;
+        throw new Error('Game is already complete');
       }
-      if (!gameState.gameId || !gameState.wordId) {
-        console.error('[Game] Invalid game state - missing gameId or wordId');
-        return;
+      if (!gameState.gameId || !gameState.wordId || !gameState.startTime) {
+        console.error('[Game] Invalid game state:', {
+          gameId: gameState.gameId,
+          wordId: gameState.wordId,
+          startTime: gameState.startTime
+        });
+        throw new Error('Invalid game state - missing required fields');
       }
 
       try {
         const playerId = getPlayerId();
         if (!playerId) {
-          console.error('[Game] No player ID available');
-          return;
+          throw new Error('No player ID available');
         }
 
         // Validate and format request payload
@@ -192,6 +242,7 @@ const useGame = () => {
           });
         }
 
+        return data;
       } catch (error) {
         console.error('[Game] Failed to submit guess:', error);
         // Log detailed error info in development
@@ -200,15 +251,17 @@ const useGame = () => {
             gameState: {
               gameId: gameState.gameId,
               wordId: gameState.wordId,
+              startTime: gameState.startTime,
               guessCount: gameState.guesses.length,
               isComplete: gameState.isComplete
             },
             error: error instanceof Error ? error.message : 'Unknown error'
           });
         }
+        throw error; // Re-throw to let parent handle the error
       }
     },
-    [gameState.gameId, gameState.wordId, gameState.isComplete, gameState.guesses.length, gameState.wordText, guessStatus, fetchLeaderboard]
+    [gameState, guessStatus, fetchLeaderboard]
   );
 
   return {
