@@ -1,38 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameSessionState, LeaderboardEntry } from '../../../shared-types/src/game';
-import { WordResponse } from '../../../shared-types/src/word';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { normalizedEquals, normalizeText } from '../../../src/utils/text';
-import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, createDefaultClueStatus, ShortClueKey, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
+import { normalizedEquals } from '../../../src/utils/text';
+import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, ShortClueKey, CLUE_KEY_MAP, createDefaultClueStatus } from '../../../shared-types/src/clues';
 import { ScoreResult } from '../../../shared-types/src/scoring';
-import { env } from '../env.client';
-
-const STORAGE_KEY = 'undefine_game_state';
+import { gameService } from '../services/GameService';
 
 const useGame = () => {
-  // Initialize state from localStorage if available
   const [gameState, setGameState] = useState<GameSessionState>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Validate required fields
-        if (parsed.gameId && parsed.wordId && parsed.startTime) {
-          console.log('[Game] Restored state from storage:', {
-            gameId: parsed.gameId,
-            wordId: parsed.wordId,
-            startTime: parsed.startTime
-          });
-          return parsed;
-        }
-      }
-    } catch (error) {
-      console.error('[Game] Failed to restore state from storage:', error);
-    }
-    
-    // Default state if no valid saved state
-    return {
+    const currentState = gameService.getCurrentState();
+    return currentState || {
       gameId: '',
       wordId: '',
       wordText: '',
@@ -53,15 +31,6 @@ const useGame = () => {
       startTime: ''
     };
   });
-
-  // Persist state to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-    } catch (error) {
-      console.error('[Game] Failed to persist state to storage:', error);
-    }
-  }, [gameState]);
 
   // Track guess status for each box (max 6)
   const [guessStatus, setGuessStatus] = useState<
@@ -96,130 +65,27 @@ const useGame = () => {
 
   const startNewGame = useCallback(async () => {
     try {
-      console.log('[Game] Fetching word…');
-      const data = await apiClient.getNewWord();
-      
-      // Validate required fields in response
-      if (!data.gameId || !data.word?.id || !data.start_time) {
-        throw new Error('Invalid response from /api/word: missing required fields');
-      }
-      
-      // Debug log in development
-      if (import.meta.env.DEV) {
-        console.log('[Debug] Word Response:', {
-          word: data.word,
-          gameId: data.gameId,
-          isFallback: data.isFallback,
-          start_time: data.start_time
-        });
-      }
-
-      // Ensure all clues are strings
-      const processedClues = {
-        definition: String(data.word.definition || ''),
-        equivalents: Array.isArray(data.word.equivalents) ? data.word.equivalents.join(', ') : String(data.word.equivalents || ''),
-        first_letter: String(data.word.first_letter || ''),
-        in_a_sentence: String(data.word.in_a_sentence || ''),
-        number_of_letters: String(data.word.number_of_letters || ''),
-        etymology: String(data.word.etymology || '')
-      };
-
-      // Debug log in development
-      if (import.meta.env.DEV) {
-        console.log('[Debug] Processed Clues:', processedClues);
-      }
-      
-      const newState = {
-        gameId: data.gameId,
-        wordId: data.word.id,
-        wordText: data.word.word,
-        clues: processedClues,
-        guesses: [],
-        revealedClues: [],
-        clueStatus: createDefaultClueStatus(),
-        isComplete: false,
-        isWon: false,
-        score: null,
-        startTime: data.start_time
-      };
-
-      // Log state update
-      console.log('[Game] Updating game state:', {
-        gameId: newState.gameId,
-        wordId: newState.wordId,
-        startTime: newState.startTime
-      });
-      
+      const newState = await gameService.startNewGame();
       setGameState(newState);
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setShowLeaderboard(false);
       setScoreDetails(null);
     } catch (error) {
       console.error('[Game] Failed to start new game:', error);
-      throw error; // Re-throw to let parent handle the error
+      throw error;
     }
   }, []);
 
   const submitGuess = useCallback(
     async (guess: string) => {
-      const normalizedGuess = normalizeText(guess);
-      
-      // Early defensive returns with better error messages
-      if (!normalizedGuess) {
-        console.warn('[Game] Empty guess submitted');
-        throw new Error('Guess cannot be empty');
-      }
-      if (gameState.isComplete) {
-        console.warn('[Game] Attempted to submit guess for completed game');
-        throw new Error('Game is already complete');
-      }
-      if (!gameState.gameId || !gameState.wordId || !gameState.startTime) {
-        console.error('[Game] Invalid game state:', {
-          gameId: gameState.gameId,
-          wordId: gameState.wordId,
-          startTime: gameState.startTime
-        });
-        throw new Error('Invalid game state - missing required fields');
-      }
-
       try {
-        const playerId = getPlayerId();
-        if (!playerId) {
-          throw new Error('No player ID available');
-        }
-
-        // Validate and format request payload
-        const guessRequest = {
-          gameId: gameState.gameId,
-          wordId: gameState.wordId,
-          guess: normalizedGuess,
-          playerId,
-          start_time: gameState.startTime
-        };
+        const data = await gameService.submitGuess(guess);
         
-        // Debug log in development
-        if (import.meta.env.DEV) {
-          console.log('[Debug] Submitting guess:', {
-            ...guessRequest,
-            currentState: {
-              guessCount: gameState.guesses.length,
-              revealedClues: gameState.revealedClues,
-              isComplete: gameState.isComplete
-            }
-          });
+        // Update game state from service
+        const currentState = gameService.getCurrentState();
+        if (currentState) {
+          setGameState(currentState);
         }
-
-        const data = await apiClient.submitGuess(guessRequest);
-
-        // Update game state with response
-        setGameState(prev => ({
-          ...prev,
-          guesses: [...prev.guesses, normalizedGuess],
-          revealedClues: data.revealedClues,
-          isComplete: data.gameOver,
-          isWon: data.isCorrect,
-          score: data.score?.score ?? null
-        }));
 
         // Update guess status
         const newGuessStatus = [...guessStatus];
@@ -231,34 +97,10 @@ const useGame = () => {
           await fetchLeaderboard();
         }
 
-        // Debug log in development
-        if (import.meta.env.DEV) {
-          console.log('[Debug] Guess response:', {
-            ...data,
-            stateBeforeUpdate: {
-              guessCount: gameState.guesses.length,
-              revealedClues: gameState.revealedClues
-            }
-          });
-        }
-
         return data;
       } catch (error) {
         console.error('[Game] Failed to submit guess:', error);
-        // Log detailed error info in development
-        if (import.meta.env.DEV) {
-          console.error('[Debug] Error context:', {
-            gameState: {
-              gameId: gameState.gameId,
-              wordId: gameState.wordId,
-              startTime: gameState.startTime,
-              guessCount: gameState.guesses.length,
-              isComplete: gameState.isComplete
-            },
-            error: error instanceof Error ? error.message : 'Unknown error'
-          });
-        }
-        throw error; // Re-throw to let parent handle the error
+        throw error;
       }
     },
     [gameState, guessStatus, fetchLeaderboard]
