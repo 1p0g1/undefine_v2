@@ -26,7 +26,8 @@ const useGame = () => {
     clueStatus: createDefaultClueStatus(),
     isComplete: false,
     isWon: false,
-    score: null
+    score: null,
+    startTime: ''
   });
 
   // Track guess status for each box (max 6)
@@ -99,7 +100,8 @@ const useGame = () => {
         clueStatus: createDefaultClueStatus(),
         isComplete: false,
         isWon: false,
-        score: null
+        score: null,
+        startTime: new Date().toISOString()
       });
       
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
@@ -141,7 +143,7 @@ const useGame = () => {
           wordId: gameState.wordId,
           guess: normalizedGuess,
           playerId,
-          start_time: new Date().toISOString()
+          start_time: gameState.startTime
         };
         
         // Debug log in development

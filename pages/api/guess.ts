@@ -228,16 +228,28 @@ export default withCors(async function handler(
   }
 
   try {
-    const { guess, gameId } = req.body;
+    const { guess, gameId, wordId, start_time } = req.body;
     // TODO: Replace with strict player validation before production
     const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
-    console.log('[/api/guess] Processing guess:', { guess, gameId, playerId });
+    console.log('[/api/guess] Processing guess:', { guess, gameId, playerId, wordId });
 
-    if (!guess || !gameId) {
-      console.error('[/api/guess] Missing required fields:', { guess, gameId });
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Validate all required fields
+    if (!guess || !gameId || !wordId || !start_time) {
+      const missingFields = [
+        !guess && 'guess',
+        !gameId && 'gameId',
+        !wordId && 'wordId',
+        !start_time && 'start_time'
+      ].filter(Boolean);
+      
+      console.error('[/api/guess] Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        details: `Missing: ${missingFields.join(', ')}`
+      });
     }
 
+    // Validate game session exists and matches
     const { data: gameSession, error: sessionError } = await supabase
       .from('game_sessions')
       .select(`
@@ -259,9 +271,8 @@ export default withCors(async function handler(
         )
       `)
       .eq('id', gameId)
-      // TODO: Re-enable player validation before production
-      // .eq('player_id', playerId)
-      .single() as { data: GameSessionWithWord | null, error: any };
+      .eq('word_id', wordId)  // Ensure word_id matches
+      .single() as unknown as { data: GameSessionWithWord | null, error: any };
 
     if (sessionError || !gameSession) {
       console.error('[/api/guess] Failed to fetch game session:', {
@@ -269,16 +280,29 @@ export default withCors(async function handler(
         details: sessionError?.details,
         hint: sessionError?.hint,
         code: sessionError?.code,
-        gameId
+        gameId,
+        wordId
       });
-      return res.status(500).json({ 
-        error: 'Failed to fetch game session',
-        details: sessionError?.message
+      return res.status(404).json({ 
+        error: 'Game session not found',
+        details: 'Invalid game session or word ID'
       });
     }
 
     if (gameSession.is_complete) {
       return res.status(400).json({ error: 'Game session is already complete' });
+    }
+
+    // Validate start_time matches
+    if (gameSession.start_time !== start_time) {
+      console.error('[/api/guess] Start time mismatch:', {
+        session: gameSession.start_time,
+        request: start_time
+      });
+      return res.status(400).json({ 
+        error: 'Invalid start time',
+        details: 'Start time does not match game session'
+      });
     }
 
     const result = await submitGuess({

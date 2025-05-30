@@ -50,6 +50,7 @@ export interface GameSessionState {
   isComplete: boolean;
   isWon: boolean;
   score: number | null;
+  startTime: string;  // ISO string of game start time
 }
 
 /**

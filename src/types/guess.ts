@@ -52,4 +52,18 @@ export interface GameSession {
   end_time: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface GameSessionWithWord extends GameSession {
+  words: {
+    word: string;
+    definition: string;
+    etymology: string | null;
+    first_letter: string;
+    in_a_sentence: string;
+    number_of_letters: number;
+    equivalents: string[] | null;
+    difficulty: number | null;
+    date: string | null;
+  };
 } 
