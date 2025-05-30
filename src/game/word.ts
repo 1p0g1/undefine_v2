@@ -43,6 +43,7 @@ export async function getNewWord(): Promise<WordResponse> {
       return {
         word: mapWordRowToResponse(randomWord),
         gameId: crypto.randomUUID(),
+        start_time: new Date().toISOString(),
         isFallback: true
       };
     }
@@ -54,6 +55,7 @@ export async function getNewWord(): Promise<WordResponse> {
     return {
       word: mapWordRowToResponse(todayWord),
       gameId: crypto.randomUUID(),
+      start_time: new Date().toISOString(),
       isFallback: false
     };
 
