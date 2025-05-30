@@ -25,7 +25,8 @@ import { WordResponse } from '../../shared-types/src/word';
 import { env } from '@/src/env.server';
 import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 import { withCors } from '@/lib/withCors';
-import { getNewWord } from '@/src/game/word';
+import { getNewWord } from '../../src/game/word';
+import { createDefaultClueStatus } from '@/shared-types/src/clues';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -38,8 +39,43 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
+    // Get player ID from header
+    const playerId = req.headers['Player-ID'] as string;
+    if (!playerId) {
+      return res.status(400).json({ error: 'Missing player ID' });
+    }
+
+    // Get today's word
     const word = await getNewWord();
-    res.status(200).json(word);
+
+    // Create a new game session
+    console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
+    const { data: session, error: sessionError } = await supabase
+      .from('game_sessions')
+      .insert({
+        player_id: playerId,
+        word_id: word.word.id,
+        guesses: [],
+        revealed_clues: [],
+        clue_status: createDefaultClueStatus(),
+        is_complete: false,
+        is_won: false,
+        used_hint: false,
+        start_time: new Date().toISOString()
+      })
+      .select('id')
+      .single();
+
+    if (sessionError) {
+      console.error('[/api/word] Failed to create game session:', sessionError);
+      return res.status(500).json({ error: 'Failed to create game session' });
+    }
+
+    // Return word data with session ID
+    res.status(200).json({
+      ...word,
+      gameId: session.id
+    });
   } catch (error) {
     console.error('[/api/word] Error:', error);
     res.status(500).json({ error: 'Failed to get word' });

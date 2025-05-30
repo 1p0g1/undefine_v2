@@ -213,6 +213,12 @@ async function updateLeaderboardSummary(
   }
 }
 
+interface GameSessionWithWord extends GameSession {
+  words: {
+    word: string;
+  };
+}
+
 export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse<GuessResponse | { error: string }>) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -220,7 +226,7 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
 
   try {
     const { guess, gameId } = req.body;
-    const playerId = req.headers['player-id'] as string;
+    const playerId = req.headers['Player-ID'] as string;
 
     if (!guess || !gameId || !playerId) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -228,11 +234,21 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
 
     const { data: gameSession, error: sessionError } = await supabase
       .from('game_sessions')
-      .select('word_id, word, revealed_clues, guesses, is_complete, start_time, used_hint')
+      .select(`
+        word_id,
+        revealed_clues,
+        guesses,
+        is_complete,
+        start_time,
+        used_hint,
+        words!inner (
+          word
+        )
+      `)
       .eq('id', gameId)
-      .single();
+      .single() as { data: GameSessionWithWord | null, error: any };
 
-    if (sessionError) {
+    if (sessionError || !gameSession) {
       console.error('[/api/guess] Failed to fetch game session:', sessionError);
       return res.status(500).json({ error: 'Failed to fetch game session' });
     }
@@ -245,7 +261,7 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
       guess,
       gameId,
       playerId
-    }, gameSession.word, gameSession.revealed_clues || []);
+    }, gameSession.words.word, gameSession.revealed_clues || []);
 
     // Calculate completion time and score if game is over
     const completionTimeSeconds = result.gameOver ? 

@@ -34,12 +34,14 @@ CREATE TABLE game_sessions (
 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 player_id TEXT NOT NULL,
 word_id UUID NOT NULL REFERENCES words(id),
+word TEXT NOT NULL,
 guesses TEXT[] DEFAULT '{}',
 revealed_clues BOOLEAN[] DEFAULT '{}',
 used_hint BOOLEAN DEFAULT FALSE,
 clue_status JSONB DEFAULT '{"D": false, "E": false, "F": false, "I": false, "N": false, "E2": false}'::jsonb,
 is_complete BOOLEAN DEFAULT FALSE,
 is_won BOOLEAN DEFAULT FALSE,
+start_time TIMESTAMP WITH TIME ZONE NOT NULL,
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 completed_at TIMESTAMP WITH TIME ZONE,
 UNIQUE(player_id, word_id)
@@ -47,6 +49,7 @@ UNIQUE(player_id, word_id)
 
 CREATE INDEX idx_game_sessions_player_id ON game_sessions(player_id);
 CREATE INDEX idx_game_sessions_word_id ON game_sessions(word_id);
+CREATE INDEX idx_game_sessions_start_time ON game_sessions(start_time);
 
 user_stats
 
@@ -140,12 +143,14 @@ interface GameSessionEntry {
 id: string;
 word_id: string;
 player_id: string;
+word: string;
 guesses: string[];
 revealed_clues: boolean[];
 used_hint: boolean;
 clue_status: Record<string, boolean>;
 is_complete: boolean;
 is_won: boolean;
+start_time: string;
 created_at: string;
 completed_at?: string | null;
 }
