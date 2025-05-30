@@ -158,6 +158,26 @@ const useGame = () => {
 
         const data = await apiClient.submitGuess(guessRequest);
 
+        // Update game state with response
+        setGameState(prev => ({
+          ...prev,
+          guesses: [...prev.guesses, normalizedGuess],
+          revealedClues: data.revealedClues,
+          isComplete: data.gameOver,
+          isWon: data.isCorrect,
+          score: data.score?.score ?? null
+        }));
+
+        // Update guess status
+        const newGuessStatus = [...guessStatus];
+        newGuessStatus[gameState.guesses.length] = data.isCorrect ? 'correct' : 'incorrect';
+        setGuessStatus(newGuessStatus);
+
+        // Fetch leaderboard if game is complete
+        if (data.gameOver) {
+          await fetchLeaderboard();
+        }
+
         // Debug log in development
         if (import.meta.env.DEV) {
           console.log('[Debug] Guess response:', {
@@ -169,60 +189,6 @@ const useGame = () => {
           });
         }
 
-        setGameState((prevState: GameSessionState) => {
-          const newGuesses = [...prevState.guesses, normalizedGuess];
-          
-          // Determine guess status using normalizedEquals
-          let status: 'correct' | 'incorrect' | 'fuzzy' = 'incorrect';
-          if (normalizedEquals(normalizedGuess, gameState.wordText)) {
-            status = 'correct';
-          } else if (data.isFuzzy) {
-            status = 'fuzzy';
-          }
-
-          // Update guess status array
-          const newGuessStatus = [...guessStatus];
-          newGuessStatus[newGuesses.length - 1] = status;
-          setGuessStatus(newGuessStatus);
-
-          // Handle game completion
-          if (data.gameOver) {
-            setShowLeaderboard(true);
-            fetchLeaderboard();
-            
-            // Dev warning for missing score when game is complete
-            if (import.meta.env.DEV && !data.score) {
-              console.warn('[Game] Score is null for completed game', {
-                isCorrect: data.isCorrect,
-                guessCount: newGuesses.length
-              });
-            }
-            
-            setScoreDetails(data.score);
-          }
-
-          // Ensure revealedClues is always an array
-          const safeRevealedClues = Array.isArray(data.revealedClues) 
-            ? data.revealedClues 
-            : prevState.revealedClues;
-
-          // Dev warning for unexpected revealedClues state
-          if (import.meta.env.DEV && !Array.isArray(data.revealedClues)) {
-            console.warn('[Game] Received invalid revealedClues from server', {
-              received: data.revealedClues,
-              using: safeRevealedClues
-            });
-          }
-
-          return {
-            ...prevState,
-            guesses: newGuesses,
-            revealedClues: safeRevealedClues,
-            isComplete: data.gameOver,
-            isWon: data.isCorrect,
-            score: data.score?.score || null
-          };
-        });
       } catch (error) {
         console.error('[Game] Failed to submit guess:', error);
         // Log detailed error info in development

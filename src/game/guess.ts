@@ -43,7 +43,7 @@ const processGuess = async (
     fuzzyPositions,
     gameOver,
     revealedClues,
-    usedHint: false
+    score: null
   };
 };
 

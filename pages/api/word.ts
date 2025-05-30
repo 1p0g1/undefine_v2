@@ -27,6 +27,7 @@ import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 import { withCors } from '@/lib/withCors';
 import { getNewWord } from '../../src/game/word';
 import { createDefaultClueStatus } from '@/shared-types/src/clues';
+import { ensurePlayerExists } from '@/src/utils/player';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -40,9 +41,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     // Get player ID from header with fallback
-    // TODO: Replace with strict player validation before production
     const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
     console.log('[/api/word] Using player ID:', playerId);
+
+    // Ensure player exists in database
+    try {
+      await ensurePlayerExists(playerId);
+    } catch (error) {
+      console.error('[/api/word] Failed to ensure player exists:', error);
+      // Continue anyway - we'll handle this gracefully
+    }
 
     // Get today's word
     const word = await getNewWord();
@@ -58,6 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .insert({
         player_id: playerId,
         word_id: word.word.id,
+        word: word.word.word,
         guesses: [],
         revealed_clues: [],
         clue_status: createDefaultClueStatus(),

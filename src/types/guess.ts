@@ -8,6 +8,8 @@ export interface GuessRequest {
   gameId: string;
   guess: string;
   playerId: string;
+  wordId: string;
+  start_time: string;
 }
 
 /**
@@ -20,7 +22,6 @@ export interface GuessResponse {
   fuzzyPositions: number[];
   gameOver: boolean;
   revealedClues: ClueKey[];
-  usedHint: boolean;
   score?: ScoreResult;
   stats?: {
     games_played: number;

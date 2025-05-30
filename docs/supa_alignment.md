@@ -135,6 +135,56 @@ ALTER TABLE leaderboard_summary
   FOREIGN KEY (word) REFERENCES words(word);
 ```
 
+## 🔁 Current Architecture State
+
+### ⚠️ Player Table Implementation Status
+- Player table has not been implemented yet
+- Foreign key checks on `game_sessions.player_id` are temporarily disabled to support MVP user testing
+- This will be reinstated post-Phase 3 when proper player management is implemented
+- Current player IDs are generated client-side and stored in localStorage
+
+### 🔄 Player Migration Plan (Phase 3)
+
+#### Phase 1: Database Setup
+- Create `players` table with minimal required fields
+- Add database functions for player management:
+  - `ensure_player_exists()`: Creates or updates player
+  - `update_player_activity()`: Tracks player activity
+- Migrate existing player IDs from game sessions
+
+#### Phase 2: Backend Integration
+- Add player management utilities:
+  - Player type definitions
+  - CRUD operations
+  - Activity tracking
+- Update API routes to use player management:
+  - Ensure player exists before game creation
+  - Track player activity
+  - Handle anonymous players gracefully
+
+#### Phase 3: Frontend Updates
+- Update player ID generation to use new system
+- Add player metadata management
+- Improve error handling for player-related operations
+
+#### Phase 4: Security & Validation
+- Re-enable foreign key constraint on `game_sessions.player_id`
+- Add proper player validation in all API routes
+- Implement RLS policies for player data
+- Add rate limiting for player creation
+
+### ✅ Recent Changes
+- Removed `usedHint` field from all interfaces and database tables as it's no longer used
+- Updated GuessRequest to include all required fields (wordId, start_time)
+- Fixed type mismatches between frontend and backend interfaces
+- Improved error handling and logging for game session operations
+
+### 🔄 Next Steps
+1. Deploy database migration for players table
+2. Test player creation and validation
+3. Monitor error rates and performance
+4. Plan frontend improvements for player management
+
 ---
 ## Completion Status (May 2025)
 Reference: cursor_project_rules/completion_criteria.md
