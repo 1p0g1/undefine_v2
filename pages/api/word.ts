@@ -61,7 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     // Create a new game session
     console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
-    const start_time = new Date().toISOString();
+    const start_time = word.start_time;  // Use the start_time from getNewWord
     const clue_status = createDefaultClueStatus();
     
     console.log('[/api/word] Initializing game session with:', {
@@ -76,6 +76,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .insert({
         player_id: playerId,
         word_id: word.word.id,
+        word: word.word.word,  // Store the actual word for historical reference
         guesses: [],
         revealed_clues: [],
         clue_status,
@@ -103,7 +104,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({
       ...word,
       gameId: session.id,
-      start_time: session.start_time
+      start_time: session.start_time  // Use the start_time from the session
     });
   } catch (error) {
     console.error('[/api/word] Error:', error);
