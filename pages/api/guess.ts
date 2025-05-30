@@ -246,8 +246,16 @@ export default withCors(async function handler(
         guesses,
         is_complete,
         start_time,
-        words!inner (
-          word
+        words (
+          word,
+          definition,
+          etymology,
+          first_letter,
+          in_a_sentence,
+          number_of_letters,
+          equivalents,
+          difficulty,
+          date
         )
       `)
       .eq('id', gameId)

@@ -135,6 +135,44 @@ ALTER TABLE leaderboard_summary
   FOREIGN KEY (word) REFERENCES words(word);
 ```
 
+## 📝 Supabase Join Syntax
+
+When selecting related data through foreign key relationships, use the following pattern:
+
+```typescript
+// ✅ Correct: Using table name with explicit field selection
+.select(`
+  word_id,
+  revealed_clues,
+  words (
+    word,
+    definition,
+    etymology,
+    first_letter,
+    in_a_sentence,
+    number_of_letters,
+    equivalents,
+    difficulty,
+    date
+  )
+`)
+
+// ❌ Incorrect: Using column name or wrong syntax
+.select(`
+  word_id,
+  revealed_clues,
+  words!inner (
+    word
+  )
+`)
+```
+
+Key points:
+- Use the table name (`words`) not the column name (`word`)
+- List all required fields from the joined table explicitly
+- Avoid using `!inner` unless specifically needed for inner joins
+- Match table names exactly as defined in Supabase
+
 ## 🔁 Current Architecture State
 
 ### ⚠️ Player Table Implementation Status
@@ -173,11 +211,17 @@ ALTER TABLE leaderboard_summary
 - Implement RLS policies for player data
 - Add rate limiting for player creation
 
-### ✅ Recent Changes
-- Removed `usedHint` field from all interfaces and database tables as it's no longer used
-- Updated GuessRequest to include all required fields (wordId, start_time)
-- Fixed type mismatches between frontend and backend interfaces
-- Improved error handling and logging for game session operations
+### ✅ Recent Changes (May 2024)
+- Fixed incorrect word handling in game sessions:
+  - Removed direct `word` field from game_sessions inserts
+  - Updated GameSession type to remove incorrect `word` field
+  - Verified correct join syntax in /api/guess.ts
+  - Impact: Fixes "Could not find the 'word' column" error
+  - Files modified:
+    - pages/api/word.ts
+    - src/types/guess.ts
+    - pages/api/guess.ts (verified)
+  - Date: May 21, 2024
 
 ### 🔄 Next Steps
 1. Deploy database migration for players table

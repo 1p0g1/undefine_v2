@@ -1,5 +1,46 @@
 # 🎯 Un-Define v2: Project Rules
 
+## ⚠️ MANDATORY DOCUMENTATION RULE
+
+**EVERY SINGLE PROMPT RESPONSE MUST:**
+
+1. **CHECK Documentation First**
+   ```
+   REQUIRED ORDER:
+   1. docs/mvp.md
+   2. docs/implementation-plan.mdc
+   3. docs/ARCHITECTURE.md
+   4. docs/supa_alignment.md
+   5. Relevant component docs
+   ```
+
+2. **UPDATE Documentation After Changes**
+   ```
+   REQUIRED UPDATES:
+   1. Add "Recent Changes" entry with:
+      - Date (YYYY-MM-DD)
+      - Time (HH:MM)
+      - Files modified
+      - Change reason
+      - System impact
+   2. Update all affected documentation
+   3. Verify documentation consistency
+   ```
+
+3. **VERIFY Recent Changes**
+   ```
+   REQUIRED CHECKS:
+   1. Check last 3 recent changes entries
+   2. Verify no conflicts with recent changes
+   3. Ensure changes align with recent updates
+   ```
+
+❌ **BREAKING THIS RULE IS NOT ALLOWED**
+- No exceptions
+- No skipping documentation checks
+- No undocumented changes
+- No unverified recent changes
+
 ## 📚 Document Authority
 
 ### Protected Files (DO NOT MODIFY)
@@ -154,3 +195,52 @@ This check must be performed BEFORE any code changes or suggestions are made.
 4. Follow existing formats
 
 29. **"Read MVP CREED First"**: ALWAYS read and follow the CREED section at the top of mvp.md before processing any prompt. This CREED contains critical architectural and environment configuration details that must be respected in all changes.
+
+## Documentation & Change Tracking
+
+### 📝 Documentation Rules
+⚠️ See **MANDATORY DOCUMENTATION RULE** at top of file - THIS MUST BE FOLLOWED
+
+Additional documentation guidelines:
+1. Every code change MUST be documented
+2. Every prompt response MUST:
+   - Follow the mandatory documentation rule
+   - Check documentation in the specified order
+   - Update documentation if changes are made
+   - Add a "Recent Changes" entry with required fields
+3. Documentation locations to check/update:
+   - `docs/mvp.md` - Primary source of truth
+   - `docs/implementation-plan.mdc` - Implementation status
+   - `docs/ARCHITECTURE.md` - Technical architecture
+   - `docs/supa_alignment.md` - Database schema
+   - Component-specific docs in their directories
+
+### 🔄 Change Tracking Process
+1. Before making changes:
+   - Review documentation in required order
+   - Check last 3 recent changes entries
+   - Verify current state matches docs
+   - Ensure no conflicts with recent changes
+
+2. While making changes:
+   - Document decisions and rationale
+   - Update types and interfaces
+   - Note any technical debt created
+   - Keep track of all modified files
+
+3. After making changes:
+   - Add detailed "Recent Changes" entry
+   - Update all affected documentation
+   - Verify documentation consistency
+   - Cross-reference with recent changes
+
+### ✅ Documentation Checklist
+Before completing ANY task:
+- [ ] Followed mandatory documentation rule
+- [ ] Checked documentation in required order
+- [ ] Verified last 3 recent changes
+- [ ] Updated affected documentation
+- [ ] Added complete recent changes entry
+- [ ] Verified documentation consistency
+- [ ] Updated types and interfaces
+- [ ] Added implementation notes

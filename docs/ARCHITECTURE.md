@@ -3,8 +3,9 @@
 ## Status (Last Updated: May 2024)
 - ✅ Backend and frontend deployed as separate Vercel projects
 - ✅ Supabase integration complete with permissive anon access
-- ⚠️ RLS not yet enabled - do not assume RLS constraints exist
-- ✅ Game logic fully tested and deployed
+- ⚠️ RLS disabled (development)
+- ✅ Game logic validation
+- ✅ Word handling refactored for proper foreign key usage
 - 🚧 End-to-end test automation pending
 
 ## Project Structure
@@ -33,6 +34,37 @@ This is a Vercel-deployed monorepo with:
    - Streamlined DevControls with auto-inferred `player_id`
    - Frontend state alignment for GameSession
    - Books emoji (📚) favicon added
+
+### Word Handling Refactor
+- Removed direct word storage in game_sessions
+- Enforced proper foreign key relationships
+- Updated types to match database schema
+- Fixed join syntax in API routes
+- Impact: Improved data consistency and fixed word column errors
+
+### Game Session Data Flow
+1. Creating a session (`/api/word.ts`):
+   ```typescript
+   .insert({
+     player_id,
+     word_id: word.id,  // ✅ Only store the foreign key
+     guesses: [],
+     revealed_clues: [],
+     ...
+   })
+   ```
+
+2. Accessing word data (`/api/guess.ts`):
+   ```typescript
+   .select(`
+     word_id,
+     words (     // ✅ Join with words table when needed
+       word,
+       definition,
+       ...
+     )
+   `)
+   ```
 
 ## API Routes
 

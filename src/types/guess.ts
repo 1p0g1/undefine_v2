@@ -43,7 +43,6 @@ export interface GameSession {
   id: string;
   player_id: string;
   word_id: string;
-  word: string;
   guesses: string[];
   revealed_clues: ClueKey[];
   is_complete: boolean;

@@ -66,7 +66,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .insert({
         player_id: playerId,
         word_id: word.word.id,
-        word: word.word.word,
         guesses: [],
         revealed_clues: [],
         clue_status: createDefaultClueStatus(),
