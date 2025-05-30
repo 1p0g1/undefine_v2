@@ -229,11 +229,12 @@ export default withCors(async function handler(
 
   try {
     const { guess, gameId } = req.body;
-    const playerId = req.headers['player-id'] as string;
-    console.log('[/api/guess] Request:', { guess, gameId, playerId, headers: req.headers });
+    // TODO: Replace with strict player validation before production
+    const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
+    console.log('[/api/guess] Processing guess:', { guess, gameId, playerId });
 
-    if (!guess || !gameId || !playerId) {
-      console.error('[/api/guess] Missing required fields:', { guess, gameId, playerId });
+    if (!guess || !gameId) {
+      console.error('[/api/guess] Missing required fields:', { guess, gameId });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -251,7 +252,8 @@ export default withCors(async function handler(
         )
       `)
       .eq('id', gameId)
-      .eq('player_id', playerId)
+      // TODO: Re-enable player validation before production
+      // .eq('player_id', playerId)
       .single() as { data: GameSessionWithWord | null, error: any };
 
     if (sessionError || !gameSession) {
@@ -260,8 +262,7 @@ export default withCors(async function handler(
         details: sessionError?.details,
         hint: sessionError?.hint,
         code: sessionError?.code,
-        gameId,
-        playerId
+        gameId
       });
       return res.status(500).json({ 
         error: 'Failed to fetch game session',

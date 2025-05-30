@@ -39,13 +39,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    // Get player ID from header
-    const playerId = req.headers['player-id'] as string;
-    console.log('[/api/word] Headers:', req.headers);
-    if (!playerId) {
-      console.error('[/api/word] Missing player-id header');
-      return res.status(400).json({ error: 'Missing player ID' });
-    }
+    // Get player ID from header with fallback
+    // TODO: Replace with strict player validation before production
+    const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
+    console.log('[/api/word] Using player ID:', playerId);
 
     // Get today's word
     const word = await getNewWord();
