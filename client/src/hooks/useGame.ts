@@ -71,7 +71,8 @@ const useGame = () => {
         console.log('[Debug] Word Response:', {
           word: data.word,
           gameId: data.gameId,
-          isFallback: data.isFallback
+          isFallback: data.isFallback,
+          start_time: data.start_time
         });
       }
 
@@ -101,7 +102,7 @@ const useGame = () => {
         isComplete: false,
         isWon: false,
         score: null,
-        startTime: new Date().toISOString()
+        startTime: data.start_time
       });
       
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);

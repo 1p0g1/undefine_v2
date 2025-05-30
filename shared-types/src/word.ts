@@ -41,4 +41,5 @@ export interface WordResponse {
   word: WordResponseShape;
   gameId: string;
   isFallback: boolean;
+  start_time: string;  // ISO string of when the game session was created
 } 

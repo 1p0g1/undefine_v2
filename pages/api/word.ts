@@ -61,6 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     // Create a new game session
     console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
+    const start_time = new Date().toISOString();
     const { data: session, error: sessionError } = await supabase
       .from('game_sessions')
       .insert({
@@ -71,9 +72,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         clue_status: createDefaultClueStatus(),
         is_complete: false,
         is_won: false,
-        start_time: new Date().toISOString()
+        start_time
       })
-      .select('id')
+      .select('id, start_time')
       .single();
 
     if (sessionError) {
@@ -89,10 +90,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // Return word data with session ID
+    // Return word data with session ID and start_time
     res.status(200).json({
       ...word,
-      gameId: session.id
+      gameId: session.id,
+      start_time: session.start_time
     });
   } catch (error) {
     console.error('[/api/word] Error:', error);
