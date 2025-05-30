@@ -216,7 +216,16 @@ async function updateLeaderboardSummary(
 interface GameSessionWithWord extends GameSession {
   words: {
     word: string;
+    definition: string;
+    etymology: string | null;
+    first_letter: string;
+    in_a_sentence: string;
+    number_of_letters: number;
+    equivalents: string[] | null;
+    difficulty: number | null;
+    date: string | null;
   };
+  clue_status?: Record<string, boolean>;
 }
 
 export default withCors(async function handler(
@@ -259,6 +268,7 @@ export default withCors(async function handler(
         guesses,
         is_complete,
         start_time,
+        clue_status,
         words:word_id (
           word,
           definition,
@@ -331,7 +341,8 @@ export default withCors(async function handler(
       .update({
         word: gameSession.words.word,
         guesses: [...(gameSession.guesses || []), result.guess],
-        revealed_clues: result.revealedClues,
+        revealed_clues: result.revealedClues.map(() => true),  // Convert to boolean array
+        clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
         is_complete: result.gameOver,
         is_won: result.isCorrect,
         end_time: result.gameOver ? new Date().toISOString() : null,
