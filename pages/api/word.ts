@@ -63,7 +63,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         clue_status: createDefaultClueStatus(),
         is_complete: false,
         is_won: false,
-        used_hint: false,
         start_time: new Date().toISOString()
       })
       .select('id')

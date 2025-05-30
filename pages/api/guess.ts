@@ -246,7 +246,6 @@ export default withCors(async function handler(
         guesses,
         is_complete,
         start_time,
-        used_hint,
         words!inner (
           word
         )
@@ -287,7 +286,7 @@ export default withCors(async function handler(
     const scoreResult = result.gameOver ? calculateScore({
       guessesUsed: (gameSession.guesses || []).length + 1,
       completionTimeSeconds: completionTimeSeconds || 0,
-      usedHint: gameSession.used_hint || false,
+      usedHint: false, // Hints are not implemented yet
       isWon: result.isCorrect
     }) : null;
 
