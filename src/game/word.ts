@@ -34,53 +34,14 @@ export async function getNewWord(): Promise<WordResponse> {
       .eq('date', today)
       .single();
 
-    const isProd = process.env.NODE_ENV === 'production';
-    if (todayError && isProd) {
+    if (todayError) {
       console.error('[getNewWord] Failed to get word of the day:', todayError);
       throw new Error('Failed to get word of the day');
     }
 
-    // In development, fall back to random word if no word set for today
-    if (!todayWord && !isProd) {
-      console.log('[getNewWord] No word set for today, falling back to random word in development');
-      const { data: randomWord, error: randomError } = await supabase
-        .from('words')
-        .select(`
-          id,
-          word,
-          definition,
-          first_letter,
-          in_a_sentence,
-          equivalents,
-          number_of_letters,
-          etymology,
-          difficulty,
-          date
-        `)
-        .limit(1)
-        .single();
-
-      if (randomError) {
-        console.error('[getNewWord] Failed to get random word:', randomError);
-        throw new Error('Failed to get random word');
-      }
-
-      if (!randomWord) {
-        console.error('[getNewWord] No words available in database');
-        throw new Error('No words available');
-      }
-
-      return {
-        word: mapWordRowToResponse(randomWord),
-        gameId: crypto.randomUUID(),
-        start_time: new Date().toISOString(),
-        isFallback: true
-      };
-    }
-
     if (!todayWord) {
-      console.error('[getNewWord] No word available for today');
-      throw new Error('No word available for today');
+      console.error('[getNewWord] No word found for today:', today);
+      throw new Error('No word found for today');
     }
 
     return {
@@ -89,7 +50,6 @@ export async function getNewWord(): Promise<WordResponse> {
       start_time: new Date().toISOString(),
       isFallback: false
     };
-
   } catch (error) {
     console.error('[getNewWord] Error:', error);
     throw error;

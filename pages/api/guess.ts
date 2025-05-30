@@ -269,7 +269,7 @@ export default withCors(async function handler(
         is_complete,
         start_time,
         clue_status,
-        words:word_id (
+        words (
           word,
           definition,
           etymology,
@@ -339,7 +339,6 @@ export default withCors(async function handler(
     const { error: updateError } = await supabase
       .from('game_sessions')
       .update({
-        word: gameSession.words.word,
         guesses: [...(gameSession.guesses || []), result.guess],
         revealed_clues: result.revealedClues.map(() => true),  // Convert to boolean array
         clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),

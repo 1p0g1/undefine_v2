@@ -10,12 +10,12 @@ const serverEnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string(),
   SUPABASE_ANON_KEY: z.string(),
-  JWT_SECRET: z.string(),
   DB_PROVIDER: z.literal('supabase'),  // Must be 'supabase' in production
+  NODE_ENV: z.enum(['development', 'production']).default('production'),  // Default to production
   
   // Optional variables with defaults
-  NODE_ENV: z.literal('production'),  // Must be 'production'
   PORT: z.string().transform(Number).default('3001'),
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 });
 
 // Parse environment variables
@@ -23,10 +23,10 @@ const parsedEnv = serverEnvSchema.safeParse({
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-  JWT_SECRET: process.env.JWT_SECRET,
   DB_PROVIDER: process.env.DB_PROVIDER,
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
+  FRONTEND_URL: process.env.FRONTEND_URL,
 });
 
 if (!parsedEnv.success) {
