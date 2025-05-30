@@ -329,6 +329,7 @@ export default withCors(async function handler(
     const { error: updateError } = await supabase
       .from('game_sessions')
       .update({
+        word: gameSession.words.word,
         guesses: [...(gameSession.guesses || []), result.guess],
         revealed_clues: result.revealedClues,
         is_complete: result.gameOver,
