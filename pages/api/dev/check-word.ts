@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { env } from '../../../src/env.server';
+import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
 
 // Initialize Supabase client with validated env variables

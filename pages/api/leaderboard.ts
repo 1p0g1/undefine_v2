@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { LeaderboardResponse, ApiResponse, LeaderboardEntry } from 'types/api';
-import { env } from '../../src/env.server';
+import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

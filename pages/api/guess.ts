@@ -20,7 +20,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { env } from '../../src/env.server';
+import { env } from '@/src/env.server';
 import { validate as isUUID } from 'uuid';
 import { ClueKey, CLUE_SEQUENCE } from '@/shared-types/src/clues';
 import { withCors } from '@/lib/withCors';

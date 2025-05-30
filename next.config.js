@@ -18,7 +18,7 @@ module.exports = {
     DB_PROVIDER: process.env.DB_PROVIDER,
   },
   webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(__dirname);
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     return config;
   },
 }

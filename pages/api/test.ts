@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { env } from '../../src/env.server';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -22,10 +22,10 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { ApiResponse, ErrorResponse } from 'types/api';
 import { WordResponse } from '../../shared-types/src/word';
-import { env } from '../../src/env.server';
-import { mapWordRowToResponse } from '../../server/src/utils/wordMapper';
+import { env } from '@/src/env.server';
+import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 import { withCors } from '@/lib/withCors';
-import { getNewWord } from '@/game/word';
+import { getNewWord } from '@/src/game/word';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -44,7 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.error('[/api/word] Error:', error);
     res.status(500).json({ error: 'Failed to get word' });
   }
-    }
+}
 
 // Export the handler wrapped with CORS middleware
 export default withCors(handler); 
