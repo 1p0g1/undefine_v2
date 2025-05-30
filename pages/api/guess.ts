@@ -276,7 +276,9 @@ export default withCors(async function handler(
     const result = await submitGuess({
       guess,
       gameId,
-      playerId
+      playerId,
+      wordId: gameSession.word_id,
+      start_time: gameSession.start_time
     }, gameSession.words.word, gameSession.revealed_clues || []);
 
     // Calculate completion time and score if game is over

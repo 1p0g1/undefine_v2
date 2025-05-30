@@ -22,7 +22,7 @@ export interface GuessResponse {
   fuzzyPositions: number[];
   gameOver: boolean;
   revealedClues: ClueKey[];
-  score?: ScoreResult;
+  score: ScoreResult | null;
   stats?: {
     games_played: number;
     games_won: number;
