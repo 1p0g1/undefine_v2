@@ -46,20 +46,8 @@ async function handler(
   try {
     console.log('[/api/leaderboard] Fetching leaderboard for wordId:', wordId, 'playerId:', playerId);
 
-    // First, check if the table exists and is accessible
-    const { count, error: countError } = await supabase
-      .from('leaderboard_summary')
-      .select('*', { count: 'exact', head: true });
-
-    if (countError) {
-      console.error('[/api/leaderboard] Error checking leaderboard table accessibility:', countError);
-      return res.status(500).json({ error: 'Database table access error: ' + countError.message });
-    }
-
-    console.log('[/api/leaderboard] Table accessible, total entries:', count);
-
-    // Get all entries for this word
-    const { data: allEntries, error: allEntriesError } = await supabase
+    // Try to get entries from leaderboard_summary first
+    let { data: allEntries, error: allEntriesError } = await supabase
       .from('leaderboard_summary')
       .select(`
         id,
@@ -76,18 +64,61 @@ async function handler(
       .order('score', { ascending: false })
       .order('completion_time_seconds', { ascending: true });
 
-    if (allEntriesError) {
-      console.error('[/api/leaderboard] Error fetching leaderboard entries:', {
-        error: allEntriesError,
-        code: allEntriesError.code,
-        message: allEntriesError.message,
-        details: allEntriesError.details,
-        hint: allEntriesError.hint
+    console.log('[/api/leaderboard] Leaderboard_summary query result:', { 
+      success: !allEntriesError, 
+      entryCount: allEntries?.length || 0,
+      error: allEntriesError?.message 
+    });
+
+    // If leaderboard_summary is empty or has errors, try to get from scores table as fallback
+    if (allEntriesError || !allEntries || allEntries.length === 0) {
+      console.log('[/api/leaderboard] Falling back to scores table...');
+      
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('scores')
+        .select(`
+          id,
+          player_id,
+          word_id,
+          score,
+          completion_time_seconds,
+          guesses_used,
+          submitted_at
+        `)
+        .eq('word_id', wordId)
+        .eq('was_correct', true)
+        .order('score', { ascending: false })
+        .order('completion_time_seconds', { ascending: true });
+
+      console.log('[/api/leaderboard] Scores table query result:', { 
+        success: !scoresError, 
+        entryCount: scoresData?.length || 0,
+        error: scoresError?.message 
       });
-      return res.status(500).json({ error: 'Database query failed: ' + allEntriesError.message });
+
+      if (scoresError) {
+        console.error('[/api/leaderboard] Both leaderboard_summary and scores failed:', {
+          leaderboardError: allEntriesError?.message,
+          scoresError: scoresError.message
+        });
+        return res.status(500).json({ error: 'Database access failed: ' + scoresError.message });
+      }
+
+      // Transform scores data to leaderboard format
+      allEntries = (scoresData || []).map((score, index) => ({
+        id: score.id,
+        player_id: score.player_id,
+        word_id: score.word_id,
+        rank: index + 1,
+        score: score.score || 0,
+        completion_time_seconds: score.completion_time_seconds,
+        guesses_used: score.guesses_used,
+        was_top_10: index < 10,
+        created_at: score.submitted_at || new Date().toISOString()
+      }));
     }
 
-    console.log('[/api/leaderboard] Query successful, found entries:', allEntries?.length || 0);
+    console.log('[/api/leaderboard] Final data:', { entryCount: allEntries?.length || 0 });
 
     // Handle empty results
     if (!allEntries || allEntries.length === 0) {
