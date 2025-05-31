@@ -46,7 +46,19 @@ async function handler(
   try {
     console.log('[/api/leaderboard] Fetching leaderboard for wordId:', wordId, 'playerId:', playerId);
 
-    // Get all entries for this word with proper joins for player names
+    // First, check if the table exists and is accessible
+    const { count, error: countError } = await supabase
+      .from('leaderboard_summary')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      console.error('[/api/leaderboard] Error checking leaderboard table accessibility:', countError);
+      return res.status(500).json({ error: 'Database table access error: ' + countError.message });
+    }
+
+    console.log('[/api/leaderboard] Table accessible, total entries:', count);
+
+    // Get all entries for this word
     const { data: allEntries, error: allEntriesError } = await supabase
       .from('leaderboard_summary')
       .select(`
@@ -65,14 +77,30 @@ async function handler(
       .order('completion_time_seconds', { ascending: true });
 
     if (allEntriesError) {
-      console.error('[/api/leaderboard] Error fetching all leaderboard entries:', allEntriesError);
-      return res.status(500).json({ error: 'Failed to fetch leaderboard' });
+      console.error('[/api/leaderboard] Error fetching leaderboard entries:', {
+        error: allEntriesError,
+        code: allEntriesError.code,
+        message: allEntriesError.message,
+        details: allEntriesError.details,
+        hint: allEntriesError.hint
+      });
+      return res.status(500).json({ error: 'Database query failed: ' + allEntriesError.message });
     }
 
-    console.log('[/api/leaderboard] Found entries:', allEntries?.length || 0);
+    console.log('[/api/leaderboard] Query successful, found entries:', allEntries?.length || 0);
+
+    // Handle empty results
+    if (!allEntries || allEntries.length === 0) {
+      console.log('[/api/leaderboard] No entries found for word:', wordId);
+      return res.status(200).json({
+        leaderboard: [],
+        playerRank: null,
+        totalEntries: 0
+      });
+    }
 
     // Transform entries to match expected format
-    const transformedEntries: LeaderboardEntry[] = (allEntries || []).map((entry, index) => ({
+    const transformedEntries: LeaderboardEntry[] = allEntries.map((entry, index) => ({
       id: entry.id,
       word_id: entry.word_id,
       player_id: entry.player_id,
@@ -89,7 +117,7 @@ async function handler(
     // Find player's entry and rank if playerId is provided
     let playerEntry: LeaderboardEntry | null = null;
     let playerRank: number | null = null;
-    if (playerId && typeof playerId === 'string' && transformedEntries) {
+    if (playerId && typeof playerId === 'string') {
       playerEntry = transformedEntries.find(entry => entry.player_id === playerId) ?? null;
       if (playerEntry) {
         playerRank = playerEntry.rank;
@@ -105,7 +133,7 @@ async function handler(
       leaderboardEntries.push(playerEntry);
     }
 
-    console.log('[/api/leaderboard] Returning leaderboard with', leaderboardEntries.length, 'entries');
+    console.log('[/api/leaderboard] Successfully returning leaderboard with', leaderboardEntries.length, 'entries');
 
     return res.status(200).json({
       leaderboard: leaderboardEntries,
@@ -113,8 +141,12 @@ async function handler(
       totalEntries: transformedEntries.length
     });
   } catch (err) {
-    console.error('[/api/leaderboard] Error in leaderboard handler:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('[/api/leaderboard] Unexpected error in leaderboard handler:', {
+      error: err,
+      message: err instanceof Error ? err.message : 'Unknown error',
+      stack: err instanceof Error ? err.stack : undefined
+    });
+    return res.status(500).json({ error: 'Internal server error: ' + (err instanceof Error ? err.message : 'Unknown error') });
   }
 }
 
