@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
 import { LeaderboardEntry } from './api/types';
+import { createDefaultClueStatus } from '../../shared-types/src/clues';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -82,16 +83,35 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        zIndex: 50
+      }}
       onClick={onClose}
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative"
         style={{
           fontFamily: 'var(--font-primary)',
           background: 'var(--color-bg)',
           color: 'var(--color-primary)',
+          backgroundColor: 'white',
+          borderRadius: '0.5rem',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '28rem',
+          position: 'relative',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -129,12 +149,22 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               gameState={{
                 gameId: '',
                 wordId: '',
+                wordText: word,
+                clues: {
+                  definition: '',
+                  equivalents: '',
+                  first_letter: '',
+                  in_a_sentence: '',
+                  number_of_letters: '',
+                  etymology: ''
+                },
                 guesses: [],
                 revealedClues: [],
-                clueStatus: {},
-                usedHint: false,
+                clueStatus: createDefaultClueStatus(),
                 isComplete: true,
                 isWon: true,
+                score: null,
+                startTime: ''
               }}
               revealedClues={[]}
               guessStatus={guessStatus}

@@ -43,22 +43,22 @@ async function handler(
   }
 
   try {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
+    console.log('[/api/leaderboard] Fetching leaderboard for wordId:', wordId, 'playerId:', playerId);
 
-    // First, get all entries for this word and date to find player's rank
+    // Get all entries for this word to find player's rank
     const { data: allEntries, error: allEntriesError } = await supabase
       .from('leaderboard_summary')
       .select('*')
       .eq('word_id', wordId)
-      .eq('date', today)
-      .order('guesses_used', { ascending: true })
+      .order('score', { ascending: false })
       .order('completion_time_seconds', { ascending: true });
 
     if (allEntriesError) {
-      console.error('Error fetching all leaderboard entries:', allEntriesError);
+      console.error('[/api/leaderboard] Error fetching all leaderboard entries:', allEntriesError);
       return res.status(500).json({ error: 'Failed to fetch leaderboard' });
     }
+
+    console.log('[/api/leaderboard] Found entries:', allEntries?.length || 0);
 
     // Find player's entry and rank if playerId is provided
     let playerEntry: LeaderboardEntry | null = null;
@@ -80,13 +80,15 @@ async function handler(
       leaderboardEntries.push(playerEntry);
     }
 
+    console.log('[/api/leaderboard] Returning leaderboard with', leaderboardEntries.length, 'entries');
+
     return res.status(200).json({
       leaderboard: leaderboardEntries,
       playerRank,
       totalEntries: allEntries?.length ?? 0
     });
   } catch (err) {
-    console.error('Error in leaderboard handler:', err);
+    console.error('[/api/leaderboard] Error in leaderboard handler:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
