@@ -2,7 +2,7 @@
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.
 
-**🔄 UPDATED: December 2024 - All critical issues resolved**
+**🔄 UPDATED: May 2025 - All critical issues resolved**
 
 ---
 
@@ -22,7 +22,7 @@ This document tracks the alignment between our deployed frontend (`undefine-v2.v
 
 ---
 
-## ✅ December 2024: All Issues Resolved
+## ✅ May 2025: All Issues Resolved
 
 ### ✅ Leaderboard Population Fixed
 **Problem**: Real game completions not appearing in leaderboard
@@ -102,7 +102,7 @@ Append all future related debugging to this file. This is the master record of a
   - Recalculates and reassigns ranks after each change
   - Includes comprehensive error handling and logging
   - Maintains data integrity with UUID relationships
-- [x] **December 2024**: Fixed leaderboard_summary schema alignment
+- [x] **May 2025**: Fixed leaderboard_summary schema alignment
   - Updated updateLeaderboardSummary() to use correct column names
   - Fixed foreign key dependency chain (players → user_stats → leaderboard_summary)
   - Added date filtering for daily leaderboards
@@ -124,7 +124,7 @@ Append all future related debugging to this file. This is the master record of a
 - **Previous Issue**: Used `word` as `text`.
 - **Fixed**: Now uses `word_id UUID REFERENCES words(id)`.
 
-### ✅ Leaderboard Summary (`leaderboard_summary`) - FIXED DECEMBER 2024
+### ✅ Leaderboard Summary (`leaderboard_summary`) - FIXED MAY 2025
 - **Previous Issue**: Column name mismatches and missing foreign key dependencies
 - **Fixed**: Updated API to use correct schema:
   - `best_time` (not completion_time_seconds)  
@@ -149,7 +149,7 @@ Append all future related debugging to this file. This is the master record of a
   - `guesses_used`
   - `submitted_at`
 
-### Ranking Algorithm ✅ UPDATED DECEMBER 2024
+### Ranking Algorithm ✅ UPDATED MAY 2025
 1. Scores are ranked by:
    - Primary: `best_time` (ASC) - faster times rank better
    - Secondary: `guesses_used` (ASC) - fewer guesses break ties
@@ -238,7 +238,7 @@ Append all future related debugging to this file. This is the master record of a
 - Daily date filtering ✅
 - Test data seeded ✅
 
-## 🎉 December 2024 Resolution Summary
+## 🎉 May 2025 Resolution Summary
 
 **Issue**: User completed "DEFINE" in 1 guess but didn't appear as #1 on leaderboard  
 **Root Cause**: API function using wrong database column names  

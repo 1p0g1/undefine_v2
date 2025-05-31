@@ -99,7 +99,7 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **Foreign Keys**: Ensures both players AND user_stats entries exist before leaderboard insert
 - **Column Mapping**: Uses `best_time` not `completion_time_seconds` for leaderboard_summary
 
-### Fixed Issues (December 2024)
+### Fixed Issues (May 2025)
 
 #### 1. Schema Mismatch Fixed
 - **Problem**: `updateLeaderboardSummary()` using wrong column names
@@ -131,7 +131,7 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **Fallback**: API automatically queries scores table as backup
 
 #### 3. Real Completions Not Appearing
-- **Cause**: Fixed in December 2024 - schema mismatch prevented real game data from populating
+- **Cause**: Fixed in May 2025 - schema mismatch prevented real game data from populating
 - **Expected**: After fix, new completions should appear immediately in leaderboard
 - **Debug**: Use `/api/debug-player?playerId={id}` to check player's game data
 
@@ -147,7 +147,7 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **20240515000000**: Adds score fields with `correct` column
 - **20240530000002**: Creates leaderboard_summary with auto-ranking
 - **20241201000001**: Fixes foreign key constraints and populates test data
-- **December 2024**: Updated API functions to match actual ERD schema
+- **May 2025**: Updated API functions to match actual ERD schema
 
 ## 📝 Documentation Requirements
 

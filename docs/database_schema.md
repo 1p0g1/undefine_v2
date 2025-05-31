@@ -2,9 +2,9 @@ Database Schema
 
 This document defines the database schema for the Un-Define v2 project. The project uses Supabase as the database provider.
 
-**⚠️ IMPORTANT: This documentation is based on the actual ERD and production database structure as of December 2024.**
+**⚠️ IMPORTANT: This documentation is based on the actual ERD and production database structure as of May 2025.**
 
-**🔄 UPDATED: December 2024 - Fixed leaderboard_summary schema alignment and API functions**
+**🔄 UPDATED: May 2025 - Fixed leaderboard_summary schema alignment and API functions**
 
 ## Tables
 
@@ -174,7 +174,7 @@ CREATE INDEX idx_leaderboard_summary_date ON leaderboard_summary(date);
 - **Top 10 tracking**: Boolean flag for top performers
 - **Foreign Key**: References user_stats.player_id (not players.id directly)
 
-## December 2024 Schema Fixes
+## May 2025 Schema Fixes
 
 ### Issue: Leaderboard Data Not Populating
 
@@ -202,7 +202,7 @@ CREATE INDEX idx_leaderboard_summary_date ON leaderboard_summary(date);
 ### API Function Updates:
 
 ```typescript
-// BEFORE (December 2024):
+// BEFORE (May 2025):
 const { error: insertError } = await supabase
   .from('leaderboard_summary')
   .upsert([{
@@ -212,7 +212,7 @@ const { error: insertError } = await supabase
     completion_time_seconds: completionTimeSeconds, // ❌ Wrong column name
   }]);
 
-// AFTER (December 2024):
+// AFTER (May 2025):
 const { error: insertError } = await supabase
   .from('leaderboard_summary')
   .upsert([{
@@ -361,7 +361,7 @@ interface ScoreEntry {
 
 ## Migration History
 
-- **December 2024**: Fixed leaderboard foreign key constraints and populated missing data
+- **May 2025**: Fixed leaderboard foreign key constraints and populated missing data
 - **Test Data**: Seeded with 5 test players for leaderboard testing
 - **Schema Validation**: Updated documentation to match actual ERD structure
-- **December 2024 API Fixes**: Updated updateLeaderboardSummary() to use correct schema
+- **May 2025 API Fixes**: Updated updateLeaderboardSummary() to use correct schema

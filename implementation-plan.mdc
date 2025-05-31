@@ -41,7 +41,7 @@ alwaysApply: false
 
 **Status**: Done - Production deployment successful
 
-## Phase 5: December 2024 Leaderboard System Fixes
+## Phase 5: May 2025 Leaderboard System Fixes
 - [x] Identified root cause: Schema mismatch between ERD and API code
 - [x] Fixed `updateLeaderboardSummary()` function to use correct column names (`best_time` not `completion_time_seconds`)
 - [x] Removed references to non-existent `score` column in leaderboard_summary
@@ -56,7 +56,7 @@ alwaysApply: false
 
 **Summary**: Fixed critical schema mismatches that prevented leaderboard population. User completions (including 1-guess wins) now rank correctly and appear immediately.
 
-## Phase 6: Type System Alignment (December 2024)
+## Phase 6: Type System Alignment (May 2025)
 
 ### 6.1: TypeScript Interface Updates
 - [ ] Update `shared-types/src/game.ts` LeaderboardEntry interface to use `best_time` instead of `completion_time_seconds`
@@ -80,7 +80,7 @@ alwaysApply: false
 - [ ] Confirm daily filtering works correctly
 - [ ] Validate type safety across entire application
 
-**Target**: Complete type system alignment to match December 2024 schema fixes
+**Target**: Complete type system alignment to match May 2025 schema fixes
 
 **Dependencies**: Requires database migrations from Phase 5 to be completed first (✅ Done)
 
