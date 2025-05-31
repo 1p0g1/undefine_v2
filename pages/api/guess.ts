@@ -306,6 +306,42 @@ export default withCors(async function handler(
     }
 
     // Validate game session exists and matches
+    console.log('[/api/guess] Looking for game session:', { gameId, wordId, playerId });
+    
+    // First, try to find the session without the join to isolate the issue
+    const { data: basicSession, error: basicError } = await supabase
+      .from('game_sessions')
+      .select('*')
+      .eq('id', gameId)
+      .single();
+
+    console.log('[/api/guess] Basic session lookup result:', { basicSession, basicError });
+
+    if (basicError || !basicSession) {
+      console.error('[/api/guess] Basic session lookup failed:', {
+        error: basicError,
+        gameId,
+        wordId
+      });
+      return res.status(404).json({ 
+        error: 'Game session not found - basic lookup failed',
+        details: { gameId, error: basicError?.message }
+      });
+    }
+
+    // Check if word_id matches
+    if (basicSession.word_id !== wordId) {
+      console.error('[/api/guess] Word ID mismatch:', {
+        sessionWordId: basicSession.word_id,
+        requestWordId: wordId
+      });
+      return res.status(404).json({ 
+        error: 'Word ID mismatch',
+        details: { sessionWordId: basicSession.word_id, requestWordId: wordId }
+      });
+    }
+
+    // Now get the full session with word data
     const { data: gameSession, error: sessionError } = await supabase
       .from('game_sessions')
       .select(`
@@ -329,11 +365,16 @@ export default withCors(async function handler(
         )
       `)
       .eq('id', gameId)
-      .eq('word_id', wordId)  // Ensure word_id matches
       .single() as unknown as { data: GameSessionWithWord | null, error: any };
 
+    console.log('[/api/guess] Full session with join result:', { 
+      hasGameSession: !!gameSession, 
+      sessionError: sessionError?.message,
+      gameSessionWordId: gameSession?.word_id
+    });
+
     if (sessionError || !gameSession) {
-      console.error('[/api/guess] Failed to fetch game session:', {
+      console.error('[/api/guess] Failed to fetch game session with join:', {
         error: sessionError,
         details: sessionError?.details,
         hint: sessionError?.hint,
