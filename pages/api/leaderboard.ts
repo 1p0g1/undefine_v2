@@ -46,7 +46,7 @@ async function handler(
   try {
     console.log('[/api/leaderboard] Fetching leaderboard for wordId:', wordId, 'playerId:', playerId);
 
-    // Try to get entries from leaderboard_summary first
+    // Try to get entries from leaderboard_summary first (using correct column names from ERD)
     let { data: allEntries, error: allEntriesError } = await supabase
       .from('leaderboard_summary')
       .select(`
@@ -54,15 +54,14 @@ async function handler(
         player_id,
         word_id,
         rank,
-        score,
-        completion_time_seconds,
+        best_time,
         guesses_used,
         was_top_10,
-        created_at
+        date
       `)
       .eq('word_id', wordId)
-      .order('score', { ascending: false })
-      .order('completion_time_seconds', { ascending: true });
+      .eq('date', new Date().toISOString().split('T')[0]) // Filter by today's date
+      .order('rank', { ascending: true });
 
     console.log('[/api/leaderboard] Leaderboard_summary query result:', { 
       success: !allEntriesError, 
@@ -110,11 +109,10 @@ async function handler(
         player_id: score.player_id,
         word_id: score.word_id,
         rank: index + 1,
-        score: score.score || 0,
-        completion_time_seconds: score.completion_time_seconds,
+        best_time: score.completion_time_seconds,
         guesses_used: score.guesses_used,
         was_top_10: (index + 1) <= 10,
-        created_at: score.submitted_at || new Date().toISOString()
+        date: score.submitted_at?.split('T')[0] || new Date().toISOString().split('T')[0]
       }));
     }
 
@@ -130,19 +128,28 @@ async function handler(
       });
     }
 
+    // Get player display names from players table
+    const playerIds = allEntries.map(entry => entry.player_id);
+    const { data: playersData } = await supabase
+      .from('players')
+      .select('id, display_name')
+      .in('id', playerIds);
+
+    const playerNames = new Map(playersData?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []);
+
     // Transform entries to match expected format
-    const transformedEntries: LeaderboardEntry[] = allEntries.map((entry, index) => ({
+    const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => ({
       id: entry.id,
       word_id: entry.word_id,
       player_id: entry.player_id,
-      player_name: `Player ${entry.player_id.slice(-4)}`, // Use last 4 chars of player ID as name
-      rank: index + 1, // Calculate rank based on order
-      guesses_used: entry.guesses_used,
-      completion_time_seconds: entry.completion_time_seconds,
-      score: entry.score || 0,
-      date: entry.created_at?.split('T')[0] || new Date().toISOString().split('T')[0], // Use created_at date or today
-      created_at: entry.created_at || new Date().toISOString(),
-      was_top_10: (index + 1) <= 10,
+      player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
+      rank: entry.rank || 0,
+      guesses_used: entry.guesses_used || 0,
+      completion_time_seconds: entry.best_time || 0, // Map best_time to completion_time_seconds for compatibility
+      score: 0, // Not available in new schema, set to 0 for compatibility
+      date: entry.date || new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString(), // Default value for compatibility
+      was_top_10: entry.was_top_10 || false,
       is_current_player: entry.player_id === playerId
     }));
 
