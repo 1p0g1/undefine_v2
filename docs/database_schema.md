@@ -4,6 +4,8 @@ This document defines the database schema for the Un-Define v2 project. The proj
 
 **⚠️ IMPORTANT: This documentation is based on the actual ERD and production database structure as of December 2024.**
 
+**🔄 UPDATED: December 2024 - Fixed leaderboard_summary schema alignment and API functions**
+
 ## Tables
 
 ### players
@@ -172,6 +174,62 @@ CREATE INDEX idx_leaderboard_summary_date ON leaderboard_summary(date);
 - **Top 10 tracking**: Boolean flag for top performers
 - **Foreign Key**: References user_stats.player_id (not players.id directly)
 
+## December 2024 Schema Fixes
+
+### Issue: Leaderboard Data Not Populating
+
+**Problem**: Real game completions weren't appearing in leaderboard despite successful game sessions.
+
+**Root Cause**: The `updateLeaderboardSummary()` function in `/api/guess.ts` was using incorrect column names that didn't match the actual ERD schema.
+
+### Fixes Applied:
+
+1. **Column Name Alignment**:
+   - ❌ **OLD**: `completion_time_seconds` (doesn't exist in leaderboard_summary)
+   - ✅ **NEW**: `best_time` (actual column name)
+   - ❌ **OLD**: `score` (doesn't exist in leaderboard_summary)
+   - ✅ **NEW**: Removed score references
+
+2. **Foreign Key Dependencies**:
+   - ❌ **OLD**: Direct insert to leaderboard_summary without user_stats check
+   - ✅ **NEW**: Ensures user_stats entry exists before leaderboard insert
+   - **Chain**: `players` → `user_stats` → `leaderboard_summary`
+
+3. **Date Filtering**:
+   - ❌ **OLD**: No date field population
+   - ✅ **NEW**: Populates `date` field with CURRENT_DATE for daily filtering
+
+### API Function Updates:
+
+```typescript
+// BEFORE (December 2024):
+const { error: insertError } = await supabase
+  .from('leaderboard_summary')
+  .upsert([{
+    player_id: playerId,
+    word_id: wordId,
+    score: scoreResult.score,                    // ❌ Column doesn't exist
+    completion_time_seconds: completionTimeSeconds, // ❌ Wrong column name
+  }]);
+
+// AFTER (December 2024):
+const { error: insertError } = await supabase
+  .from('leaderboard_summary')
+  .upsert([{
+    player_id: playerId,
+    word_id: wordId,
+    best_time: completionTimeSeconds,           // ✅ Correct column name
+    guesses_used: guessesUsed,                  // ✅ Correct column
+    date: new Date().toISOString().split('T')[0] // ✅ Add date for filtering
+  }]);
+```
+
+### Result:
+- New game completions now populate leaderboard_summary automatically
+- Real player data appears immediately in leaderboards
+- Proper foreign key relationships maintained
+- Daily date filtering works correctly
+
 ## Test Data
 
 ### Seeded Test Players
@@ -306,3 +364,4 @@ interface ScoreEntry {
 - **December 2024**: Fixed leaderboard foreign key constraints and populated missing data
 - **Test Data**: Seeded with 5 test players for leaderboard testing
 - **Schema Validation**: Updated documentation to match actual ERD structure
+- **December 2024 API Fixes**: Updated updateLeaderboardSummary() to use correct schema

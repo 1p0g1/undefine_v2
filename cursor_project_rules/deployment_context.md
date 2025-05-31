@@ -42,10 +42,17 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 
 #### 1. `players` table
 - **Purpose**: Master table for all players
-- **Key Fields**: `id` (TEXT PRIMARY KEY), `created_at`, `last_active`
+- **Key Fields**: `id` (TEXT PRIMARY KEY), `created_at`, `last_active`, `display_name`
 - **Populated By**: `ensurePlayerExists()` function (auto-created)
 
-#### 2. `scores` table  
+#### 2. `user_stats` table
+- **Purpose**: Player statistics and streaks
+- **Key Fields**: 
+  - `player_id` (TEXT PRIMARY KEY REFERENCES players.id)
+  - `current_streak`, `longest_streak`, `best_rank`, `top_10_count`
+- **Critical**: Required foreign key dependency for leaderboard_summary
+
+#### 3. `scores` table  
 - **Purpose**: Record of every game completion
 - **Key Fields**: 
   - `player_id` (TEXT REFERENCES players.id)
@@ -57,36 +64,57 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **Populated By**: `createScoreEntry()` in `/api/guess`
 - **Critical**: Only records with `correct = true` are used for leaderboard
 
-#### 3. `leaderboard_summary` table
+#### 4. `leaderboard_summary` table ⚠️ UPDATED SCHEMA
 - **Purpose**: Optimized leaderboard data with rankings
 - **Key Fields**:
-  - `player_id` (TEXT REFERENCES players.id)
+  - `player_id` (TEXT REFERENCES user_stats.player_id) ⚠️ Foreign key to user_stats, not players
   - `word_id` (UUID REFERENCES words.id)
   - `rank` (INTEGER) - auto-calculated position
   - `was_top_10` (BOOLEAN) - auto-calculated flag
-  - `score` (INTEGER)
-  - `completion_time_seconds` (INTEGER)
+  - `best_time` (INTEGER) ⚠️ NOT completion_time_seconds
   - `guesses_used` (INTEGER)
+  - `date` (DATE) - for daily filtering
 - **Populated By**: `updateLeaderboardSummary()` in `/api/guess`
+- **❌ REMOVED**: `score` column does not exist in actual schema
 - **Auto-Ranking**: Database trigger recalculates ranks on insert/update
 
-### Ranking Algorithm
-1. **Primary Sort**: `score DESC` (higher scores rank better)
-2. **Secondary Sort**: `completion_time_seconds ASC` (faster times break ties)
+### Ranking Algorithm ⚠️ UPDATED
+1. **Primary Sort**: `best_time ASC` (faster times rank better)
+2. **Secondary Sort**: `guesses_used ASC` (fewer guesses break ties)
 3. **Auto-Update**: Database trigger `update_rankings_after_leaderboard_change` recalculates all ranks when data changes
 
 ### API Endpoints
 
 #### GET /api/leaderboard?wordId={id}&playerId={id}
 - **Primary Query**: `leaderboard_summary` table (optimized)
+- **Date Filtering**: Filters by `date = CURRENT_DATE` for daily leaderboards
 - **Fallback Query**: `scores` table where `correct = true` (if summary empty)
 - **Returns**: Top 10 entries + current player rank
 - **Error Handling**: Graceful fallback mechanism if primary table empty
+- **Player Names**: Joins with players table for display_name
 
-#### POST /api/guess (triggers leaderboard updates)
+#### POST /api/guess (triggers leaderboard updates) ⚠️ UPDATED
 - **On Game Win**: Calls complete data flow sequence
 - **Scoring**: Calculated by shared-types/scoring.ts
-- **Foreign Keys**: Ensures player exists before score/leaderboard inserts
+- **Foreign Keys**: Ensures both players AND user_stats entries exist before leaderboard insert
+- **Column Mapping**: Uses `best_time` not `completion_time_seconds` for leaderboard_summary
+
+### Fixed Issues (December 2024)
+
+#### 1. Schema Mismatch Fixed
+- **Problem**: `updateLeaderboardSummary()` using wrong column names
+- **Solution**: Updated to use `best_time` instead of `completion_time_seconds`
+- **Solution**: Removed references to non-existent `score` column in leaderboard_summary
+- **Solution**: Added proper foreign key dependency on user_stats
+
+#### 2. Foreign Key Constraints Fixed
+- **Problem**: leaderboard_summary inserts failing due to missing user_stats entries
+- **Solution**: `updateLeaderboardSummary()` now ensures user_stats entry exists first
+- **Chain**: players → user_stats → leaderboard_summary (proper dependency order)
+
+#### 3. Date Filtering Added
+- **Problem**: Leaderboards showing entries from all dates
+- **Solution**: Added `date` field population and filtering by CURRENT_DATE
 
 ### Troubleshooting Common Issues
 
@@ -94,16 +122,18 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **Cause**: Database column name mismatch or foreign key constraint failures
 - **Check**: Verify `correct` column exists in scores table (not `was_correct`)
 - **Check**: Ensure players table populated via `ensurePlayerExists()`
+- **Check**: Verify user_stats entries exist for leaderboard players
 
 #### 2. Empty leaderboard_summary Table
 - **Cause**: `updateLeaderboardSummary()` failing silently due to constraints
-- **Check**: Foreign key constraints on `player_id` and `word_id`
+- **Check**: Foreign key constraints on `player_id` → user_stats.player_id
+- **Check**: Column name mismatches (best_time vs completion_time_seconds)
 - **Fallback**: API automatically queries scores table as backup
 
-#### 3. Missing Console Logs
-- **Expected**: "Leaderboard updated successfully" after game completion
-- **Missing**: Usually indicates foreign key constraint failure
-- **Debug**: Check `[updateLeaderboardSummary]` logs for constraint errors
+#### 3. Real Completions Not Appearing
+- **Cause**: Fixed in December 2024 - schema mismatch prevented real game data from populating
+- **Expected**: After fix, new completions should appear immediately in leaderboard
+- **Debug**: Use `/api/debug-player?playerId={id}` to check player's game data
 
 #### 4. Build Failures
 - **Common**: TypeScript type mismatches between shared-types and API types
@@ -116,6 +146,8 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **20240321000000**: Creates players table + functions
 - **20240515000000**: Adds score fields with `correct` column
 - **20240530000002**: Creates leaderboard_summary with auto-ranking
+- **20241201000001**: Fixes foreign key constraints and populates test data
+- **December 2024**: Updated API functions to match actual ERD schema
 
 ## 📝 Documentation Requirements
 

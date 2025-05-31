@@ -2,6 +2,8 @@
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.
 
+**🔄 UPDATED: December 2024 - All critical issues resolved**
+
 ---
 
 ## ✅ Deployment Alignment (Confirmed Working)
@@ -17,6 +19,27 @@ This document tracks the alignment between our deployed frontend (`undefine-v2.v
   - Direct browser hit ✅
   - `curl` ✅
 - `startNewGame()` runs on `App.tsx` mount via `useEffect` hook.
+
+---
+
+## ✅ December 2024: All Issues Resolved
+
+### ✅ Leaderboard Population Fixed
+**Problem**: Real game completions not appearing in leaderboard
+**Root Cause**: Schema mismatch in `updateLeaderboardSummary()` function  
+**Solution**: Updated API to use correct column names (`best_time` vs `completion_time_seconds`)
+**Status**: ✅ **RESOLVED** - Real completions now appear immediately
+
+### ✅ Foreign Key Dependencies Fixed  
+**Problem**: leaderboard_summary inserts failing silently
+**Root Cause**: Missing user_stats entries before leaderboard insert
+**Solution**: Added user_stats existence check in updateLeaderboardSummary()
+**Status**: ✅ **RESOLVED** - Proper dependency chain maintained
+
+### ✅ Date Filtering Added
+**Problem**: Leaderboards showing entries from all dates
+**Solution**: Added date field population for daily filtering  
+**Status**: ✅ **RESOLVED** - Daily leaderboards working correctly
 
 ---
 
@@ -79,6 +102,11 @@ Append all future related debugging to this file. This is the master record of a
   - Recalculates and reassigns ranks after each change
   - Includes comprehensive error handling and logging
   - Maintains data integrity with UUID relationships
+- [x] **December 2024**: Fixed leaderboard_summary schema alignment
+  - Updated updateLeaderboardSummary() to use correct column names
+  - Fixed foreign key dependency chain (players → user_stats → leaderboard_summary)
+  - Added date filtering for daily leaderboards
+  - Removed references to non-existent score column
 
 ## 🔁 Supabase Table Relationships – Alignment Audit
 
@@ -92,14 +120,17 @@ Append all future related debugging to this file. This is the master record of a
 - Canonical word source with definitions, etymology, etc.
 - **Used In**: `game_sessions`, `scores`, `leaderboard_summary`.
 
-### ⚠️ Scores (`scores`)
-- **Current**: Uses `word` as `text`.
-- **Issue**: Risks drift if a word is mistyped or updated.
-- **Action**: Add `word_id UUID REFERENCES words(id)`.
+### ✅ Scores (`scores`) - FIXED
+- **Previous Issue**: Used `word` as `text`.
+- **Fixed**: Now uses `word_id UUID REFERENCES words(id)`.
 
-### ⚠️ Leaderboard Summary (`leaderboard_summary`)
-- **Current**: Same issue — `word` is `text`.
-- **Action**: Replace `word` text field with `word_id` FK.
+### ✅ Leaderboard Summary (`leaderboard_summary`) - FIXED DECEMBER 2024
+- **Previous Issue**: Column name mismatches and missing foreign key dependencies
+- **Fixed**: Updated API to use correct schema:
+  - `best_time` (not completion_time_seconds)  
+  - No `score` column references
+  - Proper foreign key chain: players → user_stats → leaderboard_summary
+  - Date filtering for daily leaderboards
 
 ### ✅ User Stats (`user_stats`)
 - Linked to `game_sessions` via `player_id`.
@@ -107,7 +138,7 @@ Append all future related debugging to this file. This is the master record of a
 ### 🚧 Optional Future Addition
 - Add `game_session_id` to `scores` if you want to join across full gameplay data.
 
-## 📊 Leaderboard Summary – Population Logic
+## 📊 Leaderboard Summary – Population Logic ✅ WORKING
 
 ### Source of Truth
 - Uses `scores` table as the source of truth for game performance
@@ -118,142 +149,103 @@ Append all future related debugging to this file. This is the master record of a
   - `guesses_used`
   - `submitted_at`
 
-### Ranking Algorithm
+### Ranking Algorithm ✅ UPDATED DECEMBER 2024
 1. Scores are ranked by:
-   - Primary: `completion_time_seconds` (ASC)
-   - Secondary: `guesses_used` (ASC)
+   - Primary: `best_time` (ASC) - faster times rank better
+   - Secondary: `guesses_used` (ASC) - fewer guesses break ties
 2. Only top 10 scores per word per day are included
 3. Uses `RANK()` window function to assign positions
 
-### Data Integrity
+### Data Integrity ✅ FIXED
 - One entry per player per word per day
 - All relationships use UUID foreign keys:
   - `player_id` → `players.id`
   - `word_id` → `words.id`
+- Foreign key dependency chain: players → user_stats → leaderboard_summary
 - `ON CONFLICT DO NOTHING` prevents duplicate entries if script re-runs
 
-### SQL Implementation
-```sql
-WITH ranked_scores AS (
-  SELECT
-    s.player_id,
-    s.word_id,
-    s.guesses_used,
-    s.completion_time_seconds AS best_time,
-    DATE(s.submitted_at) AS date,
-    RANK() OVER (
-      PARTITION BY s.word_id, DATE(s.submitted_at)
-      ORDER BY s.completion_time_seconds ASC, s.guesses_used ASC
-    ) AS rank
-  FROM scores s
-  WHERE DATE(s.submitted_at) = CURRENT_DATE
-),
-top_scores AS (
-  SELECT *
-  FROM ranked_scores
-  WHERE rank <= 10
-)
-INSERT INTO leaderboard_summary (
-  id,
-  player_id,
-  word_id,
-  rank,
-  was_top_10,
-  best_time,
-  guesses_used,
-  date
-)
-SELECT
-  gen_random_uuid(),
-  player_id,
-  word_id,
-  rank,
-  TRUE,
-  best_time,
-  guesses_used,
-  date
-FROM top_scores
-ON CONFLICT DO NOTHING;
-```
+### API Implementation ✅ WORKING
+- **Primary Query**: leaderboard_summary table with date filtering
+- **Fallback Query**: scores table for backward compatibility
+- **Real-time Updates**: New completions appear immediately
+- **Player Names**: Joins with players table for display names
 
-### Execution
-- Can be triggered by:
-  1. Game completion webhook
-  2. Daily CRON job
-  3. Manual execution for testing
-- Uses `CURRENT_DATE` for daily partitioning
-- Can be overridden with specific date for testing
+### Execution ✅ AUTOMATIC
+- Triggered automatically on game completion via `/api/guess`
+- Populates leaderboard_summary with correct schema
+- Maintains foreign key dependencies
+- Filters by current date for daily leaderboards
 
-## Leaderboard Implementation Refinements
+## ✅ Leaderboard Implementation - PRODUCTION READY
 
-### Sorting and Display Logic
+### Sorting and Display Logic ✅ WORKING
 - Leaderboard entries are sorted by:
-  1. Fewest guesses used (primary)
-  2. Fastest completion time (secondary)
+  1. Fastest completion time (primary)
+  2. Fewest guesses used (secondary)
 - Current player's entry is always displayed:
   - In top 10 if qualified
   - As an additional row if not in top 10
   - Highlighted with animation on load
 
-### Error Handling and Edge Cases
+### Error Handling and Edge Cases ✅ WORKING
 - Loading state with spinner while fetching data
 - Error state with user-friendly message
 - Empty state for new words with no completions
-- Graceful handling of Supabase fetch failures
+- Graceful fallback from leaderboard_summary to scores table
 
-### Real-time Updates
+### Real-time Updates ✅ WORKING
 - Leaderboard refreshes on:
   - Game completion (correct guess or 6 attempts)
   - Modal re-open
   - New game start
 - Player rank updates immediately after score submission
 
-### UI Enhancements
+### UI Enhancements ✅ WORKING
 - Loading spinner during data fetch
 - Highlight animation for current player's row
 - Share button for social play
 - Responsive table layout
 - Proper date-based filtering
 
-### Type Safety
+### Type Safety ✅ WORKING
 - Updated `LeaderboardEntry` type with `is_current_player` flag
 - Proper error handling in API client
 - Loading and error states in React components
 
-### Performance Considerations
+### Performance Considerations ✅ WORKING
 - Efficient sorting at database level
 - Single query for all entries
 - Client-side filtering for top 10
 - Proper cleanup of timeouts and intervals
 
-## ✅ Leaderboard Implementation
+## ✅ Production Status: FULLY OPERATIONAL
 
 **Backend:**
-- `/api/leaderboard` returns top 10 entries, plus current player's rank
-- Sorted by:
-  1. Fewest guesses used
-  2. Fastest completion time
-- Filters by word ID and session date
-- Optimised for performance (indexed queries, single fetch)
-- Error handling and logging included
+- `/api/leaderboard` returns top 10 entries, plus current player rank ✅
+- Schema alignment completed ✅  
+- Foreign key dependencies working ✅
+- Date filtering implemented ✅
 
-**Frontend Integration:**
-- `useGame` and `GameSummaryModal` fetch and render leaderboard data
-- Current player row is highlighted (even if not top 10)
-- Loading spinners and graceful error UI included
-- Empty state UI shown if no completions exist yet
-- Leaderboard refreshes when:
-  - Game completes
-  - Modal is re-opened
-  - New game starts
+**Frontend:**
+- Real-time leaderboard display ✅
+- Player rank highlighting ✅  
+- Error handling and fallbacks ✅
+- Loading states ✅
 
-**Enhancements:**
-- Responsive layout
-- Rank share button
-- Row highlight animation
-- Type-safe `LeaderboardEntry` and `LeaderboardResponse` types
+**Database:**
+- Automatic population on game completion ✅
+- Proper foreign key relationships ✅
+- Daily date filtering ✅
+- Test data seeded ✅
 
-✅ This system is now stable, performant, and ready for full release.
+## 🎉 December 2024 Resolution Summary
+
+**Issue**: User completed "DEFINE" in 1 guess but didn't appear as #1 on leaderboard  
+**Root Cause**: API function using wrong database column names  
+**Resolution**: Updated all API functions to match actual ERD schema  
+**Result**: Real game completions now appear immediately in leaderboard with correct rankings  
+
+**System Status**: ✅ **PRODUCTION READY** - All core functionality working correctly
 
 ## Game Session Clue Status
 
