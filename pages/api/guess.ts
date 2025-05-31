@@ -442,6 +442,8 @@ export default withCors(async function handler(
     console.log('[/api/guess] Full session with join result:', { 
       hasGameSession: !!gameSession, 
       sessionError: sessionError?.message,
+      sessionErrorCode: sessionError?.code,
+      sessionErrorDetails: sessionError?.details,
       gameSessionWordId: gameSession?.word_id
     });
 
@@ -452,8 +454,140 @@ export default withCors(async function handler(
         hint: sessionError?.hint,
         code: sessionError?.code,
         gameId,
-        wordId
+        wordId,
+        playerId,
+        basicSessionExists: !!basicSession,
+        basicSessionWordId: basicSession?.word_id
       });
+      
+      // If basic session exists but join fails, try without the join
+      if (basicSession) {
+        console.log('[/api/guess] Basic session exists, trying without words join...');
+        
+        // Get word data separately
+        const { data: wordData, error: wordError } = await supabase
+          .from('words')
+          .select('word, definition, etymology, first_letter, in_a_sentence, number_of_letters, equivalents, difficulty, date')
+          .eq('id', basicSession.word_id)
+          .single();
+          
+        console.log('[/api/guess] Word lookup result:', {
+          hasWord: !!wordData,
+          wordError: wordError?.message,
+          wordId: basicSession.word_id
+        });
+        
+        if (wordError || !wordData) {
+          return res.status(500).json({ 
+            error: 'Failed to fetch word data',
+            details: { 
+              wordId: basicSession.word_id,
+              wordError: wordError?.message 
+            }
+          });
+        }
+        
+        // Create combined session object
+        const combinedSession: GameSessionWithWord = {
+          ...basicSession,
+          words: wordData
+        };
+        
+        console.log('[/api/guess] Using combined session data');
+        
+        // Continue with the rest of the logic using combinedSession instead of gameSession
+        if (combinedSession.is_complete) {
+          return res.status(400).json({ error: 'Game session is already complete' });
+        }
+
+        // Validate start_time matches
+        if (combinedSession.start_time !== start_time) {
+          console.error('[/api/guess] Start time mismatch:', {
+            session: combinedSession.start_time,
+            request: start_time
+          });
+          return res.status(400).json({ 
+            error: 'Invalid start time',
+            details: 'Start time does not match game session'
+          });
+        }
+
+        const result = await submitGuess({
+          guess,
+          gameId,
+          playerId,
+          wordId: combinedSession.word_id,
+          start_time: combinedSession.start_time
+        }, combinedSession.words.word, combinedSession.revealed_clues || []);
+
+        // Calculate completion time and score if game is over
+        const completionTimeSeconds = result.gameOver ? 
+          Math.floor((Date.now() - new Date(combinedSession.start_time).getTime()) / 1000) : null;
+
+        const scoreResult = result.gameOver ? calculateScore({
+          guessesUsed: (combinedSession.guesses || []).length + 1,
+          completionTimeSeconds: completionTimeSeconds || 0,
+          usedHint: false, // Hints are not implemented yet
+          isWon: result.isCorrect
+        }) : null;
+
+        // Update game session with new state
+        const { error: updateError } = await supabase
+          .from('game_sessions')
+          .update({
+            guesses: [...(combinedSession.guesses || []), result.guess],
+            revealed_clues: result.revealedClues.map(() => true),  // Convert to boolean array
+            clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), combinedSession.clue_status || {}),
+            is_complete: result.gameOver,
+            is_won: result.isCorrect,
+            end_time: result.gameOver ? new Date().toISOString() : null,
+            score: scoreResult?.score || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', gameId);
+
+        if (updateError) {
+          console.error('[/api/guess] Failed to update game session:', updateError);
+          return res.status(500).json({ error: 'Failed to update game session' });
+        }
+
+        // If game is complete, update stats and create score entry
+        if (result.gameOver && completionTimeSeconds && scoreResult) {
+          const stats = await updateUserStats(
+            playerId,
+            result.isCorrect,
+            combinedSession.guesses.length + 1,
+            completionTimeSeconds,
+            scoreResult
+          );
+
+          await createScoreEntry(
+            playerId,
+            combinedSession.word_id,
+            combinedSession.guesses.length + 1,
+            completionTimeSeconds,
+            result.isCorrect,
+            scoreResult
+          );
+
+          await updateLeaderboardSummary(
+            playerId,
+            combinedSession.word_id,
+            combinedSession.guesses.length + 1,
+            completionTimeSeconds,
+            scoreResult
+          );
+
+          return res.status(200).json({
+            ...result,
+            score: scoreResult,
+            stats
+          });
+        }
+
+        return res.status(200).json(result);
+      }
+      
       return res.status(404).json({ 
         error: 'Game session not found',
         details: 'Invalid game session or word ID'
