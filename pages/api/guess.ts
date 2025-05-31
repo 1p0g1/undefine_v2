@@ -532,23 +532,46 @@ export default withCors(async function handler(
         }) : null;
 
         // Update game session with new state
+        const updateData = {
+          guesses: [...(combinedSession.guesses || []), result.guess],
+          revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
+          clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), combinedSession.clue_status || {}),
+          is_complete: result.gameOver,
+          is_won: result.isCorrect,
+          end_time: result.gameOver ? new Date().toISOString() : null,
+          score: scoreResult?.score || null,
+          updated_at: new Date().toISOString()
+        };
+        
+        console.log('[/api/guess] Updating session with data:', {
+          gameId,
+          updateData,
+          originalGuesses: combinedSession.guesses,
+          newGuess: result.guess
+        });
+        
         const { error: updateError } = await supabase
           .from('game_sessions')
-          .update({
-            guesses: [...(combinedSession.guesses || []), result.guess],
-            revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
-            clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), combinedSession.clue_status || {}),
-            is_complete: result.gameOver,
-            is_won: result.isCorrect,
-            end_time: result.gameOver ? new Date().toISOString() : null,
-            score: scoreResult?.score || null,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', gameId);
 
         if (updateError) {
-          console.error('[/api/guess] Failed to update game session:', updateError);
-          return res.status(500).json({ error: 'Failed to update game session' });
+          console.error('[/api/guess] Failed to update game session:', {
+            error: updateError,
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            hint: updateError.hint,
+            gameId,
+            updateData
+          });
+          return res.status(500).json({ 
+            error: 'Failed to update game session',
+            details: {
+              message: updateError.message,
+              code: updateError.code
+            }
+          });
         }
 
         // If game is complete, update stats and create score entry
@@ -630,23 +653,46 @@ export default withCors(async function handler(
     }) : null;
 
     // Update game session with new state
+    const updateData = {
+      guesses: [...(gameSession.guesses || []), result.guess],
+      revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
+      clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
+      is_complete: result.gameOver,
+      is_won: result.isCorrect,
+      end_time: result.gameOver ? new Date().toISOString() : null,
+      score: scoreResult?.score || null,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('[/api/guess] Updating session with data:', {
+      gameId,
+      updateData,
+      originalGuesses: gameSession.guesses,
+      newGuess: result.guess
+    });
+    
     const { error: updateError } = await supabase
       .from('game_sessions')
-      .update({
-        guesses: [...(gameSession.guesses || []), result.guess],
-        revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
-        clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
-        is_complete: result.gameOver,
-        is_won: result.isCorrect,
-        end_time: result.gameOver ? new Date().toISOString() : null,
-        score: scoreResult?.score || null,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', gameId);
 
     if (updateError) {
-      console.error('[/api/guess] Failed to update game session:', updateError);
-      return res.status(500).json({ error: 'Failed to update game session' });
+      console.error('[/api/guess] Failed to update game session:', {
+        error: updateError,
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        gameId,
+        updateData
+      });
+      return res.status(500).json({ 
+        error: 'Failed to update game session',
+        details: {
+          message: updateError.message,
+          code: updateError.code
+        }
+      });
     }
 
     // If game is complete, update stats and create score entry
