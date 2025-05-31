@@ -19,7 +19,7 @@ INSERT INTO scores (
 )
 SELECT 
   player_id,
-  word_id,
+  word_id::uuid,
   guesses_used,
   completion_time_seconds,
   correct,
