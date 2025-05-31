@@ -308,6 +308,16 @@ export default withCors(async function handler(
     // Validate game session exists and matches
     console.log('[/api/guess] Looking for game session:', { gameId, wordId, playerId });
     
+    // Debug: Show all game sessions for this player
+    const { data: allSessions, error: allError } = await supabase
+      .from('game_sessions')
+      .select('id, player_id, word_id, start_time, created_at')
+      .eq('player_id', playerId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    console.log('[/api/guess] Recent sessions for player:', { allSessions, allError });
+
     // First, try to find the session without the join to isolate the issue
     const { data: basicSession, error: basicError } = await supabase
       .from('game_sessions')
@@ -315,17 +325,38 @@ export default withCors(async function handler(
       .eq('id', gameId)
       .single();
 
-    console.log('[/api/guess] Basic session lookup result:', { basicSession, basicError });
+    console.log('[/api/guess] Basic session lookup result:', { 
+      hasBasicSession: !!basicSession,
+      basicSessionId: basicSession?.id,
+      basicSessionWordId: basicSession?.word_id,
+      basicSessionPlayerId: basicSession?.player_id,
+      basicError: basicError?.message 
+    });
 
-    if (basicError || !basicSession) {
+    if (basicError) {
       console.error('[/api/guess] Basic session lookup failed:', {
         error: basicError,
+        code: basicError.code,
+        details: basicError.details,
+        hint: basicError.hint,
         gameId,
         wordId
       });
       return res.status(404).json({ 
         error: 'Game session not found - basic lookup failed',
-        details: { gameId, error: basicError?.message }
+        details: { 
+          gameId, 
+          error: basicError.message,
+          code: basicError.code,
+          allSessions: allSessions?.length || 0
+        }
+      });
+    }
+
+    if (!basicSession) {
+      return res.status(404).json({ 
+        error: 'Game session not found - no session returned',
+        details: { gameId, allSessions: allSessions?.length || 0 }
       });
     }
 
