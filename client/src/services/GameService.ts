@@ -80,6 +80,10 @@ class GameService {
   public async startNewGame(): Promise<GameSessionState> {
     try {
       console.log('[GameService] Starting new game...');
+      
+      // Clear any previous state when starting a new game
+      this.clearState();
+      
       const data = await apiClient.getNewWord();
 
       // Validate required fields
@@ -175,15 +179,14 @@ class GameService {
         score: response.score?.score ?? null
       };
 
-      // Clear state if game is complete
+      // Always save state (including completed state)
+      this.saveState();
+      
       if (response.gameOver) {
         console.log('[GameService] Game completed:', {
           isWon: response.isCorrect,
           score: response.score?.score
         });
-        this.clearState();
-      } else {
-        this.saveState();
       }
 
       return response;
