@@ -211,13 +211,32 @@ async function updateLeaderboardSummary(
     await ensurePlayerExists(playerId);
     console.log('[updateLeaderboardSummary] Player existence confirmed');
 
+    // Ensure user_stats entry exists (required for foreign key)
+    const { error: statsError } = await supabase
+      .from('user_stats')
+      .upsert([{
+        player_id: playerId,
+        current_streak: 0,
+        longest_streak: 0,
+        best_rank: null,
+        top_10_count: 0
+      }], {
+        onConflict: 'player_id',
+        ignoreDuplicates: true
+      });
+
+    if (statsError) {
+      console.error('[updateLeaderboardSummary] Failed to ensure user_stats entry:', statsError);
+      throw statsError;
+    }
+
     // Check existing leaderboard entries for this word
     const { data: leaderboard, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
       .select('*')
       .eq('word_id', wordId)
-      .order('score', { ascending: false })
-      .order('completion_time_seconds', { ascending: true })
+      .order('best_time', { ascending: true })
+      .order('guesses_used', { ascending: true })
       .limit(10);
 
     if (leaderboardError) {
@@ -229,7 +248,7 @@ async function updateLeaderboardSummary(
 
     // Always insert/update for winning games, let the database handle ranking
     if (scoreResult.score > 0) {
-      console.log('[updateLeaderboardSummary] Inserting leaderboard entry for score:', scoreResult.score);
+      console.log('[updateLeaderboardSummary] Inserting leaderboard entry for completion time:', completionTimeSeconds);
       
       const { error: insertError } = await supabase
         .from('leaderboard_summary')
@@ -238,9 +257,9 @@ async function updateLeaderboardSummary(
           word_id: wordId,
           rank: 1, // Will be recalculated by trigger
           was_top_10: true, // Will be updated by trigger
-          score: scoreResult.score,
+          best_time: completionTimeSeconds,
           guesses_used: guessesUsed,
-          completion_time_seconds: completionTimeSeconds,
+          date: new Date().toISOString().split('T')[0] // Add today's date
         }], {
           onConflict: 'player_id,word_id'
         });
@@ -311,7 +330,7 @@ export default withCors(async function handler(
         .map(([field, _]) => field);
       
       console.error('[/api/guess] Missing required fields:', missingFields);
-      return res.status(400).json({
+      return res.status(400).json({ 
         error: 'Missing required fields',
         details: {
           missing: missingFields,
@@ -819,13 +838,13 @@ export default withCors(async function handler(
 
     // Update game session with new state - start with minimal update
     const updateData = {
-      guesses: [...(gameSession.guesses || []), result.guess],
+        guesses: [...(gameSession.guesses || []), result.guess],
       revealed_clues: result.revealedClues,
-      clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
-      is_complete: result.gameOver,
-      is_won: result.isCorrect,
-      end_time: result.gameOver ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
+        clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
+        is_complete: result.gameOver,
+        is_won: result.isCorrect,
+        end_time: result.gameOver ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
     };
     
     console.log('[/api/guess] Updating session with data:', {
@@ -858,7 +877,7 @@ export default withCors(async function handler(
         }
       });
     }
-    
+
     // If game is complete, update stats and create score entry
     if (result.gameOver && completionTimeSeconds && scoreResult) {
       console.log('[/api/guess] Game completed, updating stats and scores:', {
@@ -928,12 +947,12 @@ export default withCors(async function handler(
         console.log('[/api/guess] Step 2: Updating user stats');
         try {
           stats = await updateUserStats(
-            playerId,
-            result.isCorrect,
-            gameSession.guesses.length + 1,
-            completionTimeSeconds,
-            scoreResult
-          );
+        playerId,
+        result.isCorrect,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        scoreResult
+      );
           console.log('[/api/guess] ✅ Step 2 completed: User stats updated successfully');
         } catch (statsError) {
           console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
@@ -949,14 +968,14 @@ export default withCors(async function handler(
 
         console.log('[/api/guess] Step 3: Creating score entry');
         try {
-          await createScoreEntry(
-            playerId,
-            gameSession.word_id,
-            gameSession.guesses.length + 1,
-            completionTimeSeconds,
-            result.isCorrect,
-            scoreResult
-          );
+      await createScoreEntry(
+        playerId,
+        gameSession.word_id,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        result.isCorrect,
+        scoreResult
+      );
           console.log('[/api/guess] ✅ Step 3 completed: Score entry created successfully');
         } catch (scoreError) {
           console.error('[/api/guess] ❌ Step 3 failed: createScoreEntry error:', {
@@ -973,13 +992,13 @@ export default withCors(async function handler(
 
         console.log('[/api/guess] Step 4: Updating leaderboard summary');
         try {
-          await updateLeaderboardSummary(
-            playerId,
-            gameSession.word_id,
-            gameSession.guesses.length + 1,
-            completionTimeSeconds,
-            scoreResult
-          );
+      await updateLeaderboardSummary(
+        playerId,
+        gameSession.word_id,
+        gameSession.guesses.length + 1,
+        completionTimeSeconds,
+        scoreResult
+      );
           console.log('[/api/guess] ✅ Step 4 completed: Leaderboard updated successfully');
         } catch (leaderboardError) {
           console.error('[/api/guess] ❌ Step 4 failed: updateLeaderboardSummary error:', {
@@ -996,11 +1015,11 @@ export default withCors(async function handler(
 
         console.log('[/api/guess] 🎉 All completion steps successful! Game stats and leaderboard updated.');
 
-        return res.status(200).json({
-          ...result,
-          score: scoreResult,
-          stats
-        });
+      return res.status(200).json({
+        ...result,
+        score: scoreResult,
+        stats
+      });
       } catch (statsError) {
         console.error('[/api/guess] 💥 Final catch: Failed in completion logic:', {
           error: statsError,
