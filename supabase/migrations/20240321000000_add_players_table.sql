@@ -46,6 +46,8 @@ EXECUTE FUNCTION update_player_activity();
 
 -- Migrate existing player IDs
 INSERT INTO players (id, created_at, is_anonymous)
-SELECT DISTINCT player_id, MIN(created_at), TRUE
+SELECT player_id, MIN(created_at), TRUE
 FROM game_sessions
+WHERE player_id IS NOT NULL
+GROUP BY player_id
 ON CONFLICT (id) DO NOTHING; 
