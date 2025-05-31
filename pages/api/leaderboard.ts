@@ -86,7 +86,7 @@ async function handler(
           submitted_at
         `)
         .eq('word_id', wordId)
-        .eq('was_correct', true)
+        .eq('correct', true)
         .order('score', { ascending: false })
         .order('completion_time_seconds', { ascending: true });
 

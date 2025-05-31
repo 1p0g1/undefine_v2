@@ -34,7 +34,7 @@ WITH ranked_scores AS (
       ORDER BY s.score DESC, s.completion_time_seconds ASC
     ) as rank
   FROM scores s
-  WHERE s.was_correct = true
+  WHERE s.correct = true
 )
 INSERT INTO leaderboard_summary (
   player_id,

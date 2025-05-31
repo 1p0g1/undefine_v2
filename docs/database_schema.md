@@ -84,7 +84,7 @@ word_id UUID NOT NULL REFERENCES words(id),
 guesses_used INTEGER NOT NULL,
 used_hint BOOLEAN DEFAULT FALSE,
 completion_time_seconds INTEGER NOT NULL,
-was_correct BOOLEAN DEFAULT FALSE,
+correct BOOLEAN DEFAULT FALSE,
 score INTEGER NOT NULL,
 base_score INTEGER NOT NULL,
 guess_penalty INTEGER NOT NULL,
@@ -162,7 +162,7 @@ word_id: string;
 guesses_used: number;
 used_hint: boolean;
 completion_time_seconds: number;
-was_correct: boolean;
+correct: boolean;
 score: number;
 base_score: number;
 guess_penalty: number;

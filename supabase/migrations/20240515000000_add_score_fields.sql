@@ -30,7 +30,7 @@ SELECT
   s.score,
   s.completion_time_seconds
 FROM scores s
-WHERE s.was_correct = true
+WHERE s.correct = true
 ON CONFLICT (player_id, word_id) 
 DO UPDATE SET 
   score = EXCLUDED.score,

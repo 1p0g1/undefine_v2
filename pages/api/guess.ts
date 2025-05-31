@@ -169,7 +169,7 @@ async function createScoreEntry(
       word_id: wordId,
       guesses_used: guessesUsed,
       completion_time_seconds: completionTimeSeconds,
-      was_correct: isWon,
+      correct: isWon,
       score: scoreResult.score,
       base_score: scoreResult.baseScore,
       guess_penalty: scoreResult.guessPenalty,
