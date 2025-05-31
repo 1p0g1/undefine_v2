@@ -316,16 +316,37 @@ export default withCors(async function handler(
       .order('created_at', { ascending: false })
       .limit(5);
 
-    console.log('[/api/guess] Recent sessions for player:', { allSessions, allError });
+    console.log('[/api/guess] Recent sessions for player:', { 
+      playerId,
+      sessionCount: allSessions?.length || 0,
+      sessions: allSessions,
+      allError: allError?.message 
+    });
 
-    // First, try to find the session without the join to isolate the issue
-    const { data: basicSession, error: basicError } = await supabase
+    // First, try to find the session by gameId only (to see if it exists at all)
+    const { data: anySession, error: anyError } = await supabase
       .from('game_sessions')
       .select('*')
       .eq('id', gameId)
       .single();
 
-    console.log('[/api/guess] Basic session lookup result:', { 
+    console.log('[/api/guess] Session lookup by gameId only:', { 
+      found: !!anySession,
+      sessionPlayerId: anySession?.player_id,
+      requestPlayerId: playerId,
+      playerMatch: anySession?.player_id === playerId,
+      anyError: anyError?.message
+    });
+
+    // Now try to find the session with player_id validation
+    const { data: basicSession, error: basicError } = await supabase
+      .from('game_sessions')
+      .select('*')
+      .eq('id', gameId)
+      .eq('player_id', playerId)  // Add player_id validation
+      .single();
+
+    console.log('[/api/guess] Session lookup with player validation:', { 
       hasBasicSession: !!basicSession,
       basicSessionId: basicSession?.id,
       basicSessionWordId: basicSession?.word_id,
@@ -334,18 +355,33 @@ export default withCors(async function handler(
     });
 
     if (basicError) {
-      console.error('[/api/guess] Basic session lookup failed:', {
+      console.error('[/api/guess] Session lookup failed:', {
         error: basicError,
         code: basicError.code,
         details: basicError.details,
         hint: basicError.hint,
         gameId,
-        wordId
+        wordId,
+        playerId,
+        sessionExistsButWrongPlayer: !!anySession && anySession.player_id !== playerId
       });
+      
+      if (anySession && anySession.player_id !== playerId) {
+        return res.status(403).json({ 
+          error: 'Session belongs to different player',
+          details: { 
+            gameId, 
+            sessionPlayerId: anySession.player_id,
+            requestPlayerId: playerId
+          }
+        });
+      }
+      
       return res.status(404).json({ 
-        error: 'Game session not found - basic lookup failed',
+        error: 'Game session not found',
         details: { 
           gameId, 
+          playerId,
           error: basicError.message,
           code: basicError.code,
           allSessions: allSessions?.length || 0
@@ -355,8 +391,13 @@ export default withCors(async function handler(
 
     if (!basicSession) {
       return res.status(404).json({ 
-        error: 'Game session not found - no session returned',
-        details: { gameId, allSessions: allSessions?.length || 0 }
+        error: 'Game session not found',
+        details: { 
+          gameId, 
+          playerId,
+          allSessions: allSessions?.length || 0,
+          sessionExistsButWrongPlayer: !!anySession
+        }
       });
     }
 
