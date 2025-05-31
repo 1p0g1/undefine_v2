@@ -584,6 +584,34 @@ export default withCors(async function handler(
           });
           
           try {
+            // Defensive checks
+            if (!playerId || playerId === 'anonymous') {
+              console.warn('[/api/guess] Skipping stats update for anonymous player');
+              return res.status(200).json({
+                ...result,
+                score: scoreResult,
+                stats: undefined
+              });
+            }
+            
+            if (!combinedSession?.word_id) {
+              console.error('[/api/guess] Missing word_id in session');
+              return res.status(200).json({
+                ...result,
+                score: scoreResult,
+                stats: undefined
+              });
+            }
+            
+            if (typeof completionTimeSeconds !== 'number' || completionTimeSeconds < 0) {
+              console.error('[/api/guess] Invalid completion time:', completionTimeSeconds);
+              return res.status(200).json({
+                ...result,
+                score: scoreResult,
+                stats: undefined
+              });
+            }
+
             const stats = await updateUserStats(
               playerId,
               result.isCorrect,
@@ -733,6 +761,25 @@ export default withCors(async function handler(
       });
       
       try {
+        // Defensive checks
+        if (!playerId || playerId === 'anonymous') {
+          console.warn('[/api/guess] Skipping stats update for anonymous player');
+          return res.status(200).json({
+            ...result,
+            score: scoreResult,
+            stats: undefined
+          });
+        }
+        
+        if (typeof completionTimeSeconds !== 'number' || completionTimeSeconds < 0) {
+          console.error('[/api/guess] Invalid completion time:', completionTimeSeconds);
+          return res.status(200).json({
+            ...result,
+            score: scoreResult,
+            stats: undefined
+          });
+        }
+
         const stats = await updateUserStats(
           playerId,
           result.isCorrect,
