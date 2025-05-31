@@ -47,7 +47,6 @@ export interface GameSession {
   revealed_clues: ClueKey[];
   is_complete: boolean;
   is_won: boolean;
-  score: number | null;
   start_time: string;
   end_time: string | null;
   created_at: string;
