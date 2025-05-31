@@ -618,8 +618,16 @@ export default withCors(async function handler(
             isCorrect: result.isCorrect,
             guessesUsed: combinedSession.guesses.length + 1,
             completionTimeSeconds,
-            scoreResult
+            scoreResult: {
+              score: scoreResult.score,
+              baseScore: scoreResult.baseScore,
+              guessPenalty: scoreResult.guessPenalty,
+              timePenalty: scoreResult.timePenalty,
+              hintPenalty: scoreResult.hintPenalty
+            }
           });
+          
+          let stats = undefined;
           
           try {
             // Ensure player exists before updating stats
@@ -632,11 +640,18 @@ export default withCors(async function handler(
               });
             }
             
+            console.log('[/api/guess] Step 1: Ensuring player exists for player ID:', playerId);
             try {
               await ensurePlayerExists(playerId);
-              console.log('[/api/guess] Player existence confirmed for stats update');
+              console.log('[/api/guess] ✅ Step 1 completed: Player existence confirmed');
             } catch (playerError) {
-              console.error('[/api/guess] Failed to ensure player exists:', playerError);
+              console.error('[/api/guess] ❌ Step 1 failed: ensurePlayerExists error:', {
+                error: playerError,
+                message: playerError instanceof Error ? playerError.message : 'Unknown error',
+                code: (playerError as any)?.code,
+                details: (playerError as any)?.details,
+                playerId
+              });
               return res.status(200).json({
                 ...result,
                 score: scoreResult,
@@ -662,33 +677,76 @@ export default withCors(async function handler(
               });
             }
 
-            const stats = await updateUserStats(
-              playerId,
-              result.isCorrect,
-              combinedSession.guesses.length + 1,
-              completionTimeSeconds,
-              scoreResult
-            );
-            console.log('[/api/guess] User stats updated successfully');
+            console.log('[/api/guess] Step 2: Updating user stats');
+            try {
+              stats = await updateUserStats(
+                playerId,
+                result.isCorrect,
+                combinedSession.guesses.length + 1,
+                completionTimeSeconds,
+                scoreResult
+              );
+              console.log('[/api/guess] ✅ Step 2 completed: User stats updated successfully');
+            } catch (statsError) {
+              console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
+                error: statsError,
+                message: statsError instanceof Error ? statsError.message : 'Unknown error',
+                code: (statsError as any)?.code,
+                details: (statsError as any)?.details,
+                playerId,
+                wordId: combinedSession.word_id
+              });
+              throw statsError;
+            }
 
-            await createScoreEntry(
-              playerId,
-              combinedSession.word_id,
-              combinedSession.guesses.length + 1,
-              completionTimeSeconds,
-              result.isCorrect,
-              scoreResult
-            );
-            console.log('[/api/guess] Score entry created successfully');
+            console.log('[/api/guess] Step 3: Creating score entry');
+            try {
+              await createScoreEntry(
+                playerId,
+                combinedSession.word_id,
+                combinedSession.guesses.length + 1,
+                completionTimeSeconds,
+                result.isCorrect,
+                scoreResult
+              );
+              console.log('[/api/guess] ✅ Step 3 completed: Score entry created successfully');
+            } catch (scoreError) {
+              console.error('[/api/guess] ❌ Step 3 failed: createScoreEntry error:', {
+                error: scoreError,
+                message: scoreError instanceof Error ? scoreError.message : 'Unknown error',
+                code: (scoreError as any)?.code,
+                details: (scoreError as any)?.details,
+                playerId,
+                wordId: combinedSession.word_id,
+                scoreResult
+              });
+              throw scoreError;
+            }
 
-            await updateLeaderboardSummary(
-              playerId,
-              combinedSession.word_id,
-              combinedSession.guesses.length + 1,
-              completionTimeSeconds,
-              scoreResult
-            );
-            console.log('[/api/guess] Leaderboard updated successfully');
+            console.log('[/api/guess] Step 4: Updating leaderboard summary');
+            try {
+              await updateLeaderboardSummary(
+                playerId,
+                combinedSession.word_id,
+                combinedSession.guesses.length + 1,
+                completionTimeSeconds,
+                scoreResult
+              );
+              console.log('[/api/guess] ✅ Step 4 completed: Leaderboard updated successfully');
+            } catch (leaderboardError) {
+              console.error('[/api/guess] ❌ Step 4 failed: updateLeaderboardSummary error:', {
+                error: leaderboardError,
+                message: leaderboardError instanceof Error ? leaderboardError.message : 'Unknown error',
+                code: (leaderboardError as any)?.code,
+                details: (leaderboardError as any)?.details,
+                playerId,
+                wordId: combinedSession.word_id,
+                scoreResult
+              });
+              throw leaderboardError;
+            }
+
+            console.log('[/api/guess] 🎉 All completion steps successful! Game stats and leaderboard updated.');
 
             return res.status(200).json({
               ...result,
@@ -696,13 +754,14 @@ export default withCors(async function handler(
               stats
             });
           } catch (statsError) {
-            console.error('[/api/guess] Failed in completion logic:', {
+            console.error('[/api/guess] 💥 Final catch: Failed in completion logic:', {
               error: statsError,
               message: statsError instanceof Error ? statsError.message : 'Unknown error',
               stack: statsError instanceof Error ? statsError.stack : undefined,
               playerId,
               wordId: combinedSession.word_id,
-              scoreResult
+              scoreResult,
+              step: 'unknown'
             });
             
             // Return success for the guess itself, but log the stats error
@@ -807,8 +866,16 @@ export default withCors(async function handler(
         isCorrect: result.isCorrect,
         guessesUsed: gameSession.guesses.length + 1,
         completionTimeSeconds,
-        scoreResult
+        scoreResult: {
+          score: scoreResult.score,
+          baseScore: scoreResult.baseScore,
+          guessPenalty: scoreResult.guessPenalty,
+          timePenalty: scoreResult.timePenalty,
+          hintPenalty: scoreResult.hintPenalty
+        }
       });
+      
+      let stats = undefined;
       
       try {
         // Ensure player exists before updating stats
@@ -821,11 +888,18 @@ export default withCors(async function handler(
           });
         }
         
+        console.log('[/api/guess] Step 1: Ensuring player exists for player ID:', playerId);
         try {
           await ensurePlayerExists(playerId);
-          console.log('[/api/guess] Player existence confirmed for stats update');
+          console.log('[/api/guess] ✅ Step 1 completed: Player existence confirmed');
         } catch (playerError) {
-          console.error('[/api/guess] Failed to ensure player exists:', playerError);
+          console.error('[/api/guess] ❌ Step 1 failed: ensurePlayerExists error:', {
+            error: playerError,
+            message: playerError instanceof Error ? playerError.message : 'Unknown error',
+            code: (playerError as any)?.code,
+            details: (playerError as any)?.details,
+            playerId
+          });
           return res.status(200).json({
             ...result,
             score: scoreResult,
@@ -851,33 +925,76 @@ export default withCors(async function handler(
           });
         }
 
-        const stats = await updateUserStats(
-          playerId,
-          result.isCorrect,
-          gameSession.guesses.length + 1,
-          completionTimeSeconds,
-          scoreResult
-        );
-        console.log('[/api/guess] User stats updated successfully');
+        console.log('[/api/guess] Step 2: Updating user stats');
+        try {
+          stats = await updateUserStats(
+            playerId,
+            result.isCorrect,
+            gameSession.guesses.length + 1,
+            completionTimeSeconds,
+            scoreResult
+          );
+          console.log('[/api/guess] ✅ Step 2 completed: User stats updated successfully');
+        } catch (statsError) {
+          console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
+            error: statsError,
+            message: statsError instanceof Error ? statsError.message : 'Unknown error',
+            code: (statsError as any)?.code,
+            details: (statsError as any)?.details,
+            playerId,
+            wordId: gameSession.word_id
+          });
+          throw statsError;
+        }
 
-        await createScoreEntry(
-          playerId,
-          gameSession.word_id,
-          gameSession.guesses.length + 1,
-          completionTimeSeconds,
-          result.isCorrect,
-          scoreResult
-        );
-        console.log('[/api/guess] Score entry created successfully');
+        console.log('[/api/guess] Step 3: Creating score entry');
+        try {
+          await createScoreEntry(
+            playerId,
+            gameSession.word_id,
+            gameSession.guesses.length + 1,
+            completionTimeSeconds,
+            result.isCorrect,
+            scoreResult
+          );
+          console.log('[/api/guess] ✅ Step 3 completed: Score entry created successfully');
+        } catch (scoreError) {
+          console.error('[/api/guess] ❌ Step 3 failed: createScoreEntry error:', {
+            error: scoreError,
+            message: scoreError instanceof Error ? scoreError.message : 'Unknown error',
+            code: (scoreError as any)?.code,
+            details: (scoreError as any)?.details,
+            playerId,
+            wordId: gameSession.word_id,
+            scoreResult
+          });
+          throw scoreError;
+        }
 
-        await updateLeaderboardSummary(
-          playerId,
-          gameSession.word_id,
-          gameSession.guesses.length + 1,
-          completionTimeSeconds,
-          scoreResult
-        );
-        console.log('[/api/guess] Leaderboard updated successfully');
+        console.log('[/api/guess] Step 4: Updating leaderboard summary');
+        try {
+          await updateLeaderboardSummary(
+            playerId,
+            gameSession.word_id,
+            gameSession.guesses.length + 1,
+            completionTimeSeconds,
+            scoreResult
+          );
+          console.log('[/api/guess] ✅ Step 4 completed: Leaderboard updated successfully');
+        } catch (leaderboardError) {
+          console.error('[/api/guess] ❌ Step 4 failed: updateLeaderboardSummary error:', {
+            error: leaderboardError,
+            message: leaderboardError instanceof Error ? leaderboardError.message : 'Unknown error',
+            code: (leaderboardError as any)?.code,
+            details: (leaderboardError as any)?.details,
+            playerId,
+            wordId: gameSession.word_id,
+            scoreResult
+          });
+          throw leaderboardError;
+        }
+
+        console.log('[/api/guess] 🎉 All completion steps successful! Game stats and leaderboard updated.');
 
         return res.status(200).json({
           ...result,
@@ -885,13 +1002,14 @@ export default withCors(async function handler(
           stats
         });
       } catch (statsError) {
-        console.error('[/api/guess] Failed in completion logic:', {
+        console.error('[/api/guess] 💥 Final catch: Failed in completion logic:', {
           error: statsError,
           message: statsError instanceof Error ? statsError.message : 'Unknown error',
           stack: statsError instanceof Error ? statsError.stack : undefined,
           playerId,
           wordId: gameSession.word_id,
-          scoreResult
+          scoreResult,
+          step: 'unknown'
         });
         
         // Return success for the guess itself, but log the stats error
