@@ -67,6 +67,7 @@ export interface LeaderboardEntry {
   score: number;
   date: string;
   created_at: string;
+  was_top_10: boolean;
   is_current_player?: boolean;
 }
 

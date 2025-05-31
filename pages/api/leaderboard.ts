@@ -113,7 +113,7 @@ async function handler(
         score: score.score || 0,
         completion_time_seconds: score.completion_time_seconds,
         guesses_used: score.guesses_used,
-        was_top_10: index < 10,
+        was_top_10: (index + 1) <= 10,
         created_at: score.submitted_at || new Date().toISOString()
       }));
     }
@@ -142,6 +142,7 @@ async function handler(
       score: entry.score || 0,
       date: entry.created_at?.split('T')[0] || new Date().toISOString().split('T')[0], // Use created_at date or today
       created_at: entry.created_at || new Date().toISOString(),
+      was_top_10: (index + 1) <= 10,
       is_current_player: entry.player_id === playerId
     }));
 
