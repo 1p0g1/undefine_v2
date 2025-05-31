@@ -14,7 +14,7 @@ export interface LeaderboardEntry {
   date: string;
   rank: number;
   guesses_used: number;
-  completion_time_seconds: number;
+  best_time: number;
   was_top_10: boolean;
   is_current_player?: boolean;
 }

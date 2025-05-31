@@ -292,7 +292,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                   <td
                     style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
                   >
-                      {formatTime(entry.completion_time_seconds)}
+                      {formatTime(entry.best_time)}
                   </td>
                   <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
                       {entry.guesses_used}

@@ -13,8 +13,8 @@ export class LeaderboardRepository {
       .from('leaderboard_summary')
       .select('*')
       .eq('word_id', wordId)
-      .order('score', { ascending: false })
-      .order('completion_time_seconds', { ascending: true })
+      .order('best_time', { ascending: true })
+      .order('guesses_used', { ascending: true })
       .limit(limit);
 
     if (error) {

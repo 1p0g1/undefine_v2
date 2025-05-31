@@ -30,8 +30,7 @@ export interface LeaderboardEntry {
   player_name: string;
   rank: number;
   guesses_used: number;
-  completion_time_seconds: number;
-  score: number;
+  best_time: number;           // ✅ Updated to match database schema (was completion_time_seconds)
   date: string;
   created_at: string;
   is_current_player?: boolean;

@@ -145,8 +145,7 @@ async function handler(
       player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
       rank: entry.rank || 0,
       guesses_used: entry.guesses_used || 0,
-      completion_time_seconds: entry.best_time || 0, // Map best_time to completion_time_seconds for compatibility
-      score: 0, // Not available in new schema, set to 0 for compatibility
+      best_time: entry.best_time || 0,
       date: entry.date || new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString(), // Default value for compatibility
       was_top_10: entry.was_top_10 || false,
