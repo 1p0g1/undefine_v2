@@ -198,42 +198,79 @@ async function updateLeaderboardSummary(
     throw new Error('Completion time is required for updating leaderboard');
   }
 
-  const { data: leaderboard, error: leaderboardError } = await supabase
-    .from('leaderboard_summary')
-    .select('*')
-    .eq('word_id', wordId)
-    .order('score', { ascending: false })
-    .order('completion_time_seconds', { ascending: true })
-    .limit(10);
+  console.log('[updateLeaderboardSummary] Starting leaderboard update:', {
+    playerId,
+    wordId,
+    guessesUsed,
+    completionTimeSeconds,
+    score: scoreResult.score
+  });
 
-  if (leaderboardError) {
-    console.error('[updateLeaderboardSummary] Failed to fetch leaderboard:', leaderboardError);
-    throw leaderboardError;
-  }
+  try {
+    // Ensure player exists in players table before attempting leaderboard insert
+    await ensurePlayerExists(playerId);
+    console.log('[updateLeaderboardSummary] Player existence confirmed');
 
-  const isTop10 = leaderboard.length < 10 || 
-    scoreResult.score > leaderboard[leaderboard.length - 1].score ||
-    (scoreResult.score === leaderboard[leaderboard.length - 1].score && 
-     completionTimeSeconds < leaderboard[leaderboard.length - 1].completion_time_seconds);
-
-  if (isTop10) {
-    const { error: insertError } = await supabase
+    // Check existing leaderboard entries for this word
+    const { data: leaderboard, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
-      .insert([{
-        player_id: playerId,
-        word_id: wordId,
-        rank: leaderboard.length + 1,
-        was_top_10: true,
-        score: scoreResult.score,
-        guesses_used: guessesUsed,
-        completion_time_seconds: completionTimeSeconds,
-        created_at: new Date().toISOString()
-      }]);
+      .select('*')
+      .eq('word_id', wordId)
+      .order('score', { ascending: false })
+      .order('completion_time_seconds', { ascending: true })
+      .limit(10);
 
-    if (insertError) {
-      console.error('[updateLeaderboardSummary] Failed to insert leaderboard entry:', insertError);
-      throw insertError;
+    if (leaderboardError) {
+      console.error('[updateLeaderboardSummary] Failed to fetch existing leaderboard:', leaderboardError);
+      throw leaderboardError;
     }
+
+    console.log('[updateLeaderboardSummary] Current leaderboard entries:', leaderboard?.length || 0);
+
+    // Always insert/update for winning games, let the database handle ranking
+    if (scoreResult.score > 0) {
+      console.log('[updateLeaderboardSummary] Inserting leaderboard entry for score:', scoreResult.score);
+      
+      const { error: insertError } = await supabase
+        .from('leaderboard_summary')
+        .upsert([{
+          player_id: playerId,
+          word_id: wordId,
+          rank: 1, // Will be recalculated by trigger
+          was_top_10: true, // Will be updated by trigger
+          score: scoreResult.score,
+          guesses_used: guessesUsed,
+          completion_time_seconds: completionTimeSeconds,
+        }], {
+          onConflict: 'player_id,word_id'
+        });
+
+      if (insertError) {
+        console.error('[updateLeaderboardSummary] Failed to insert/update leaderboard entry:', {
+          error: insertError,
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          playerId,
+          wordId
+        });
+        throw insertError;
+      }
+
+      console.log('[updateLeaderboardSummary] Successfully inserted/updated leaderboard entry');
+    } else {
+      console.log('[updateLeaderboardSummary] Skipping leaderboard entry for zero score');
+    }
+  } catch (error) {
+    console.error('[updateLeaderboardSummary] Error in leaderboard update:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      playerId,
+      wordId,
+      scoreResult
+    });
+    throw error;
   }
 }
 
