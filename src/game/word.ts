@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from '@/src/env.server';
-import { WordResponse, WordResponseShape } from '@/shared-types/src/word';
+import { WordResponseShape } from '@/shared-types/src/word';
 import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
@@ -10,7 +10,7 @@ const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
  * In production: Returns today's word
  * In development: Falls back to random word if no word set for today
  */
-export async function getNewWord(): Promise<WordResponse> {
+export async function getNewWord(): Promise<{ word: WordResponseShape; isFallback: boolean }> {
   try {
     // Get today's date in YYYY-MM-DD format
     const now = new Date();
@@ -46,8 +46,6 @@ export async function getNewWord(): Promise<WordResponse> {
 
     return {
       word: mapWordRowToResponse(todayWord),
-      gameId: crypto.randomUUID(),
-      start_time: new Date().toISOString(),
       isFallback: false
     };
   } catch (error) {

@@ -25,9 +25,32 @@ import { validate as isUUID } from 'uuid';
 import { ClueKey, CLUE_SEQUENCE } from '@/shared-types/src/clues';
 import { withCors } from '@/lib/withCors';
 import { submitGuess } from '@/src/game/guess';
-import type { GuessRequest, GuessResponse, GameSession } from '@/src/types/guess';
+import type { GuessRequest, GuessResponse } from '@/shared-types/src/game';
+import type { GameSession } from '@/src/types/guess';
 import { normalizeText } from '@/src/utils/text';
 import { calculateScore, type ScoreResult } from '@/shared-types/src/scoring';
+
+// Validate critical environment variables
+if (!env.SUPABASE_URL) {
+  console.error('❌ Missing SUPABASE_URL in env');
+  throw new Error('Missing SUPABASE_URL');
+}
+if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY in env');
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+}
+if (!env.DB_PROVIDER) {
+  console.error('❌ Missing DB_PROVIDER in env');
+  throw new Error('Missing DB_PROVIDER');
+}
+
+// Log environment validation success
+console.log('[/api/guess] Environment validation passed:', {
+  hasSupabaseUrl: !!env.SUPABASE_URL,
+  hasServiceRoleKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+  dbProvider: env.DB_PROVIDER,
+  nodeEnv: env.NODE_ENV
+});
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -230,7 +253,7 @@ interface GameSessionWithWord extends GameSession {
 
 export default withCors(async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GuessResponse | { error: string, details?: string }>
+  res: NextApiResponse<GuessResponse | { error: string, details?: any }>
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -238,23 +261,47 @@ export default withCors(async function handler(
 
   try {
     const { guess, gameId, wordId, start_time } = req.body;
-    // TODO: Replace with strict player validation before production
     const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
+    
     console.log('[/api/guess] Processing guess:', { guess, gameId, playerId, wordId });
 
-    // Validate all required fields
-    if (!guess || !gameId || !wordId || !start_time) {
-      const missingFields = [
-        !guess && 'guess',
-        !gameId && 'gameId',
-        !wordId && 'wordId',
-        !start_time && 'start_time'
-      ].filter(Boolean);
+    // Enhanced validation with detailed error response
+    if (!gameId || !wordId || !start_time || !guess || !playerId) {
+      const fieldValues = { gameId, wordId, playerId, guess, start_time };
+      const missingFields = Object.entries(fieldValues)
+        .filter(([_, value]) => !value)
+        .map(([field, _]) => field);
       
       console.error('[/api/guess] Missing required fields:', missingFields);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing required fields',
-        details: `Missing: ${missingFields.join(', ')}`
+        details: {
+          missing: missingFields,
+          received: fieldValues,
+          required: ['gameId', 'wordId', 'playerId', 'guess', 'start_time']
+        }
+      });
+    }
+
+    // Additional validation for field types and formats
+    if (typeof guess !== 'string' || guess.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Invalid guess format',
+        details: { guess, expected: 'non-empty string' }
+      });
+    }
+
+    if (typeof gameId !== 'string' || typeof wordId !== 'string') {
+      return res.status(400).json({
+        error: 'Invalid ID format',
+        details: { gameId, wordId, expected: 'string UUIDs' }
+      });
+    }
+
+    if (typeof start_time !== 'string' || !Date.parse(start_time)) {
+      return res.status(400).json({
+        error: 'Invalid start_time format',
+        details: { start_time, expected: 'ISO date string' }
       });
     }
 

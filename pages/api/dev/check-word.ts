@@ -3,6 +3,30 @@ import { createClient } from '@supabase/supabase-js';
 import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
 
+// Validate critical environment variables
+if (!env.SUPABASE_URL) {
+  console.error('❌ Missing SUPABASE_URL in env');
+  throw new Error('Missing SUPABASE_URL');
+}
+if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY in env');
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+}
+if (!env.DB_PROVIDER) {
+  console.error('❌ Missing DB_PROVIDER in env');
+  throw new Error('Missing DB_PROVIDER');
+}
+
+// Log environment validation success (only in development)
+if (env.NODE_ENV === 'development') {
+  console.log('[/api/dev/check-word] Environment validation passed:', {
+    hasSupabaseUrl: !!env.SUPABASE_URL,
+    hasServiceRoleKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+    dbProvider: env.DB_PROVIDER,
+    nodeEnv: env.NODE_ENV
+  });
+}
+
 // Initialize Supabase client with validated env variables
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 

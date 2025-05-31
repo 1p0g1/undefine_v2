@@ -141,6 +141,19 @@ export const apiClient = {
    * @returns Promise with the guess response
    */
   async submitGuess(request: GuessRequest): Promise<GuessResponse> {
+    // Validate all required fields
+    const missingFields = [
+      !request.gameId && 'gameId',
+      !request.wordId && 'wordId',
+      !request.start_time && 'start_time',
+      !request.guess && 'guess',
+      !request.playerId && 'playerId'
+    ].filter(Boolean);
+
+    if (missingFields.length > 0) {
+      throw new ApiError(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
     return fetchFromApi<GuessResponse>('/api/guess', {
       method: 'POST',
       body: JSON.stringify(request),

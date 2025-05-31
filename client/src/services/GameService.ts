@@ -1,4 +1,5 @@
 import { WordResponse, GuessResponse } from '../api/types';
+import { GuessRequest } from '../../../shared-types/src/game';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { GameSessionState } from '../../../shared-types/src/game';
@@ -132,9 +133,16 @@ class GameService {
 
     const { gameId, wordId, startTime, isComplete } = this.currentState;
 
-    // Validate game state
-    if (!gameId || !wordId || !startTime) {
-      throw new Error('Invalid game state: missing required fields');
+    // Validate all required fields
+    const missingFields = [
+      !gameId && 'gameId',
+      !wordId && 'wordId',
+      !startTime && 'start_time',
+      !guess && 'guess'
+    ].filter(Boolean);
+
+    if (missingFields.length > 0) {
+      throw new Error(`Invalid game state: missing required fields: ${missingFields.join(', ')}`);
     }
 
     if (isComplete) {
@@ -147,13 +155,15 @@ class GameService {
         throw new Error('No player ID available');
       }
 
-      const response = await apiClient.submitGuess({
+      const request: GuessRequest = {
         gameId,
         wordId,
         guess,
         playerId,
         start_time: startTime
-      });
+      };
+
+      const response = await apiClient.submitGuess(request);
 
       // Update state with response
       this.currentState = {
