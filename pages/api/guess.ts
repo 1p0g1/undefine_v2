@@ -531,23 +531,16 @@ export default withCors(async function handler(
           isWon: result.isCorrect
         }) : null;
 
-        // Update game session with new state
+        // Update game session with new state - start with minimal update
         const updateData = {
-          guesses: [...(combinedSession.guesses || []), result.guess],
-          revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
-          clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), combinedSession.clue_status || {}),
           is_complete: result.gameOver,
           is_won: result.isCorrect,
-          end_time: result.gameOver ? new Date().toISOString() : null,
-          score: scoreResult?.score || null,
           updated_at: new Date().toISOString()
         };
         
-        console.log('[/api/guess] Updating session with data:', {
+        console.log('[/api/guess] Updating session with minimal data first:', {
           gameId,
-          updateData,
-          originalGuesses: combinedSession.guesses,
-          newGuess: result.guess
+          updateData
         });
         
         const { error: updateError } = await supabase
@@ -570,6 +563,44 @@ export default withCors(async function handler(
             details: {
               message: updateError.message,
               code: updateError.code
+            }
+          });
+        }
+        
+        // If basic update works, try updating arrays separately
+        const arrayUpdateData = {
+          guesses: [...(combinedSession.guesses || []), result.guess],
+          revealed_clues: result.revealedClues
+        };
+        
+        console.log('[/api/guess] Updating arrays:', {
+          gameId,
+          arrayUpdateData,
+          originalGuesses: combinedSession.guesses,
+          newGuess: result.guess,
+          revealedClues: result.revealedClues
+        });
+        
+        const { error: arrayUpdateError } = await supabase
+          .from('game_sessions')
+          .update(arrayUpdateData)
+          .eq('id', gameId);
+
+        if (arrayUpdateError) {
+          console.error('[/api/guess] Failed to update arrays:', {
+            error: arrayUpdateError,
+            message: arrayUpdateError.message,
+            code: arrayUpdateError.code,
+            details: arrayUpdateError.details,
+            hint: arrayUpdateError.hint,
+            gameId,
+            arrayUpdateData
+          });
+          return res.status(500).json({ 
+            error: 'Failed to update session arrays',
+            details: {
+              message: arrayUpdateError.message,
+              code: arrayUpdateError.code
             }
           });
         }
@@ -652,23 +683,16 @@ export default withCors(async function handler(
       isWon: result.isCorrect
     }) : null;
 
-    // Update game session with new state
+    // Update game session with new state - start with minimal update
     const updateData = {
-      guesses: [...(gameSession.guesses || []), result.guess],
-      revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
-      clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
       is_complete: result.gameOver,
       is_won: result.isCorrect,
-      end_time: result.gameOver ? new Date().toISOString() : null,
-      score: scoreResult?.score || null,
       updated_at: new Date().toISOString()
     };
     
-    console.log('[/api/guess] Updating session with data:', {
+    console.log('[/api/guess] Updating session with minimal data first:', {
       gameId,
-      updateData,
-      originalGuesses: gameSession.guesses,
-      newGuess: result.guess
+      updateData
     });
     
     const { error: updateError } = await supabase
@@ -691,6 +715,44 @@ export default withCors(async function handler(
         details: {
           message: updateError.message,
           code: updateError.code
+        }
+      });
+    }
+    
+    // If basic update works, try updating arrays separately
+    const arrayUpdateData = {
+      guesses: [...(gameSession.guesses || []), result.guess],
+      revealed_clues: result.revealedClues
+    };
+    
+    console.log('[/api/guess] Updating arrays:', {
+      gameId,
+      arrayUpdateData,
+      originalGuesses: gameSession.guesses,
+      newGuess: result.guess,
+      revealedClues: result.revealedClues
+    });
+    
+    const { error: arrayUpdateError } = await supabase
+      .from('game_sessions')
+      .update(arrayUpdateData)
+      .eq('id', gameId);
+
+    if (arrayUpdateError) {
+      console.error('[/api/guess] Failed to update arrays:', {
+        error: arrayUpdateError,
+        message: arrayUpdateError.message,
+        code: arrayUpdateError.code,
+        details: arrayUpdateError.details,
+        hint: arrayUpdateError.hint,
+        gameId,
+        arrayUpdateData
+      });
+      return res.status(500).json({ 
+        error: 'Failed to update session arrays',
+        details: {
+          message: arrayUpdateError.message,
+          code: arrayUpdateError.code
         }
       });
     }
