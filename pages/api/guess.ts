@@ -536,7 +536,7 @@ export default withCors(async function handler(
           .from('game_sessions')
           .update({
             guesses: [...(combinedSession.guesses || []), result.guess],
-            revealed_clues: result.revealedClues.map(() => true),  // Convert to boolean array
+            revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
             clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), combinedSession.clue_status || {}),
             is_complete: result.gameOver,
             is_won: result.isCorrect,
@@ -634,7 +634,7 @@ export default withCors(async function handler(
       .from('game_sessions')
       .update({
         guesses: [...(gameSession.guesses || []), result.guess],
-        revealed_clues: result.revealedClues.map(() => true),  // Convert to boolean array
+        revealed_clues: result.revealedClues,  // Use the actual ClueKey[] array
         clue_status: result.revealedClues.reduce((acc, key) => ({ ...acc, [key]: true }), gameSession.clue_status || {}),
         is_complete: result.gameOver,
         is_won: result.isCorrect,
