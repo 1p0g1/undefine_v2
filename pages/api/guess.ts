@@ -29,6 +29,7 @@ import type { GuessRequest, GuessResponse } from '@/shared-types/src/game';
 import type { GameSession } from '@/src/types/guess';
 import { normalizeText } from '@/src/utils/text';
 import { calculateScore, type ScoreResult } from '@/shared-types/src/scoring';
+import { ensurePlayerExists } from '@/src/utils/player';
 
 // Validate critical environment variables
 if (!env.SUPABASE_URL) {
@@ -584,9 +585,21 @@ export default withCors(async function handler(
           });
           
           try {
-            // Defensive checks
-            if (!playerId || playerId === 'anonymous') {
-              console.warn('[/api/guess] Skipping stats update for anonymous player');
+            // Ensure player exists before updating stats
+            if (!playerId) {
+              console.error('[/api/guess] Missing player ID');
+              return res.status(200).json({
+                ...result,
+                score: scoreResult,
+                stats: undefined
+              });
+            }
+            
+            try {
+              await ensurePlayerExists(playerId);
+              console.log('[/api/guess] Player existence confirmed for stats update');
+            } catch (playerError) {
+              console.error('[/api/guess] Failed to ensure player exists:', playerError);
               return res.status(200).json({
                 ...result,
                 score: scoreResult,
@@ -761,9 +774,30 @@ export default withCors(async function handler(
       });
       
       try {
-        // Defensive checks
-        if (!playerId || playerId === 'anonymous') {
-          console.warn('[/api/guess] Skipping stats update for anonymous player');
+        // Ensure player exists before updating stats
+        if (!playerId) {
+          console.error('[/api/guess] Missing player ID');
+          return res.status(200).json({
+            ...result,
+            score: scoreResult,
+            stats: undefined
+          });
+        }
+        
+        try {
+          await ensurePlayerExists(playerId);
+          console.log('[/api/guess] Player existence confirmed for stats update');
+        } catch (playerError) {
+          console.error('[/api/guess] Failed to ensure player exists:', playerError);
+          return res.status(200).json({
+            ...result,
+            score: scoreResult,
+            stats: undefined
+          });
+        }
+        
+        if (!gameSession?.word_id) {
+          console.error('[/api/guess] Missing word_id in session');
           return res.status(200).json({
             ...result,
             score: scoreResult,
