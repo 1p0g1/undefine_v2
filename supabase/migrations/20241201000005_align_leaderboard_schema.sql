@@ -3,11 +3,6 @@
 -- Author: Project Team
 -- Date: 2024-12-01
 
--- Step 1: Add missing columns that the API expects
-ALTER TABLE leaderboard_summary 
-ADD COLUMN IF NOT EXISTS best_time INTEGER,
-ADD COLUMN IF NOT EXISTS date DATE DEFAULT CURRENT_DATE;
-
 -- Step 2: Migrate data from old columns to new columns (if they exist)
 DO $$ 
 BEGIN
