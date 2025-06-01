@@ -402,6 +402,8 @@ function App() {
         playerRank={playerRank}
         isLoading={isLeaderboardLoading}
         error={leaderboardError || undefined}
+        currentDisplayName={currentDisplayName}
+        onOpenSettings={() => setShowSettings(true)}
       />
       {/* Settings Modal */}
       <SettingsModal

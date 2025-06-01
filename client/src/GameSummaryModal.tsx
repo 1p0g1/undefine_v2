@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
 import { LeaderboardEntry } from './api/types';
 import { createDefaultClueStatus } from '../../shared-types/src/clues';
+import { FirstGamePrompt } from './components/FirstGamePrompt';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -26,6 +27,8 @@ interface GameSummaryModalProps {
     hintPenalty: number;
     score: number;
   };
+  currentDisplayName?: string;
+  onOpenSettings?: () => void;
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -44,9 +47,14 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   isLoading = false,
   error,
   score,
+  currentDisplayName,
+  onOpenSettings,
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  
+  // State for managing nickname prompt dismissal
+  const [showNicknamePrompt, setShowNicknamePrompt] = useState(true);
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +66,18 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
     if (modalRef.current) modalRef.current.focus();
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
+
+  // Reset nickname prompt when modal opens
+  useEffect(() => {
+    if (open) {
+      // Check if user has dismissed prompt before
+      const hasSkippedNickname = localStorage.getItem('hasSkippedNickname');
+      const hasSetNickname = localStorage.getItem('hasSetNickname');
+      
+      // Only show prompt if they haven't set a nickname and haven't permanently skipped
+      setShowNicknamePrompt(!hasSkippedNickname && !hasSetNickname);
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -79,6 +99,18 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
     navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Handle nickname prompt actions
+  const handleSetNickname = () => {
+    setShowNicknamePrompt(false);
+    onClose(); // Close the summary modal
+    onOpenSettings?.(); // Open settings modal
+  };
+
+  const handleSkipNickname = () => {
+    setShowNicknamePrompt(false);
+    localStorage.setItem('hasSkippedNickname', 'true');
   };
 
   return createPortal(
@@ -303,6 +335,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           </table>
           )}
         </div>
+        
+        {/* Nickname Prompt - shows if user hasn't set custom nickname and hasn't skipped */}
+        {showNicknamePrompt && currentDisplayName && (
+          <FirstGamePrompt
+            currentDisplayName={currentDisplayName}
+            onSetNickname={handleSetNickname}
+            onSkip={handleSkipNickname}
+          />
+        )}
+        
         <div
           className="gs-modal-actions"
           style={{
