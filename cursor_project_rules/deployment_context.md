@@ -165,4 +165,73 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 2. Environment variables must be documented separately for each project
 3. Configuration files must be appropriate for their respective projects
 4. Build and deployment instructions must be project-specific
-5. API documentation must use production URLs 
+5. API documentation must use production URLs
+
+## 🎮 **PLANNED: Nickname System (December 2024)**
+
+### **Overview**
+Following successful leaderboard system deployment, implement dual-interface nickname customization:
+- **Settings Button**: Always-available ⚙️ icon for nickname management
+- **First-Game Prompt**: Automatic nickname suggestion after initial game completion
+
+### **Supabase Infrastructure Impact**
+
+#### **Existing Schema Support** ✅
+- `players.display_name TEXT` column already exists
+- Leaderboard queries already JOIN with players table
+- No new migrations required for basic functionality
+
+#### **New Database Functions Required**:
+```sql
+-- Enhanced player creation with optional display name
+CREATE OR REPLACE FUNCTION ensure_player_exists(p_id TEXT, p_display_name TEXT DEFAULT NULL)
+RETURNS TEXT AS $$
+BEGIN
+  INSERT INTO players (id, display_name) 
+  VALUES (p_id, p_display_name)
+  ON CONFLICT (id) DO UPDATE SET 
+    last_active = NOW(),
+    display_name = COALESCE(EXCLUDED.display_name, players.display_name);
+  RETURN p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Nickname update with validation
+CREATE OR REPLACE FUNCTION update_player_display_name(p_id TEXT, p_display_name TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF LENGTH(TRIM(p_display_name)) = 0 OR LENGTH(p_display_name) > 20 THEN
+    RETURN FALSE;
+  END IF;
+  
+  UPDATE players 
+  SET display_name = TRIM(p_display_name), last_active = NOW()
+  WHERE id = p_id;
+  
+  RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+#### **API Endpoint Addition**:
+- **New Route**: `POST /api/player/nickname`
+- **Table Modified**: `players.display_name`
+- **Validation**: 20 char limit, no empty strings, basic profanity filter
+- **Rate Limiting**: 1 change per hour per player
+
+#### **Performance Considerations**:
+- Existing leaderboard JOINs already optimized ✅
+- No additional database round trips required ✅
+- Consider `display_name` index for future search features
+- Rate limiting prevents abuse
+
+### **Implementation Dependencies**:
+- Leaderboard system operational ✅ (December 2024)
+- Player management system stable ✅ (March 2024)
+- Database trigger system working ✅ (December 2024)
+
+### **Database Query Changes**:
+- Leaderboard queries unchanged (already JOIN players) ✅
+- New UPDATE operations on nickname changes
+- Enhanced player creation with optional display_name
+- Validation logic in database functions 

@@ -8,7 +8,9 @@ import DebugPanel from './components/DebugPanel';
 import { normalizeText } from '../../src/utils/text';
 import { SettingsButton } from './components/SettingsButton';
 import { SettingsModal } from './components/SettingsModal';
+import { Toast } from './components/Toast';
 import { getPlayerId } from './utils/player';
+import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 
 function App() {
   const {
@@ -35,6 +37,10 @@ function App() {
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
   const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
+
+  // Toast state
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -151,6 +157,16 @@ function App() {
     console.log('[App] Nickname updated to:', newNickname);
   };
 
+  // Handle DEFINE box clicks
+  const handleDefineBoxClick = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+  };
+
+  const handleToastClose = () => {
+    setShowToast(false);
+  };
+
   return (
     <div
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
@@ -229,6 +245,7 @@ function App() {
             gameState={gameState}
             revealedClues={revealedClueKeys}
             guessStatus={boxStatus}
+            onBoxClick={handleDefineBoxClick}
           />
         </div>
       </div>
@@ -283,10 +300,25 @@ function App() {
       {/* Clues Section */}
       <div className="hint-blocks" style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
         {visibleClues.map((clue, idx) => {
+          // Get the full label for the clue heading
+          const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
+          const clueLabel = CLUE_LABELS[clueKey];
+          
           return (
             <div className="hint-row" key={clue.key}>
               <div className="hint-letter">{clue.key}</div>
               <div className="hint-box">
+                <div className="hint-title" style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  color: 'var(--color-primary)',
+                  marginBottom: '0.25rem',
+                  fontFamily: 'var(--font-primary)',
+                  letterSpacing: '0.03em'
+                }}>
+                  {clueLabel}
+                </div>
                 <div className="hint-text">{clue.value}</div>
               </div>
             </div>
@@ -411,6 +443,12 @@ function App() {
         onClose={() => setShowSettings(false)}
         currentDisplayName={currentDisplayName}
         onNicknameUpdate={handleNicknameUpdate}
+      />
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={handleToastClose}
       />
       <DebugPanel gameState={gameState} isVisible={showDebug} />
       <style>{`
