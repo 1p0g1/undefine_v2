@@ -18,6 +18,7 @@ function App() {
     startNewGame,
     submitGuess,
     guessStatus,
+    fuzzyMatchCount,
     showLeaderboard,
     leaderboardData,
     playerRank,
@@ -426,7 +427,7 @@ function App() {
         word={gameState.wordText}
         time={`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}
         guessesUsed={gameState.guesses.length}
-        fuzzyMatches={0}
+        fuzzyMatches={fuzzyMatchCount}
         hintsUsed={0}
         date={new Date().toLocaleDateString('en-GB')}
         guessStatus={guessStatus}

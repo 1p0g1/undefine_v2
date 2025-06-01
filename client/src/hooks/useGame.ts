@@ -6,6 +6,7 @@ import { normalizedEquals } from '../../../src/utils/text';
 import { ClueKey, CLUE_SEQUENCE, CLUE_LABELS, ShortClueKey, CLUE_KEY_MAP, createDefaultClueStatus } from '../../../shared-types/src/clues';
 import { ScoreResult } from '../../../shared-types/src/scoring';
 import { gameService } from '../services/GameService';
+import type { LeaderboardResponse } from '../api/types';
 
 const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>(() => {
@@ -37,6 +38,9 @@ const useGame = () => {
     ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[]
   >(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
 
+  // Track fuzzy match count
+  const [fuzzyMatchCount, setFuzzyMatchCount] = useState(0);
+
   // Track leaderboard modal
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -52,8 +56,15 @@ const useGame = () => {
     setLeaderboardError(null);
     try {
       const playerId = getPlayerId();
-      const data = await apiClient.getLeaderboard(gameState.wordId, playerId);
-      setLeaderboardData(data.leaderboard);
+      const data: LeaderboardResponse = await apiClient.getLeaderboard(gameState.wordId, playerId);
+      
+      // Convert API response to shared type format
+      const convertedLeaderboard: LeaderboardEntry[] = data.leaderboard.map(entry => ({
+        ...entry,
+        was_top_10: entry.rank <= 10
+      }));
+      
+      setLeaderboardData(convertedLeaderboard);
       setPlayerRank(data.playerRank);
     } catch (error) {
       console.error('[Game] Failed to fetch leaderboard:', error);
@@ -68,6 +79,7 @@ const useGame = () => {
       const newState = await gameService.startNewGame();
       setGameState(newState);
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      setFuzzyMatchCount(0);
       setShowLeaderboard(false);
       setScoreDetails(null);
     } catch (error) {
@@ -87,9 +99,24 @@ const useGame = () => {
           setGameState(currentState);
         }
 
-        // Update guess status
+        // Update guess status based on response
         const newGuessStatus = [...guessStatus];
-        newGuessStatus[gameState.guesses.length] = data.isCorrect ? 'correct' : 'incorrect';
+        const guessIndex = gameState.guesses.length;
+        
+        if (data.isCorrect) {
+          newGuessStatus[guessIndex] = 'correct';
+        } else if (data.isFuzzy) {
+          newGuessStatus[guessIndex] = 'fuzzy';
+          setFuzzyMatchCount(prev => prev + 1);
+          console.log('[Game] Fuzzy match detected:', {
+            guess,
+            fuzzyPositions: data.fuzzyPositions,
+            totalFuzzyMatches: fuzzyMatchCount + 1
+          });
+        } else {
+          newGuessStatus[guessIndex] = 'incorrect';
+        }
+        
         setGuessStatus(newGuessStatus);
 
         // Fetch leaderboard if game is complete
@@ -103,7 +130,7 @@ const useGame = () => {
         throw error;
       }
     },
-    [gameState, guessStatus, fetchLeaderboard]
+    [gameState, guessStatus, fuzzyMatchCount, fetchLeaderboard]
   );
 
   return {
@@ -111,6 +138,7 @@ const useGame = () => {
     startNewGame,
     submitGuess,
     guessStatus,
+    fuzzyMatchCount,
     showLeaderboard,
     leaderboardData,
     playerRank,

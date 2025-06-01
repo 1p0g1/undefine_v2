@@ -23,6 +23,7 @@ interface GameSummaryModalProps {
   score?: {
     baseScore: number;
     guessPenalty: number;
+    fuzzyPenalty: number;
     timePenalty: number;
     hintPenalty: number;
     score: number;
@@ -228,6 +229,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                 <div>{score.baseScore}</div>
                 <div>Guess Penalty:</div>
                 <div style={{ color: '#ef4444' }}>-{score.guessPenalty}</div>
+                <div>Fuzzy Penalty:</div>
+                <div style={{ color: '#ef4444' }}>-{score.fuzzyPenalty}</div>
                 <div>Time Penalty:</div>
                 <div style={{ color: '#ef4444' }}>-{score.timePenalty}</div>
                 <div>Hint Penalty:</div>

@@ -298,6 +298,45 @@ async function updateLeaderboardSummary(
   }
 }
 
+/**
+ * Count fuzzy matches from game session guesses by re-evaluating each guess
+ * This is needed because we don't store fuzzy match history
+ */
+function countFuzzyMatches(guesses: string[], targetWord: string): number {
+  const normalizedTarget = normalizeText(targetWord);
+  let fuzzyCount = 0;
+  
+  for (const guess of guesses) {
+    const normalizedGuess = normalizeText(guess);
+    
+    // Skip if it's a correct guess
+    if (normalizedGuess === normalizedTarget) {
+      continue;
+    }
+    
+    // Check if this guess would be considered fuzzy
+    // Simple check: shared characters without being correct
+    let sharedChars = 0;
+    const targetChars = normalizedTarget.split('');
+    
+    for (const char of normalizedGuess) {
+      const index = targetChars.indexOf(char);
+      if (index !== -1) {
+        sharedChars++;
+        targetChars.splice(index, 1); // Remove used character
+      }
+    }
+    
+    // Consider it fuzzy if it shares at least 40% of characters
+    const similarity = sharedChars / Math.max(normalizedGuess.length, normalizedTarget.length);
+    if (similarity >= 0.4 && sharedChars >= 2) {
+      fuzzyCount++;
+    }
+  }
+  
+  return fuzzyCount;
+}
+
 interface GameSessionWithWord extends GameSession {
   words: {
     word: string;
@@ -586,8 +625,16 @@ export default withCors(async function handler(
         const completionTimeSeconds = result.gameOver ? 
           Math.floor((Date.now() - new Date(combinedSession.start_time).getTime()) / 1000) : null;
 
+        // Count fuzzy matches from session history
+        const allGuesses = [...(combinedSession.guesses || []), result.guess];
+        const fuzzyMatchCount = countFuzzyMatches(
+          combinedSession.guesses || [], 
+          combinedSession.words.word
+        );
+
         const scoreResult = result.gameOver ? calculateScore({
-          guessesUsed: (combinedSession.guesses || []).length + 1,
+          guessesUsed: allGuesses.length,
+          fuzzyMatches: fuzzyMatchCount + (result.isFuzzy ? 1 : 0), // Include current guess if fuzzy
           completionTimeSeconds: completionTimeSeconds || 0,
           usedHint: false, // Hints are not implemented yet
           isWon: result.isCorrect
@@ -834,8 +881,16 @@ export default withCors(async function handler(
     const completionTimeSeconds = result.gameOver ? 
       Math.floor((Date.now() - new Date(gameSession.start_time).getTime()) / 1000) : null;
 
+    // Count fuzzy matches from session history
+    const allGuesses = [...(gameSession.guesses || []), result.guess];
+    const fuzzyMatchCount = countFuzzyMatches(
+      gameSession.guesses || [], 
+      gameSession.words.word
+    );
+
     const scoreResult = result.gameOver ? calculateScore({
-      guessesUsed: (gameSession.guesses || []).length + 1,
+      guessesUsed: allGuesses.length,
+      fuzzyMatches: fuzzyMatchCount + (result.isFuzzy ? 1 : 0), // Include current guess if fuzzy
       completionTimeSeconds: completionTimeSeconds || 0,
       usedHint: false, // Hints are not implemented yet
       isWon: result.isCorrect
