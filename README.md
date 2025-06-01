@@ -21,6 +21,7 @@ Reference: cursor_project_rules/project_status.md
 ✅ Core game logic
 ⚠️ RLS implementation pending
 🚧 Leaderboard functionality
+🚨 **CRITICAL: See `docs/LEADERBOARD_DECEMBER_2024_STATUS.md` for migration audit & action plan**
 
 ## 📁 Project Structure
 Reference: cursor_project_rules/architecture.md
@@ -28,6 +29,13 @@ Reference: cursor_project_rules/architecture.md
 ✅ Next.js API backend
 ✅ Supabase database
 ✅ TypeScript monorepo
+
+### Documentation
+- `docs/ARCHITECTURE.md` - System architecture and patterns
+- `docs/database_schema.md` - Database schema and ERD
+- `docs/leaderboard_logic.md` - Leaderboard data flow and triggers
+- `docs/LEADERBOARD_DECEMBER_2024_STATUS.md` - Current leaderboard system state ⭐️ NEW
+- `docs/LEADERBOARD_TROUBLESHOOTING.md` - Debugging and recovery procedures
 
 ## 🔍 API Endpoints
 Reference: cursor_project_rules/api_spec.md
