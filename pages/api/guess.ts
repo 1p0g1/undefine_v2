@@ -202,6 +202,7 @@ async function updateUserStats(
 
 /**
  * Create a score entry for a completed game
+ * UPDATED: Now uses new simplified scoring system with fuzzy bonuses
  */
 async function createScoreEntry(
   playerId: string,
@@ -215,6 +216,21 @@ async function createScoreEntry(
     throw new Error('Completion time is required for creating score entry');
   }
 
+  console.log('[createScoreEntry] Using NEW scoring system:', {
+    playerId,
+    wordId,
+    guessesUsed,
+    completionTimeSeconds,
+    isWon,
+    scoreBreakdown: {
+      baseScore: scoreResult.baseScore,
+      fuzzyBonus: scoreResult.fuzzyBonus,  // NEW: Bonus points for fuzzy matches
+      timePenalty: scoreResult.timePenalty,  // FIXED: Now correctly 1 point per 10 seconds
+      hintPenalty: scoreResult.hintPenalty,
+      finalScore: scoreResult.score
+    }
+  });
+
   const { error: scoreError } = await supabase
     .from('scores')
     .insert([{
@@ -225,8 +241,9 @@ async function createScoreEntry(
       correct: isWon,
       score: scoreResult.score,
       base_score: scoreResult.baseScore,
-      guess_penalty: scoreResult.guessPenalty,
-      time_penalty: scoreResult.timePenalty,
+      guess_penalty: scoreResult.guessPenalty,  // DEPRECATED: Always 0 in new system
+      fuzzy_bonus: scoreResult.fuzzyBonus,      // NEW: Stores fuzzy bonus points
+      time_penalty: scoreResult.timePenalty,    // FIXED: Now correctly calculated
       hint_penalty: scoreResult.hintPenalty,
       submitted_at: new Date().toISOString()
     }]);
@@ -235,6 +252,8 @@ async function createScoreEntry(
     console.error('[createScoreEntry] Failed to create score:', scoreError);
     throw scoreError;
   }
+
+  console.log('[createScoreEntry] Successfully stored score with NEW system');
 }
 
 /**
@@ -692,7 +711,7 @@ export default withCors(async function handler(
             scoreResult: {
               score: scoreResult.score,
               baseScore: scoreResult.baseScore,
-              guessPenalty: scoreResult.guessPenalty,
+              fuzzyBonus: scoreResult.fuzzyBonus,
               timePenalty: scoreResult.timePenalty,
               hintPenalty: scoreResult.hintPenalty
             }
@@ -948,7 +967,7 @@ export default withCors(async function handler(
         scoreResult: {
           score: scoreResult.score,
           baseScore: scoreResult.baseScore,
-          guessPenalty: scoreResult.guessPenalty,
+          fuzzyBonus: scoreResult.fuzzyBonus,
           timePenalty: scoreResult.timePenalty,
           hintPenalty: scoreResult.hintPenalty
         }

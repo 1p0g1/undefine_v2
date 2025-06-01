@@ -799,21 +799,101 @@ The leaderboard system is fully functional with comprehensive fuzzy matching imp
 
 ### **Primary Ranking Factors (in order)**:
 1. **Completion Status**: Winners ranked above non-winners
-2. **Final Score**: Higher scores rank higher (includes fuzzy penalties)
+2. **Final Score**: Higher scores rank higher (now includes fuzzy bonuses!)
 3. **Completion Time**: Faster times break score ties
 4. **Guess Count**: Fewer guesses break time ties
 
-### **Score Calculation**:
+### **🎯 NEW SIMPLIFIED SCORING SYSTEM (December 2024)**:
+
+**MAJOR CHANGE**: Switched from penalty-based to positive reward system!
+
+**NEW FORMULA:**
 ```
-Final Score = 1000 - (extra_guesses * 100) - (fuzzy_matches * 25) - (time_seconds / 10) - (hints * 200)
+Final Score = base_score_for_guess + fuzzy_bonus - time_penalty - hint_penalty
 ```
 
-### **Fuzzy Match Impact**:
-- **Moderate Penalty**: 25 points per fuzzy match (vs 100 for wrong guess)
-- **Ranking Effect**: Can differentiate between players with same guess count
-- **Strategic Element**: Rewards precision while acknowledging close attempts
+**Base Scores by Guess Number:**
+- Guess 1: 1,000 points
+- Guess 2: 900 points  
+- Guess 3: 800 points
+- Guess 4: 700 points
+- Guess 5: 600 points
+- Guess 6: 500 points
 
-## **🔄 Migration History**
+**Bonuses & Penalties:**
+- **Fuzzy Bonus**: +25 points per fuzzy match (rewards close attempts!)
+- **Time Penalty**: -1 point per 10 seconds (FIXED: was 10x too high)
+- **Hint Penalty**: -200 points if hints used (future feature)
+
+### **📊 Scoring Examples:**
+
+**Perfect Game:**
+```
+1 guess, 30 seconds, no fuzzy = 1000 + 0 - 3 = 997 points
+```
+
+**Good Game with Fuzzy Help:**
+```
+2 guesses (1 fuzzy), 30 seconds = 900 + 25 - 3 = 922 points
+```
+
+**Average Game without Help:**
+```
+2 guesses (1 wrong), 30 seconds = 900 + 0 - 3 = 897 points
+```
+
+**Slower Game with Multiple Fuzzy:**
+```
+3 guesses (2 fuzzy), 60 seconds = 800 + 50 - 6 = 844 points
+```
+
+### **✨ Why This System is Better:**
+
+#### **Positive Psychology:**
+- **OLD**: "You lose 100 points for wrong guesses" 😞
+- **NEW**: "You get 1000 points for first guess!" 😊
+
+#### **Rewards Close Attempts:**
+- **OLD**: Fuzzy matches penalized (-25 points each)
+- **NEW**: Fuzzy matches rewarded (+25 points each)
+
+#### **Intuitive Understanding:**
+- **OLD**: Complex penalty calculations
+- **NEW**: "Guess early = more points, fuzzy helps = bonus!"
+
+### **🔧 Technical Implementation:**
+
+**Database Storage (`scores` table):**
+```sql
+base_score INTEGER,      -- Points for guess number (1000, 900, 800, etc.)
+fuzzy_bonus INTEGER,     -- NEW: Bonus points for fuzzy matches
+time_penalty INTEGER,    -- FIXED: Now correctly 1 point per 10 seconds
+hint_penalty INTEGER,    -- Hint penalty (200 points when implemented)
+guess_penalty INTEGER,   -- DEPRECATED: Always 0 in new system
+score INTEGER           -- Final calculated score
+```
+
+**Frontend Display:**
+- Shows base score prominently with guess number
+- Highlights fuzzy bonuses in green (positive)
+- Shows time/hint penalties in red (negative)
+- Explains new system with helpful tooltip
+
+### **📈 Impact on Leaderboard Rankings:**
+
+**Same Relative Order**: Players who guess faster with fewer attempts still rank higher
+
+**New Advantages**:
+- Players with fuzzy matches now rank higher than those without (same guess count)
+- Rewards strategic thinking and vocabulary knowledge
+- Encourages close attempts rather than random guessing
+
+**Migration Notes**:
+- Existing scores calculated with old system remain valid
+- New scores use improved calculation
+- Backward compatibility maintained during transition
+
+## 🔄 Migration History**
 
 ### **December 2024 Migrations**:
 1. **20241201000000_populate_missing_players_simple.sql** - Player data backfill

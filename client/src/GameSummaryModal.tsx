@@ -22,11 +22,11 @@ interface GameSummaryModalProps {
   error?: string;
   score?: {
     baseScore: number;
-    guessPenalty: number;
-    fuzzyPenalty: number;
+    fuzzyBonus: number;
     timePenalty: number;
     hintPenalty: number;
     score: number;
+    guessPenalty?: number;
   };
   currentDisplayName?: string;
   onOpenSettings?: () => void;
@@ -223,20 +223,39 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           </div>
           {score && (
             <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '0.5rem' }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Score Breakdown</div>
+              <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#1a237e' }}>Score Breakdown (NEW System)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', fontSize: '0.9rem' }}>
-                <div>Base Score:</div>
-                <div>{score.baseScore}</div>
-                <div>Guess Penalty:</div>
-                <div style={{ color: '#ef4444' }}>-{score.guessPenalty}</div>
-                <div>Fuzzy Penalty:</div>
-                <div style={{ color: '#ef4444' }}>-{score.fuzzyPenalty}</div>
-                <div>Time Penalty:</div>
-                <div style={{ color: '#ef4444' }}>-{score.timePenalty}</div>
-                <div>Hint Penalty:</div>
-                <div style={{ color: '#ef4444' }}>-{score.hintPenalty}</div>
-                <div style={{ fontWeight: 700 }}>Final Score:</div>
-                <div style={{ fontWeight: 700 }}>{score.score}</div>
+                <div style={{ fontWeight: 600 }}>Base Score (Guess #{guessesUsed}):</div>
+                <div style={{ fontWeight: 600, color: '#1a237e' }}>{score.baseScore}</div>
+                
+                {score.fuzzyBonus > 0 && (
+                  <>
+                    <div>Fuzzy Match Bonus:</div>
+                    <div style={{ color: '#059669', fontWeight: 500 }}>+{score.fuzzyBonus}</div>
+                  </>
+                )}
+                
+                {score.timePenalty > 0 && (
+                  <>
+                    <div>Time Penalty:</div>
+                    <div style={{ color: '#ef4444' }}>-{score.timePenalty}</div>
+                  </>
+                )}
+                
+                {score.hintPenalty > 0 && (
+                  <>
+                    <div>Hint Penalty:</div>
+                    <div style={{ color: '#ef4444' }}>-{score.hintPenalty}</div>
+                  </>
+                )}
+                
+                <hr style={{ gridColumn: '1 / -1', margin: '0.5rem 0', border: 'none', borderTop: '1px solid #d1d5db' }} />
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>Final Score:</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#1a237e' }}>{score.score}</div>
+              </div>
+              
+              <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#6b7280', fontStyle: 'italic' }}>
+                💡 New System: Earlier guesses = higher base score. Fuzzy matches give bonus points!
               </div>
             </div>
           )}
