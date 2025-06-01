@@ -14,6 +14,37 @@ Un-Define is a daily word-guessing game with progressive clue revelation, inspir
 
 Guess the word within 6 attempts to win. Anonymous gameplay, no login required.
 
+## 🎮 How to Play
+
+1. **Daily Word**: Each day features a new mystery word
+2. **Use Clues**: Six different types of hints help guide your guesses
+3. **Make Guesses**: You have 6 attempts to find the correct word
+4. **Compete**: Compare your performance on the daily leaderboard
+
+## 🏆 Scoring System (Quick Overview)
+
+Un·Define uses a **positive reward system** that gives you points for good performance:
+
+### **Base Points by Guess Number:**
+- **1st guess**: 1,000 points (Perfect!)
+- **2nd guess**: 900 points  
+- **3rd guess**: 800 points
+- **4th guess**: 700 points
+- **5th guess**: 600 points
+- **6th guess**: 500 points
+
+### **Bonuses & Penalties:**
+- **Fuzzy Match Bonus**: +25 points for each "close" guess (like guessing "DEFINE" when answer is "DEFIED")
+- **Time Penalty**: -1 point per 10 seconds (minimal impact)
+- **Hint Penalty**: -200 points if hints are used (future feature)
+
+### **What This Means:**
+- **Guess count matters most** (~90% of your score)
+- **Fuzzy matches help you rank higher** than players who made random guesses
+- **Time pressure is minimal** - think carefully rather than rushing
+
+📖 **[Read the Complete Scoring Guide](docs/SCORING_SYSTEM_GUIDE.md)** for detailed explanations, examples, and strategy tips.
+
 ## Status Overview
 Reference: cursor_project_rules/project_status.md
 ✅ Frontend deployment
