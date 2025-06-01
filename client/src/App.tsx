@@ -6,6 +6,9 @@ import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
 import DebugPanel from './components/DebugPanel';
 import { normalizeText } from '../../src/utils/text';
+import { SettingsButton } from './components/SettingsButton';
+import { SettingsModal } from './components/SettingsModal';
+import { getPlayerId } from './utils/player';
 
 function App() {
   const {
@@ -28,6 +31,23 @@ function App() {
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  
+  // Settings modal state
+  const [showSettings, setShowSettings] = useState(false);
+  const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
+
+  // Initialize display name from localStorage or generate default
+  useEffect(() => {
+    const savedDisplayName = localStorage.getItem('playerDisplayName');
+    if (savedDisplayName) {
+      setCurrentDisplayName(savedDisplayName);
+    } else {
+      // Generate default name format: "Player [last 4 chars of ID]"
+      const playerId = getPlayerId();
+      const defaultName = playerId ? `Player ${playerId.slice(-4)}` : 'Player';
+      setCurrentDisplayName(defaultName);
+    }
+  }, []);
 
   useEffect(() => {
     startNewGame();
@@ -125,6 +145,12 @@ function App() {
     }
   }, [gameState.isComplete, gameState.isWon]);
 
+  // Handle nickname updates
+  const handleNicknameUpdate = (newNickname: string) => {
+    setCurrentDisplayName(newNickname);
+    console.log('[App] Nickname updated to:', newNickname);
+  };
+
   return (
     <div
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
@@ -132,7 +158,16 @@ function App() {
     >
       {/* Timer Row */}
       <div
-        style={{ margin: '0 auto', textAlign: 'center', marginBottom: '0.25rem', width: '100%' }}
+        style={{ 
+          margin: '0 auto', 
+          textAlign: 'center', 
+          marginBottom: '0.25rem', 
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
+        }}
       >
         <span
           className="game-timer timer"
@@ -152,6 +187,12 @@ function App() {
           </span>
           {String(timer % 60).padStart(2, '0')}
         </span>
+        
+        {/* Settings Button */}
+        <SettingsButton 
+          onClick={() => setShowSettings(true)}
+          currentNickname={currentDisplayName}
+        />
       </div>
       {/* Un·DEFINE Row */}
       <div
@@ -361,6 +402,13 @@ function App() {
         playerRank={playerRank}
         isLoading={isLeaderboardLoading}
         error={leaderboardError || undefined}
+      />
+      {/* Settings Modal */}
+      <SettingsModal
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        currentDisplayName={currentDisplayName}
+        onNicknameUpdate={handleNicknameUpdate}
       />
       <DebugPanel gameState={gameState} isVisible={showDebug} />
       <style>{`
