@@ -109,6 +109,42 @@ async function updateUserStats(
     throw new Error('Completion time is required for updating stats');
   }
 
+  // Step 1: Ensure a user_stats record exists for the player.
+  // This is crucial for foreign key constraints when the leaderboard trigger fires.
+  const { error: upsertError } = await supabase
+    .from('user_stats')
+    .upsert(
+      {
+        player_id: playerId,
+        // Initialize with default values if it's a new record
+        // These will be overridden by the subsequent update if the record is new,
+        // or if it exists, these defaults won't apply due to onConflict.
+        games_played: 0,
+        games_won: 0,
+        current_streak: 0,
+        longest_streak: 0,
+        total_guesses: 0,
+        average_guesses_per_game: 0,
+        total_play_time_seconds: 0,
+        total_score: 0,
+        updated_at: new Date().toISOString()
+      },
+      {
+        onConflict: 'player_id', // If player_id already exists, do nothing for this upsert.
+        ignoreDuplicates: false, // Important: we want the conflict to be handled by onConflict.
+      }
+    );
+
+  if (upsertError) {
+    console.error('[updateUserStats] Failed to upsert initial user_stats record:', upsertError);
+    // Depending on the error, we might want to throw or handle differently.
+    // For now, we'll log and proceed, as the select/update might still work if the record existed.
+    // However, if it was a critical error (e.g., DB connection), subsequent steps would also fail.
+  } else {
+    console.log('[updateUserStats] Initial user_stats record ensured for player:', playerId);
+  }
+
+  // Step 2: Fetch the current stats (which now definitely exists or was just created).
   const { data: stats, error: statsError } = await supabase
     .from('user_stats')
     .select('*')
@@ -116,23 +152,38 @@ async function updateUserStats(
     .single();
 
   if (statsError) {
-    console.error('[updateUserStats] Failed to fetch stats:', statsError);
-    throw statsError;
+    console.error('[updateUserStats] Failed to fetch stats after upsert:', statsError);
+    throw statsError; // If we can't fetch, we can't reliably update.
   }
 
+  // If stats is null here, it means the initial upsert failed silently or select failed,
+  // which should be caught by statsError. But as a safeguard:
+  if (!stats) {
+    console.error('[updateUserStats] user_stats record is null after upsert and select for player:', playerId);
+    throw new Error('Failed to retrieve or create user_stats record.');
+  }
+  
+  console.log('[updateUserStats] Current stats for player:', playerId, stats);
+
+
+  // Step 3: Calculate and apply the new statistics.
   const newStats = {
-    games_played: (stats?.games_played || 0) + 1,
-    games_won: isWon ? (stats?.games_won || 0) + 1 : (stats?.games_won || 0),
-    current_streak: isWon ? (stats?.current_streak || 0) + 1 : 0,
+    games_played: (stats.games_played || 0) + 1,
+    games_won: isWon ? (stats.games_won || 0) + 1 : (stats.games_won || 0),
+    current_streak: isWon ? (stats.current_streak || 0) + 1 : 0,
     longest_streak: isWon 
-      ? Math.max(stats?.longest_streak || 0, (stats?.current_streak || 0) + 1) 
-      : (stats?.longest_streak || 0),
-    total_guesses: (stats?.total_guesses || 0) + guessesUsed,
-    average_guesses_per_game: ((stats?.total_guesses || 0) + guessesUsed) / ((stats?.games_played || 0) + 1),
-    total_play_time_seconds: (stats?.total_play_time_seconds || 0) + completionTimeSeconds,
-    total_score: (stats?.total_score || 0) + scoreResult.score,
+      ? Math.max(stats.longest_streak || 0, (stats.current_streak || 0) + 1)
+      : (stats.longest_streak || 0),
+    total_guesses: (stats.total_guesses || 0) + guessesUsed,
+    // Ensure games_played for average calculation is at least 1 (the current game)
+    average_guesses_per_game: ((stats.total_guesses || 0) + guessesUsed) / Math.max(1, (stats.games_played || 0) + 1),
+    total_play_time_seconds: (stats.total_play_time_seconds || 0) + completionTimeSeconds,
+    total_score: (stats.total_score || 0) + scoreResult.score,
     updated_at: new Date().toISOString()
   };
+  
+  console.log('[updateUserStats] Calculated new stats for player:', playerId, newStats);
+
 
   const { error: updateError } = await supabase
     .from('user_stats')
@@ -143,6 +194,8 @@ async function updateUserStats(
     console.error('[updateUserStats] Failed to update stats:', updateError);
     throw updateError;
   }
+  
+  console.log('[updateUserStats] Successfully updated stats for player:', playerId);
 
   return newStats;
 }
@@ -230,57 +283,9 @@ async function updateLeaderboardSummary(
       throw statsError;
     }
 
-    // Check existing leaderboard entries for this word
-    const { data: leaderboard, error: leaderboardError } = await supabase
-      .from('leaderboard_summary')
-      .select('*')
-      .eq('word_id', wordId)
-      .order('best_time', { ascending: true })
-      .order('guesses_used', { ascending: true })
-      .limit(10);
-
-    if (leaderboardError) {
-      console.error('[updateLeaderboardSummary] Failed to fetch existing leaderboard:', leaderboardError);
-      throw leaderboardError;
-    }
-
-    console.log('[updateLeaderboardSummary] Current leaderboard entries:', leaderboard?.length || 0);
-
-    // Always insert/update for winning games, let the database handle ranking
-    if (scoreResult.score > 0) {
-      console.log('[updateLeaderboardSummary] Inserting leaderboard entry for completion time:', completionTimeSeconds);
-      
-      const { error: insertError } = await supabase
-        .from('leaderboard_summary')
-        .upsert([{
-          player_id: playerId,
-          word_id: wordId,
-          rank: 1, // Will be recalculated by trigger
-          was_top_10: true, // Will be updated by trigger
-          best_time: completionTimeSeconds,
-          guesses_used: guessesUsed,
-          date: new Date().toISOString().split('T')[0] // Add today's date
-        }], {
-          onConflict: 'player_id,word_id'
-        });
-
-      if (insertError) {
-        console.error('[updateLeaderboardSummary] Failed to insert/update leaderboard entry:', {
-          error: insertError,
-          code: insertError.code,
-          message: insertError.message,
-          details: insertError.details,
-          hint: insertError.hint,
-          playerId,
-          wordId
-        });
-        throw insertError;
-      }
-
-      console.log('[updateLeaderboardSummary] Successfully inserted/updated leaderboard entry');
-    } else {
-      console.log('[updateLeaderboardSummary] Skipping leaderboard entry for zero score');
-    }
+    // No need to manually update leaderboard_summary anymore
+    // The trigger on game_sessions will handle this automatically
+    console.log('[updateLeaderboardSummary] Leaderboard will be updated by database trigger');
   } catch (error) {
     console.error('[updateLeaderboardSummary] Error in leaderboard update:', {
       error,

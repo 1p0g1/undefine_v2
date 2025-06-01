@@ -1,5 +1,11 @@
 # Un-Define v2 Deployment Context
 
+# ⚡️ Leaderboard Data Flow & Best Practice (June 2025)
+
+**This project is now striving for a best-practice, fully documented leaderboard data flow.**
+- See implementation-plan.mdc Phase 7 for audit and documentation tasks.
+- All documentation and troubleshooting will be updated as part of this phase.
+
 ## 🌐 Production Architecture
 
 This project is deployed as TWO SEPARATE Vercel projects:
@@ -77,6 +83,10 @@ Frontend Request → /api/leaderboard → Query leaderboard_summary → Fallback
 - **Populated By**: `updateLeaderboardSummary()` in `/api/guess`
 - **❌ REMOVED**: `score` column does not exist in actual schema
 - **Auto-Ranking**: Database trigger recalculates ranks on insert/update
+- **Best Practice (June 2025):**
+  - All leaderboard entries are populated from real game completions via `/api/guess.ts`.
+  - Foreign key chain is always maintained: `players` → `user_stats` → `leaderboard_summary`.
+  - See implementation-plan.mdc Phase 7 for audit and troubleshooting tasks.
 
 ### Ranking Algorithm ⚠️ UPDATED
 1. **Primary Sort**: `best_time ASC` (faster times rank better)

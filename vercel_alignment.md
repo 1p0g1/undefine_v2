@@ -1,3 +1,9 @@
+# ⚡️ Leaderboard Data Flow & Best Practice (June 2025)
+
+**This project is now striving for a best-practice, fully documented leaderboard data flow.**
+- See implementation-plan.mdc Phase 7 for audit and documentation tasks.
+- All documentation and troubleshooting will be updated as part of this phase.
+
 # Vercel Alignment & Debug Log
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.
@@ -177,6 +183,11 @@ Append all future related debugging to this file. This is the master record of a
 - Filters by current date for daily leaderboards
 
 ## ✅ Leaderboard Implementation - PRODUCTION READY
+
+### Best Practice (June 2025):
+- All leaderboard entries are populated from real game completions via `/api/guess.ts`.
+- Foreign key chain is always maintained: `players` → `user_stats` → `leaderboard_summary`.
+- See implementation-plan.mdc Phase 7 for audit and troubleshooting tasks.
 
 ### Sorting and Display Logic ✅ WORKING
 - Leaderboard entries are sorted by:

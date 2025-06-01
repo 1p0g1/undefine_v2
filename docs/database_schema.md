@@ -1,10 +1,26 @@
-Database Schema
+# Database Schema
 
 This document defines the database schema for the Un-Define v2 project. The project uses Supabase as the database provider.
 
 **⚠️ IMPORTANT: This documentation is based on the actual ERD and production database structure as of May 2025.**
 
 **🔄 UPDATED: May 2025 - Fixed leaderboard_summary schema alignment and API functions**
+
+## Entity Relationship Diagram (ERD)
+
+**[USER TO EMBED ERD IMAGE HERE - `erd.png`]**
+
+*(The ERD above visually represents the table structures and their relationships as described below and used throughout the project. Refer to it for a quick overview of how tables are connected.)*
+
+# ⚡️ Leaderboard Data Flow & Best Practice (June 2025)
+
+**This project is now striving for a lean, scalable, and robust leaderboard system.**
+
+- Real game completions flow: `game_sessions` → `scores` → `user_stats` → `leaderboard_summary`
+- All upserts and updates are handled in `/api/guess.ts` (see implementation-plan.mdc Phase 7)
+- Foreign key chain: `players` → `user_stats` → `leaderboard_summary`
+- Leaderboard is always populated from real game completions, not test data
+- All documentation and troubleshooting will be updated as part of the Phase 7 audit
 
 ## Tables
 
@@ -87,6 +103,7 @@ Stores statistics for each player.
 ```sql
 CREATE TABLE user_stats (
   player_id TEXT PRIMARY KEY REFERENCES players(id),
+  games_played INTEGER DEFAULT 0,
   current_streak INTEGER DEFAULT 0,
   longest_streak INTEGER DEFAULT 0,
   best_rank INTEGER,
@@ -173,6 +190,12 @@ CREATE INDEX idx_leaderboard_summary_date ON leaderboard_summary(date);
 - **Auto-ranking**: Ranks calculated by best_time and guesses_used
 - **Top 10 tracking**: Boolean flag for top performers
 - **Foreign Key**: References user_stats.player_id (not players.id directly)
+
+**Best Practice Data Flow (June 2025):**
+- On game win, `/api/guess.ts` updates `user_stats`, inserts into `scores`, and upserts into `leaderboard_summary`.
+- Foreign key dependencies are always checked and maintained.
+- Database triggers recalculate ranks automatically.
+- Troubleshooting and audit tasks are tracked in `implementation-plan.mdc` Phase 7.
 
 ## May 2025 Schema Fixes
 

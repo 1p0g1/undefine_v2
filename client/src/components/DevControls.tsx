@@ -111,18 +111,18 @@ export const DevControls: React.FC = () => {
       {/* Game Controls */}
       <div style={{ marginBottom: 16 }}>
         <h4>Game Controls</h4>
-        <div style={{ marginBottom: 8 }}>
-          <label>
-            Word override:{' '}
-            <input
-              type="text"
-              value={word}
-              onChange={e => setWord(e.target.value)}
-              placeholder="(blank for today's word)"
-            />
-          </label>
-        </div>
-        <button onClick={handleReset}>Reset Session</button>
+      <div style={{ marginBottom: 8 }}>
+        <label>
+          Word override:{' '}
+          <input
+            type="text"
+            value={word}
+            onChange={e => setWord(e.target.value)}
+            placeholder="(blank for today's word)"
+          />
+        </label>
+      </div>
+      <button onClick={handleReset}>Reset Session</button>
         <button onClick={handleTestLeaderboard} style={{ marginLeft: 8 }}>
           Test Leaderboard
         </button>

@@ -1,3 +1,9 @@
+# ⚡️ Leaderboard Data Flow & Best Practice (June 2025)
+
+**This project is now striving for a best-practice, fully documented leaderboard data flow.**
+- See implementation-plan.mdc Phase 7 for audit and documentation tasks.
+- All documentation and troubleshooting will be updated as part of this phase.
+
 # May 2025 Schema Alignment - Leaderboard System Fixes
 
 **Date:** May 2025  
@@ -219,6 +225,10 @@ After completing these updates:
 3. **Daily Leaderboards** will show only today's games
 4. **Type Safety** will be restored across the application
 5. **Performance** will be optimal using optimized leaderboard_summary table
+6. **Best Practice (June 2025):**
+   - All leaderboard entries are populated from real game completions via `/api/guess.ts`.
+   - Foreign key chain is always maintained: `players` → `user_stats` → `leaderboard_summary`.
+   - See implementation-plan.mdc Phase 7 for audit and troubleshooting tasks.
 
 ## 📋 **Verification Checklist**
 

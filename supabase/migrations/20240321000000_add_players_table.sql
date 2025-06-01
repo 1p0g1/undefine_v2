@@ -1,11 +1,11 @@
 -- Create players table
-CREATE TABLE players (
+CREATE TABLE IF NOT EXISTS players (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   display_name TEXT,
   is_anonymous BOOLEAN DEFAULT TRUE,
-  metadata JSONB DEFAULT '{}'::jsonb
+  metadata JSONB DEFAULT '''{}'''::jsonb
 );
 
 -- Create function to ensure player exists
@@ -39,6 +39,7 @@ END;
 $$;
 
 -- Create trigger to update player activity on game session creation
+DROP TRIGGER IF EXISTS update_player_activity_on_game ON game_sessions;
 CREATE TRIGGER update_player_activity_on_game
 AFTER INSERT OR UPDATE ON game_sessions
 FOR EACH ROW

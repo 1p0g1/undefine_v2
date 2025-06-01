@@ -88,7 +88,102 @@ alwaysApply: false
 
 **Status**: ✅ **COMPLETED** - All TypeScript interfaces and repository classes updated successfully. Builds passing. Ready for production deployment.
 
----
+## Phase 7: Leaderboard Data Flow & Best Practice Audit (June 2025)
+
+### 7.1: Documentation & Audit Tasks
+- [x] Document the end-to-end leaderboard data flow from real game completion to leaderboard display
+- [x] Audit `/api/guess.ts` for error handling and logging in all upserts (user_stats, scores, leaderboard_summary)
+- [x] Add troubleshooting section for leaderboard population failures
+- [x] Update `database_schema.md` to clarify the intended data flow and best practices
+- [x] Update `deployment_context.md` to reflect the clarified leaderboard data flow
+- [x] Update `MAY_2025_SCHEMA_ALIGNMENT.md` to reference the new best-practice flow
+- [x] Update `vercel_alignment.md` to note the new data flow and troubleshooting steps
+
+### 7.2: Database Schema & Trigger Implementation
+- [x] Create migration `20240601000001_fix_leaderboard_data_flow.sql` with ERD-aligned triggers
+  - Done. This migration establishes the correct foreign keys for `leaderboard_summary` and implements the `update_leaderboard_from_game` and `update_leaderboard_rankings` triggers using `best_time` and `guesses_used` as per the ERD.
+- [x] Create migration `20240601000002_add_trigger_logging.sql`
+  - Done. This adds a `trigger_log` table and enhances the new leaderboard triggers with logging capabilities.
+- [x] Audit and refactor existing migrations for idempotency and ERD alignment (June 2025)
+  - Done. All listed migrations from `20230515...` to `20241201...` have been reviewed. Changes were made to improve idempotency (e.g., `IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), align with ERD, and make older, problematic migrations (especially `20240530000002_fix_leaderboard_summary.sql`) safer and deferential to later, more correct migrations.
+
+### 7.3: API Layer Adjustments
+- [x] Audit and update `/api/guess.ts` to ensure `user_stats` is created/updated *before* game completion might trigger leaderboard FK dependencies.
+  - Done. Modified `updateUserStats` to perform an upsert first, then an update to ensure the `user_stats` row exists and has fresh data before any leaderboard trigger relying on it might fire.
+- [ ] Remove manual leaderboard updates from API if now fully trigger-based (Covered by audit)
+  - Done. Manual updates were in `updateLeaderboardSummary` in `pages/api/guess.ts`. The trigger-based system from `20240601000001_fix_leaderboard_data_flow.sql` supersedes this.
+
+### 7.4: New Core Documentation: Leaderboard Logic
+- [ ] Create `docs/leaderboard_logic.md`
+- [ ] Document migration audit decisions & schema evolution for `leaderboard_summary` in `docs/leaderboard_logic.md`
+- [ ] Document inferred game logic for leaderboard (triggers, ranking, data flow) in `docs/leaderboard_logic.md`
+- [ ] Document key user flows related to leaderboard population and display in `docs/leaderboard_logic.md`
+
+### Next Steps
+- [ ] Monitor production performance
+- [ ] Gather user feedback
+- [ ] Plan optimizations if needed
+
+## Phase 8: Leaderboard System Monitoring & Optimization (June 2025)
+
+### 8.1: Performance Monitoring
+- [ ] Add database query performance monitoring for leaderboard operations
+- [ ] Set up alerts for trigger execution times
+- [ ] Monitor foreign key constraint impact on write operations
+- [ ] Track leaderboard update latency in production
+
+### 8.2: Data Integrity Checks
+- [ ] Create daily validation job to ensure:
+  - All game_sessions have corresponding scores entries
+  - All scores have corresponding leaderboard_summary entries
+  - Rankings are correctly calculated
+  - Foreign key relationships are intact
+- [ ] Add monitoring dashboard for data consistency metrics
+
+### 8.3: Documentation Updates
+- [ ] Create troubleshooting guide for common leaderboard issues
+- [ ] Document database trigger behavior and failure scenarios
+- [ ] Update API documentation with new leaderboard data flow
+- [ ] Create maintenance guide for database administrators
+- [ ] Document backup and recovery procedures for leaderboard data
+
+### 8.4: Optimization Opportunities
+- [ ] Evaluate index usage and query performance
+- [ ] Consider materialized views for frequently accessed leaderboard data
+- [ ] Investigate caching strategies for leaderboard results
+- [ ] Plan for data archival of old leaderboard entries
+
+### 8.5: Scale Planning
+- [ ] Document expected growth patterns
+- [ ] Plan for database partitioning strategy
+- [ ] Consider sharding strategy for high-volume periods
+- [ ] Evaluate read replica requirements
+
+### 8.6: Testing & Validation
+- [ ] Create comprehensive test suite for leaderboard system
+- [ ] Add load testing scenarios
+- [ ] Implement chaos testing for trigger resilience
+- [ ] Add integration tests for the complete data flow
+
+### 8.7: User Experience
+- [ ] Add real-time leaderboard updates
+- [ ] Implement leaderboard position change animations
+- [ ] Add user notifications for rank changes
+- [ ] Create detailed leaderboard statistics view
+
+### Status
+Currently in planning phase. Each task will be prioritized based on:
+1. Impact on data integrity
+2. User experience improvement
+3. Performance optimization
+4. Future scalability needs
+
+### Success Metrics
+- Zero data inconsistencies in production
+- Sub-100ms leaderboard query times
+- 100% accuracy in rankings
+- Positive user feedback on leaderboard features
+- No performance degradation under load
 
 ## Notes
 - All phases follow cursor_project_rules/deployment_context.md for consistency
