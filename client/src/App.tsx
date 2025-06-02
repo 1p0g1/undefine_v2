@@ -24,7 +24,8 @@ function App() {
     playerRank,
     isLeaderboardLoading,
     leaderboardError,
-    scoreDetails
+    scoreDetails,
+    fetchLeaderboard
   } = useGame();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
@@ -133,10 +134,16 @@ function App() {
   };
 
   // Handler to show leaderboard modal (View Results)
-  const showLeaderboardModal = () => {
+  const showLeaderboardModal = useCallback(async () => {
+    if (!gameState.wordId) return;
     setShowSummary(true);
     setCanReopenSummary(false);
-  };
+    
+    // Fetch leaderboard data if not already loaded
+    if (leaderboardData.length === 0 && !isLeaderboardLoading) {
+      await fetchLeaderboard();
+    }
+  }, [gameState.wordId, leaderboardData.length, isLeaderboardLoading, fetchLeaderboard]);
 
   const launchConfetti = () => {
     confetti({
@@ -350,6 +357,7 @@ function App() {
                 borderRadius: '0.25rem',
                 border: '1px solid #e5e7eb',
                 fontSize: '1rem',
+                fontFamily: 'var(--font-primary)',
               }}
             />
             <button
@@ -363,6 +371,7 @@ function App() {
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: 500,
+                fontFamily: 'var(--font-primary)',
               }}
             >
               Submit
@@ -396,6 +405,24 @@ function App() {
           }}
         >
           How to Play
+        </button>
+        <button
+          type="button"
+          onClick={showLeaderboardModal}
+          style={{
+            padding: '0.5rem 1rem',
+            borderRadius: '0.25rem',
+            backgroundColor: '#f3f4f6',
+            color: '#374151',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-primary)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            transition: 'background-color 0.2s',
+          }}
+        >
+          Leaderboard
         </button>
         {gameState.isComplete && (
           <button
@@ -450,6 +477,7 @@ function App() {
         message={toastMessage}
         isVisible={showToast}
         onClose={handleToastClose}
+        duration={2000}
       />
       <DebugPanel gameState={gameState} isVisible={showDebug} />
       <style>{`
