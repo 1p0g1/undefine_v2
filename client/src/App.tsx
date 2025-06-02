@@ -6,7 +6,6 @@ import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
 import DebugPanel from './components/DebugPanel';
 import { normalizeText } from '../../src/utils/text';
-import { SettingsButton } from './components/SettingsButton';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { getPlayerId } from './utils/player';
@@ -47,10 +46,6 @@ function App() {
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Rolladex state
-  const [activeHintIndex, setActiveHintIndex] = useState(0);
-  const [scrollY, setScrollY] = useState(0);
-
   // Initialize display name from localStorage or generate default
   useEffect(() => {
     const savedDisplayName = localStorage.getItem('playerDisplayName');
@@ -63,29 +58,6 @@ function App() {
       setCurrentDisplayName(defaultName);
     }
   }, []);
-
-  // Scroll handler for rolladex
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setScrollY(currentScrollY);
-      
-      // Calculate which hint should be active based on scroll position
-      const visibleClues = gameState.clues
-        ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
-        : [];
-      
-      if (visibleClues.length > 1) {
-        // Change hint every 50px of scroll
-        const scrollThreshold = 50;
-        const newIndex = Math.floor(currentScrollY / scrollThreshold) % visibleClues.length;
-        setActiveHintIndex(newIndex);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [gameState.clues, gameState.guesses, gameState.wordText]);
 
   useEffect(() => {
     startNewGame();
@@ -213,24 +185,24 @@ function App() {
   return (
     <div
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
-      style={{ paddingTop: 24, paddingBottom: 88 }}
+      style={{ paddingTop: 16, paddingBottom: 64 }}
     >
       <div
         style={{ 
           margin: '0 auto', 
           textAlign: 'center', 
-          marginBottom: '0.25rem', 
+          marginBottom: '0.15rem', 
           width: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.5rem'
+          gap: '0.75rem'
         }}
       >
         <span
           className="game-timer timer"
           style={{
-            fontSize: '1rem',
+            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
             fontWeight: 400,
             opacity: 0.85,
             fontFamily: 'Inter, Roboto, DM Sans, Arial, sans-serif',
@@ -246,11 +218,27 @@ function App() {
           {String(timer % 60).padStart(2, '0')}
         </span>
         
-        {/* Settings Button */}
-        <SettingsButton 
+        {/* Hamburger Menu Button */}
+        <button
           onClick={() => setShowSettings(true)}
-          currentNickname={currentDisplayName}
-        />
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            width: '20px',
+            height: '20px',
+            justifyContent: 'center'
+          }}
+          aria-label="Menu"
+        >
+          <div style={{ width: '16px', height: '2px', backgroundColor: 'var(--color-primary)', borderRadius: '1px' }} />
+          <div style={{ width: '16px', height: '2px', backgroundColor: 'var(--color-primary)', borderRadius: '1px' }} />
+          <div style={{ width: '16px', height: '2px', backgroundColor: 'var(--color-primary)', borderRadius: '1px' }} />
+        </button>
       </div>
       {/* Un·DEFINE Row */}
       <div
@@ -262,10 +250,10 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: '0.4rem',
+          gap: 'clamp(0.25rem, 1vw, 0.3rem)',
           width: '100%',
-          marginTop: '0.7rem',
-          marginBottom: '0.5rem',
+          marginTop: '0.5rem',
+          marginBottom: '0.3rem',
           position: 'relative',
         }}
       >
@@ -276,8 +264,8 @@ function App() {
             fontStyle: 'italic',
             fontWeight: 700,
             color: '#1a237e',
-            fontSize: '1.1rem',
-            marginRight: '0.25rem',
+            fontSize: 'clamp(1rem, 2.8vw, 1.1rem)',
+            marginRight: '0.2rem',
             whiteSpace: 'nowrap',
             display: 'inline-block',
             position: 'relative',
@@ -286,7 +274,7 @@ function App() {
         >
           Un·
         </span>
-        <div className="define-boxes" style={{ display: 'flex', gap: '0.4rem', flex: '0 0 auto' }}>
+        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.25rem, 1vw, 0.3rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
             revealedClues={revealedClueKeys}
@@ -342,129 +330,65 @@ function App() {
       )}
       {/* Past Guesses below DEFINE row */}
       {gameState.guesses.length > 0 && (
-        <div className="past-guesses">Past guesses: {gameState.guesses.join(', ')}</div>
+        <div className="past-guesses" style={{
+          fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+          margin: '0.25rem 0'
+        }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
-      {/* Clues Section - Rolladex Style */}
-      {visibleClues.length > 0 && (
-        <div className="rolladex-container" style={{ 
-          width: '100%', 
-          maxWidth: 420, 
-          margin: '1rem auto',
-          height: '120px',
-          position: 'relative',
-          perspective: '1000px'
-        }}>
-          {visibleClues.length > 1 && (
-            <div style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-primary)',
-              opacity: 0.7,
-              textAlign: 'center',
-              marginBottom: '0.5rem',
-              fontFamily: 'var(--font-primary)'
-            }}>
-              Scroll to reveal hints ({activeHintIndex + 1} of {visibleClues.length})
-            </div>
-          )}
+      {/* Clues Section */}
+      <div className="hint-blocks" style={{ 
+        width: '100%', 
+        maxWidth: 420, 
+        margin: '0 auto',
+        gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
+      }}>
+        {visibleClues.map((clue, idx) => {
+          // Get the full label for the clue heading
+          const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
+          const clueLabel = CLUE_LABELS[clueKey];
           
-          {visibleClues.map((clue, idx) => {
-            const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
-            const clueLabel = CLUE_LABELS[clueKey];
-            const isActive = idx === activeHintIndex;
-            const offset = idx - activeHintIndex;
-            
-            return (
-              <div 
-                key={clue.key}
-                className="hint-card"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '0.75rem',
-                  padding: '1rem',
-                  boxShadow: isActive 
-                    ? '0 4px 12px rgba(0, 0, 0, 0.15)' 
-                    : '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  transform: `
-                    translateY(${offset * 8}px) 
-                    rotateX(${offset * 5}deg) 
-                    scale(${isActive ? 1 : 0.95})
-                  `,
-                  opacity: isActive ? 1 : 0.7,
-                  zIndex: visibleClues.length - Math.abs(offset),
-                  transition: 'all 0.3s ease',
-                  transformOrigin: 'center bottom'
-                }}
-              >
-                <div className="hint-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <div 
-                    className="hint-letter"
-                    style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'var(--color-primary)',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.875rem',
-                      fontFamily: 'var(--font-primary)',
-                      flexShrink: 0
-                    }}
-                  >
-                    {clue.key}
-                  </div>
-                  <div className="hint-content" style={{ flex: 1, minWidth: 0 }}>
-                    <div 
-                      className="hint-title"
-                      style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        color: 'var(--color-primary)',
-                        marginBottom: '0.25rem',
-                        fontFamily: 'var(--font-primary)',
-                        letterSpacing: '0.03em'
-                      }}
-                    >
-                      {clueLabel}
-                    </div>
-                    <div 
-                      className="hint-text"
-                      style={{
-                        fontSize: '0.875rem',
-                        lineHeight: '1.4',
-                        color: '#374151',
-                        fontFamily: 'var(--font-primary)'
-                      }}
-                    >
-                      {clue.value}
-                    </div>
-                  </div>
+          return (
+            <div className="hint-row" key={clue.key}>
+              <div className="hint-letter" style={{
+                fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
+              }}>{clue.key}</div>
+              <div className="hint-box">
+                <div className="hint-title" style={{
+                  fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  color: 'var(--color-primary)',
+                  marginBottom: '0.25rem',
+                  fontFamily: 'var(--font-primary)',
+                  letterSpacing: '0.03em'
+                }}>
+                  {clueLabel}
                 </div>
+                <div className="hint-text" style={{
+                  fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+                  lineHeight: '1.4'
+                }}>{clue.value}</div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        })}
+      </div>
       {/* Solution Reveal */}
       {gameState.isComplete && (
         <div
           className="solution-reveal"
-          style={{ fontSize: 20, fontWeight: 700, margin: '1.2rem 0' }}
+          style={{ 
+            fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)', 
+            fontWeight: 700, 
+            margin: '1rem 0' 
+          }}
         >
           The word was: {gameState.wordText}
         </div>
       )}
       {/* Guess Input Form */}
       {!gameState.isComplete && (
-        <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '1rem auto' }}>
+        <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '0.75rem auto' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
@@ -477,7 +401,7 @@ function App() {
                 padding: '0.5rem',
                 borderRadius: '0.25rem',
                 border: '1px solid #e5e7eb',
-                fontSize: '1rem',
+                fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
                 fontFamily: 'var(--font-primary)',
                 transition: 'all 0.2s ease',
                 backgroundColor: isSubmitting ? '#f3f4f6' : '#fff',
@@ -494,7 +418,7 @@ function App() {
                 color: 'white',
                 border: 'none',
                 cursor: isSubmitting ? 'default' : 'pointer',
-                fontSize: '0.875rem',
+                fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
                 fontWeight: 500,
                 fontFamily: 'var(--font-primary)',
                 transition: 'all 0.2s ease',
@@ -505,73 +429,6 @@ function App() {
           </div>
         </form>
       )}
-      {/* Action Buttons */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          justifyContent: 'center',
-          marginTop: '1rem',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setShowRules(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            transition: 'background-color 0.2s',
-          }}
-        >
-          How to Play
-        </button>
-        <button
-          type="button"
-          onClick={showLeaderboardModal}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            transition: 'background-color 0.2s',
-          }}
-        >
-          Leaderboard
-        </button>
-        {gameState.isComplete && (
-          <button
-            type="button"
-            onClick={showLeaderboardModal}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: '#1a237e',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              transition: 'background-color 0.2s',
-            }}
-            aria-label="View Results"
-          >
-            View Results
-          </button>
-        )}
-      </div>
       {/* Game Summary Modal */}
       <GameSummaryModal
         open={showSummary}
@@ -597,6 +454,8 @@ function App() {
         onClose={() => setShowSettings(false)}
         currentDisplayName={currentDisplayName}
         onNicknameUpdate={handleNicknameUpdate}
+        onShowRules={() => setShowRules(true)}
+        onShowLeaderboard={showLeaderboardModal}
       />
       {/* Toast Notification */}
       <Toast

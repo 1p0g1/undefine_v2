@@ -61,10 +61,11 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       display: 'flex', 
       flexDirection: 'column',
       alignItems: 'center',
-      minHeight: '4.5rem',
-      padding: '0.25rem 0'
+      minHeight: 'clamp(3.5rem, 10vw, 4rem)',
+      padding: '0.15rem 0',
+      position: 'relative'
     }}>
-      <div style={{ display: 'flex', gap: '0.4rem' }}>
+      <div style={{ display: 'flex', gap: 'clamp(0.25rem, 1vw, 0.3rem)' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -95,14 +96,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 }
               }}
               style={{
-                width: '3.5rem',
-                height: '3.5rem',
+                width: 'clamp(3rem, 8vw, 3.5rem)',
+                height: 'clamp(3rem, 8vw, 3.5rem)',
                 border: `2px solid ${borderColor}`,
-                borderRadius: '0.5rem',
+                borderRadius: '0.4rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
+                fontSize: 'clamp(1.4rem, 4vw, 1.75rem)',
                 fontWeight: 700,
                 color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
                 backgroundColor,
@@ -122,13 +123,24 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       {showHint && (
         <div 
           style={{
-            marginTop: '0.5rem',
-            fontSize: '0.875rem',
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginTop: '0.25rem',
+            fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
             color: 'var(--color-primary)',
             fontFamily: 'var(--font-primary)',
             opacity: 0.9,
             transition: 'opacity 0.2s ease',
-            textAlign: 'center'
+            textAlign: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '0.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(26, 35, 126, 0.1)',
+            whiteSpace: 'nowrap',
+            zIndex: 10
           }}
         >
           {showHint}

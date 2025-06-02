@@ -8,13 +8,17 @@ interface SettingsModalProps {
   onClose: () => void;
   currentDisplayName?: string;
   onNicknameUpdate: (newNickname: string) => void;
+  onShowRules?: () => void;
+  onShowLeaderboard?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onClose,
   currentDisplayName,
-  onNicknameUpdate
+  onNicknameUpdate,
+  onShowRules,
+  onShowLeaderboard
 }) => {
   const [nickname, setNickname] = useState(currentDisplayName || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -186,7 +190,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             color: 'var(--color-primary, #1a237e)',
           }}
         >
-          Settings
+          Menu
         </div>
 
         {/* Close button */}
@@ -208,6 +212,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
           ×
         </button>
+
+        {/* Menu Items */}
+        <div style={{ marginBottom: '2rem' }}>
+          <button
+            onClick={() => {
+              onShowRules?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            📚 How to Play
+          </button>
+          
+          <button
+            onClick={() => {
+              onShowLeaderboard?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            🏆 Leaderboard
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div style={{ 
+          height: '1px', 
+          backgroundColor: '#e5e7eb', 
+          marginBottom: '1.5rem' 
+        }} />
 
         {/* Nickname Section */}
         <div style={{ marginBottom: '1.5rem' }}>
