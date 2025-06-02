@@ -1,7 +1,7 @@
 import React from 'react';
 import './DefineBoxes.css';
-import { GameSessionState } from '../api/types';
-import { createDefaultClueStatus } from '../../../shared-types/src/clues';
+import { GameSessionState } from '../../../shared-types/src/game';
+import { ShortClueKey, createDefaultClueStatus } from '../../../shared-types/src/clues';
 
 // Use full key list for D.E.F.I.N.E. (E2 is the last box)
 const DEFINE_KEYS = ['D', 'E', 'F', 'I', 'N', 'E2'] as const;
@@ -22,74 +22,116 @@ const DEFINE_HINTS: Record<DefineKey, string> = {
 
 interface DefineBoxesProps {
   gameState: GameSessionState;
-  revealedClues: string[];
-  guessStatus?: GuessStatus[];
+  revealedClues: ShortClueKey[];
+  guessStatus: GuessStatus[];
   onBoxClick?: (message: string) => void;
+  isLoading?: boolean;
 }
 
-export function DefineBoxes({ gameState, revealedClues, guessStatus = [], onBoxClick }: DefineBoxesProps) {
-  if (!gameState) return null;
-
-  const getBoxClassName = (key: DefineKey, idx: number) => {
-    const baseClass = 'define-box';
-    const status = guessStatus[idx] || 'empty';
-    if (status === 'correct') return `${baseClass} correct`;
-    if (status === 'incorrect') return `${baseClass} incorrect`;
-    if (status === 'fuzzy') return `${baseClass} fuzzy`;
-    if (status === 'active') return `${baseClass} active`;
-    return baseClass;
-  };
-
-  const handleBoxClick = (key: DefineKey) => {
-    if (onBoxClick) {
-      onBoxClick(DEFINE_HINTS[key]);
-    }
-  };
+export const DefineBoxes: React.FC<DefineBoxesProps> = ({
+  gameState,
+  revealedClues,
+  guessStatus,
+  onBoxClick,
+  isLoading = false
+}) => {
+  const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
 
   return (
-    <div className="define-boxes-container">
-      <div className="define-boxes">
-        {DEFINE_KEYS.map((key, i) => (
-          <div 
-            key={key} 
-            className={getBoxClassName(key, i)} 
-            data-key={key}
-            onClick={() => handleBoxClick(key)}
-            style={{ cursor: onBoxClick ? 'pointer' : 'default' }}
+    <div style={{ display: 'flex', gap: '0.4rem' }}>
+      {letters.map((letter, index) => {
+        const isRevealed = revealedClues.includes(letter as ShortClueKey);
+        const status = guessStatus[gameState.guesses.length];
+        const isActive = status === 'active' && index === gameState.guesses.length;
+        const isCorrect = guessStatus[index] === 'correct';
+        const isIncorrect = guessStatus[index] === 'incorrect';
+        const isFuzzy = guessStatus[index] === 'fuzzy';
+
+        let backgroundColor = '#fff';
+        let borderColor = 'var(--color-primary, #1a237e)';
+        
+        if (isCorrect) backgroundColor = '#4caf50';
+        else if (isIncorrect) backgroundColor = '#ef5350';
+        else if (isFuzzy) backgroundColor = '#ff9800';
+        else if (isActive) backgroundColor = '#e8eaf6';
+
+        return (
+          <div
+            key={letter}
+            onClick={() => {
+              if (onBoxClick && isRevealed) {
+                onBoxClick(`${letter}: ${gameState.clues[letter.toLowerCase() as keyof typeof gameState.clues]}`);
+              }
+            }}
+            style={{
+              width: '3.5rem',
+              height: '3.5rem',
+              border: `2px solid ${borderColor}`,
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
+              backgroundColor,
+              cursor: isRevealed ? 'pointer' : 'default',
+              transition: 'all 0.2s ease',
+              animation: isLoading ? `jiggle 0.6s ease-in-out ${index * 0.1}s infinite` : 'none',
+              fontFamily: 'var(--font-primary)',
+            }}
           >
-            {DEFINE_LABELS[i]}
+            {letter}
           </div>
-        ))}
-      </div>
+        );
+      })}
+      <style>{`
+        @keyframes jiggle {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          25% {
+            transform: translateY(-4px) rotate(-2deg);
+          }
+          75% {
+            transform: translateY(4px) rotate(2deg);
+          }
+        }
+      `}</style>
     </div>
   );
-}
+};
 
 // Static version for How to Play
-export function StaticDefineBoxes() {
+export const StaticDefineBoxes = () => {
+  const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
+  const emptyGameState = {
+    gameId: '',
+    wordId: '',
+    wordText: '',
+    clues: {
+      definition: '',
+      equivalents: '',
+      first_letter: '',
+      in_a_sentence: '',
+      number_of_letters: '',
+      etymology: '',
+    },
+    guesses: [],
+    revealedClues: [],
+    clueStatus: createDefaultClueStatus(),
+    isComplete: false,
+    isWon: false,
+    score: null,
+    startTime: ''
+  };
+
   return (
     <DefineBoxes
-      gameState={{
-        gameId: '',
-        wordId: '',
-        wordText: '',
-        clues: {
-          definition: '',
-          equivalents: '',
-          first_letter: '',
-          in_a_sentence: '',
-          number_of_letters: '',
-          etymology: ''
-        },
-        guesses: [],
-        revealedClues: [],
-        clueStatus: createDefaultClueStatus(),
-        isComplete: false,
-        isWon: false,
-        score: null,
-        startTime: ''
-      }}
+      gameState={emptyGameState}
       revealedClues={[]}
+      guessStatus={['empty', 'empty', 'empty', 'empty', 'empty', 'empty']}
+      isLoading={false}
     />
   );
-}
+};

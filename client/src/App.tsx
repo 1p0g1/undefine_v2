@@ -9,7 +9,6 @@ import { normalizeText } from '../../src/utils/text';
 import { SettingsButton } from './components/SettingsButton';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
-import { LoadingBar } from './components/LoadingBar';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 
@@ -187,8 +186,6 @@ function App() {
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
       style={{ paddingTop: 24, paddingBottom: 88 }}
     >
-      <LoadingBar isLoading={isSubmitting} />
-      {/* Timer Row */}
       <div
         style={{ 
           margin: '0 auto', 
@@ -262,6 +259,7 @@ function App() {
             revealedClues={revealedClueKeys}
             guessStatus={boxStatus}
             onBoxClick={handleDefineBoxClick}
+            isLoading={isSubmitting}
           />
         </div>
       </div>
