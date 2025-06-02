@@ -389,38 +389,29 @@ function App() {
                   left: 0,
                   width: '100%',
                   height: '100%',
-                  overflow: 'hidden'
+                  overflow: 'visible',
+                  pointerEvents: 'none'
                 }}>
                   {guess.split('').map((letter, index) => (
                     <div
                       key={index}
-                      className="falling-letter"
+                      className="rising-letter"
                       style={{
                         position: 'absolute',
-                        left: `${(index * 20) + 10}px`,
+                        left: `${0.5 + (index * 0.6)}rem`, // Start from padding + character width
                         top: '50%',
                         transform: 'translateY(-50%)',
                         fontSize: '1rem',
                         fontFamily: 'var(--font-primary)',
                         color: 'var(--color-primary)',
-                        animation: `fallAndFade 1s ease-in forwards ${index * 0.1}s`
+                        fontWeight: '400',
+                        animation: `riseAndFade 0.6s ease-out forwards ${index * 0.05}s`,
+                        zIndex: 10
                       }}
                     >
                       {letter}
                     </div>
                   ))}
-                  <div className="bin" style={{
-                    position: 'absolute',
-                    bottom: '-20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '40px',
-                    height: '20px',
-                    borderTop: '2px solid var(--color-primary)',
-                    borderLeft: '2px solid var(--color-primary)',
-                    borderRight: '2px solid var(--color-primary)',
-                    borderRadius: '4px 4px 0 0'
-                  }} />
                 </div>
               )}
             </div>
@@ -616,17 +607,17 @@ function App() {
           }
         }
 
-        @keyframes fallAndFade {
+        @keyframes riseAndFade {
           0% {
             transform: translateY(-50%);
             opacity: 1;
           }
-          60% {
-            transform: translateY(30px);
-            opacity: 0.7;
+          30% {
+            transform: translateY(-80px);
+            opacity: 0.8;
           }
           100% {
-            transform: translateY(40px);
+            transform: translateY(-120px);
             opacity: 0;
           }
         }
@@ -635,7 +626,7 @@ function App() {
           pointer-events: none;
         }
 
-        .falling-letter {
+        .rising-letter {
           will-change: transform, opacity;
         }
       `}</style>
