@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './DefineBoxes.css';
 import { GameSessionState } from '../../../shared-types/src/game';
-import { ShortClueKey, createDefaultClueStatus } from '../../../shared-types/src/clues';
+import { ShortClueKey, createDefaultClueStatus, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
 
 // Use full key list for D.E.F.I.N.E. (E2 is the last box)
 const DEFINE_KEYS = ['D', 'E', 'F', 'I', 'N', 'E2'] as const;
@@ -82,17 +82,23 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           else if (isFuzzy) backgroundColor = '#ff9800';
           else if (isActive) backgroundColor = '#e8eaf6';
 
+          // Handle special case for second E
+          const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
+
           return (
             <div
-              key={letter}
-              onMouseEnter={() => handleBoxHover(letter)}
+              key={`${letter}-${index}`}
+              onMouseEnter={() => handleBoxHover(clueKey)}
               onMouseLeave={() => {
                 if (hintTimer) clearTimeout(hintTimer);
                 setShowHint(null);
               }}
               onClick={() => {
                 if (onBoxClick && isRevealed) {
-                  onBoxClick(`${letter}: ${gameState.clues[letter.toLowerCase() as keyof typeof gameState.clues]}`);
+                  // Map the clue key to the proper property name
+                  const clueProperty = CLUE_KEY_MAP[clueKey as ShortClueKey];
+                  const clueValue = gameState.clues[clueProperty];
+                  onBoxClick(`${clueKey}: ${clueValue || 'No clue available'}`);
                 }
               }}
               style={{
