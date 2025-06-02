@@ -231,12 +231,13 @@ function App() {
           flexWrap: 'nowrap',
           alignItems: 'center',
           justifyContent: 'center',
-          overflow: 'hidden',
+          overflow: 'visible',
           whiteSpace: 'nowrap',
           gap: '0.4rem',
           width: '100%',
           marginTop: '0.7rem',
           marginBottom: '0.5rem',
+          position: 'relative',
         }}
       >
         <span
@@ -247,13 +248,16 @@ function App() {
             fontWeight: 700,
             color: '#1a237e',
             fontSize: '1.1rem',
-            marginRight: '0.5rem',
+            marginRight: '0.25rem',
             whiteSpace: 'nowrap',
+            display: 'inline-block',
+            position: 'relative',
+            top: '1px',
           }}
         >
           Un·
         </span>
-        <div className="define-boxes" style={{ display: 'flex', gap: '0.4rem' }}>
+        <div className="define-boxes" style={{ display: 'flex', gap: '0.4rem', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
             revealedClues={revealedClueKeys}

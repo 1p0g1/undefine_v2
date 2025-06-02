@@ -38,7 +38,13 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
   const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
 
   return (
-    <div style={{ display: 'flex', gap: '0.4rem' }}>
+    <div className="define-boxes-wrapper" style={{ 
+      display: 'flex', 
+      gap: '0.4rem',
+      alignItems: 'center',
+      minHeight: '4rem', // Ensure consistent height during animation
+      padding: '0.25rem 0' // Add some vertical padding
+    }}>
       {letters.map((letter, index) => {
         const isRevealed = revealedClues.includes(letter as ShortClueKey);
         const status = guessStatus[gameState.guesses.length];
@@ -77,8 +83,10 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
               backgroundColor,
               cursor: isRevealed ? 'pointer' : 'default',
               transition: 'all 0.2s ease',
-              animation: isLoading ? `jiggle 0.6s ease-in-out ${index * 0.1}s infinite` : 'none',
+              animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
               fontFamily: 'var(--font-primary)',
+              position: 'relative', // Ensure z-index works
+              zIndex: 1 // Keep above other elements during animation
             }}
           >
             {letter}
@@ -86,15 +94,12 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
         );
       })}
       <style>{`
-        @keyframes jiggle {
+        @keyframes wave {
           0%, 100% {
             transform: translateY(0);
           }
-          25% {
-            transform: translateY(-4px) rotate(-2deg);
-          }
-          75% {
-            transform: translateY(4px) rotate(2deg);
+          50% {
+            transform: translateY(-3px);
           }
         }
       `}</style>
