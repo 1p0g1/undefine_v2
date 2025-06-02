@@ -9,6 +9,7 @@ import { normalizeText } from '../../src/utils/text';
 import { SettingsButton } from './components/SettingsButton';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
+import { LoadingBar } from './components/LoadingBar';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 
@@ -43,6 +44,9 @@ function App() {
   // Toast state
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+
+  // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -95,7 +99,7 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleGuessSubmit = (e: React.FormEvent) => {
+  const handleGuessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted');
     const normalizedGuess = normalizeText(guess);
@@ -108,7 +112,12 @@ function App() {
       return;
     }
     console.log('Submitting guess:', normalizedGuess);
-    submitGuess(normalizedGuess);
+    setIsSubmitting(true);
+    try {
+      await submitGuess(normalizedGuess);
+    } finally {
+      setIsSubmitting(false);
+    }
     setGuess('');
   };
 
@@ -139,11 +148,9 @@ function App() {
     setShowSummary(true);
     setCanReopenSummary(false);
     
-    // Fetch leaderboard data if not already loaded
-    if (leaderboardData.length === 0 && !isLeaderboardLoading) {
-      await fetchLeaderboard();
-    }
-  }, [gameState.wordId, leaderboardData.length, isLeaderboardLoading, fetchLeaderboard]);
+    // Always fetch leaderboard data when modal is opened
+    await fetchLeaderboard();
+  }, [gameState.wordId, fetchLeaderboard]);
 
   const launchConfetti = () => {
     confetti({
@@ -180,6 +187,7 @@ function App() {
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
       style={{ paddingTop: 24, paddingBottom: 88 }}
     >
+      <LoadingBar isLoading={isSubmitting} />
       {/* Timer Row */}
       <div
         style={{ 
