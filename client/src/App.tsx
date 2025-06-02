@@ -108,6 +108,8 @@ function App() {
     }
     if (gameState.guesses.includes(normalizedGuess)) {
       console.log('Duplicate guess, ignoring:', normalizedGuess);
+      setToastMessage('Word already guessed');
+      setShowToast(true);
       return;
     }
     console.log('Submitting guess:', normalizedGuess);
