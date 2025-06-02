@@ -355,66 +355,25 @@ function App() {
       {/* Guess Input Form */}
       {!gameState.isComplete && (
         <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '1rem auto' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
-            <div 
-              style={{ 
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+              placeholder="Enter your guess..."
+              disabled={isSubmitting}
+              style={{
                 flex: 1,
-                position: 'relative',
-                height: '38px'
+                padding: '0.5rem',
+                borderRadius: '0.25rem',
+                border: '1px solid #e5e7eb',
+                fontSize: '1rem',
+                fontFamily: 'var(--font-primary)',
+                transition: 'all 0.2s ease',
+                backgroundColor: isSubmitting ? '#f3f4f6' : '#fff',
+                opacity: isSubmitting ? 0.7 : 1,
               }}
-            >
-              <input
-                type="text"
-                value={guess}
-                onChange={(e) => setGuess(e.target.value)}
-                placeholder="Enter your guess..."
-                disabled={isSubmitting}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  padding: '0.5rem',
-                  borderRadius: '0.25rem',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '1rem',
-                  fontFamily: 'var(--font-primary)',
-                  transition: 'all 0.2s ease',
-                  backgroundColor: isSubmitting ? '#f3f4f6' : '#fff',
-                  opacity: isSubmitting ? 0.7 : 1,
-                }}
-              />
-              {isSubmitting && guess && (
-                <div className="falling-letters-container" style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'visible',
-                  pointerEvents: 'none'
-                }}>
-                  {guess.split('').map((letter, index) => (
-                    <div
-                      key={index}
-                      className="rising-letter"
-                      style={{
-                        position: 'absolute',
-                        left: `${0.5 + (index * 0.6)}rem`, // Start from padding + character width
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        fontSize: '1rem',
-                        fontFamily: 'var(--font-primary)',
-                        color: 'var(--color-primary)',
-                        fontWeight: '400',
-                        animation: `riseAndFade 0.6s ease-out forwards ${index * 0.05}s`,
-                        zIndex: 10
-                      }}
-                    >
-                      {letter}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            />
             <button
               type="submit"
               disabled={isSubmitting}
@@ -541,93 +500,6 @@ function App() {
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
-        }
-
-        @keyframes fadeOutChar {
-          0% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-        }
-
-        .input-loading::placeholder {
-          animation: fadeOutChar 0.6s ease-in-out forwards;
-        }
-
-        /* Create staggered animation for each character */
-        .input-loading::placeholder::first-letter { animation-delay: 0s; }
-        .input-loading::placeholder::nth-word(2) { animation-delay: 0.1s; }
-        .input-loading::placeholder::nth-word(3) { animation-delay: 0.2s; }
-        .input-loading::placeholder::nth-word(4) { animation-delay: 0.3s; }
-
-        .loading-dots {
-          z-index: 2;
-        }
-        
-        .dot {
-          width: 6px;
-          height: 6px;
-          background-color: var(--color-primary, #1a237e);
-          border-radius: 50%;
-          opacity: 0;
-        }
-        
-        .dot:nth-child(1) {
-          animation: dropAndBounce 1s infinite;
-        }
-        
-        .dot:nth-child(2) {
-          animation: dropAndBounce 1s infinite 0.2s;
-        }
-        
-        .dot:nth-child(3) {
-          animation: dropAndBounce 1s infinite 0.4s;
-        }
-        
-        @keyframes dropAndBounce {
-          0% {
-            transform: translateY(-20px);
-            opacity: 0;
-          }
-          30% {
-            transform: translateY(0);
-            opacity: 1;
-          }
-          60% {
-            transform: translateY(-8px);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes riseAndFade {
-          0% {
-            transform: translateY(-50%);
-            opacity: 1;
-          }
-          30% {
-            transform: translateY(-80px);
-            opacity: 0.8;
-          }
-          100% {
-            transform: translateY(-120px);
-            opacity: 0;
-          }
-        }
-
-        .falling-letters-container {
-          pointer-events: none;
-        }
-
-        .rising-letter {
-          will-change: transform, opacity;
         }
       `}</style>
     </div>
