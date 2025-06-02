@@ -360,7 +360,7 @@ function App() {
               style={{ 
                 flex: 1,
                 position: 'relative',
-                height: '38px' // Match input height
+                height: '38px'
               }}
             >
               <input
@@ -382,18 +382,45 @@ function App() {
                   opacity: isSubmitting ? 0.7 : 1,
                 }}
               />
-              {isSubmitting && (
-                <div className="loading-dots" style={{
+              {isSubmitting && guess && (
+                <div className="falling-letters-container" style={{
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  display: 'flex',
-                  gap: '4px'
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'hidden'
                 }}>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
+                  {guess.split('').map((letter, index) => (
+                    <div
+                      key={index}
+                      className="falling-letter"
+                      style={{
+                        position: 'absolute',
+                        left: `${(index * 20) + 10}px`,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: '1rem',
+                        fontFamily: 'var(--font-primary)',
+                        color: 'var(--color-primary)',
+                        animation: `fallAndFade 1s ease-in forwards ${index * 0.1}s`
+                      }}
+                    >
+                      {letter}
+                    </div>
+                  ))}
+                  <div className="bin" style={{
+                    position: 'absolute',
+                    bottom: '-20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '40px',
+                    height: '20px',
+                    borderTop: '2px solid var(--color-primary)',
+                    borderLeft: '2px solid var(--color-primary)',
+                    borderRight: '2px solid var(--color-primary)',
+                    borderRadius: '4px 4px 0 0'
+                  }} />
                 </div>
               )}
             </div>
@@ -587,6 +614,29 @@ function App() {
             transform: translateY(0);
             opacity: 1;
           }
+        }
+
+        @keyframes fallAndFade {
+          0% {
+            transform: translateY(-50%);
+            opacity: 1;
+          }
+          60% {
+            transform: translateY(30px);
+            opacity: 0.7;
+          }
+          100% {
+            transform: translateY(40px);
+            opacity: 0;
+          }
+        }
+
+        .falling-letters-container {
+          pointer-events: none;
+        }
+
+        .falling-letter {
+          will-change: transform, opacity;
         }
       `}</style>
     </div>
