@@ -355,36 +355,65 @@ function App() {
       {/* Guess Input Form */}
       {!gameState.isComplete && (
         <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '1rem auto' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={guess}
-              onChange={(e) => setGuess(e.target.value)}
-              placeholder="Enter your guess..."
-              style={{
+          <div style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
+            <div 
+              style={{ 
                 flex: 1,
-                padding: '0.5rem',
-                borderRadius: '0.25rem',
-                border: '1px solid #e5e7eb',
-                fontSize: '1rem',
-                fontFamily: 'var(--font-primary)',
+                position: 'relative',
+                height: '38px' // Match input height
               }}
-            />
+            >
+              <input
+                type="text"
+                value={guess}
+                onChange={(e) => setGuess(e.target.value)}
+                placeholder="Enter your guess..."
+                disabled={isSubmitting}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  padding: '0.5rem',
+                  borderRadius: '0.25rem',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '1rem',
+                  fontFamily: 'var(--font-primary)',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: isSubmitting ? '#f3f4f6' : '#fff',
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
+              />
+              {isSubmitting && (
+                <div className="loading-dots" style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  display: 'flex',
+                  gap: '4px'
+                }}>
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                </div>
+              )}
+            </div>
             <button
               type="submit"
+              disabled={isSubmitting}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '0.25rem',
-                backgroundColor: '#1a237e',
+                backgroundColor: isSubmitting ? '#cbd5e1' : '#1a237e',
                 color: 'white',
                 border: 'none',
-                cursor: 'pointer',
+                cursor: isSubmitting ? 'default' : 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 fontFamily: 'var(--font-primary)',
+                transition: 'all 0.2s ease',
               }}
             >
-              Submit
+              {isSubmitting ? 'Checking...' : 'Submit'}
             </button>
           </div>
         </form>
@@ -494,6 +523,70 @@ function App() {
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
+        }
+
+        @keyframes fadeOutChar {
+          0% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+        }
+
+        .input-loading::placeholder {
+          animation: fadeOutChar 0.6s ease-in-out forwards;
+        }
+
+        /* Create staggered animation for each character */
+        .input-loading::placeholder::first-letter { animation-delay: 0s; }
+        .input-loading::placeholder::nth-word(2) { animation-delay: 0.1s; }
+        .input-loading::placeholder::nth-word(3) { animation-delay: 0.2s; }
+        .input-loading::placeholder::nth-word(4) { animation-delay: 0.3s; }
+
+        .loading-dots {
+          z-index: 2;
+        }
+        
+        .dot {
+          width: 6px;
+          height: 6px;
+          background-color: var(--color-primary, #1a237e);
+          border-radius: 50%;
+          opacity: 0;
+        }
+        
+        .dot:nth-child(1) {
+          animation: dropAndBounce 1s infinite;
+        }
+        
+        .dot:nth-child(2) {
+          animation: dropAndBounce 1s infinite 0.2s;
+        }
+        
+        .dot:nth-child(3) {
+          animation: dropAndBounce 1s infinite 0.4s;
+        }
+        
+        @keyframes dropAndBounce {
+          0% {
+            transform: translateY(-20px);
+            opacity: 0;
+          }
+          30% {
+            transform: translateY(0);
+            opacity: 1;
+          }
+          60% {
+            transform: translateY(-8px);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>
