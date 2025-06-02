@@ -47,6 +47,10 @@ function App() {
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Rolladex state
+  const [activeHintIndex, setActiveHintIndex] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+
   // Initialize display name from localStorage or generate default
   useEffect(() => {
     const savedDisplayName = localStorage.getItem('playerDisplayName');
@@ -59,6 +63,29 @@ function App() {
       setCurrentDisplayName(defaultName);
     }
   }, []);
+
+  // Scroll handler for rolladex
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrollY(currentScrollY);
+      
+      // Calculate which hint should be active based on scroll position
+      const visibleClues = gameState.clues
+        ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
+        : [];
+      
+      if (visibleClues.length > 1) {
+        // Change hint every 50px of scroll
+        const scrollThreshold = 50;
+        const newIndex = Math.floor(currentScrollY / scrollThreshold) % visibleClues.length;
+        setActiveHintIndex(newIndex);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [gameState.clues, gameState.guesses, gameState.wordText]);
 
   useEffect(() => {
     startNewGame();
@@ -317,34 +344,115 @@ function App() {
       {gameState.guesses.length > 0 && (
         <div className="past-guesses">Past guesses: {gameState.guesses.join(', ')}</div>
       )}
-      {/* Clues Section */}
-      <div className="hint-blocks" style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
-        {visibleClues.map((clue, idx) => {
-          // Get the full label for the clue heading
-          const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
-          const clueLabel = CLUE_LABELS[clueKey];
-          
-          return (
-            <div className="hint-row" key={clue.key}>
-              <div className="hint-letter">{clue.key}</div>
-              <div className="hint-box">
-                <div className="hint-title" style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  color: 'var(--color-primary)',
-                  marginBottom: '0.25rem',
-                  fontFamily: 'var(--font-primary)',
-                  letterSpacing: '0.03em'
-                }}>
-                  {clueLabel}
-                </div>
-                <div className="hint-text">{clue.value}</div>
-              </div>
+      {/* Clues Section - Rolladex Style */}
+      {visibleClues.length > 0 && (
+        <div className="rolladex-container" style={{ 
+          width: '100%', 
+          maxWidth: 420, 
+          margin: '1rem auto',
+          height: '120px',
+          position: 'relative',
+          perspective: '1000px'
+        }}>
+          {visibleClues.length > 1 && (
+            <div style={{
+              fontSize: '0.75rem',
+              color: 'var(--color-primary)',
+              opacity: 0.7,
+              textAlign: 'center',
+              marginBottom: '0.5rem',
+              fontFamily: 'var(--font-primary)'
+            }}>
+              Scroll to reveal hints ({activeHintIndex + 1} of {visibleClues.length})
             </div>
-          );
-        })}
-      </div>
+          )}
+          
+          {visibleClues.map((clue, idx) => {
+            const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
+            const clueLabel = CLUE_LABELS[clueKey];
+            const isActive = idx === activeHintIndex;
+            const offset = idx - activeHintIndex;
+            
+            return (
+              <div 
+                key={clue.key}
+                className="hint-card"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.75rem',
+                  padding: '1rem',
+                  boxShadow: isActive 
+                    ? '0 4px 12px rgba(0, 0, 0, 0.15)' 
+                    : '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transform: `
+                    translateY(${offset * 8}px) 
+                    rotateX(${offset * 5}deg) 
+                    scale(${isActive ? 1 : 0.95})
+                  `,
+                  opacity: isActive ? 1 : 0.7,
+                  zIndex: visibleClues.length - Math.abs(offset),
+                  transition: 'all 0.3s ease',
+                  transformOrigin: 'center bottom'
+                }}
+              >
+                <div className="hint-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <div 
+                    className="hint-letter"
+                    style={{
+                      width: '2rem',
+                      height: '2rem',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'var(--color-primary)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      fontFamily: 'var(--font-primary)',
+                      flexShrink: 0
+                    }}
+                  >
+                    {clue.key}
+                  </div>
+                  <div className="hint-content" style={{ flex: 1, minWidth: 0 }}>
+                    <div 
+                      className="hint-title"
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: 'var(--color-primary)',
+                        marginBottom: '0.25rem',
+                        fontFamily: 'var(--font-primary)',
+                        letterSpacing: '0.03em'
+                      }}
+                    >
+                      {clueLabel}
+                    </div>
+                    <div 
+                      className="hint-text"
+                      style={{
+                        fontSize: '0.875rem',
+                        lineHeight: '1.4',
+                        color: '#374151',
+                        fontFamily: 'var(--font-primary)'
+                      }}
+                    >
+                      {clue.value}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {/* Solution Reveal */}
       {gameState.isComplete && (
         <div
