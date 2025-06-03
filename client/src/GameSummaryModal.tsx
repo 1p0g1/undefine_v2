@@ -57,6 +57,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   // State for managing nickname prompt dismissal
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(true);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ENTRIES_PER_PAGE = 5;
+
+  // Calculate pagination
+  const totalPages = Math.ceil(leaderboard.length / ENTRIES_PER_PAGE);
+  const startIndex = (currentPage - 1) * ENTRIES_PER_PAGE;
+  const endIndex = startIndex + ENTRIES_PER_PAGE;
+  const currentPageEntries = leaderboard.slice(startIndex, endIndex);
+
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,6 +87,9 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
       
       // Only show prompt if they haven't set a nickname and haven't permanently skipped
       setShowNicknamePrompt(!hasSkippedNickname && !hasSetNickname);
+      
+      // Reset pagination when modal opens
+      setCurrentPage(1);
     }
   }, [open]);
 
@@ -112,6 +125,23 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   const handleSkipNickname = () => {
     setShowNicknamePrompt(false);
     localStorage.setItem('hasSkippedNickname', 'true');
+  };
+
+  // Get background color for top 3 positions
+  const getRowBackgroundColor = (rank: number, isCurrentPlayer: boolean | undefined, idx: number) => {
+    if (isCurrentPlayer) {
+      return 'rgba(26, 35, 126, 0.1)';
+    }
+    if (rank === 1) {
+      return 'rgba(255, 215, 0, 0.15)'; // Light gold
+    }
+    if (rank === 2) {
+      return 'rgba(192, 192, 192, 0.15)'; // Light silver
+    }
+    if (rank === 3) {
+      return 'rgba(205, 127, 50, 0.15)'; // Light bronze
+    }
+    return idx % 2 === 1 ? '#f7faff' : undefined;
   };
 
   return createPortal(
@@ -175,8 +205,28 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             display: 'flex',
             justifyContent: 'center',
             paddingTop: 10,
+            alignItems: 'center',
+            gap: 'clamp(0.25rem, 1vw, 0.3rem)'
           }}
         >
+          {/* Add Un· prefix */}
+          <span
+            style={{
+              fontFamily: 'var(--font-primary)',
+              fontStyle: 'italic',
+              fontWeight: 700,
+              color: '#1a237e',
+              fontSize: 'clamp(0.8rem, 2.2vw, 0.88rem)',
+              whiteSpace: 'nowrap',
+              display: 'inline-block',
+              position: 'relative',
+              top: '1px',
+              transform: 'scale(0.78)',
+              marginRight: '0.15rem'
+            }}
+          >
+            Un·
+          </span>
           <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.22rem' }}>
             <DefineBoxes
               gameState={{
@@ -278,83 +328,141 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               No entries yet. Be the first to complete today's word!
             </div>
           ) : (
-          <table
-            className="gs-modal-table"
-            style={{
-              width: '100%',
-              fontFamily: 'var(--font-primary)',
-              fontSize: 13,
-              borderCollapse: 'separate',
-              borderSpacing: 0,
-              textAlign: 'left',
-            }}
-          >
-            <thead>
-              <tr style={{ background: '#f3f4f6' }}>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Rank
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Player
-                </th>
-                <th
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    borderBottom: '1px solid #e5e7eb',
-                    textAlign: 'center',
-                  }}
-                >
-                  Time
-                </th>
-                <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                  Guesses
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.map((entry, idx) => (
-                <tr
-                    key={entry.id}
-                  style={{
-                    background: idx % 2 === 1 ? '#f7faff' : undefined,
-                      fontWeight: entry.is_current_player ? 600 : entry.rank === 1 ? 700 : 400,
-                    borderBottom: '1px solid #f0f0f0',
-                      animation: entry.is_current_player ? 'highlightRow 1s ease-out' : undefined,
-                  }}
-                >
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                    <span
-                      style={{
-                        fontSize: 15,
-                        marginRight: 4,
-                        verticalAlign: 'top',
-                        display: 'inline-block',
-                      }}
-                    >
-                      {entry.rank === 1
-                        ? '🥇'
-                        : entry.rank === 2
-                          ? '🥈'
-                          : entry.rank === 3
-                            ? '🥉'
-                            : entry.rank}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                      {entry.player_name}
-                  </td>
-                  <td
-                    style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+          <>
+            <table
+              className="gs-modal-table"
+              style={{
+                width: '100%',
+                fontFamily: 'var(--font-primary)',
+                fontSize: 13,
+                borderCollapse: 'separate',
+                borderSpacing: 0,
+                textAlign: 'left',
+              }}
+            >
+              <thead>
+                <tr style={{ background: '#f3f4f6' }}>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Rank
+                  </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Player
+                  </th>
+                  <th
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderBottom: '1px solid #e5e7eb',
+                      textAlign: 'center',
+                    }}
                   >
-                      {formatTime(entry.best_time)}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                      {entry.guesses_used}
-                  </td>
+                    Time
+                  </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                    Guesses
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentPageEntries.map((entry, idx) => (
+                  <tr
+                      key={entry.id}
+                    style={{
+                      background: getRowBackgroundColor(entry.rank, entry.is_current_player, idx),
+                        fontWeight: entry.is_current_player ? 600 : entry.rank === 1 ? 700 : 400,
+                      borderBottom: '1px solid #f0f0f0',
+                        animation: entry.is_current_player ? 'highlightRow 1s ease-out' : undefined,
+                    }}
+                  >
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          marginRight: 4,
+                          verticalAlign: 'top',
+                          display: 'inline-block',
+                        }}
+                      >
+                        {entry.rank === 1
+                          ? '🥇'
+                          : entry.rank === 2
+                            ? '🥈'
+                            : entry.rank === 3
+                              ? '🥉'
+                              : entry.rank}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                        {entry.player_name}
+                    </td>
+                    <td
+                      style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
+                    >
+                        {formatTime(entry.best_time)}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                        {entry.guesses_used}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                marginTop: '1rem',
+                fontFamily: 'var(--font-primary)',
+                fontSize: '0.875rem'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                    color: currentPage === 1 ? '#9ca3af' : '#374151',
+                    borderRadius: '0.25rem',
+                    cursor: currentPage === 1 ? 'default' : 'pointer',
+                    fontFamily: 'var(--font-primary)',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  ‹ Prev
+                </button>
+                
+                <span style={{ 
+                  color: '#6b7280', 
+                  fontWeight: 500,
+                  minWidth: '4rem',
+                  textAlign: 'center'
+                }}>
+                  {currentPage} of {totalPages}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                    color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                    borderRadius: '0.25rem',
+                    cursor: currentPage === totalPages ? 'default' : 'pointer',
+                    fontFamily: 'var(--font-primary)',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  Next ›
+                </button>
+              </div>
+            )}
+          </>
           )}
         </div>
         
