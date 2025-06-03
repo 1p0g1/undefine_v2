@@ -222,7 +222,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               style={{
                 width: 'clamp(3rem, 8vw, 3.5rem)',
                 height: 'clamp(3rem, 8vw, 3.5rem)',
-                borderRadius: '0.5rem',
+                borderRadius: '50%',
                 backgroundColor: '#f8f9ff',
                 border: '2px solid #e0e4ff',
                 display: 'flex',
