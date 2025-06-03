@@ -4,6 +4,7 @@ import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
 import { LeaderboardEntry } from './api/types';
 import { createDefaultClueStatus } from '../../shared-types/src/clues';
 import { FirstGamePrompt } from './components/FirstGamePrompt';
+import { UnPrefix } from './components/UnPrefix';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -209,61 +210,41 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             gap: 'clamp(0.25rem, 1vw, 0.3rem)'
           }}
         >
-          {/* Un· circle design matching DEFINE boxes */}
+          {/* Un· dynamic sun/moon design */}
           <div
             style={{
-              transform: 'scale(0.78)',
               display: 'flex',
               alignItems: 'center',
               gap: 'clamp(0.25rem, 1vw, 0.3rem)'
             }}
           >
-            <div
-              style={{
-                width: 'clamp(3rem, 8vw, 3.5rem)',
-                height: 'clamp(3rem, 8vw, 3.5rem)',
-                borderRadius: '50%',
-                backgroundColor: '#f8f9ff',
-                border: '2px solid #e0e4ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'var(--font-primary)',
-                fontStyle: 'italic',
-                fontWeight: 700,
-                color: '#1a237e',
-                fontSize: 'clamp(1rem, 3vw, 1.2rem)',
-                position: 'relative',
-                flexShrink: 0,
-                aspectRatio: '1 / 1' // Ensures perfect circle
-              }}
-            >
-              Un·
+            <UnPrefix scaled={true} />
+            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.22rem' }}>
+              <DefineBoxes
+                gameState={{
+                  gameId: '',
+                  wordId: '',
+                  wordText: word,
+                  clues: {
+                    definition: '',
+                    equivalents: '',
+                    first_letter: '',
+                    in_a_sentence: '',
+                    number_of_letters: '',
+                    etymology: ''
+                  },
+                  guesses: [],
+                  revealedClues: [],
+                  clueStatus: createDefaultClueStatus(),
+                  isComplete: true,
+                  isWon: true,
+                  score: null,
+                  startTime: ''
+                }}
+                revealedClues={[]}
+                guessStatus={guessStatus}
+              />
             </div>
-            <DefineBoxes
-              gameState={{
-                gameId: '',
-                wordId: '',
-                wordText: word,
-                clues: {
-                  definition: '',
-                  equivalents: '',
-                  first_letter: '',
-                  in_a_sentence: '',
-                  number_of_letters: '',
-                  etymology: ''
-                },
-                guesses: [],
-                revealedClues: [],
-                clueStatus: createDefaultClueStatus(),
-                isComplete: true,
-                isWon: true,
-                score: null,
-                startTime: ''
-              }}
-              revealedClues={[]}
-              guessStatus={guessStatus}
-            />
           </div>
         </div>
         <div

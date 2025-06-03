@@ -9,6 +9,7 @@ import { normalizeText } from '../../src/utils/text';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
+import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 
@@ -286,29 +287,8 @@ function App() {
           position: 'relative',
         }}
       >
-        {/* Un· perfect circle matching DEFINE box dimensions exactly */}
-        <div
-          style={{
-            width: 'clamp(3rem, 8vw, 3.5rem)',
-            height: 'clamp(3rem, 8vw, 3.5rem)',
-            borderRadius: '50%',
-            backgroundColor: '#f8f9ff',
-            border: '2px solid #e0e4ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-primary)',
-            fontStyle: 'italic',
-            fontWeight: 700,
-            color: '#1a237e',
-            fontSize: 'clamp(1rem, 3vw, 1.2rem)',
-            position: 'relative',
-            flexShrink: 0,
-            aspectRatio: '1 / 1' // Ensures perfect circle
-          }}
-        >
-          Un·
-        </div>
+        {/* Un· dynamic sun/moon design */}
+        <UnPrefix />
         <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.25rem, 1vw, 0.3rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
