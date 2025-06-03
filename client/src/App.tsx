@@ -286,23 +286,28 @@ function App() {
           position: 'relative',
         }}
       >
-        <span
-          className="un-prefix"
+        {/* Un· circle design matching leaderboard */}
+        <div
           style={{
+            width: 'clamp(3rem, 8vw, 3.5rem)',
+            height: 'clamp(3rem, 8vw, 3.5rem)',
+            borderRadius: '50%',
+            backgroundColor: '#f8f9ff',
+            border: '2px solid #e0e4ff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontFamily: 'var(--font-primary)',
             fontStyle: 'italic',
             fontWeight: 700,
             color: '#1a237e',
-            fontSize: 'clamp(1rem, 2.8vw, 1.1rem)',
-            marginRight: '0.2rem',
-            whiteSpace: 'nowrap',
-            display: 'inline-block',
+            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
             position: 'relative',
-            top: '1px',
+            marginRight: '0.2rem'
           }}
         >
           Un·
-        </span>
+        </div>
         <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.25rem, 1vw, 0.3rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
