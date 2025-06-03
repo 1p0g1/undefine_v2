@@ -5,7 +5,7 @@ interface TimerBadgeProps {
 }
 
 export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
-  const [isTicking, setIsTicking] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
 
   const formatTime = (s: number) => {
     const minutes = Math.floor(s / 60);
@@ -13,10 +13,10 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   };
 
-  // Trigger tick animation every second
+  // Trigger rotation animation every second
   useEffect(() => {
-    setIsTicking(true);
-    const timeout = setTimeout(() => setIsTicking(false), 200);
+    setIsRotating(true);
+    const timeout = setTimeout(() => setIsRotating(false), 300);
     return () => clearTimeout(timeout);
   }, [seconds]);
 
@@ -24,13 +24,9 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
     <>
       <style>{`
         @media (prefers-reduced-motion: reduce) {
-          .timer-badge .tick-hand {
+          .timer-badge .sandglass {
             transition: none !important;
-            transform: scale(1) rotate(0deg) !important;
-          }
-          .timer-badge .tick-hand-needle {
-            transition: none !important;
-            transform: translateX(-50%) rotate(0deg) !important;
+            transform: rotate(0deg) !important;
           }
         }
         
@@ -38,10 +34,14 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
           .timer-badge {
             top: 0.75rem !important;
             right: 0.75rem !important;
-            padding: 0.375rem 0.75rem !important;
-            gap: 0.375rem !important;
-            font-size: 0.8rem !important;
-            min-width: 4.5rem !important;
+            padding: 0.5rem 0.875rem !important;
+            gap: 0.5rem !important;
+            font-size: 0.9rem !important;
+            min-width: 5.5rem !important;
+          }
+          .sandglass {
+            width: 14px !important;
+            height: 16px !important;
           }
         }
         
@@ -49,9 +49,13 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
           .timer-badge {
             top: 0.5rem !important;
             right: 0.5rem !important;
-            padding: 0.3rem 0.6rem !important;
-            font-size: 0.75rem !important;
-            min-width: 4rem !important;
+            padding: 0.4rem 0.75rem !important;
+            font-size: 0.85rem !important;
+            min-width: 5rem !important;
+          }
+          .sandglass {
+            width: 12px !important;
+            height: 14px !important;
           }
         }
       `}</style>
@@ -65,51 +69,86 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
           background: '#faf7f2',
           border: '2px solid #1a237e',
           borderRadius: '2rem',
-          padding: '0.5rem 1rem',
+          padding: '0.6rem 1.2rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
+          justifyContent: 'center',
+          gap: '0.75rem',
           fontFamily: 'Libre Baskerville, Georgia, Times, serif',
-          fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+          fontSize: 'clamp(0.95rem, 2.8vw, 1.1rem)',
           fontWeight: 600,
           color: '#1a237e',
-          boxShadow: '0 2px 8px rgba(26, 35, 126, 0.15)',
+          boxShadow: '0 3px 12px rgba(26, 35, 126, 0.2)',
           zIndex: 40,
           fontVariantNumeric: 'tabular-nums',
           letterSpacing: '0.02em',
-          minWidth: '5rem',
-          justifyContent: 'center'
+          minWidth: '6rem'
         }}
       >
         <div className="timer-text">
           {formatTime(seconds)}
         </div>
         <div 
-          className="tick-hand"
+          className="sandglass"
           style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            background: '#1a237e',
+            width: '16px',
+            height: '18px',
             position: 'relative',
-            transition: 'transform 0.1s ease-out',
-            transform: isTicking ? 'scale(1.2) rotate(15deg)' : 'scale(1) rotate(0deg)',
-            transformOrigin: 'center bottom'
+            transition: 'transform 0.3s ease-out',
+            transform: isRotating ? 'rotate(180deg)' : 'rotate(0deg)',
+            transformOrigin: 'center'
           }}
         >
+          {/* Top bulb */}
           <div
-            className="tick-hand-needle"
             style={{
               position: 'absolute',
-              top: '-6px',
+              top: '0',
               left: '50%',
-              width: '2px',
-              height: '8px',
+              width: '14px',
+              height: '7px',
               background: '#1a237e',
+              borderRadius: '7px 7px 3px 3px',
+              transform: 'translateX(-50%)'
+            }}
+          />
+          {/* Bottom bulb */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              left: '50%',
+              width: '14px',
+              height: '7px',
+              background: '#1a237e',
+              borderRadius: '3px 3px 7px 7px',
+              transform: 'translateX(-50%)'
+            }}
+          />
+          {/* Center narrow part */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '4px',
+              height: '2px',
+              background: '#1a237e',
+              transform: 'translateX(-50%) translateY(-50%)'
+            }}
+          />
+          {/* Sand grains */}
+          <div
+            style={{
+              position: 'absolute',
+              top: isRotating ? '12px' : '2px',
+              left: '50%',
+              width: '8px',
+              height: '3px',
+              background: '#d4a574',
               borderRadius: '1px',
-              transition: 'transform 0.1s ease-out',
-              transformOrigin: 'center bottom',
-              transform: isTicking ? 'translateX(-50%) rotate(10deg)' : 'translateX(-50%) rotate(-10deg)'
+              transform: 'translateX(-50%)',
+              transition: 'top 0.3s ease-out'
             }}
           />
         </div>

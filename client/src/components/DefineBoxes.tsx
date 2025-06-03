@@ -94,12 +94,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 setShowHint(null);
               }}
               onClick={() => {
-                if (onBoxClick && isRevealed) {
-                  // Map the clue key to the proper property name
-                  const clueProperty = CLUE_KEY_MAP[clueKey as ShortClueKey];
-                  const clueValue = gameState.clues[clueProperty];
-                  onBoxClick(`${clueKey}: ${clueValue || 'No clue available'}`);
-                }
+                // Removed click functionality - hover hints are sufficient
               }}
               style={{
                 width: 'clamp(3rem, 8vw, 3.5rem)',
