@@ -8,6 +8,7 @@ import DebugPanel from './components/DebugPanel';
 import { normalizeText } from '../../src/utils/text';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
+import { TimerBadge } from './components/TimerBadge';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 
@@ -233,51 +234,32 @@ function App() {
       className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
       style={{ paddingTop: 16, paddingBottom: 64 }}
     >
+      {/* Timer Badge - Fixed position */}
+      <TimerBadge seconds={timer} />
+      
+      {/* Hamburger Menu - Top left positioning */}
       <div
         style={{ 
-          margin: '0 auto', 
-          textAlign: 'center', 
-          marginBottom: '0.15rem', 
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.75rem'
+          position: 'fixed',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 40
         }}
       >
-        <span
-          className="game-timer timer"
-          style={{
-            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
-            fontWeight: 400,
-            opacity: 0.85,
-            fontFamily: 'Inter, Roboto, DM Sans, Arial, sans-serif',
-            letterSpacing: '0.04em',
-            display: 'inline-block',
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {String(Math.floor(timer / 60)).padStart(2, '0')}
-          <span className="colon" style={{ animation: 'blink 1s infinite' }}>
-            :
-          </span>
-          {String(timer % 60).padStart(2, '0')}
-        </span>
-        
-        {/* Hamburger Menu Button */}
         <button
           onClick={() => setShowSettings(true)}
           style={{
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.25rem',
+            padding: '0.5rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
-            width: '20px',
-            height: '20px',
-            justifyContent: 'center'
+            width: '24px',
+            height: '24px',
+            justifyContent: 'center',
+            borderRadius: '0.25rem'
           }}
           aria-label="Menu"
         >
@@ -286,6 +268,7 @@ function App() {
           <div style={{ width: '16px', height: '2px', backgroundColor: 'var(--color-primary)', borderRadius: '1px' }} />
         </button>
       </div>
+      
       {/* Un·DEFINE Row */}
       <div
         className="define-header"
@@ -298,7 +281,7 @@ function App() {
           whiteSpace: 'nowrap',
           gap: 'clamp(0.25rem, 1vw, 0.3rem)',
           width: '100%',
-          marginTop: '0.5rem',
+          marginTop: '2rem',
           marginBottom: '0.3rem',
           position: 'relative',
         }}
