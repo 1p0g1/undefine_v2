@@ -286,7 +286,7 @@ function App() {
           position: 'relative',
         }}
       >
-        {/* Un· circle design matching leaderboard */}
+        {/* Un· perfect circle matching DEFINE box dimensions exactly */}
         <div
           style={{
             width: 'clamp(3rem, 8vw, 3.5rem)',
@@ -301,9 +301,10 @@ function App() {
             fontStyle: 'italic',
             fontWeight: 700,
             color: '#1a237e',
-            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+            fontSize: 'clamp(1rem, 3vw, 1.2rem)',
             position: 'relative',
-            marginRight: '0.2rem'
+            flexShrink: 0,
+            aspectRatio: '1 / 1' // Ensures perfect circle
           }}
         >
           Un·

@@ -232,8 +232,10 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                 fontStyle: 'italic',
                 fontWeight: 700,
                 color: '#1a237e',
-                fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
-                position: 'relative'
+                fontSize: 'clamp(1rem, 3vw, 1.2rem)',
+                position: 'relative',
+                flexShrink: 0,
+                aspectRatio: '1 / 1' // Ensures perfect circle
               }}
             >
               Un·
