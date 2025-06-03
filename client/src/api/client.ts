@@ -11,6 +11,23 @@ console.log('[API Client] Initialized with:', {
 });
 
 /**
+ * Cache configurations for different API endpoints
+ */
+const CACHE_CONFIG = {
+  '/api/word': { cache: 'default' as const, maxAge: 3600 }, // 1 hour - daily words don't change
+  '/api/guess': { cache: 'no-cache' as const }, // Always fresh - real-time game state
+  '/api/leaderboard': { cache: 'default' as const, maxAge: 300 }, // 5 minutes - semi-static data
+  default: { cache: 'no-cache' as const }
+};
+
+/**
+ * Gets cache configuration for a given path
+ */
+const getCacheConfig = (path: string) => {
+  return CACHE_CONFIG[path as keyof typeof CACHE_CONFIG] || CACHE_CONFIG.default;
+};
+
+/**
  * Ensures path starts with a forward slash
  */
 const normalizePath = (path: string) => {
@@ -72,7 +89,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
       ...options,
       headers,
       mode: 'cors',
-      cache: 'no-cache',
+      cache: getCacheConfig(path).cache,
     });
 
     const duration = Math.round(performance.now() - startTime);
