@@ -87,28 +87,18 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
           />
         </>
       ) : (
-        // Moon craters (subtle)
+        // Moon craters (subtle but visible, positioned to avoid text)
         <>
           <div
             style={{
               position: 'absolute',
-              width: '4px',
-              height: '4px',
+              width: '5px',
+              height: '5px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(26, 35, 126, 0.15)',
-              top: '30%',
-              left: '35%'
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              width: '2px',
-              height: '2px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(26, 35, 126, 0.15)',
-              top: '60%',
-              right: '30%'
+              backgroundColor: 'rgba(26, 35, 126, 0.25)',
+              top: '20%',
+              left: '25%',
+              boxShadow: 'inset 1px 1px 2px rgba(26, 35, 126, 0.2)'
             }}
           />
           <div
@@ -117,9 +107,32 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
               width: '3px',
               height: '3px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(26, 35, 126, 0.1)',
-              top: '45%',
-              left: '60%'
+              backgroundColor: 'rgba(26, 35, 126, 0.3)',
+              top: '70%',
+              right: '20%',
+              boxShadow: 'inset 1px 1px 1px rgba(26, 35, 126, 0.2)'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              width: '4px',
+              height: '4px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(26, 35, 126, 0.2)',
+              top: '15%',
+              right: '25%'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              width: '2px',
+              height: '2px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(26, 35, 126, 0.35)',
+              top: '75%',
+              left: '20%'
             }}
           />
         </>
