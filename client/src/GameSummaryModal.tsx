@@ -209,25 +209,35 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             gap: 'clamp(0.25rem, 1vw, 0.3rem)'
           }}
         >
-          {/* Add Un· prefix */}
-          <span
+          {/* Un· circle design matching DEFINE boxes */}
+          <div
             style={{
-              fontFamily: 'var(--font-primary)',
-              fontStyle: 'italic',
-              fontWeight: 700,
-              color: '#1a237e',
-              fontSize: 'clamp(0.8rem, 2.2vw, 0.88rem)',
-              whiteSpace: 'nowrap',
-              display: 'inline-block',
-              position: 'relative',
-              top: '1px',
               transform: 'scale(0.78)',
-              marginRight: '0.15rem'
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'clamp(0.25rem, 1vw, 0.3rem)'
             }}
           >
-            Un·
-          </span>
-          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.22rem' }}>
+            <div
+              style={{
+                width: 'clamp(3rem, 8vw, 3.5rem)',
+                height: 'clamp(3rem, 8vw, 3.5rem)',
+                borderRadius: '0.5rem',
+                backgroundColor: '#f8f9ff',
+                border: '2px solid #e0e4ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-primary)',
+                fontStyle: 'italic',
+                fontWeight: 700,
+                color: '#1a237e',
+                fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+                position: 'relative'
+              }}
+            >
+              Un·
+            </div>
             <DefineBoxes
               gameState={{
                 gameId: '',
