@@ -97,7 +97,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   if (!open) return null;
 
   const handleCopy = () => {
-    const summary = `UN·DEFINE ${date}\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nwww.undefine.io`;
+    const summary = `UN·DEFINE ${date}\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
     navigator.clipboard.writeText(summary);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -110,7 +110,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   };
 
   const handleShare = () => {
-    const shareText = `I ranked #${playerRank || '?'} in today's Un·Define!\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nwww.undefine.io`;
+    const shareText = `I ranked #${playerRank || '?'} in today's Un·Define!\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
     navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
