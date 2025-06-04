@@ -299,6 +299,24 @@ function App() {
           />
         </div>
       </div>
+      
+      {/* Game Description */}
+      <div
+        className="game-description"
+        style={{
+          fontFamily: 'var(--font-primary)',
+          fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+          color: 'var(--color-primary)',
+          lineHeight: '1.5',
+          textAlign: 'center',
+          margin: '0.75rem 0',
+          maxWidth: '420px',
+          padding: '0 0.5rem'
+        }}
+      >
+        Welcome to Un·Define - a clue-based word guessing game. Your objective is to identify the word that each of the D, E, F, I, N and E hints are referring too, hover over the boxes to learn more!
+      </div>
+      
       {showRules && (
         <div className="modal-overlay" onClick={() => setShowRules(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
