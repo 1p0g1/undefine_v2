@@ -207,19 +207,20 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.25rem, 1vw, 0.3rem)'
+            gap: 'clamp(0.3rem, 1.2vw, 0.4rem)',
           }}
         >
-          {/* Un· dynamic sun/moon design */}
+          {/* Un· enhanced design */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 'clamp(0.25rem, 1vw, 0.3rem)'
+              gap: 'clamp(0.3rem, 1.2vw, 0.4rem)',
+              justifyContent: 'center'
             }}
           >
             <UnPrefix scaled={true} />
-            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.22rem' }}>
+            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.1rem, 0.3vw, 0.15rem)' }}>
               <DefineBoxes
                 gameState={{
                   gameId: '',

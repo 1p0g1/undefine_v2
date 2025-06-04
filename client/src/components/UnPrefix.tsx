@@ -5,33 +5,39 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
+  // Make Un circle larger and more prominent than DEFINE boxes
+  const baseSize = scaled ? 'clamp(3.5rem, 9vw, 4rem)' : 'clamp(3.8rem, 10vw, 4.5rem)';
+  
   const containerStyle = {
-    width: 'clamp(3rem, 8vw, 3.5rem)',
-    height: 'clamp(3rem, 8vw, 3.5rem)',
+    width: baseSize,
+    height: baseSize,
     borderRadius: '50%',
     backgroundColor: '#f8f9ff',
-    border: '2px solid #e0e4ff',
+    border: '3px solid #1a237e', // Thicker, stronger border
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontFamily: 'var(--font-primary)',
     fontStyle: 'italic',
-    fontWeight: 700,
+    fontWeight: 800, // Bolder weight
     color: '#1a237e',
-    fontSize: 'clamp(1rem, 3vw, 1.2rem)',
+    fontSize: scaled ? 'clamp(1.2rem, 4vw, 1.5rem)' : 'clamp(1.4rem, 4.5vw, 1.8rem)', // Larger text
     position: 'relative' as const,
     flexShrink: 0,
-    aspectRatio: '1 / 1' as const
+    aspectRatio: '1 / 1' as const,
+    // Add subtle shadow and glow for more visual impact
+    boxShadow: '0 4px 12px rgba(26, 35, 126, 0.15), 0 0 0 1px rgba(26, 35, 126, 0.1)',
+    transition: 'all 0.2s ease-in-out'
   };
 
   if (scaled) {
-    Object.assign(containerStyle, { transform: 'scale(0.78)' });
+    Object.assign(containerStyle, { transform: 'scale(0.85)' });
   }
 
   return (
     <div style={containerStyle}>
-      {/* "Un·" text */}
-      <span style={{ position: 'relative', zIndex: 2 }}>Un·</span>
+      {/* "Un" text - removed interpunct for cleaner look */}
+      <span style={{ position: 'relative', zIndex: 2 }}>Un</span>
     </div>
   );
 }; 

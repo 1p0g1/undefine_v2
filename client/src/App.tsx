@@ -298,16 +298,16 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.25rem, 1vw, 0.3rem)',
+          gap: 'clamp(0.4rem, 1.5vw, 0.5rem)',
           width: '100%',
           marginTop: '2rem',
           marginBottom: '0.3rem',
           position: 'relative',
         }}
       >
-        {/* Un· dynamic sun/moon design */}
+        {/* Un· enhanced design */}
         <UnPrefix />
-        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.25rem, 1vw, 0.3rem)', flex: '0 0 auto' }}>
+        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
             revealedClues={revealedClueKeys}
