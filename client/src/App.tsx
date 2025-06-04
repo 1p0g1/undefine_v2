@@ -37,6 +37,9 @@ function App() {
   const [showRules, setShowRules] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   
+  // Game start state
+  const [gameStarted, setGameStarted] = useState(false);
+  
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
   const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
@@ -74,11 +77,14 @@ function App() {
       }, 5000);
       return;
     }
-    timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+    // Only start timer if game has been started
+    if (gameStarted) {
+      timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+    }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameState.isComplete]);
+  }, [gameState.isComplete, gameStarted]);
 
   useEffect(() => {
     return () => {
@@ -154,6 +160,13 @@ function App() {
     await fetchLeaderboard();
   }, [gameState.wordId, fetchLeaderboard]);
 
+  // Handle Play Again - reset game and timer
+  const handlePlayAgain = () => {
+    setGameStarted(false);
+    setTimer(0);
+    startNewGame();
+  };
+
   const launchConfetti = () => {
     confetti({
       particleCount: 100,
@@ -228,6 +241,11 @@ function App() {
 
   const handleToastClose = () => {
     setShowToast(false);
+  };
+
+  // Handle game start
+  const handleStartGame = () => {
+    setGameStarted(true);
   };
 
   return (
@@ -314,8 +332,63 @@ function App() {
           padding: '0 0.5rem'
         }}
       >
-        Welcome to Un·Define - a clue-based word guessing game. Your objective is to identify the word that each of the D, E, F, I, N and E hints are referring too, hover over the boxes to learn more!
+        Welcome to Un·Define. Solve the daily word in 6 guesses or less - faster than your friends.
       </div>
+      
+      {/* Start Game Section */}
+      {!gameStarted && (
+        <div
+          className="start-game-section"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            margin: '1rem 0',
+            maxWidth: '420px'
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-primary)',
+              fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
+              color: '#6b7280',
+              textAlign: 'center',
+              fontStyle: 'italic'
+            }}
+          >
+            Your time starts when you click 'Ready'
+          </div>
+          <button
+            onClick={handleStartGame}
+            style={{
+              fontFamily: 'var(--font-primary)',
+              fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+              fontWeight: 600,
+              padding: '0.75rem 2rem',
+              backgroundColor: 'var(--color-primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 4px rgba(26, 35, 126, 0.2)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#1e2875';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(26, 35, 126, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(26, 35, 126, 0.2)';
+            }}
+          >
+            Ready
+          </button>
+        </div>
+      )}
       
       {showRules && (
         <div className="modal-overlay" onClick={() => setShowRules(false)}>
@@ -362,50 +435,52 @@ function App() {
         </div>
       )}
       {/* Past Guesses below DEFINE row */}
-      {gameState.guesses.length > 0 && (
+      {gameStarted && gameState.guesses.length > 0 && (
         <div className="past-guesses" style={{
           fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
           margin: '0.25rem 0'
         }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
       {/* Clues Section */}
-      <div className="hint-blocks" style={{ 
-        width: '100%', 
-        maxWidth: 420, 
-        margin: '0 auto',
-        gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
-      }}>
-        {visibleClues.map((clue, idx) => {
-          // Get the full label for the clue heading
-          const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
-          const clueLabel = CLUE_LABELS[clueKey];
-          
-          return (
-            <div className="hint-row" key={clue.key}>
-              <div className="hint-letter" style={{
-                fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
-              }}>{clue.key}</div>
-              <div className="hint-box">
-                <div className="hint-title" style={{
-                  fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  color: 'var(--color-primary)',
-                  marginBottom: '0.25rem',
-                  fontFamily: 'var(--font-primary)',
-                  letterSpacing: '0.03em'
-                }}>
-                  {clueLabel}
+      {gameStarted && (
+        <div className="hint-blocks" style={{ 
+          width: '100%', 
+          maxWidth: 420, 
+          margin: '0 auto',
+          gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
+        }}>
+          {visibleClues.map((clue, idx) => {
+            // Get the full label for the clue heading
+            const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
+            const clueLabel = CLUE_LABELS[clueKey];
+            
+            return (
+              <div className="hint-row" key={clue.key}>
+                <div className="hint-letter" style={{
+                  fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
+                }}>{clue.key}</div>
+                <div className="hint-box">
+                  <div className="hint-title" style={{
+                    fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    color: 'var(--color-primary)',
+                    marginBottom: '0.25rem',
+                    fontFamily: 'var(--font-primary)',
+                    letterSpacing: '0.03em'
+                  }}>
+                    {clueLabel}
+                  </div>
+                  <div className="hint-text" style={{
+                    fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+                    lineHeight: '1.4'
+                  }}>{clue.value}</div>
                 </div>
-                <div className="hint-text" style={{
-                  fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-                  lineHeight: '1.4'
-                }}>{clue.value}</div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
       {/* Solution Reveal */}
       {gameState.isComplete && (
         <div
@@ -420,7 +495,7 @@ function App() {
         </div>
       )}
       {/* Guess Input Form */}
-      {!gameState.isComplete && (
+      {!gameState.isComplete && gameStarted && (
         <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '0.75rem auto' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
@@ -466,7 +541,7 @@ function App() {
       <GameSummaryModal
         open={showSummary}
         onClose={handleCloseSummary}
-        onPlayAgain={startNewGame}
+        onPlayAgain={handlePlayAgain}
         word={gameState.wordText}
         time={`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}
         guessesUsed={gameState.guesses.length}
