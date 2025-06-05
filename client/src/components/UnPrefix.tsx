@@ -36,8 +36,15 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
 
   return (
     <div style={containerStyle}>
-      {/* "Un" text - removed interpunct for cleaner look */}
-      <span style={{ position: 'relative', zIndex: 2 }}>Un</span>
+      {/* "un" text - lowercase and adjusted positioning to appear centered */}
+      <span style={{ 
+        position: 'relative', 
+        zIndex: 2,
+        marginLeft: '0.1em', // Slight adjustment to compensate for italic slant
+        transform: 'translateX(-0.05em)' // Fine-tune visual centering
+      }}>
+        un
+      </span>
     </div>
   );
 }; 

@@ -220,7 +220,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             }}
           >
             <UnPrefix scaled={true} />
-            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.1rem, 0.3vw, 0.15rem)' }}>
+            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)' }}>
               <DefineBoxes
                 gameState={{
                   gameId: '',
