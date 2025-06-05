@@ -310,7 +310,7 @@ function App() {
         {/* Interpunct separator */}
         <span style={{
           fontFamily: 'var(--font-primary)',
-          fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+          fontSize: 'clamp(1.6rem, 4vw, 2rem)',
           color: '#1a237e',
           fontWeight: 700,
           lineHeight: 1,
