@@ -207,16 +207,17 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.15rem, 0.6vw, 0.22rem)'
+            gap: 'clamp(0.18rem, 0.7vw, 0.25rem)',
+            transform: 'scale(0.82)',
+            transformOrigin: 'center'
           }}
         >
           {/* Un· enhanced design with overlap effect */}
-          <UnPrefix scaled={true} />
+          <UnPrefix scaled={false} />
           <div style={{ 
-            transform: 'scale(0.78)', 
             display: 'flex', 
-            gap: 'clamp(0.02rem, 0.1vw, 0.04rem)',
-            marginLeft: '-0.1rem'
+            gap: 'clamp(0.08rem, 0.25vw, 0.12rem)',
+            flex: '0 0 auto'
           }}>
             <DefineBoxes
               gameState={{

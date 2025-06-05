@@ -350,9 +350,13 @@ function App() {
           padding: '0 0.5rem'
         }}
       >
-        Welcome to Un·Define! A word guessing game.
+        Welcome to Un·Define!
         <br /><br />
-        Solve the word in 6 guesses or less, using clues tied to the D-E-F-I-N-E boxes above (hover over the boxes to learn more). Clues are revealed upon each guess. Fastest player with the fewest guesses wins! Good luck!
+        Your objective is to <strong>reverse-engineer</strong> today's word based on a series of clues.
+        <br /><br />
+        Clues are revealed after each guess, hover over the D-E-F-I-N-E boxes to learn more.
+        <br /><br />
+        Fastest player with the fewest guesses wins. Good luck!
       </div>
       
       {/* Start Game Section */}

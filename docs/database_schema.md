@@ -52,16 +52,16 @@ Stores the words that can be used in the game.
 
 ```sql
 CREATE TABLE words (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   date DATE,
-  word TEXT NOT NULL UNIQUE,
-  definition TEXT NOT NULL,
+word TEXT NOT NULL UNIQUE,
+definition TEXT NOT NULL,
   etymology TEXT,
-  first_letter TEXT,
-  in_a_sentence TEXT,
+first_letter TEXT,
+in_a_sentence TEXT,
   number_of_letters INTEGER,
   equivalents TEXT,
-  difficulty TEXT,
+difficulty TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -75,18 +75,18 @@ Stores information about each game session.
 
 ```sql
 CREATE TABLE game_sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   state TEXT,
   player_id TEXT NOT NULL REFERENCES players(id),
-  word_id UUID NOT NULL REFERENCES words(id),
+word_id UUID NOT NULL REFERENCES words(id),
   start_time TIMESTAMP WITH TIME ZONE NOT NULL,
   end_time TIMESTAMP WITH TIME ZONE,
-  guesses TEXT[] DEFAULT '{}',
+guesses TEXT[] DEFAULT '{}',
   guesses_used INTEGER,
   revealed_clues TEXT[] DEFAULT '{}',
-  is_complete BOOLEAN DEFAULT FALSE,
-  is_won BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+is_complete BOOLEAN DEFAULT FALSE,
+is_won BOOLEAN DEFAULT FALSE,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   clue_status JSONB DEFAULT '{"definition": false, "equivalents": false, "first_letter": false, "in_a_sentence": false, "number_of_letters": false, "etymology": false}'::jsonb
 );
@@ -103,15 +103,15 @@ Stores statistics for each player.
 ```sql
 CREATE TABLE user_stats (
   player_id TEXT PRIMARY KEY REFERENCES players(id),
-  games_played INTEGER DEFAULT 0,
-  current_streak INTEGER DEFAULT 0,
-  longest_streak INTEGER DEFAULT 0,
+games_played INTEGER DEFAULT 0,
+current_streak INTEGER DEFAULT 0,
+longest_streak INTEGER DEFAULT 0,
   best_rank INTEGER,
   top_10_count INTEGER DEFAULT 0,
   average_completion_time FLOAT,
-  last_played_word TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+last_played_word TEXT,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_user_stats_current_streak ON user_stats(current_streak);
@@ -132,16 +132,16 @@ Stores scores for each game session.
 
 ```sql
 CREATE TABLE scores (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  word_id UUID NOT NULL REFERENCES words(id),
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+word_id UUID NOT NULL REFERENCES words(id),
   game_session_id UUID REFERENCES game_sessions(id),
   player_id TEXT NOT NULL REFERENCES players(id),
   nickname TEXT,
-  score INTEGER NOT NULL,
-  base_score INTEGER NOT NULL,
-  guess_penalty INTEGER NOT NULL,
-  time_penalty INTEGER NOT NULL,
-  hint_penalty INTEGER NOT NULL,
+score INTEGER NOT NULL,
+base_score INTEGER NOT NULL,
+guess_penalty INTEGER NOT NULL,
+time_penalty INTEGER NOT NULL,
+hint_penalty INTEGER NOT NULL,
   correct BOOLEAN DEFAULT FALSE,
   guesses_used INTEGER NOT NULL,
   used_hint BOOLEAN DEFAULT FALSE,
@@ -169,11 +169,11 @@ Stores optimized leaderboard data with auto-calculated rankings.
 
 ```sql
 CREATE TABLE leaderboard_summary (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   word_id UUID REFERENCES words(id),
   player_id TEXT NOT NULL REFERENCES user_stats(player_id),
   rank INTEGER,
-  was_top_10 BOOLEAN DEFAULT FALSE,
+was_top_10 BOOLEAN DEFAULT FALSE,
   best_time INTEGER,
   guesses_used INTEGER,
   date DATE DEFAULT CURRENT_DATE
@@ -332,30 +332,30 @@ EXECUTE FUNCTION update_player_activity();
 
 ```typescript
 interface PlayerEntry {
-  id: string;
+id: string;
   display_name: string | null;
-  created_at: string;
+created_at: string;
   last_active: string;
   is_anonymous: boolean;
   metadata: Record<string, unknown>;
 }
 
 interface UserStatsEntry {
-  player_id: string;
-  current_streak: number;
-  longest_streak: number;
+player_id: string;
+current_streak: number;
+longest_streak: number;
   best_rank: number | null;
   top_10_count: number;
   average_completion_time: number | null;
   last_played_word: string | null;
-  created_at: string;
-  updated_at: string;
+created_at: string;
+updated_at: string;
 }
 
 interface LeaderboardSummaryEntry {
-  id: string;
+id: string;
   word_id: string;
-  player_id: string;
+player_id: string;
   rank: number | null;
   was_top_10: boolean;
   best_time: number | null;
@@ -365,11 +365,11 @@ interface LeaderboardSummaryEntry {
 
 interface ScoreEntry {
   id: string;
-  word_id: string;
+word_id: string;
   game_session_id: string | null;
   player_id: string;
   nickname: string | null;
-  score: number;
+score: number;
   base_score: number;
   guess_penalty: number;
   time_penalty: number;
@@ -377,7 +377,7 @@ interface ScoreEntry {
   correct: boolean;
   guesses_used: number;
   used_hint: boolean;
-  completion_time_seconds: number;
+completion_time_seconds: number;
   submitted_at: string;
 }
 ```

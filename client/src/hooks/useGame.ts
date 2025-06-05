@@ -144,7 +144,8 @@ const useGame = () => {
     playerRank,
     isLeaderboardLoading,
     leaderboardError,
-    scoreDetails
+    scoreDetails,
+    fetchLeaderboard
   };
 };
 
