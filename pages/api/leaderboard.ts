@@ -60,7 +60,6 @@ async function handler(
         date
       `)
       .eq('word_id', wordId)
-      .eq('date', new Date().toISOString().split('T')[0]) // Filter by today's date
       .order('rank', { ascending: true });
 
     console.log('[/api/leaderboard] Leaderboard_summary query result:', { 
