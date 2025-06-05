@@ -258,9 +258,9 @@ function App() {
         paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
         minHeight: '100vh',
         width: '100%',
-        maxWidth: '100vw',
-        boxSizing: 'border-box',
-        overflow: 'hidden'
+        maxWidth: 'min(100vw, 28rem)',
+        margin: '0 auto',
+        boxSizing: 'border-box'
       }}
     >
       {/* Timer Badge - Centered at top */}
@@ -306,7 +306,7 @@ function App() {
         </button>
       </div>
       
-      {/* Un·DEFINE Row with interpunct */}
+      {/* Un·DEFINE Row - no separate interpunct */}
       <div
         className="define-header"
         style={{
@@ -323,20 +323,8 @@ function App() {
           position: 'relative',
         }}
       >
-        {/* Un enhanced design */}
+        {/* Un· enhanced design */}
         <UnPrefix />
-        {/* Interpunct separator */}
-        <span style={{
-          fontFamily: 'var(--font-primary)',
-          fontSize: 'clamp(1.6rem, 4vw, 2rem)',
-          color: '#1a237e',
-          fontWeight: 700,
-          lineHeight: 1,
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          ·
-        </span>
         <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.1rem, 0.3vw, 0.15rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}

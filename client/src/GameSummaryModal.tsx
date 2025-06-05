@@ -207,26 +207,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.15rem, 0.6vw, 0.2rem)'
+            gap: 'clamp(0.4rem, 1.2vw, 0.5rem)'
           }}
         >
-          {/* Un enhanced design */}
+          {/* Un· enhanced design */}
           <UnPrefix scaled={true} />
-          {/* Interpunct separator - larger and more visible */}
-          <span style={{
-            fontFamily: 'var(--font-primary)',
-            fontSize: 'clamp(1.4rem, 3.5vw, 1.8rem)',
-            color: '#1a237e',
-            fontWeight: 700,
-            lineHeight: 1,
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: '-0.05rem',
-            marginRight: '0.05rem'
-          }}>
-            ·
-          </span>
-          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.05rem, 0.1vw, 0.08rem)' }}>
+          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.02rem' }}> {/* Extremely tight DEFINE spacing */}
             <DefineBoxes
               gameState={{
                 gameId: '',

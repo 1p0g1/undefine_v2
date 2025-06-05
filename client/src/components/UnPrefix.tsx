@@ -34,14 +34,14 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
 
   return (
     <div style={containerStyle}>
-      {/* "Un" text - counter-rotate to keep text upright */}
+      {/* "Un·" text - counter-rotate to keep text upright and include interpunct */}
       <span style={{ 
         position: 'relative', 
         zIndex: 2,
         transform: 'rotate(-45deg) translateX(-0.05em)', // Counter-rotate text and adjust centering
         marginLeft: '0.1em' // Slight adjustment to compensate for italic slant
       }}>
-        Un
+        Un·
       </span>
     </div>
   );
