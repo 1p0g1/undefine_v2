@@ -350,7 +350,9 @@ function App() {
           padding: '0 0.5rem'
         }}
       >
-        Welcome to Un·Define. Solve the daily word in 6 guesses or less - faster than your friends.
+        Welcome to Un·Define! A word guessing game.
+        <br /><br />
+        Solve the word in 6 guesses or less, using clues tied to the D-E-F-I-N-E boxes above (hover over the boxes to learn more). Clues are revealed upon each guess. Fastest player with the fewest guesses wins! Good luck!
       </div>
       
       {/* Start Game Section */}

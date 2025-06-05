@@ -212,7 +212,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         >
           {/* Un· enhanced design with overlap effect */}
           <UnPrefix scaled={true} />
-          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.08rem, 0.24vw, 0.12rem)' }}> {/* Match homepage DEFINE spacing scaled */}
+          <div style={{ 
+            transform: 'scale(0.78)', 
+            display: 'flex', 
+            gap: 'clamp(0.02rem, 0.1vw, 0.04rem)',
+            marginLeft: '-0.1rem'
+          }}>
             <DefineBoxes
               gameState={{
                 gameId: '',
@@ -236,6 +241,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               }}
               revealedClues={[]}
               guessStatus={guessStatus}
+              onBoxClick={() => {}}
             />
           </div>
         </div>
