@@ -306,7 +306,7 @@ function App() {
         </button>
       </div>
       
-      {/* Un·DEFINE Row - no separate interpunct */}
+      {/* Un·DEFINE Row - with overlapping effect */}
       <div
         className="define-header"
         style={{
@@ -316,7 +316,7 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.4rem, 1.5vw, 0.5rem)',
+          gap: 'clamp(0.2rem, 0.8vw, 0.3rem)',
           width: '100%',
           marginTop: '1rem',
           marginBottom: '0.3rem',

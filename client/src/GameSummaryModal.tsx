@@ -207,12 +207,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.4rem, 1.2vw, 0.5rem)'
+            gap: 'clamp(0.15rem, 0.6vw, 0.22rem)'
           }}
         >
-          {/* Un· enhanced design */}
+          {/* Un· enhanced design with overlap effect */}
           <UnPrefix scaled={true} />
-          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: '0.02rem' }}> {/* Extremely tight DEFINE spacing */}
+          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.08rem, 0.24vw, 0.12rem)' }}> {/* Match homepage DEFINE spacing scaled */}
             <DefineBoxes
               gameState={{
                 gameId: '',
