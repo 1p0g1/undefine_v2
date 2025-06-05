@@ -250,18 +250,36 @@ function App() {
 
   return (
     <div
-      className="flex flex-col items-center text-center px-4 w-full max-w-sm mx-auto min-h-screen main-container"
-      style={{ paddingTop: 16, paddingBottom: 64 }}
+      className="flex flex-col items-center text-center w-full min-h-screen main-container"
+      style={{ 
+        paddingTop: 8, 
+        paddingBottom: 32,
+        paddingLeft: 'clamp(0.5rem, 2vw, 1rem)',
+        paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      }}
     >
-      {/* Timer Badge - Fixed position */}
-      <TimerBadge seconds={timer} />
+      {/* Timer Badge - Centered at top */}
+      <div style={{ 
+        width: '100%', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginBottom: '1rem',
+        paddingTop: '0.5rem'
+      }}>
+        <TimerBadge seconds={timer} />
+      </div>
       
       {/* Hamburger Menu - Top left positioning */}
       <div
         style={{ 
           position: 'fixed',
-          top: '1rem',
-          left: '1rem',
+          top: '0.5rem',
+          left: '0.5rem',
           zIndex: 40
         }}
       >
@@ -300,7 +318,7 @@ function App() {
           whiteSpace: 'nowrap',
           gap: 'clamp(0.4rem, 1.5vw, 0.5rem)',
           width: '100%',
-          marginTop: '2rem',
+          marginTop: '1rem',
           marginBottom: '0.3rem',
           position: 'relative',
         }}
@@ -319,7 +337,7 @@ function App() {
         }}>
           ·
         </span>
-        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)', flex: '0 0 auto' }}>
+        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.1rem, 0.3vw, 0.15rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
             revealedClues={revealedClueKeys}

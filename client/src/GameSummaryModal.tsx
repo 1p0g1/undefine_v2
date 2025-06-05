@@ -207,7 +207,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.2rem, 0.8vw, 0.25rem)'
+            gap: 'clamp(0.15rem, 0.6vw, 0.2rem)'
           }}
         >
           {/* Un enhanced design */}
@@ -221,13 +221,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             lineHeight: 1,
             display: 'flex',
             alignItems: 'center',
-            transform: 'scale(0.85)',
-            marginLeft: '-0.1rem',
-            marginRight: '0.1rem'
+            marginLeft: '-0.05rem',
+            marginRight: '0.05rem'
           }}>
             ·
           </span>
-          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.08rem, 0.2vw, 0.1rem)' }}>
+          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.05rem, 0.1vw, 0.08rem)' }}>
             <DefineBoxes
               gameState={{
                 gameId: '',
