@@ -352,11 +352,9 @@ function App() {
       >
         Welcome to Un·Define!
         <br /><br />
-        Your objective is to <strong>reverse-engineer</strong> today's word based on a series of clues.
+        The objective is to reverse-engineer a word using clues tied to the DEFINE boxes above (hover over them to learn more).
         <br /><br />
-        Clues are revealed after each guess, hover over the D-E-F-I-N-E boxes to learn more.
-        <br /><br />
-        Fastest player with the fewest guesses wins. Good luck!
+        Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
       </div>
       
       {/* Start Game Section */}
