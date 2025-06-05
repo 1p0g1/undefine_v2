@@ -207,45 +207,49 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.3rem, 1.2vw, 0.4rem)',
+            gap: 'clamp(0.3rem, 1.2vw, 0.4rem)'
           }}
         >
-          {/* Un· enhanced design */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'clamp(0.3rem, 1.2vw, 0.4rem)',
-              justifyContent: 'center'
-            }}
-          >
-            <UnPrefix scaled={true} />
-            <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)' }}>
-              <DefineBoxes
-                gameState={{
-                  gameId: '',
-                  wordId: '',
-                  wordText: word,
-                  clues: {
-                    definition: '',
-                    equivalents: '',
-                    first_letter: '',
-                    in_a_sentence: '',
-                    number_of_letters: '',
-                    etymology: ''
-                  },
-                  guesses: [],
-                  revealedClues: [],
-                  clueStatus: createDefaultClueStatus(),
-                  isComplete: true,
-                  isWon: true,
-                  score: null,
-                  startTime: ''
-                }}
-                revealedClues={[]}
-                guessStatus={guessStatus}
-              />
-            </div>
+          {/* Un enhanced design */}
+          <UnPrefix scaled={true} />
+          {/* Interpunct separator */}
+          <span style={{
+            fontFamily: 'var(--font-primary)',
+            fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', // Slightly smaller for modal
+            color: '#1a237e',
+            fontWeight: 700,
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+            transform: 'scale(0.85)' // Match the scaled environment
+          }}>
+            ·
+          </span>
+          <div style={{ transform: 'scale(0.78)', display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)' }}> {/* Match homepage spacing exactly */}
+            <DefineBoxes
+              gameState={{
+                gameId: '',
+                wordId: '',
+                wordText: word,
+                clues: {
+                  definition: '',
+                  equivalents: '',
+                  first_letter: '',
+                  in_a_sentence: '',
+                  number_of_letters: '',
+                  etymology: ''
+                },
+                guesses: [],
+                revealedClues: [],
+                clueStatus: createDefaultClueStatus(),
+                isComplete: true,
+                isWon: true,
+                score: null,
+                startTime: ''
+              }}
+              revealedClues={[]}
+              guessStatus={guessStatus}
+            />
           </div>
         </div>
         <div

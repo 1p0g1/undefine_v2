@@ -288,7 +288,7 @@ function App() {
         </button>
       </div>
       
-      {/* Un·DEFINE Row */}
+      {/* Un·DEFINE Row with interpunct */}
       <div
         className="define-header"
         style={{
@@ -305,8 +305,20 @@ function App() {
           position: 'relative',
         }}
       >
-        {/* Un· enhanced design */}
+        {/* Un enhanced design */}
         <UnPrefix />
+        {/* Interpunct separator */}
+        <span style={{
+          fontFamily: 'var(--font-primary)',
+          fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+          color: '#1a237e',
+          fontWeight: 700,
+          lineHeight: 1,
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          ·
+        </span>
         <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)', flex: '0 0 auto' }}>
           <DefineBoxes
             gameState={gameState}
