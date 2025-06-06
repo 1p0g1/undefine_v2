@@ -131,14 +131,63 @@
 - [ ] **Update all code references** to use `game_sessions` instead of `scores`
 - [ ] **Remove scoring API endpoints** that reference the redundant table
 
-#### **1.2 Create Reliable Leaderboard Population**
-- [ ] **Build robust leaderboard population function** that:
-  - Queries `game_sessions` for completed, won games
-  - Calculates ranks, best times, guess counts
-  - Handles ties and edge cases properly
-  - Includes comprehensive error handling
-- [ ] **Create manual population endpoint** for emergency fixes
-- [ ] **Add validation checks** to ensure all completed games appear
+#### **1.2 Build Reliable Leaderboard Population Function**
+**Status**: 🔄 IN PROGRESS
+
+**Current Understanding** (from code analysis):
+- ✅ **Existing trigger system** (`update_leaderboard_from_game`) exists but fails silently
+- ✅ **Data source** is `game_sessions` table (reliable, complete data)
+- ✅ **Target table** is `leaderboard_summary` (correct structure)
+- ✅ **Ranking logic** exists (`update_leaderboard_rankings`) 
+- ⚠️ **Issue**: 55+ trigger executions but still missing players like Matilda
+
+**Approach Decided**: ✅ **HYBRID APPROACH**
+1. Build robust population function (manual/scheduled)
+2. Keep triggers but add comprehensive error handling
+3. Add validation to catch trigger failures
+4. Include backfill capability for historical fixes
+
+**Implementation Progress**:
+- [x] **Analysis complete** - Understanding current system
+- [x] **✅ COMPLETED**: Create robust population function (`/api/admin/populate-leaderboard`)
+- [x] **✅ COMPLETED**: Create validation endpoint (`/api/admin/validate-leaderboard`)
+- [ ] **🔄 NEXT**: Enhance existing triggers with error handling
+- [ ] Create comprehensive error handling
+- [ ] Create manual trigger endpoint
+- [ ] Build backfill capability
+- [ ] Test with current missing players
+
+**Recent Completions**:
+- ✅ **Robust Population Function**: `/api/admin/populate-leaderboard`
+  - Queries `game_sessions` for completed, winning games
+  - Handles filtering by `wordId`, `playerId`, with `backfill` option
+  - Ensures `user_stats` entries exist (fixes foreign key issues)
+  - Implements proper conflict resolution (only updates better times)
+  - Updates rankings for all affected words
+  - Comprehensive error handling and detailed logging
+  - Returns detailed stats and action log
+
+- ✅ **Validation Endpoint**: `/api/admin/validate-leaderboard`
+  - Identifies missing players from leaderboard
+  - Shows detailed missing player information
+  - Provides comprehensive statistics
+  - Can validate specific words or entire system
+
+**Usage Examples**:
+```bash
+# Populate leaderboard for specific word with validation
+curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
+  -H "Content-Type: application/json" \
+  -d '{"wordId": "WORD_ID", "validate": true}'
+
+# Backfill all historical missing players
+curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
+  -H "Content-Type: application/json" \
+  -d '{"backfill": true, "validate": true}'
+
+# Validate leaderboard completeness
+curl https://undefine-v2-front.vercel.app/api/admin/validate-leaderboard?wordId=WORD_ID
+```
 
 #### **1.3 Fix Missing Players Immediately**
 - [ ] **Run one-time backfill** for recent missing players
@@ -273,4 +322,80 @@
 3. **PRIORITY**: Fix current day's missing players issue
 4. **FOUNDATION**: Implement persistent daily snapshots
 
-This systematic approach will create a robust, scalable leaderboard system that supports current needs and future enhancements like streaks and all-time leaderboards. 
+This systematic approach will create a robust, scalable leaderboard system that supports current needs and future enhancements like streaks and all-time leaderboards.
+
+---
+
+## 📋 TASK LOG & PROGRESS TRACKING
+
+### **PHASE 1: IMMEDIATE FIXES**
+
+#### **1.1 Eliminate Redundancy**
+**Status**: ⏸️ DEFERRED (will do after population function is stable)
+- [ ] Delete `scores` table
+- [ ] Update code references
+- [ ] Remove redundant API endpoints
+
+#### **1.2 Build Reliable Leaderboard Population Function**
+**Status**: 🔄 IN PROGRESS
+
+**Current Understanding** (from code analysis):
+- ✅ **Existing trigger system** (`update_leaderboard_from_game`) exists but fails silently
+- ✅ **Data source** is `game_sessions` table (reliable, complete data)
+- ✅ **Target table** is `leaderboard_summary` (correct structure)
+- ✅ **Ranking logic** exists (`update_leaderboard_rankings`) 
+- ⚠️ **Issue**: 55+ trigger executions but still missing players like Matilda
+
+**Approach Decided**: ✅ **HYBRID APPROACH**
+1. Build robust population function (manual/scheduled)
+2. Keep triggers but add comprehensive error handling
+3. Add validation to catch trigger failures
+4. Include backfill capability for historical fixes
+
+**Implementation Progress**:
+- [x] **Analysis complete** - Understanding current system
+- [x] **✅ COMPLETED**: Create robust population function (`/api/admin/populate-leaderboard`)
+- [x] **✅ COMPLETED**: Create validation endpoint (`/api/admin/validate-leaderboard`)
+- [ ] **🔄 NEXT**: Enhance existing triggers with error handling
+- [ ] Create comprehensive error handling
+- [ ] Create manual trigger endpoint
+- [ ] Build backfill capability
+- [ ] Test with current missing players
+
+**Recent Completions**:
+- ✅ **Robust Population Function**: `/api/admin/populate-leaderboard`
+  - Queries `game_sessions` for completed, winning games
+  - Handles filtering by `wordId`, `playerId`, with `backfill` option
+  - Ensures `user_stats` entries exist (fixes foreign key issues)
+  - Implements proper conflict resolution (only updates better times)
+  - Updates rankings for all affected words
+  - Comprehensive error handling and detailed logging
+  - Returns detailed stats and action log
+
+- ✅ **Validation Endpoint**: `/api/admin/validate-leaderboard`
+  - Identifies missing players from leaderboard
+  - Shows detailed missing player information
+  - Provides comprehensive statistics
+  - Can validate specific words or entire system
+
+**Usage Examples**:
+```bash
+# Populate leaderboard for specific word with validation
+curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
+  -H "Content-Type: application/json" \
+  -d '{"wordId": "WORD_ID", "validate": true}'
+
+# Backfill all historical missing players
+curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
+  -H "Content-Type: application/json" \
+  -d '{"backfill": true, "validate": true}'
+
+# Validate leaderboard completeness
+curl https://undefine-v2-front.vercel.app/api/admin/validate-leaderboard?wordId=WORD_ID
+```
+
+#### **1.3 Fix Missing Players**
+**Status**: ⏳ PENDING (depends on 1.2)
+- [ ] One-time backfill script
+- [ ] Current day validation
+- [ ] Monitoring setup 
