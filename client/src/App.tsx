@@ -12,6 +12,7 @@ import { TimerBadge } from './components/TimerBadge';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
+import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 
 function App() {
   const {
@@ -50,6 +51,9 @@ function App() {
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // All-time leaderboard state
+  const [showAllTimeLeaderboard, setShowAllTimeLeaderboard] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -159,6 +163,11 @@ function App() {
     // Always fetch leaderboard data when modal is opened
     await fetchLeaderboard();
   }, [gameState.wordId, fetchLeaderboard]);
+
+  // Handler to show all-time leaderboard
+  const handleShowAllTimeLeaderboard = useCallback(() => {
+    setShowAllTimeLeaderboard(true);
+  }, []);
 
   // Handle Play Again - reset game and timer
   const handlePlayAgain = () => {
@@ -587,6 +596,7 @@ function App() {
         onNicknameUpdate={handleNicknameUpdate}
         onShowRules={() => setShowRules(true)}
         onShowLeaderboard={showLeaderboardModal}
+        onShowAllTimeLeaderboard={handleShowAllTimeLeaderboard}
       />
       {/* Toast Notification */}
       <Toast
@@ -596,6 +606,11 @@ function App() {
         duration={2000}
       />
       <DebugPanel gameState={gameState} isVisible={showDebug} />
+      {/* All-Time Leaderboard Modal */}
+      <AllTimeLeaderboard
+        open={showAllTimeLeaderboard}
+        onClose={() => setShowAllTimeLeaderboard(false)}
+      />
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }

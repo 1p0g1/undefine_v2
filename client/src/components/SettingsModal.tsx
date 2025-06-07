@@ -10,6 +10,7 @@ interface SettingsModalProps {
   onNicknameUpdate: (newNickname: string) => void;
   onShowRules?: () => void;
   onShowLeaderboard?: () => void;
+  onShowAllTimeLeaderboard?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -18,7 +19,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentDisplayName,
   onNicknameUpdate,
   onShowRules,
-  onShowLeaderboard
+  onShowLeaderboard,
+  onShowAllTimeLeaderboard
 }) => {
   const [nickname, setNickname] = useState(currentDisplayName || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -264,7 +266,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
           >
-            🏆 Leaderboard
+            🏆 Today's Leaderboard
+          </button>
+
+          <button
+            onClick={() => {
+              onShowAllTimeLeaderboard?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            📊 All-Time Stats
           </button>
         </div>
 
