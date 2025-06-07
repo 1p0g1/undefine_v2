@@ -9,74 +9,81 @@ interface SentenceWithLogoProps {
 }
 
 export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
-  // Simple mini logo component that adapts to underscore length
+  // Simple SVG logo component that adapts to underscore length
   const MiniUnDefineLogo = ({ underscoreCount }: { underscoreCount: number }) => {
-    // Base width calculation - each underscore is roughly 0.6em wide
-    const baseWidth = Math.max(6, Math.min(12, underscoreCount * 0.6)); // Between 6-12em
-    const scale = Math.max(0.5, Math.min(0.8, baseWidth / 10)); // Scale between 0.5-0.8
+    // Calculate appropriate width based on underscore count
+    const logoWidth = Math.max(80, Math.min(120, underscoreCount * 8)); // 80-120px range
     
     return (
       <span style={{ 
         display: 'inline-flex', 
         alignItems: 'center', 
-        gap: '0.05rem',
         margin: '0 0.1rem',
         verticalAlign: 'middle',
-        transform: `scale(${scale})`,
-        transformOrigin: 'center',
         position: 'relative',
-        top: '-1px',
-        // Match main DEFINE box styling
-        border: '2px solid var(--color-primary)', // Same as main boxes
-        borderRadius: '0.4rem', // Same as main boxes
-        padding: '0.1rem 0.25rem',
-        backgroundColor: '#fff', // Same as main boxes
-        boxShadow: '0 2px 8px rgba(26, 35, 126, 0.04)', // Same as main boxes
-        width: `${baseWidth}em`,
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontFamily: 'var(--font-primary)' // Same as main boxes
+        top: '-1px'
       }}>
-        {/* Mini Un prefix */}
-        <span style={{
-          fontStyle: 'italic',
-          fontWeight: 600,
-          fontSize: '0.8rem',
-          color: 'var(--color-primary)',
-          marginRight: '0.08rem',
-          whiteSpace: 'nowrap',
-          letterSpacing: '0.05em' // Match main box letter spacing
-        }}>
-          Un·
-        </span>
-        
-        {/* Mini DEFINE boxes - matching main box proportions */}
-        {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
-          <span
-            key={`mini-${letter}-${index}`}
-            style={{
-              width: '1rem',
-              height: '1rem',
-              border: '2px solid var(--color-primary)', // Match main box border
-              borderRadius: '0.4rem', // Match main box border radius
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.55rem',
-              fontWeight: 700, // Match main box font weight
-              color: 'var(--color-primary)',
-              backgroundColor: '#fff',
-              marginRight: index < 5 ? '0.05rem' : '0', // Slightly increased gap
-              fontFamily: 'var(--font-primary)',
-              flexShrink: 0,
-              letterSpacing: '0.05em', // Match main box letter spacing
-              boxShadow: '0 2px 8px rgba(26, 35, 126, 0.04)', // Match main box shadow
-              transition: 'all 0.2s ease' // Match main box transition
-            }}
+        <svg 
+          width={logoWidth} 
+          height="20" 
+          viewBox="0 0 120 20" 
+          style={{ 
+            display: 'inline-block',
+            verticalAlign: 'middle'
+          }}
+        >
+          {/* Diamond background for Un· */}
+          <path 
+            d="M2 10 L10 2 L18 10 L10 18 Z" 
+            fill="white" 
+            stroke="#1a237e" 
+            strokeWidth="1.5"
+          />
+          
+          {/* Un· text */}
+          <text 
+            x="10" 
+            y="13" 
+            textAnchor="middle" 
+            fontSize="8" 
+            fontFamily="var(--font-primary)" 
+            fontStyle="italic" 
+            fontWeight="600" 
+            fill="#1a237e"
           >
-            {letter}
-          </span>
-        ))}
+            Un·
+          </text>
+          
+          {/* DEFINE boxes */}
+          {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => {
+            const x = 24 + (index * 15);
+            return (
+              <g key={letter + index}>
+                <rect 
+                  x={x} 
+                  y="4" 
+                  width="12" 
+                  height="12" 
+                  fill="white" 
+                  stroke="#1a237e" 
+                  strokeWidth="1.5" 
+                  rx="2"
+                />
+                <text 
+                  x={x + 6} 
+                  y="12.5" 
+                  textAnchor="middle" 
+                  fontSize="7" 
+                  fontFamily="var(--font-primary)" 
+                  fontWeight="700" 
+                  fill="#1a237e"
+                >
+                  {letter}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
       </span>
     );
   };
