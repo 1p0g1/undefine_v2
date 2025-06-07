@@ -166,10 +166,11 @@
 **Next Major Tasks**:
 - [x] **✅ COMPLETED**: Design daily snapshot table schema
 - [x] **✅ COMPLETED**: Create daily finalization process  
-- [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
-- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization (cron job)
-- [ ] **🔄 IMMEDIATE**: Update leaderboard API to use snapshots for historical data
+- [x] **✅ COMPLETED**: Modify triggers for dual current/historical logic
+- [x] **✅ COMPLETED**: Build automated midnight UTC finalization (cron job)
+- [x] **✅ COMPLETED**: Update leaderboard API to use snapshots for historical data
 - [ ] **🔄 IMMEDIATE**: Test snapshot system with existing data
+- [ ] **🔄 IMMEDIATE**: Deploy migration to production database
 - [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
 - [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
 
@@ -185,6 +186,22 @@
   - Auto-finalization of all old snapshots  
   - Comprehensive error handling and progress tracking
   - Returns detailed stats on finalized snapshots
+
+**Recent Completions (Enhanced Leaderboard API)**:
+- ✅ **Dual Logic System**: Current day (real-time) vs Historical (snapshots)
+- ✅ **Enhanced `/api/leaderboard`**: 
+  - `date` parameter support for historical queries
+  - `getCurrentDayLeaderboard()` - Real-time data from `leaderboard_summary`
+  - `getHistoricalLeaderboard()` - Immutable data from snapshots
+  - Auto-finalization fallback for missing snapshots
+  - Graceful fallback to real-time when snapshots unavailable
+- ✅ **Automated Finalization**: `/api/cron/finalize-daily-leaderboards`
+  - Runs at midnight UTC via Vercel Cron (`0 0 * * *`)
+  - Finalizes yesterday's leaderboards automatically
+  - Prevents duplicate finalization with smart checking
+  - Comprehensive error handling and logging
+  - Security: Only accessible via Vercel Cron headers
+- ✅ **Vercel Cron Configuration**: `vercel.json` with daily schedule
 
 #### **1.3 Fix Missing Players Immediately**
 - [ ] **Run one-time backfill** for recent missing players
@@ -368,10 +385,11 @@ This systematic approach will create a robust, scalable leaderboard system that 
 **Next Major Tasks**:
 - [x] **✅ COMPLETED**: Design daily snapshot table schema
 - [x] **✅ COMPLETED**: Create daily finalization process  
-- [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
-- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization (cron job)
-- [ ] **🔄 IMMEDIATE**: Update leaderboard API to use snapshots for historical data
+- [x] **✅ COMPLETED**: Modify triggers for dual current/historical logic
+- [x] **✅ COMPLETED**: Build automated midnight UTC finalization (cron job)
+- [x] **✅ COMPLETED**: Update leaderboard API to use snapshots for historical data
 - [ ] **🔄 IMMEDIATE**: Test snapshot system with existing data
+- [ ] **🔄 IMMEDIATE**: Deploy migration to production database
 - [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
 - [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
 
@@ -387,6 +405,22 @@ This systematic approach will create a robust, scalable leaderboard system that 
   - Auto-finalization of all old snapshots  
   - Comprehensive error handling and progress tracking
   - Returns detailed stats on finalized snapshots
+
+**Recent Completions (Enhanced Leaderboard API)**:
+- ✅ **Dual Logic System**: Current day (real-time) vs Historical (snapshots)
+- ✅ **Enhanced `/api/leaderboard`**: 
+  - `date` parameter support for historical queries
+  - `getCurrentDayLeaderboard()` - Real-time data from `leaderboard_summary`
+  - `getHistoricalLeaderboard()` - Immutable data from snapshots
+  - Auto-finalization fallback for missing snapshots
+  - Graceful fallback to real-time when snapshots unavailable
+- ✅ **Automated Finalization**: `/api/cron/finalize-daily-leaderboards`
+  - Runs at midnight UTC via Vercel Cron (`0 0 * * *`)
+  - Finalizes yesterday's leaderboards automatically
+  - Prevents duplicate finalization with smart checking
+  - Comprehensive error handling and logging
+  - Security: Only accessible via Vercel Cron headers
+- ✅ **Vercel Cron Configuration**: `vercel.json` with daily schedule
 
 #### **1.3 Fix Missing Players**
 **Status**: ⏳ PENDING (depends on 1.2)

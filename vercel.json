@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/finalize-daily-leaderboards",
+      "schedule": "0 0 * * *"
+    }
+  ]
+} 
