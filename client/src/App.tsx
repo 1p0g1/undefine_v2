@@ -252,7 +252,7 @@ function App() {
     <div
       className="flex flex-col items-center text-center w-full min-h-screen main-container"
       style={{ 
-        paddingTop: 8, 
+        paddingTop: '2rem',
         paddingBottom: 32,
         paddingLeft: 'clamp(0.5rem, 2vw, 1rem)',
         paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
@@ -274,12 +274,12 @@ function App() {
         <TimerBadge seconds={timer} />
       </div>
       
-      {/* Hamburger Menu - Top left positioning */}
+      {/* Hamburger Menu - Top left positioning with mobile-safe positioning */}
       <div
         style={{ 
           position: 'fixed',
-          top: '0.5rem',
-          left: '0.5rem',
+          top: 'max(0.5rem, env(safe-area-inset-top))',
+          left: 'max(0.5rem, env(safe-area-inset-left))',
           zIndex: 40
         }}
       >
@@ -306,7 +306,7 @@ function App() {
         </button>
       </div>
       
-      {/* Un·DEFINE Row - with overlapping effect */}
+      {/* Un·DEFINE Row - with overlapping effect and mobile-safe spacing */}
       <div
         className="define-header"
         style={{
@@ -318,9 +318,10 @@ function App() {
           whiteSpace: 'nowrap',
           gap: 'clamp(0.2rem, 0.8vw, 0.3rem)',
           width: '100%',
-          marginTop: '1rem',
+          marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
+          minHeight: 'clamp(4rem, 12vw, 5rem)',
         }}
       >
         {/* Un· enhanced design */}

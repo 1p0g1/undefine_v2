@@ -22,6 +22,9 @@ html {
   color: var(--color-primary);
   height: 100%;
   overflow-x: hidden;
+  /* Ensure mobile viewport is handled properly */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 .main-container {
@@ -29,6 +32,9 @@ html {
   margin: 0 auto;
   padding-inline: 1rem;
   box-sizing: border-box;
+  /* Ensure content doesn't get cropped on mobile */
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 .define-header {
@@ -39,6 +45,8 @@ html {
   gap: 0.25rem;
   overflow-x: auto;
   width: 100%;
+  /* Ensure adequate spacing on mobile */
+  padding-top: clamp(0.5rem, 2vw, 1rem);
 }
 
 .un-prefix {
