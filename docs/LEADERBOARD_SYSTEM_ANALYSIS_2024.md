@@ -164,12 +164,27 @@
 - ⚠️ **Current triggers** - Need complete redesign for new business logic
 
 **Next Major Tasks**:
-- [ ] **🔄 IMMEDIATE**: Design daily snapshot table schema
-- [ ] **🔄 IMMEDIATE**: Create daily finalization process  
+- [x] **✅ COMPLETED**: Design daily snapshot table schema
+- [x] **✅ COMPLETED**: Create daily finalization process  
 - [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
-- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization
+- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization (cron job)
+- [ ] **🔄 IMMEDIATE**: Update leaderboard API to use snapshots for historical data
+- [ ] **🔄 IMMEDIATE**: Test snapshot system with existing data
 - [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
 - [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
+
+**Recent Completions (Daily Snapshot Foundation)**:
+- ✅ **Daily Snapshot Table**: `daily_leaderboard_snapshots` with JSONB final rankings
+- ✅ **Finalization Functions**: 
+  - `finalize_daily_leaderboard()` - Creates immutable snapshots with final `was_top_10`
+  - `get_historical_leaderboard()` - Queries historical data from snapshots
+  - `should_finalize_date()` - Checks if date should be finalized (past midnight UTC)
+  - `auto_finalize_old_snapshots()` - Bulk finalization of unfinalized snapshots
+- ✅ **Admin API Endpoint**: `/api/admin/finalize-daily-leaderboard`
+  - Manual finalization of specific word/date
+  - Auto-finalization of all old snapshots  
+  - Comprehensive error handling and progress tracking
+  - Returns detailed stats on finalized snapshots
 
 #### **1.3 Fix Missing Players Immediately**
 - [ ] **Run one-time backfill** for recent missing players
@@ -351,12 +366,27 @@ This systematic approach will create a robust, scalable leaderboard system that 
 - ⚠️ **Current triggers** - Need complete redesign for new business logic
 
 **Next Major Tasks**:
-- [ ] **🔄 IMMEDIATE**: Design daily snapshot table schema
-- [ ] **🔄 IMMEDIATE**: Create daily finalization process  
+- [x] **✅ COMPLETED**: Design daily snapshot table schema
+- [x] **✅ COMPLETED**: Create daily finalization process  
 - [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
-- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization
+- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization (cron job)
+- [ ] **🔄 IMMEDIATE**: Update leaderboard API to use snapshots for historical data
+- [ ] **🔄 IMMEDIATE**: Test snapshot system with existing data
 - [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
 - [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
+
+**Recent Completions (Daily Snapshot Foundation)**:
+- ✅ **Daily Snapshot Table**: `daily_leaderboard_snapshots` with JSONB final rankings
+- ✅ **Finalization Functions**: 
+  - `finalize_daily_leaderboard()` - Creates immutable snapshots with final `was_top_10`
+  - `get_historical_leaderboard()` - Queries historical data from snapshots
+  - `should_finalize_date()` - Checks if date should be finalized (past midnight UTC)
+  - `auto_finalize_old_snapshots()` - Bulk finalization of unfinalized snapshots
+- ✅ **Admin API Endpoint**: `/api/admin/finalize-daily-leaderboard`
+  - Manual finalization of specific word/date
+  - Auto-finalization of all old snapshots  
+  - Comprehensive error handling and progress tracking
+  - Returns detailed stats on finalized snapshots
 
 #### **1.3 Fix Missing Players**
 **Status**: ⏳ PENDING (depends on 1.2)
