@@ -24,7 +24,7 @@ WHERE word_id = target_word_id;
 
 **Questions for Clarification**:
 1. **What should `was_top_10` represent?**
-   - **Option A**: "Was in top 10 when daily word closed" (end-of-day snapshot)
+   - **Option A**: "Was in top 10 when daily word ended"
    - **Option B**: "Is currently in top 10" (real-time status)  
    - **Option C**: "Was ever in top 10 during that day" (once true, stays true)
 
@@ -155,16 +155,75 @@ ALTER TABLE leaderboard_summary ADD COLUMN is_final BOOLEAN;
 
 ---
 
+## ✅ BUSINESS REQUIREMENTS CONFIRMED
+
+**Date**: December 2024  
+**Status**: ✅ REQUIREMENTS CLARIFIED - READY TO IMPLEMENT
+
+### **User Answers**:
+
+1. **`was_top_10`** = **Option A**: "Was in top 10 when daily word ended" ✅
+2. **Daily words close at midnight UTC** and leaderboards become **immutable** ✅
+3. **Yes to historical preservation** for leaderboards ✅
+4. **Future archive words won't affect leaderboards** (noted for future)
+5. **User expectation**: When someone sees "was top 10" it means they achieved top 10 when that day ended
+
+### **Bigger Picture Goals**:
+- **Daily leaderboard** to see how you ranked on today's word
+- **All-time leaderboard** with times in top 10, games completed, streak counts
+- **Streak features** for player retention
+- **Archive words** in future (won't affect leaderboards)
+
+### **Key Discovery**:
+User thought previous day's words were inaccessible, but our database shows games across multiple dates. Need to verify current word access logic.
+
+---
+
+## 🚨 REQUIRED SYSTEM CHANGES
+
+**This requires MAJOR changes (not minimal):**
+
+### **1. End-of-Day Snapshot System** ✅ REQUIRED
+```sql
+CREATE TABLE daily_leaderboard_snapshots (
+  id UUID PRIMARY KEY,
+  word_id UUID,
+  date DATE,
+  final_rankings JSONB, -- Complete leaderboard with final was_top_10
+  total_players INTEGER,
+  is_finalized BOOLEAN,
+  finalized_at TIMESTAMPTZ
+);
+```
+
+### **2. Modified `was_top_10` Logic** ✅ REQUIRED
+- **Current day**: Real-time updates as players complete games
+- **Past days**: Immutable, set only in final snapshot
+- **Query logic**: Use snapshots for historical, live table for current day
+
+### **3. Daily Finalization Process** ✅ REQUIRED
+- Automated job at midnight UTC
+- Creates immutable snapshot
+- Sets final `was_top_10` values
+- Marks day as completed
+
+### **4. Foundation for All-Time Stats** ✅ REQUIRED
+- Track top 10 appearances from snapshots
+- Calculate streaks from daily completions
+- Aggregate statistics for all-time leaderboard
+
+---
+
 ## 🔄 IMPACT ON CURRENT IMPLEMENTATION
 
-**Depending on answers above, we may need to**:
-- ✅ **Minimal changes**: If real-time behavior is correct
-- ⚠️ **Moderate changes**: If we need end-of-day freezing
-- 🚨 **Major changes**: If we need historical snapshots and immutable records
-
 **This affects**:
-- Trigger logic enhancement (next step)
-- User stats calculations  
-- Streak logic
-- Achievement systems
-- API responses 
+- ✅ **Minimal changes**: ~~If real-time behavior is correct~~
+- ✅ **Moderate changes**: ~~If we need end-of-day freezing~~
+- 🚨 **Major changes**: **REQUIRED** - Need historical snapshots and immutable records
+
+**Immediate Changes Needed**:
+- Trigger logic enhancement → **Complete redesign**
+- User stats calculations → **Add snapshot integration**
+- Streak logic → **Build from scratch using snapshots**
+- Achievement systems → **Base on immutable daily results**
+- API responses → **Different logic for current vs historical days** 

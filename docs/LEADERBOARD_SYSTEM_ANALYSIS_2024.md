@@ -132,62 +132,44 @@
 - [ ] **Remove scoring API endpoints** that reference the redundant table
 
 #### **1.2 Build Reliable Leaderboard Population Function**
-**Status**: 🔄 IN PROGRESS
+**Status**: 🔄 REQUIRES MAJOR REDESIGN
 
-**Current Understanding** (from code analysis):
-- ✅ **Existing trigger system** (`update_leaderboard_from_game`) exists but fails silently
-- ✅ **Data source** is `game_sessions` table (reliable, complete data)
-- ✅ **Target table** is `leaderboard_summary` (correct structure)
-- ✅ **Ranking logic** exists (`update_leaderboard_rankings`) 
-- ⚠️ **Issue**: 55+ trigger executions but still missing players like Matilda
+**Business Requirements Clarified**:
+- ✅ `was_top_10` = "Was in top 10 when daily word ended"
+- ✅ Words close at midnight UTC, leaderboards become immutable  
+- ✅ Historical preservation required
+- ✅ Foundation needed for streaks and all-time leaderboards
 
-**Approach Decided**: ✅ **HYBRID APPROACH**
-1. Build robust population function (manual/scheduled)
-2. Keep triggers but add comprehensive error handling
-3. Add validation to catch trigger failures
-4. Include backfill capability for historical fixes
+**Major System Changes Required**:
+- 🚨 **End-of-day snapshot system** (new table + finalization process)
+- 🚨 **Immutable daily leaderboards** (current vs historical logic)
+- 🚨 **Modified `was_top_10` logic** (real-time for current, frozen for past)
+- 🚨 **Daily finalization automation** (midnight UTC jobs)
+- 🚨 **All-time stats foundation** (streak tracking, top 10 counts)
 
 **Implementation Progress**:
 - [x] **Analysis complete** - Understanding current system
 - [x] **✅ COMPLETED**: Create robust population function (`/api/admin/populate-leaderboard`)
 - [x] **✅ COMPLETED**: Create validation endpoint (`/api/admin/validate-leaderboard`)
-- [ ] **🔄 NEXT**: Enhance existing triggers with error handling
-- [ ] Create comprehensive error handling
-- [ ] Create manual trigger endpoint
-- [ ] Build backfill capability
+- [ ] **🚨 REDESIGN REQUIRED**: Current functions need major modifications for snapshot system
+- [ ] **🔄 NEW PRIORITY**: Design and implement daily snapshot system
+- [ ] **🔄 NEW PRIORITY**: Create daily finalization process
+- [ ] **🔄 NEW PRIORITY**: Modify triggers for current-day vs historical logic
+- [ ] **🔄 NEW PRIORITY**: Build foundation for streak tracking
 - [ ] Test with current missing players
 
-**Recent Completions**:
-- ✅ **Robust Population Function**: `/api/admin/populate-leaderboard`
-  - Queries `game_sessions` for completed, winning games
-  - Handles filtering by `wordId`, `playerId`, with `backfill` option
-  - Ensures `user_stats` entries exist (fixes foreign key issues)
-  - Implements proper conflict resolution (only updates better times)
-  - Updates rankings for all affected words
-  - Comprehensive error handling and detailed logging
-  - Returns detailed stats and action log
+**Previous Work Status**:
+- ✅ **Population function** - Will be adapted for snapshot system
+- ✅ **Validation endpoint** - Will be enhanced for snapshot validation  
+- ⚠️ **Current triggers** - Need complete redesign for new business logic
 
-- ✅ **Validation Endpoint**: `/api/admin/validate-leaderboard`
-  - Identifies missing players from leaderboard
-  - Shows detailed missing player information
-  - Provides comprehensive statistics
-  - Can validate specific words or entire system
-
-**Usage Examples**:
-```bash
-# Populate leaderboard for specific word with validation
-curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
-  -H "Content-Type: application/json" \
-  -d '{"wordId": "WORD_ID", "validate": true}'
-
-# Backfill all historical missing players
-curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
-  -H "Content-Type: application/json" \
-  -d '{"backfill": true, "validate": true}'
-
-# Validate leaderboard completeness
-curl https://undefine-v2-front.vercel.app/api/admin/validate-leaderboard?wordId=WORD_ID
-```
+**Next Major Tasks**:
+- [ ] **🔄 IMMEDIATE**: Design daily snapshot table schema
+- [ ] **🔄 IMMEDIATE**: Create daily finalization process  
+- [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
+- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization
+- [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
+- [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
 
 #### **1.3 Fix Missing Players Immediately**
 - [ ] **Run one-time backfill** for recent missing players
@@ -337,62 +319,44 @@ This systematic approach will create a robust, scalable leaderboard system that 
 - [ ] Remove redundant API endpoints
 
 #### **1.2 Build Reliable Leaderboard Population Function**
-**Status**: 🔄 IN PROGRESS
+**Status**: 🔄 REQUIRES MAJOR REDESIGN
 
-**Current Understanding** (from code analysis):
-- ✅ **Existing trigger system** (`update_leaderboard_from_game`) exists but fails silently
-- ✅ **Data source** is `game_sessions` table (reliable, complete data)
-- ✅ **Target table** is `leaderboard_summary` (correct structure)
-- ✅ **Ranking logic** exists (`update_leaderboard_rankings`) 
-- ⚠️ **Issue**: 55+ trigger executions but still missing players like Matilda
+**Business Requirements Clarified**:
+- ✅ `was_top_10` = "Was in top 10 when daily word ended"
+- ✅ Words close at midnight UTC, leaderboards become immutable  
+- ✅ Historical preservation required
+- ✅ Foundation needed for streaks and all-time leaderboards
 
-**Approach Decided**: ✅ **HYBRID APPROACH**
-1. Build robust population function (manual/scheduled)
-2. Keep triggers but add comprehensive error handling
-3. Add validation to catch trigger failures
-4. Include backfill capability for historical fixes
+**Major System Changes Required**:
+- 🚨 **End-of-day snapshot system** (new table + finalization process)
+- 🚨 **Immutable daily leaderboards** (current vs historical logic)
+- 🚨 **Modified `was_top_10` logic** (real-time for current, frozen for past)
+- 🚨 **Daily finalization automation** (midnight UTC jobs)
+- 🚨 **All-time stats foundation** (streak tracking, top 10 counts)
 
 **Implementation Progress**:
 - [x] **Analysis complete** - Understanding current system
 - [x] **✅ COMPLETED**: Create robust population function (`/api/admin/populate-leaderboard`)
 - [x] **✅ COMPLETED**: Create validation endpoint (`/api/admin/validate-leaderboard`)
-- [ ] **🔄 NEXT**: Enhance existing triggers with error handling
-- [ ] Create comprehensive error handling
-- [ ] Create manual trigger endpoint
-- [ ] Build backfill capability
+- [ ] **🚨 REDESIGN REQUIRED**: Current functions need major modifications for snapshot system
+- [ ] **🔄 NEW PRIORITY**: Design and implement daily snapshot system
+- [ ] **🔄 NEW PRIORITY**: Create daily finalization process
+- [ ] **🔄 NEW PRIORITY**: Modify triggers for current-day vs historical logic
+- [ ] **🔄 NEW PRIORITY**: Build foundation for streak tracking
 - [ ] Test with current missing players
 
-**Recent Completions**:
-- ✅ **Robust Population Function**: `/api/admin/populate-leaderboard`
-  - Queries `game_sessions` for completed, winning games
-  - Handles filtering by `wordId`, `playerId`, with `backfill` option
-  - Ensures `user_stats` entries exist (fixes foreign key issues)
-  - Implements proper conflict resolution (only updates better times)
-  - Updates rankings for all affected words
-  - Comprehensive error handling and detailed logging
-  - Returns detailed stats and action log
+**Previous Work Status**:
+- ✅ **Population function** - Will be adapted for snapshot system
+- ✅ **Validation endpoint** - Will be enhanced for snapshot validation  
+- ⚠️ **Current triggers** - Need complete redesign for new business logic
 
-- ✅ **Validation Endpoint**: `/api/admin/validate-leaderboard`
-  - Identifies missing players from leaderboard
-  - Shows detailed missing player information
-  - Provides comprehensive statistics
-  - Can validate specific words or entire system
-
-**Usage Examples**:
-```bash
-# Populate leaderboard for specific word with validation
-curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
-  -H "Content-Type: application/json" \
-  -d '{"wordId": "WORD_ID", "validate": true}'
-
-# Backfill all historical missing players
-curl -X POST https://undefine-v2-front.vercel.app/api/admin/populate-leaderboard \
-  -H "Content-Type: application/json" \
-  -d '{"backfill": true, "validate": true}'
-
-# Validate leaderboard completeness
-curl https://undefine-v2-front.vercel.app/api/admin/validate-leaderboard?wordId=WORD_ID
-```
+**Next Major Tasks**:
+- [ ] **🔄 IMMEDIATE**: Design daily snapshot table schema
+- [ ] **🔄 IMMEDIATE**: Create daily finalization process  
+- [ ] **🔄 IMMEDIATE**: Modify triggers for dual current/historical logic
+- [ ] **🔄 IMMEDIATE**: Build automated midnight UTC finalization
+- [ ] **🔄 FUTURE**: Implement streak tracking from snapshots
+- [ ] **🔄 FUTURE**: Build all-time leaderboard from historical data
 
 #### **1.3 Fix Missing Players**
 **Status**: ⏳ PENDING (depends on 1.2)
