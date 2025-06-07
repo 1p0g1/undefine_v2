@@ -13,7 +13,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
   const MiniUnDefineLogo = ({ underscoreCount }: { underscoreCount: number }) => {
     // Base width calculation - each underscore is roughly 0.6em wide
     const baseWidth = Math.max(6, Math.min(12, underscoreCount * 0.6)); // Between 6-12em
-    const scale = Math.max(0.4, Math.min(0.7, baseWidth / 10)); // Scale between 0.4-0.7
+    const scale = Math.max(0.5, Math.min(0.8, baseWidth / 10)); // Scale between 0.5-0.8
     
     return (
       <span style={{ 
@@ -26,15 +26,16 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         transformOrigin: 'center',
         position: 'relative',
         top: '-1px',
-        // Add border around the whole logo
-        border: '1px solid var(--color-primary)',
-        borderRadius: '0.3rem',
-        padding: '0.1rem 0.2rem',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        boxShadow: '0 1px 3px rgba(26, 35, 126, 0.1)',
+        // Match main DEFINE box styling
+        border: '2px solid var(--color-primary)', // Same as main boxes
+        borderRadius: '0.4rem', // Same as main boxes
+        padding: '0.1rem 0.25rem',
+        backgroundColor: '#fff', // Same as main boxes
+        boxShadow: '0 2px 8px rgba(26, 35, 126, 0.04)', // Same as main boxes
         width: `${baseWidth}em`,
         justifyContent: 'center',
-        flexShrink: 0
+        flexShrink: 0,
+        fontFamily: 'var(--font-primary)' // Same as main boxes
       }}>
         {/* Mini Un prefix */}
         <span style={{
@@ -42,31 +43,35 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
           fontWeight: 600,
           fontSize: '0.8rem',
           color: 'var(--color-primary)',
-          marginRight: '0.05rem',
-          whiteSpace: 'nowrap'
+          marginRight: '0.08rem',
+          whiteSpace: 'nowrap',
+          letterSpacing: '0.05em' // Match main box letter spacing
         }}>
           Un·
         </span>
         
-        {/* Mini DEFINE boxes */}
+        {/* Mini DEFINE boxes - matching main box proportions */}
         {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
           <span
             key={`mini-${letter}-${index}`}
             style={{
               width: '1rem',
               height: '1rem',
-              border: '1px solid var(--color-primary)',
-              borderRadius: '0.15rem',
+              border: '2px solid var(--color-primary)', // Match main box border
+              borderRadius: '0.4rem', // Match main box border radius
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '0.55rem',
-              fontWeight: 700,
+              fontWeight: 700, // Match main box font weight
               color: 'var(--color-primary)',
               backgroundColor: '#fff',
-              marginRight: index < 5 ? '0.02rem' : '0',
+              marginRight: index < 5 ? '0.05rem' : '0', // Slightly increased gap
               fontFamily: 'var(--font-primary)',
-              flexShrink: 0
+              flexShrink: 0,
+              letterSpacing: '0.05em', // Match main box letter spacing
+              boxShadow: '0 2px 8px rgba(26, 35, 126, 0.04)', // Match main box shadow
+              transition: 'all 0.2s ease' // Match main box transition
             }}
           >
             {letter}
