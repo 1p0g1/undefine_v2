@@ -13,6 +13,7 @@ import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
+import { SentenceWithLogo } from './components/SentenceWithLogo';
 
 function App() {
   const {
@@ -506,7 +507,13 @@ function App() {
                   <div className="hint-text" style={{
                     fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
                     lineHeight: '1.4'
-                  }}>{clue.value}</div>
+                  }}>
+                    {clueKey === 'in_a_sentence' ? (
+                      <SentenceWithLogo text={clue.value} />
+                    ) : (
+                      clue.value
+                    )}
+                  </div>
                 </div>
               </div>
             );

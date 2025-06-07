@@ -257,12 +257,22 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           }}
         >
           <div style={{ marginBottom: 2 }}>
-            Today you ranked <span style={{ fontWeight: 700 }}>#{playerRank || '?'}</span>
+            {playerRank ? (
+              <>Today you ranked <span style={{ fontWeight: 700 }}>#{playerRank}</span></>
+            ) : (
+              <>Today you didn't rank <span style={{ fontSize: '1.2rem' }}>:(</span></>
+            )}
           </div>
-          <div>
-            Guesses: <span style={{ fontWeight: 700 }}>{guessesUsed}/6</span>, Fuzzy:{' '}
-            <span style={{ fontWeight: 700 }}>{fuzzyMatches}/6</span>
-          </div>
+          {playerRank ? (
+            <div>
+              Guesses: <span style={{ fontWeight: 700 }}>{guessesUsed}/6</span>, Fuzzy:{' '}
+              <span style={{ fontWeight: 700 }}>{fuzzyMatches}/6</span>
+            </div>
+          ) : (
+            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
+              Better luck tomorrow!
+            </div>
+          )}
           {score && (
             <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '0.5rem' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#1a237e' }}>Score Breakdown (NEW System)</div>
