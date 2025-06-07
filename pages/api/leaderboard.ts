@@ -37,154 +37,256 @@ async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { wordId, playerId } = req.query;
+  const { wordId, playerId, date } = req.query;
 
   if (!wordId || typeof wordId !== 'string') {
     return res.status(400).json({ error: 'wordId is required' });
   }
 
   try {
-    console.log('[/api/leaderboard] Fetching leaderboard for wordId:', wordId, 'playerId:', playerId);
-
-    // Try to get entries from leaderboard_summary first (using correct column names from ERD)
-    let { data: allEntries, error: allEntriesError } = await supabase
-      .from('leaderboard_summary')
-      .select(`
-        id,
-        player_id,
-        word_id,
-        rank,
-        best_time,
-        guesses_used,
-        was_top_10,
-        date
-      `)
-      .eq('word_id', wordId)
-      .order('rank', { ascending: true });
-
-    console.log('[/api/leaderboard] Leaderboard_summary query result:', { 
-      success: !allEntriesError, 
-      entryCount: allEntries?.length || 0,
-      error: allEntriesError?.message 
+    const targetDate = date && typeof date === 'string' ? date : getCurrentUTCDate();
+    const isCurrentDay = targetDate === getCurrentUTCDate();
+    
+    console.log('[/api/leaderboard] Fetching leaderboard for:', {
+      wordId,
+      playerId: typeof playerId === 'string' ? playerId : undefined,
+      targetDate,
+      isCurrentDay
     });
 
-    // If leaderboard_summary is empty or has errors, try to get from scores table as fallback
-    if (allEntriesError || !allEntries || allEntries.length === 0) {
-      console.log('[/api/leaderboard] Falling back to scores table...');
-      
-      const { data: scoresData, error: scoresError } = await supabase
-        .from('scores')
-        .select(`
-          id,
-          player_id,
-          word_id,
-          score,
-          completion_time_seconds,
-          guesses_used,
-          submitted_at
-        `)
-        .eq('word_id', wordId)
-        .eq('correct', true)
-        .order('score', { ascending: false })
-        .order('completion_time_seconds', { ascending: true });
+    let leaderboardEntries: LeaderboardEntry[] = [];
+    let totalEntries = 0;
 
-      console.log('[/api/leaderboard] Scores table query result:', { 
-        success: !scoresError, 
-        entryCount: scoresData?.length || 0,
-        error: scoresError?.message 
-      });
-
-      if (scoresError) {
-        console.error('[/api/leaderboard] Both leaderboard_summary and scores failed:', {
-          leaderboardError: allEntriesError?.message,
-          scoresError: scoresError.message
-        });
-        return res.status(500).json({ error: 'Database access failed: ' + scoresError.message });
-      }
-
-      // Transform scores data to leaderboard format
-      allEntries = (scoresData || []).map((score, index) => ({
-        id: score.id,
-        player_id: score.player_id,
-        word_id: score.word_id,
-        rank: index + 1,
-        best_time: score.completion_time_seconds,
-        guesses_used: score.guesses_used,
-        was_top_10: (index + 1) <= 10,
-        date: score.submitted_at?.split('T')[0] || new Date().toISOString().split('T')[0]
-      }));
+    if (isCurrentDay) {
+      // Current day: Use real-time leaderboard_summary
+      const currentResult = await getCurrentDayLeaderboard(wordId, typeof playerId === 'string' ? playerId : undefined);
+      leaderboardEntries = currentResult.entries;
+      totalEntries = currentResult.totalEntries;
+    } else {
+      // Historical date: Use immutable snapshots
+      const historicalResult = await getHistoricalLeaderboard(wordId, targetDate, typeof playerId === 'string' ? playerId : undefined);
+      leaderboardEntries = historicalResult.entries;
+      totalEntries = historicalResult.totalEntries;
     }
 
-    console.log('[/api/leaderboard] Final data:', { entryCount: allEntries?.length || 0 });
+    // Find player's rank
+    const playerEntry = leaderboardEntries.find(entry => entry.player_id === (typeof playerId === 'string' ? playerId : undefined));
+    const playerRank = playerEntry?.rank || null;
 
-    // Handle empty results
-    if (!allEntries || allEntries.length === 0) {
-      console.log('[/api/leaderboard] No entries found for word:', wordId);
-      return res.status(200).json({
-        leaderboard: [],
-        playerRank: null,
-        totalEntries: 0
-      });
-    }
-
-    // Get player display names from players table
-    const playerIds = allEntries.map(entry => entry.player_id);
-    const { data: playersData } = await supabase
-      .from('players')
-      .select('id, display_name')
-      .in('id', playerIds);
-
-    const playerNames = new Map(playersData?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []);
-
-    // Transform entries to match expected format
-    const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => ({
-      id: entry.id,
-      word_id: entry.word_id,
-      player_id: entry.player_id,
-      player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
-      rank: entry.rank || 0,
-      guesses_used: entry.guesses_used || 0,
-      best_time: entry.best_time || 0,
-      date: entry.date || new Date().toISOString().split('T')[0],
-      created_at: new Date().toISOString(), // Default value for compatibility
-      was_top_10: entry.was_top_10 || false,
-      is_current_player: entry.player_id === playerId
-    }));
-
-    // Find player's entry and rank if playerId is provided
-    let playerEntry: LeaderboardEntry | null = null;
-    let playerRank: number | null = null;
-    if (playerId && typeof playerId === 'string') {
-      playerEntry = transformedEntries.find(entry => entry.player_id === playerId) ?? null;
-      if (playerEntry) {
-        playerRank = playerEntry.rank;
-      }
-    }
-
-    // Get top 10 entries
-    const topEntries = transformedEntries.slice(0, 10);
-
-    // If player is not in top 10 but has an entry, add it to the response
-    const leaderboardEntries = [...topEntries];
-    if (playerEntry && !topEntries.find(entry => entry.player_id === playerId)) {
-      leaderboardEntries.push(playerEntry);
-    }
-
-    console.log('[/api/leaderboard] Successfully returning leaderboard with', leaderboardEntries.length, 'entries');
+    console.log('[/api/leaderboard] Successfully returning leaderboard:', {
+      entryCount: leaderboardEntries.length,
+      totalEntries,
+      playerRank,
+      source: isCurrentDay ? 'real-time' : 'snapshot'
+    });
 
     return res.status(200).json({
       leaderboard: leaderboardEntries,
       playerRank,
-      totalEntries: transformedEntries.length
+      totalEntries
     });
+
   } catch (err) {
     console.error('[/api/leaderboard] Unexpected error in leaderboard handler:', {
       error: err,
       message: err instanceof Error ? err.message : 'Unknown error',
       stack: err instanceof Error ? err.stack : undefined
     });
-    return res.status(500).json({ error: 'Internal server error: ' + (err instanceof Error ? err.message : 'Unknown error') });
+    return res.status(500).json({ 
+      error: 'Internal server error: ' + (err instanceof Error ? err.message : 'Unknown error') 
+    });
   }
+}
+
+/**
+ * Get current day leaderboard using real-time data
+ */
+async function getCurrentDayLeaderboard(
+  wordId: string, 
+  playerId?: string
+): Promise<{ entries: LeaderboardEntry[]; totalEntries: number }> {
+  console.log('[getCurrentDayLeaderboard] Fetching real-time data for:', wordId);
+
+  // Get entries from leaderboard_summary (real-time for current day)
+  const { data: allEntries, error: allEntriesError } = await supabase
+    .from('leaderboard_summary')
+    .select(`
+      id,
+      player_id,
+      word_id,
+      rank,
+      best_time,
+      guesses_used,
+      was_top_10,
+      date
+    `)
+    .eq('word_id', wordId)
+    .order('rank', { ascending: true });
+
+  if (allEntriesError) {
+    console.error('[getCurrentDayLeaderboard] Query failed:', allEntriesError.message);
+    throw new Error(`Failed to fetch current leaderboard: ${allEntriesError.message}`);
+  }
+
+  if (!allEntries || allEntries.length === 0) {
+    console.log('[getCurrentDayLeaderboard] No entries found for current day');
+    return { entries: [], totalEntries: 0 };
+  }
+
+  // Get player display names
+  const playerIds = allEntries.map(entry => entry.player_id);
+  const { data: playersData } = await supabase
+    .from('players')
+    .select('id, display_name')
+    .in('id', playerIds);
+
+  const playerNames = new Map(
+    playersData?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []
+  );
+
+  // Transform entries
+  const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => ({
+    id: entry.id,
+    word_id: entry.word_id,
+    player_id: entry.player_id,
+    player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
+    rank: entry.rank || 0,
+    guesses_used: entry.guesses_used || 0,
+    best_time: entry.best_time || 0,
+    date: entry.date || getCurrentUTCDate(),
+    created_at: new Date().toISOString(),
+    was_top_10: entry.was_top_10 || false,
+    is_current_player: entry.player_id === playerId
+  }));
+
+  // Get top 10 + player's entry if not in top 10
+  const topEntries = transformedEntries.slice(0, 10);
+  const playerEntry = transformedEntries.find(entry => entry.player_id === playerId);
+  
+  const leaderboardEntries = [...topEntries];
+  if (playerEntry && !topEntries.find(entry => entry.player_id === playerId)) {
+    leaderboardEntries.push(playerEntry);
+  }
+
+  return {
+    entries: leaderboardEntries,
+    totalEntries: transformedEntries.length
+  };
+}
+
+/**
+ * Get historical leaderboard from immutable snapshots
+ */
+async function getHistoricalLeaderboard(
+  wordId: string,
+  date: string,
+  playerId?: string
+): Promise<{ entries: LeaderboardEntry[]; totalEntries: number }> {
+  console.log('[getHistoricalLeaderboard] Fetching snapshot data for:', { wordId, date });
+
+  try {
+    // Try to get historical data from snapshots
+    const { data: historicalData, error: historicalError } = await supabase
+      .rpc('get_historical_leaderboard', {
+        target_word_id: wordId,
+        target_date: date
+      });
+
+    if (historicalError) {
+      console.error('[getHistoricalLeaderboard] Snapshot query failed:', historicalError.message);
+      // Fall back to current method for historical data
+      return await getCurrentDayLeaderboard(wordId, playerId);
+    }
+
+    if (!historicalData || historicalData.length === 0) {
+      console.log('[getHistoricalLeaderboard] No snapshot found, checking if day should be finalized');
+      
+      // Check if this date should be finalized
+      const { data: shouldFinalize } = await supabase
+        .rpc('should_finalize_date', { check_date: date });
+
+      if (shouldFinalize) {
+        console.log('[getHistoricalLeaderboard] Date should be finalized, attempting auto-finalization');
+        
+        // Try to finalize this date
+        const { data: finalizeResult } = await supabase
+          .rpc('finalize_daily_leaderboard', {
+            target_word_id: wordId,
+            target_date: date
+          });
+
+        if (finalizeResult?.[0]?.success) {
+          console.log('[getHistoricalLeaderboard] Auto-finalization successful, retrying snapshot query');
+          
+          // Retry snapshot query
+          const { data: retryData, error: retryError } = await supabase
+            .rpc('get_historical_leaderboard', {
+              target_word_id: wordId,
+              target_date: date
+            });
+
+          if (!retryError && retryData && retryData.length > 0) {
+            return transformHistoricalData(retryData, playerId);
+          }
+        }
+      }
+
+      // Still no data, fall back to current method
+      console.log('[getHistoricalLeaderboard] No snapshot available, falling back to real-time query');
+      return await getCurrentDayLeaderboard(wordId, playerId);
+    }
+
+    return transformHistoricalData(historicalData, playerId);
+
+  } catch (error) {
+    console.error('[getHistoricalLeaderboard] Error fetching historical data:', error);
+    // Fall back to current method
+    return await getCurrentDayLeaderboard(wordId, playerId);
+  }
+}
+
+/**
+ * Transform historical snapshot data to LeaderboardEntry format
+ */
+function transformHistoricalData(
+  historicalData: any[],
+  playerId?: string
+): { entries: LeaderboardEntry[]; totalEntries: number } {
+  const transformedEntries: LeaderboardEntry[] = historicalData.map((entry) => ({
+    id: `snapshot-${entry.player_id}`, // Generate ID for snapshot entries
+    word_id: entry.word_id || '',
+    player_id: entry.player_id,
+    player_name: entry.player_name,
+    rank: entry.rank,
+    guesses_used: entry.guesses_used,
+    best_time: entry.best_time,
+    date: getCurrentUTCDate(), // Will be set to actual date in future
+    created_at: new Date().toISOString(),
+    was_top_10: entry.was_top_10,
+    is_current_player: entry.player_id === playerId
+  }));
+
+  // Get top 10 + player's entry if not in top 10
+  const topEntries = transformedEntries.slice(0, 10);
+  const playerEntry = transformedEntries.find(entry => entry.player_id === playerId);
+  
+  const leaderboardEntries = [...topEntries];
+  if (playerEntry && !topEntries.find(entry => entry.player_id === playerId)) {
+    leaderboardEntries.push(playerEntry);
+  }
+
+  return {
+    entries: leaderboardEntries,
+    totalEntries: transformedEntries.length
+  };
+}
+
+/**
+ * Get current UTC date in YYYY-MM-DD format
+ */
+function getCurrentUTCDate(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
 }
 
 // Export the handler wrapped with CORS middleware
