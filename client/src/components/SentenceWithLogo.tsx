@@ -9,81 +9,73 @@ interface SentenceWithLogoProps {
 }
 
 export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
-  // Simple SVG logo component that adapts to underscore length
+  // Mini logo component that matches the main DEFINE box styling
   const MiniUnDefineLogo = ({ underscoreCount }: { underscoreCount: number }) => {
-    // Calculate appropriate width based on underscore count
-    const logoWidth = Math.max(80, Math.min(120, underscoreCount * 8)); // 80-120px range
+    // Calculate appropriate size based on underscore count (smaller than main boxes)
+    const boxSize = Math.max(18, Math.min(24, underscoreCount * 1.2));
+    const fontSize = Math.max(10, Math.min(13, boxSize * 0.55));
     
     return (
       <span style={{ 
         display: 'inline-flex', 
         alignItems: 'center', 
-        margin: '0 0.1rem',
+        gap: '2px',
+        margin: '0 2px',
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px'
       }}>
-        <svg 
-          width={logoWidth} 
-          height="20" 
-          viewBox="0 0 120 20" 
-          style={{ 
-            display: 'inline-block',
-            verticalAlign: 'middle'
-          }}
-        >
-          {/* Diamond background for Un· */}
-          <path 
-            d="M2 10 L10 2 L18 10 L10 18 Z" 
-            fill="white" 
-            stroke="#1a237e" 
-            strokeWidth="1.5"
-          />
-          
-          {/* Un· text */}
-          <text 
-            x="10" 
-            y="13" 
-            textAnchor="middle" 
-            fontSize="8" 
-            fontFamily="var(--font-primary)" 
-            fontStyle="italic" 
-            fontWeight="600" 
-            fill="#1a237e"
-          >
+        {/* Un· diamond - matching UnPrefix styling but smaller */}
+        <div style={{
+          width: `${boxSize}px`,
+          height: `${boxSize}px`,
+          borderRadius: '3px',
+          backgroundColor: '#f8f9ff',
+          border: '2px solid #1a237e',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-primary)',
+          fontStyle: 'italic',
+          fontWeight: '700',
+          color: '#1a237e',
+          fontSize: `${fontSize * 0.8}px`,
+          transform: 'rotate(45deg)',
+          boxShadow: '0 1px 3px rgba(26, 35, 126, 0.1)',
+          flexShrink: 0
+        }}>
+          <span style={{ 
+            transform: 'rotate(-45deg)',
+            lineHeight: 1
+          }}>
             Un·
-          </text>
-          
-          {/* DEFINE boxes */}
-          {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => {
-            const x = 24 + (index * 15);
-            return (
-              <g key={letter + index}>
-                <rect 
-                  x={x} 
-                  y="4" 
-                  width="12" 
-                  height="12" 
-                  fill="white" 
-                  stroke="#1a237e" 
-                  strokeWidth="1.5" 
-                  rx="2"
-                />
-                <text 
-                  x={x + 6} 
-                  y="12.5" 
-                  textAnchor="middle" 
-                  fontSize="7" 
-                  fontFamily="var(--font-primary)" 
-                  fontWeight="700" 
-                  fill="#1a237e"
-                >
-                  {letter}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+          </span>
+        </div>
+        
+        {/* DEFINE boxes - matching main styling */}
+        {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
+          <div
+            key={letter + index}
+            style={{
+              width: `${boxSize}px`,
+              height: `${boxSize}px`,
+              border: '2px solid #1a237e',
+              borderRadius: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#fff',
+              fontFamily: 'var(--font-primary)',
+              fontSize: `${fontSize}px`,
+              fontWeight: '700',
+              color: '#1a237e',
+              boxShadow: '0 1px 3px rgba(26, 35, 126, 0.04)',
+              letterSpacing: '0.02em'
+            }}
+          >
+            {letter}
+          </div>
+        ))}
       </span>
     );
   };
