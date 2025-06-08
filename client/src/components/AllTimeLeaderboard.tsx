@@ -14,6 +14,7 @@ interface AllTimeStats {
   total_games: number;
   total_wins: number;
   last_played: string;
+  top_10_finishes?: number; // Optional field for top 10 finishes category
 }
 
 interface AllTimeLeaderboardData {
@@ -21,6 +22,7 @@ interface AllTimeLeaderboardData {
   topByConsistency: AllTimeStats[];
   topByStreaks: AllTimeStats[];
   topByGames: AllTimeStats[];
+  topByTop10Finishes: AllTimeStats[];
   totalPlayers: number;
   totalGames: number;
 }
@@ -30,7 +32,7 @@ interface AllTimeLeaderboardProps {
   onClose: () => void;
 }
 
-type LeaderboardTab = 'winRate' | 'consistency' | 'streaks' | 'activity';
+type LeaderboardTab = 'winRate' | 'consistency' | 'streaks' | 'activity' | 'top10';
 
 export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, onClose }) => {
   const [data, setData] = useState<AllTimeLeaderboardData | null>(null);
@@ -69,7 +71,8 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     { id: 'winRate' as LeaderboardTab, label: '🥇 Win Rate', description: 'Highest win percentage' },
     { id: 'consistency' as LeaderboardTab, label: '🎯 Consistency', description: 'Fewest average guesses' },
     { id: 'streaks' as LeaderboardTab, label: '🔥 Streaks', description: 'Longest win streaks' },
-    { id: 'activity' as LeaderboardTab, label: '📊 Activity', description: 'Most games played' }
+    { id: 'activity' as LeaderboardTab, label: '📊 Activity', description: 'Most games played' },
+    { id: 'top10' as LeaderboardTab, label: '🏆 Top 10', description: 'Most top 10 finishes' }
   ];
 
   const getCurrentData = (): AllTimeStats[] => {
@@ -80,11 +83,41 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
       case 'consistency': return data.topByConsistency;
       case 'streaks': return data.topByStreaks;
       case 'activity': return data.topByGames;
+      case 'top10': return data.topByTop10Finishes;
       default: return [];
     }
   };
 
   const renderLeaderboardEntry = (player: AllTimeStats, rank: number) => {
+    let primaryStat = '';
+    let secondaryStats = [];
+
+    switch (activeTab) {
+      case 'winRate':
+        primaryStat = `${player.win_percentage}%`;
+        secondaryStats = [`${player.total_wins}/${player.total_games}`, `Current: ${player.current_streak}`];
+        break;
+      case 'consistency':
+        primaryStat = `${player.average_guesses}`;
+        secondaryStats = [`${player.total_wins} wins`, `${player.win_percentage}% win rate`];
+        break;
+      case 'streaks':
+        primaryStat = `${player.highest_streak}`;
+        secondaryStats = [`Current: ${player.current_streak}`, `Last: ${player.last_played}`];
+        break;
+      case 'activity':
+        primaryStat = `${player.total_games}`;
+        secondaryStats = [`${player.win_percentage}% win rate`, `Last: ${player.last_played}`];
+        break;
+      case 'top10':
+        primaryStat = `${player.top_10_finishes || 0}`;
+        secondaryStats = [`${player.win_percentage}% win rate`, `Last: ${player.last_played}`];
+        break;
+      default:
+        primaryStat = '0';
+        secondaryStats = [];
+    }
+
     const formatDate = (dateStr: string) => {
       if (!dateStr) return 'Never';
       return new Date(dateStr).toLocaleDateString();

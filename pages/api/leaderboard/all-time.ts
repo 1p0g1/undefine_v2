@@ -19,6 +19,7 @@ interface GameRow {
   rank: number;
   guesses_used: number;
   date: string;
+  was_top_10: boolean;
 }
 
 interface StreakRow {
@@ -34,6 +35,7 @@ interface AllTimeLeaderboardResponse {
     topByConsistency: AllTimeStats[];
     topByStreaks: AllTimeStats[];
     topByGames: AllTimeStats[];
+    topByTop10Finishes: AllTimeStats[];
     totalPlayers: number;
     totalGames: number;
   };
@@ -57,7 +59,8 @@ async function handler(
         player_id,
         rank,
         guesses_used,
-        date
+        date,
+        was_top_10
       `)
       .order('date', { ascending: false });
 
@@ -116,7 +119,7 @@ async function handler(
       .slice(0, 10);
 
     const topByConsistency = [...playerStats]
-      .filter(p => p.total_wins >= 3) // Need wins to calculate average guesses
+      .filter(p => p.total_wins >= 1) // Changed from 3 to 1 - need at least one win to calculate average guesses
       .sort((a, b) => a.average_guesses - b.average_guesses) // Lower is better
       .slice(0, 10);
 
@@ -129,6 +132,9 @@ async function handler(
       .sort((a, b) => b.total_games - a.total_games)
       .slice(0, 10);
 
+    // Calculate top 10 finishes from raw data
+    const topByTop10Finishes = calculateTop10Finishes(rawData || [], playerNameMap);
+
     const totalPlayers = playerStats.length;
     const totalGames = playerStats.reduce((sum, p) => sum + p.total_games, 0);
 
@@ -139,6 +145,7 @@ async function handler(
         topByConsistency,
         topByStreaks,
         topByGames,
+        topByTop10Finishes,
         totalPlayers,
         totalGames
       }
@@ -198,6 +205,55 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
       last_played: lastPlayed
     };
   });
+}
+
+function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string, string>): AllTimeStats[] {
+  const playerGroups = rawData.reduce((groups, row) => {
+    const playerId = row.player_id;
+    if (!groups[playerId]) {
+      groups[playerId] = [];
+    }
+    groups[playerId].push(row);
+    return groups;
+  }, {} as Record<string, GameRow[]>);
+
+  return Object.entries(playerGroups)
+    .map(([playerId, games]) => {
+      const totalGames = games.length;
+      const wins = games.filter(g => g.rank === 1);
+      const totalWins = wins.length;
+      const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+      
+      // Count top 10 finishes
+      const top10Finishes = games.filter(g => g.was_top_10 === true).length;
+      
+      // Calculate average guesses for wins only
+      const averageGuesses = totalWins > 0 
+        ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
+        : 0;
+      
+      const lastPlayed = games.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      )[0]?.date || '';
+
+      const playerName = playerNameMap[playerId] || `Player ${playerId.slice(-4)}`;
+
+      return {
+        player_id: playerId,
+        player_name: playerName,
+        win_percentage: Math.round(winPercentage * 100) / 100,
+        average_guesses: Math.round(averageGuesses * 100) / 100,
+        highest_streak: 0, // Not needed for this category
+        current_streak: 0, // Not needed for this category
+        total_games: totalGames,
+        total_wins: totalWins,
+        last_played: lastPlayed,
+        top_10_finishes: top10Finishes // Add this field for display
+      };
+    })
+    .filter(p => p.top_10_finishes > 0) // Only show players with at least one top 10 finish
+    .sort((a, b) => (b as any).top_10_finishes - (a as any).top_10_finishes) // Sort by most top 10 finishes
+    .slice(0, 10);
 }
 
 export default withCors(handler); 
