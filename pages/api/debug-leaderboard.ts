@@ -79,6 +79,38 @@ export default async function handler(
 
     console.log('[Debug] Streak successful, streak data:', streakData);
 
+    // Debug specific player issue - Matt Dub
+    console.log('=== DEBUGGING MATT DUB ISSUE ===');
+    const { data: mattDubData, error: mattDubError } = await supabase
+      .from('leaderboard_summary')
+      .select('*')
+      .eq('player_id', '3c7d9c19-a71b-4d3a-9e25-61edf8f69c96') // Matt Dub's ID from API response
+      .order('date', { ascending: false });
+
+    if (mattDubError) {
+      console.error('Matt Dub query error:', mattDubError);
+    } else {
+      console.log('Matt Dub leaderboard_summary data:', JSON.stringify(mattDubData, null, 2));
+    }
+
+    // Check if Matt Dub has any rank = 1 entries
+    const mattDubWins = mattDubData?.filter(entry => entry.rank === 1) || [];
+    console.log('Matt Dub wins (rank = 1):', mattDubWins.length);
+    console.log('Matt Dub win entries:', JSON.stringify(mattDubWins, null, 2));
+
+    // Also check the scores table for Matt Dub
+    const { data: mattDubScores, error: scoresError } = await supabase
+      .from('scores')
+      .select('*')
+      .eq('player_id', '3c7d9c19-a71b-4d3a-9e25-61edf8f69c96')
+      .order('created_at', { ascending: false });
+
+    if (scoresError) {
+      console.error('Matt Dub scores query error:', scoresError);
+    } else {
+      console.log('Matt Dub scores data:', JSON.stringify(mattDubScores, null, 2));
+    }
+
     return res.status(200).json({
       success: true,
       debug: {
