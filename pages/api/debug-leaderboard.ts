@@ -111,6 +111,22 @@ export default async function handler(
       console.log('Matt Dub scores data:', JSON.stringify(mattDubScores, null, 2));
     }
 
+    // Get current word and basic leaderboard data
+    const { data: leaderboardData, error: leaderboardError } = await supabase
+      .from('leaderboard_summary')
+      .select(`
+        id,
+        player_id,
+        word_id,
+        rank,
+        was_top_10,
+        best_time,
+        guesses_used,
+        date
+      `)
+      .order('date', { ascending: false })
+      .limit(20);
+
     return res.status(200).json({
       success: true,
       debug: {
