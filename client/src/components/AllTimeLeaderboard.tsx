@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+// Import API base URL configuration
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
+
 interface AllTimeStats {
   player_id: string;
   player_name: string;
@@ -46,7 +49,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     setError(null);
     
     try {
-      const response = await fetch('/api/leaderboard/all-time');
+      const response = await fetch(`${BASE_URL}/api/leaderboard/all-time`);
       const result = await response.json();
       
       if (result.success) {
