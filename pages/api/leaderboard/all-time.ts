@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../src/lib/supabase';
+import { withCors } from '../../../lib/withCors';
 
 interface AllTimeStats {
   player_id: string;
@@ -43,7 +44,7 @@ interface AllTimeLeaderboardResponse {
   debug?: any;
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<AllTimeLeaderboardResponse>
 ) {
@@ -185,4 +186,6 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
       last_played: lastPlayed
     };
   });
-} 
+}
+
+export default withCors(handler); 
