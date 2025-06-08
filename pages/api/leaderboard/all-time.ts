@@ -173,11 +173,12 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
 
   return Object.entries(playerGroups).map(([playerId, games]) => {
     const totalGames = games.length;
-    const wins = games.filter(g => g.rank === 1);
+    // UPDATED WIN LOGIC: Any entry in leaderboard_summary = completed the word = WIN
+    const wins = games; // All games are wins (since they completed the word to be ranked)
     const totalWins = wins.length;
     const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
     
-    // Calculate average guesses for wins only (more meaningful than all games)
+    // Calculate average guesses for all games (since all are wins)
     const averageGuesses = totalWins > 0 
       ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
       : 0;
@@ -220,14 +221,15 @@ function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string
   return Object.entries(playerGroups)
     .map(([playerId, games]) => {
       const totalGames = games.length;
-      const wins = games.filter(g => g.rank === 1);
+      // UPDATED WIN LOGIC: All entries are wins (completed the word)
+      const wins = games;
       const totalWins = wins.length;
       const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
       
       // Count top 10 finishes
       const top10Finishes = games.filter(g => g.was_top_10 === true).length;
       
-      // Calculate average guesses for wins only
+      // Calculate average guesses for all games (since all are wins)
       const averageGuesses = totalWins > 0 
         ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
         : 0;
