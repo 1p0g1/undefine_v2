@@ -21,10 +21,12 @@ interface GameRow {
   players?: {
     display_name: string;
   };
-  player_streaks?: {
-    highest_streak: number;
-    current_streak: number;
-  };
+}
+
+interface StreakRow {
+  player_id: string;
+  highest_streak: number;
+  current_streak: number;
 }
 
 interface AllTimeLeaderboardResponse {
@@ -38,6 +40,7 @@ interface AllTimeLeaderboardResponse {
     totalGames: number;
   };
   error?: string;
+  debug?: any;
 }
 
 export default async function handler(
@@ -49,26 +52,49 @@ export default async function handler(
   }
 
   try {
-    // Query leaderboard_summary with player names and streak data
-    const { data: rawData, error } = await supabase
+    // Query leaderboard_summary with player names (separate from streaks)
+    const { data: rawData, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
       .select(`
         player_id,
         rank,
         guesses_used,
         date,
-        players!inner(display_name),
-        player_streaks(highest_streak, current_streak)
+        players!inner(display_name)
       `)
       .order('date', { ascending: false });
 
-    if (error) {
-      console.error('[All-Time API] Database error:', error);
-      return res.status(500).json({ success: false, error: 'Database query failed' });
+    if (leaderboardError) {
+      console.error('[All-Time API] Leaderboard query error:', leaderboardError);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Leaderboard query failed',
+        debug: leaderboardError
+      });
     }
 
+    // Query player_streaks separately
+    const { data: streakData, error: streakError } = await supabase
+      .from('player_streaks')
+      .select('player_id, highest_streak, current_streak');
+
+    if (streakError) {
+      console.error('[All-Time API] Streak query error:', streakError);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Streak query failed',
+        debug: streakError
+      });
+    }
+
+    // Create streak lookup map
+    const streakMap = (streakData || []).reduce((map, streak) => {
+      map[streak.player_id] = streak;
+      return map;
+    }, {} as Record<string, StreakRow>);
+
     // Calculate statistics from raw data
-    const playerStats = calculateAllTimeStats((rawData as unknown as GameRow[]) || []);
+    const playerStats = calculateAllTimeStats((rawData as unknown as GameRow[]) || [], streakMap);
     
     // Sort into different leaderboard categories (simplified)
     const topByWinRate = [...playerStats]
@@ -109,12 +135,13 @@ export default async function handler(
     console.error('[All-Time API] Unexpected error:', error);
     return res.status(500).json({ 
       success: false, 
-      error: 'Internal server error' 
+      error: 'Internal server error',
+      debug: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
 
-function calculateAllTimeStats(rawData: GameRow[]): AllTimeStats[] {
+function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, StreakRow>): AllTimeStats[] {
   const playerGroups = rawData.reduce((groups, row) => {
     const playerId = row.player_id;
     if (!groups[playerId]) {
@@ -141,8 +168,8 @@ function calculateAllTimeStats(rawData: GameRow[]): AllTimeStats[] {
 
     const playerName = games[0]?.players?.display_name || `Player ${playerId.slice(-4)}`;
     
-    // Get streak data from the joined table (same for all games, so take first)
-    const streakData = games[0]?.player_streaks;
+    // Get streak data from lookup map
+    const streakData = streakMap[playerId];
     const highestStreak = streakData?.highest_streak || 0;
     const currentStreak = streakData?.current_streak || 0;
 
