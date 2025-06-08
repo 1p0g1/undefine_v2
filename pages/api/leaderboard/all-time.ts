@@ -114,12 +114,12 @@ async function handler(
     
     // Sort into different leaderboard categories (simplified)
     const topByWinRate = [...playerStats]
-      .filter(p => p.total_games >= 3) // Minimum games for meaningful win rate
+      .filter(p => p.total_games >= 1) // Changed from 3 to 1 - any player with at least 1 win
       .sort((a, b) => b.win_percentage - a.win_percentage)
       .slice(0, 10);
 
     const topByConsistency = [...playerStats]
-      .filter(p => p.total_wins >= 1) // Changed from 3 to 1 - need at least one win to calculate average guesses
+      .filter(p => p.total_wins >= 1) // Need at least one win to calculate average guesses
       .sort((a, b) => a.average_guesses - b.average_guesses) // Lower is better
       .slice(0, 10);
 
@@ -129,6 +129,7 @@ async function handler(
       .slice(0, 10);
 
     const topByGames = [...playerStats]
+      .filter(p => p.total_games >= 1) // Changed from no filter to at least 1 game
       .sort((a, b) => b.total_games - a.total_games)
       .slice(0, 10);
 
