@@ -421,9 +421,25 @@ h6 {
   }
   .define-header {
     gap: 0.18rem;
+    overflow: visible;
+    padding: 0 0.25rem;
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: 100vw;
   }
   .define-boxes {
     gap: 0.18rem;
+  }
+  .un-prefix {
+    flex-shrink: 0;
+    margin-right: 0.2rem;
+  }
+  .define-box {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.2rem;
   }
 }
 

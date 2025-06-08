@@ -328,15 +328,23 @@ function App() {
           whiteSpace: 'nowrap',
           gap: 'clamp(0.2rem, 0.8vw, 0.3rem)',
           width: '100%',
+          maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
           minHeight: 'clamp(4rem, 12vw, 5rem)',
+          padding: '0 clamp(0.25rem, 1vw, 0.5rem)',
+          boxSizing: 'border-box'
         }}
       >
         {/* Un· enhanced design */}
         <UnPrefix />
-        <div className="define-boxes" style={{ display: 'flex', gap: 'clamp(0.1rem, 0.3vw, 0.15rem)', flex: '0 0 auto' }}>
+        <div className="define-boxes" style={{ 
+          display: 'flex', 
+          gap: 'clamp(0.1rem, 0.3vw, 0.15rem)', 
+          flex: '0 0 auto',
+          flexShrink: 0
+        }}>
           <DefineBoxes
             gameState={gameState}
             revealedClues={revealedClueKeys}
