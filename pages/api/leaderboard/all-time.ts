@@ -19,9 +19,6 @@ interface GameRow {
   rank: number;
   guesses_used: number;
   date: string;
-  players?: {
-    display_name: string;
-  };
 }
 
 interface StreakRow {
@@ -53,15 +50,14 @@ async function handler(
   }
 
   try {
-    // Query leaderboard_summary with player names (separate from streaks)
+    // Query leaderboard_summary without player join (since no FK relationship exists)
     const { data: rawData, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
       .select(`
         player_id,
         rank,
         guesses_used,
-        date,
-        players!inner(display_name)
+        date
       `)
       .order('date', { ascending: false });
 
@@ -74,6 +70,26 @@ async function handler(
       });
     }
 
+    // Get unique player IDs to fetch names separately
+    const uniquePlayerIds = Array.from(new Set((rawData || []).map(row => row.player_id)));
+    
+    // Query players table separately
+    const { data: playersData, error: playersError } = await supabase
+      .from('players')
+      .select('id, display_name')
+      .in('id', uniquePlayerIds);
+
+    if (playersError) {
+      console.error('[All-Time API] Players query error:', playersError);
+      // Continue without player names rather than failing
+    }
+
+    // Create player name lookup map
+    const playerNameMap = (playersData || []).reduce((map, player) => {
+      map[player.id] = player.display_name;
+      return map;
+    }, {} as Record<string, string>);
+
     // Query player_streaks separately
     const { data: streakData, error: streakError } = await supabase
       .from('player_streaks')
@@ -81,11 +97,7 @@ async function handler(
 
     if (streakError) {
       console.error('[All-Time API] Streak query error:', streakError);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Streak query failed',
-        debug: streakError
-      });
+      // Continue without streak data rather than failing
     }
 
     // Create streak lookup map
@@ -95,7 +107,7 @@ async function handler(
     }, {} as Record<string, StreakRow>);
 
     // Calculate statistics from raw data
-    const playerStats = calculateAllTimeStats((rawData as unknown as GameRow[]) || [], streakMap);
+    const playerStats = calculateAllTimeStats(rawData || [], streakMap, playerNameMap);
     
     // Sort into different leaderboard categories (simplified)
     const topByWinRate = [...playerStats]
@@ -142,7 +154,7 @@ async function handler(
   }
 }
 
-function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, StreakRow>): AllTimeStats[] {
+function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, StreakRow>, playerNameMap: Record<string, string>): AllTimeStats[] {
   const playerGroups = rawData.reduce((groups, row) => {
     const playerId = row.player_id;
     if (!groups[playerId]) {
@@ -167,7 +179,7 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )[0]?.date || '';
 
-    const playerName = games[0]?.players?.display_name || `Player ${playerId.slice(-4)}`;
+    const playerName = playerNameMap[playerId] || `Player ${playerId.slice(-4)}`;
     
     // Get streak data from lookup map
     const streakData = streakMap[playerId];
