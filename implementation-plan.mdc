@@ -342,3 +342,111 @@ All core functionality is working correctly:
 ## Known Issues: None Currently
 
 The December 2024 fixes resolved all major issues. The system is now functioning as designed with proper data flow from game completion to leaderboard display.
+
+# Implementation Plan - Un·Define All-Time Leaderboards
+
+## Phase 1: Backend API Development
+- [x] **Create `/api/leaderboard/all-time.ts` endpoint** - Done
+  - Uses existing `leaderboard_summary` and `player_streaks` tables
+  - Calculates win rate, consistency, streaks, and activity metrics
+  - Returns top 10 players for each category
+- [x] **Add proper CORS middleware** - Done
+  - Added `withCors` wrapper to prevent authentication blocking
+- [x] **Implement comprehensive error handling** - Done
+
+## Phase 2: Frontend Component Development  
+- [x] **Create `AllTimeLeaderboard.tsx` component** - Done
+  - Tabbed interface for different leaderboard categories
+  - Mobile-responsive design with proper styling
+  - Loading states and error handling
+- [x] **Fix API URL configuration** - Done
+  - Updated to use backend BASE_URL instead of relative paths
+- [x] **Add summary statistics display** - Done
+
+## Phase 3: Integration & Testing
+- [x] **Add "📊 All-Time Stats" button to SettingsModal** - Done
+- [x] **Wire up modal state management in App.tsx** - Done
+- [x] **Test all leaderboard categories function** - Done
+- [x] **Verify proper error handling** - Done
+
+## Phase 4: Documentation & Deployment
+- [x] **Create troubleshooting documentation** - Done
+  - Documented API authentication and routing issues
+  - Created comprehensive debugging guide
+- [x] **Deploy to feature branch** - Done
+- [x] **Test in production environment** - Done
+
+## 🎯 **COMPLETED FEATURES**
+
+### ✅ All-Time Leaderboard System
+- **🥇 Win Rate Leaderboard**: Shows players with highest win percentage (minimum 3 games)
+- **🎯 Consistency Leaderboard**: Shows players with lowest average guesses (minimum 3 wins)  
+- **🔥 Streaks Leaderboard**: Shows players with longest win streaks
+- **📊 Activity Leaderboard**: Shows most active players by total games
+
+### ✅ Technical Implementation
+- Real-time statistics calculation from `leaderboard_summary` data
+- Proper TypeScript interfaces and error handling
+- Mobile-responsive modal design
+- Integration with existing settings system
+
+## 📚 **LESSONS LEARNED**
+
+### **Critical Architecture Understanding**
+This project uses **TWO SEPARATE Vercel deployments**:
+1. **Frontend (Vite)**: `undefine-v2-front-[hash]-paddys-projects-82cb6057.vercel.app`  
+2. **Backend (Next.js API)**: `undefine-v2-back.vercel.app`
+
+**⚠️ Key Lesson**: API routes ONLY exist on the backend deployment!
+
+### **API Authentication Issues Encountered**
+1. **Missing `withCors` Wrapper**: 
+   - API endpoints without `withCors` get blocked by Vercel's authentication
+   - Symptoms: HTML authentication page instead of JSON responses
+   - Solution: Always wrap handlers with `export default withCors(handler);`
+
+2. **Wrong API Base URLs**:
+   - Frontend was calling API on frontend domain instead of backend domain
+   - Symptoms: "Deployment not found" errors
+   - Solution: Use proper BASE_URL configuration pointing to backend
+
+### **Debugging Process Developed**
+1. **Identify Domain**: Check if error occurs on frontend vs backend domain
+2. **Test API Directly**: Use curl to verify backend API responds with JSON
+3. **Check Frontend Config**: Verify BASE_URL points to correct backend
+4. **Validate CORS**: Ensure all API endpoints have withCors wrapper
+
+### **Prevention Best Practices Established**
+- Always use API client pattern for frontend calls
+- Never use relative paths for API calls in production  
+- Test API endpoints directly before frontend integration
+- Include `withCors` wrapper in all new API routes
+- Document API response formats consistently
+
+## 📋 **IMPLEMENTATION SUMMARY**
+
+**Total Development Time**: ~4 hours
+**Files Created/Modified**: 5
+- `pages/api/leaderboard/all-time.ts` (new)
+- `client/src/components/AllTimeLeaderboard.tsx` (new)  
+- `client/src/components/SettingsModal.tsx` (modified)
+- `client/src/App.tsx` (modified)
+- `docs/TROUBLESHOOTING_API_AUTHENTICATION.md` (new)
+
+**Key Technical Decisions**:
+- Used existing database tables instead of creating new ones
+- Implemented client-side filtering and sorting for performance
+- Built modular component that can be easily extended
+- Created reusable patterns for future API development
+
+**Deployment Status**: ✅ Successfully deployed to feature branch and tested in production
+
+## 🚀 **NEXT STEPS**
+
+The all-time leaderboard system is now complete and ready for production. Future enhancements could include:
+- Historical trend analysis
+- Player profile pages  
+- Achievement badges system
+- Streak notifications
+
+**Ready for merge to main branch** ✅
