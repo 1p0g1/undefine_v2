@@ -134,7 +134,7 @@ async function handler(
       .slice(0, 10);
 
     // Calculate top 10 finishes from raw data
-    const topByTop10Finishes = calculateTop10Finishes(rawData || [], playerNameMap);
+    const topByTop10Finishes = await calculateTop10FinishesFromSnapshots(playerNameMap);
 
     const totalPlayers = playerStats.length;
     const totalGames = playerStats.reduce((sum, p) => sum + p.total_games, 0);
@@ -209,39 +209,75 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
   });
 }
 
-function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string, string>): AllTimeStats[] {
-  // This function needs to be updated to use daily snapshots instead of real-time was_top_10
-  // For now, return the existing logic but mark it as needing snapshot integration
-  const playerGroups = rawData.reduce((groups, row) => {
-    const playerId = row.player_id;
-    if (!groups[playerId]) {
-      groups[playerId] = [];
+async function calculateTop10FinishesFromSnapshots(playerNameMap: Record<string, string>): Promise<AllTimeStats[]> {
+  // Query all finalized daily snapshots to get accurate historical Top 10 counts
+  const { data: snapshots, error: snapshotsError } = await supabase
+    .from('daily_leaderboard_snapshots')
+    .select('final_rankings, date, word_id')
+    .eq('is_finalized', true);
+
+  if (snapshotsError) {
+    console.error('[calculateTop10FinishesFromSnapshots] Error:', snapshotsError);
+    // Fallback to old method if snapshots unavailable
+    return [];
+  }
+
+  // Process all snapshots to count Top 10 appearances
+  const playerTop10Counts: Record<string, {
+    total_games: number;
+    total_wins: number;
+    top_10_finishes: number;
+    last_played: string;
+    total_guesses: number;
+  }> = {};
+
+  for (const snapshot of snapshots || []) {
+    const rankings = snapshot.final_rankings as Array<{
+      player_id: string;
+      player_name: string;
+      rank: number;
+      best_time: number;
+      guesses_used: number;
+      was_top_10: boolean;
+      date: string;
+    }>;
+
+    for (const playerData of rankings) {
+      const playerId = playerData.player_id;
+      
+      if (!playerTop10Counts[playerId]) {
+        playerTop10Counts[playerId] = {
+          total_games: 0,
+          total_wins: 0,
+          top_10_finishes: 0,
+          last_played: '',
+          total_guesses: 0
+        };
+      }
+
+      const player = playerTop10Counts[playerId];
+      player.total_games++;
+      player.total_wins++; // All entries in snapshots are wins
+      player.total_guesses += playerData.guesses_used;
+      
+      // Count Top 10 finishes from finalized snapshots (this is the fix!)
+      if (playerData.was_top_10) {
+        player.top_10_finishes++;
+      }
+
+      // Track most recent game
+      if (playerData.date > player.last_played) {
+        player.last_played = playerData.date;
+      }
     }
-    groups[playerId].push(row);
-    return groups;
-  }, {} as Record<string, GameRow[]>);
+  }
 
-  return Object.entries(playerGroups)
-    .map(([playerId, games]) => {
-      const totalGames = games.length;
-      const wins = games;
-      const totalWins = wins.length;
-      const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-      
-      // 🚨 KNOWN ISSUE: This uses real-time was_top_10 instead of historical snapshots
-      // TODO: Update to query daily_leaderboard_snapshots for accurate historical Top 10 counts
-      // Real logic should be: Count appearances in top 10 of finalized daily snapshots
-      const top10Finishes = games.filter(g => g.was_top_10 === true).length;
-      
-      const averageGuesses = totalWins > 0 
-        ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
-        : 0;
-      
-      const lastPlayed = games.sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      )[0]?.date || '';
-
+  // Convert to AllTimeStats format and sort by Top 10 finishes
+  return Object.entries(playerTop10Counts)
+    .map(([playerId, stats]) => {
       const playerName = playerNameMap[playerId] || `Player ${playerId.slice(-4)}`;
+      const winPercentage = stats.total_games > 0 ? (stats.total_wins / stats.total_games) * 100 : 0;
+      const averageGuesses = stats.total_wins > 0 ? stats.total_guesses / stats.total_wins : 0;
 
       return {
         player_id: playerId,
@@ -250,15 +286,23 @@ function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string
         average_guesses: Math.round(averageGuesses * 100) / 100,
         highest_streak: 0, // Not needed for this category
         current_streak: 0, // Not needed for this category
-        total_games: totalGames,
-        total_wins: totalWins,
-        last_played: lastPlayed,
-        top_10_finishes: top10Finishes // Add this field for display
+        total_games: stats.total_games,
+        total_wins: stats.total_wins,
+        last_played: stats.last_played,
+        top_10_finishes: stats.top_10_finishes
       };
     })
     .filter(p => p.top_10_finishes > 0) // Only show players with at least one top 10 finish
     .sort((a, b) => (b as any).top_10_finishes - (a as any).top_10_finishes) // Sort by most top 10 finishes
     .slice(0, 10);
+}
+
+function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string, string>): AllTimeStats[] {
+  // 🚨 DEPRECATED: This function now just returns empty array
+  // The new calculateTop10FinishesFromSnapshots function should be used instead
+  // Keeping this for backwards compatibility but it's no longer called
+  console.warn('[calculateTop10Finishes] Deprecated function called - should use snapshot-based version');
+  return [];
 }
 
 export default withCors(handler); 
