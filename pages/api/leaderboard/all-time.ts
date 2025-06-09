@@ -110,7 +110,7 @@ async function handler(
     }, {} as Record<string, StreakRow>);
 
     // Calculate statistics from raw data
-    const playerStats = calculateAllTimeStats(rawData || [], streakMap, playerNameMap);
+    const playerStats = await calculateAllTimeStatsFromSessions(streakMap, playerNameMap);
     
     // Sort into different leaderboard categories (simplified)
     const topByWinRate = [...playerStats]
@@ -162,7 +162,78 @@ async function handler(
   }
 }
 
+async function calculateAllTimeStatsFromSessions(streakMap: Record<string, StreakRow>, playerNameMap: Record<string, string>): Promise<AllTimeStats[]> {
+  // Query game_sessions for ALL completed games (wins and losses)
+  const { data: completedGames, error: gamesError } = await supabase
+    .from('game_sessions')
+    .select('player_id, is_won, guesses, start_time, end_time, word_id')
+    .eq('is_complete', true); // Only completed games (both wins and losses)
+
+  if (gamesError) {
+    console.error('[calculateAllTimeStatsFromSessions] Error:', gamesError);
+    return [];
+  }
+
+  // Group games by player
+  const playerGroups = (completedGames || []).reduce((groups, game) => {
+    const playerId = game.player_id;
+    if (!groups[playerId]) {
+      groups[playerId] = { wins: [], losses: [], totalGames: 0 };
+    }
+    
+    if (game.is_won) {
+      groups[playerId].wins.push(game);
+    } else {
+      groups[playerId].losses.push(game);
+    }
+    groups[playerId].totalGames++;
+    return groups;
+  }, {} as Record<string, { wins: any[], losses: any[], totalGames: number }>);
+
+  // Calculate stats for each player
+  return Object.entries(playerGroups).map(([playerId, playerData]) => {
+    const { wins, losses, totalGames } = playerData;
+    const totalWins = wins.length;
+    const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+    
+    // Calculate average guesses for wins only
+    const averageGuesses = totalWins > 0 
+      ? wins.reduce((sum, game) => sum + (game.guesses ? game.guesses.length : 0), 0) / totalWins
+      : 0;
+    
+    // Find most recent game
+    const allGames = [...wins, ...losses];
+    const lastPlayed = allGames.length > 0 
+      ? allGames.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())[0].start_time.split('T')[0]
+      : '';
+
+    const playerName = playerNameMap[playerId] || `Player ${playerId.slice(-4)}`;
+    
+    // Get streak data from lookup map
+    const streakData = streakMap[playerId];
+    const highestStreak = streakData?.highest_streak || 0;
+    const currentStreak = streakData?.current_streak || 0;
+
+    return {
+      player_id: playerId,
+      player_name: playerName,
+      win_percentage: Math.round(winPercentage * 100) / 100,
+      average_guesses: Math.round(averageGuesses * 100) / 100,
+      highest_streak: highestStreak,
+      current_streak: currentStreak,
+      total_games: totalGames,
+      total_wins: totalWins,
+      last_played: lastPlayed
+    };
+  });
+}
+
 function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, StreakRow>, playerNameMap: Record<string, string>): AllTimeStats[] {
+  // 🚨 DEPRECATED: This function uses leaderboard_summary which only contains wins
+  // The new calculateAllTimeStatsFromSessions function should be used instead for accurate win rates
+  // Keeping this for backwards compatibility but it's no longer the primary method
+  console.warn('[calculateAllTimeStats] Deprecated function called - should use session-based version for accurate win rates');
+  
   const playerGroups = rawData.reduce((groups, row) => {
     const playerId = row.player_id;
     if (!groups[playerId]) {
