@@ -6,6 +6,7 @@
  * Normalizes text by:
  * - Trimming whitespace
  * - Converting to lowercase
+ * - Removing accents and diacritics
  * - Removing invisible Unicode characters and hyphens
  * 
  * @param text The text to normalize
@@ -17,6 +18,8 @@ export const normalizeText = (text: string): string => {
   return text
     .trim() // Remove leading/trailing whitespace
     .toLowerCase() // Convert to lowercase
+    .normalize('NFD') // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
     .replace(/[\u200B\u200D\u200C\uFEFF-]/g, ''); // Remove zero-width spaces and hyphens
 };
 
