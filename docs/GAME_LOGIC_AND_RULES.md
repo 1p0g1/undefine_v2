@@ -129,18 +129,28 @@ win_rate = (successful_completions / total_attempts) * 100
 
 ### **Top 10 Logic - STATUS UPDATE**
 - **✅ SNAPSHOTS IMPLEMENTED**: End-of-day snapshot system is fully deployed
-- **🚨 API BUG**: All-time API still uses broken real-time `was_top_10` field
-- **✅ USER'S EXPECTATION CORRECT**: Should count "number of times FEATURED in the top 10 of a day"
-- **🔧 FIX NEEDED**: Update all-time API to query `daily_leaderboard_snapshots` for accurate counts
+- **✅ API FIXED**: All-time API now uses snapshot-based `calculateTop10FinishesFromSnapshots()` function
+- **✅ USER'S EXPECTATION MET**: Counts "number of times FEATURED in the top 10 of daily rankings"
+- **✅ FRONTEND COMPLETE**: Top 10 tab displays data correctly with proper TypeScript interfaces
 
-**The Problem We Solved**:
-- ✅ **End-of-day snapshots preserve final `was_top_10` status**
-- ✅ **Real-time rankings for current day, immutable for past days**
-- ✅ **Automated finalization at midnight UTC**
+### **Win Rate Logic - STATUS UPDATE**
+- **✅ ACCURATE TRACKING**: Now queries `game_sessions` table for both wins and losses
+- **✅ REAL PERCENTAGES**: No longer shows 100% for all players
+- **✅ MATT DUB FIX**: His 0% win rate bug is resolved (will show actual percentage)
+- **Implementation**: `calculateAllTimeStatsFromSessions()` function tracks:
+  - **Wins**: `is_complete = true, is_won = true`
+  - **Losses**: `is_complete = true, is_won = false`
+  - **Win Rate**: `(wins / total_attempts) * 100`
 
-**Remaining Issue**:
-- ❌ **All-time leaderboard API not using snapshot data**
-- ❌ **Top 10 tab shows inaccurate counts from real-time field**
+### **Data Sources Summary**
+- **Current Method**: `game_sessions` table (✅ Complete - tracks wins + losses)
+- **Legacy Method**: `leaderboard_summary` table (❌ Deprecated - wins only)
+
+### **Data Flow Triggers**
+1. **Game completion** updates `game_sessions`
+2. **Trigger 1** populates `leaderboard_summary` (winners only)
+3. **Trigger 2** recalculates rankings for all players on that word
+4. **Result**: Real-time leaderboard updates
 
 ---
 
