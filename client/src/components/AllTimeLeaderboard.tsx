@@ -170,6 +170,12 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
               {player.win_percentage}% win rate • Last played: {formatDate(player.last_played)}
             </div>
           )}
+          
+          {activeTab === 'top10' && (
+            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              {player.top_10_finishes || 0} top 10s • {player.win_percentage}% win rate • Last: {formatDate(player.last_played)}
+            </div>
+          )}
         </div>
 
         <div style={{ 
@@ -182,6 +188,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
           {activeTab === 'consistency' && `${player.average_guesses}`}
           {activeTab === 'streaks' && `${player.highest_streak}`}
           {activeTab === 'activity' && `${player.total_games}`}
+          {activeTab === 'top10' && `${player.top_10_finishes || 0}`}
         </div>
       </div>
     );
