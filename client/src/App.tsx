@@ -355,26 +355,25 @@ function App() {
         </div>
       </div>
       
-      {/* Game Description */}
-      <div
-        className="game-description"
-        style={{
-          fontFamily: 'var(--font-primary)',
-          fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          color: 'var(--color-primary)',
-          lineHeight: '1.5',
-          textAlign: 'center',
-          margin: '0.75rem 0',
-          maxWidth: '420px',
-          padding: '0 0.5rem'
-        }}
-      >
-        Welcome to Un·Define!
-        <br /><br />
-        The objective is to reverse-engineer a word using clues tied to the DEFINE boxes above (hover over them to learn more).
-        <br /><br />
-        Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
-      </div>
+      {/* Intro Text - only show when game hasn't started */}
+      {!gameStarted && (
+        <div
+          style={{
+            fontFamily: 'var(--font-primary)',
+            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+            color: '#6b7280',
+            textAlign: 'center',
+            lineHeight: '1.6',
+            margin: '1rem auto',
+            maxWidth: '420px',
+            padding: '0 1rem'
+          }}
+        >
+          The objective of Un·Define is to <b>reverse-engineer today's word</b> using up to 6 clues tied to the DEFINE boxes above (hover over them to learn more).
+          <br /><br />
+          Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
+        </div>
+      )}
       
       {/* Start Game Section */}
       {!gameStarted && (
