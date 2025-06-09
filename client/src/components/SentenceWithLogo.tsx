@@ -20,7 +20,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         display: 'inline-flex', 
         alignItems: 'center', 
         gap: '2px',
-        margin: '0 2px',
+        margin: '0 6px 0 2px',
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px'
