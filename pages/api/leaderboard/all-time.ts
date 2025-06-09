@@ -210,6 +210,8 @@ function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, Str
 }
 
 function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string, string>): AllTimeStats[] {
+  // This function needs to be updated to use daily snapshots instead of real-time was_top_10
+  // For now, return the existing logic but mark it as needing snapshot integration
   const playerGroups = rawData.reduce((groups, row) => {
     const playerId = row.player_id;
     if (!groups[playerId]) {
@@ -222,15 +224,15 @@ function calculateTop10Finishes(rawData: GameRow[], playerNameMap: Record<string
   return Object.entries(playerGroups)
     .map(([playerId, games]) => {
       const totalGames = games.length;
-      // UPDATED WIN LOGIC: All entries are wins (completed the word)
       const wins = games;
       const totalWins = wins.length;
       const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
       
-      // Count top 10 finishes
+      // 🚨 KNOWN ISSUE: This uses real-time was_top_10 instead of historical snapshots
+      // TODO: Update to query daily_leaderboard_snapshots for accurate historical Top 10 counts
+      // Real logic should be: Count appearances in top 10 of finalized daily snapshots
       const top10Finishes = games.filter(g => g.was_top_10 === true).length;
       
-      // Calculate average guesses for all games (since all are wins)
       const averageGuesses = totalWins > 0 
         ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
         : 0;
