@@ -20,7 +20,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         display: 'inline-flex', 
         alignItems: 'center', 
         gap: '2px',
-        margin: '0 6px 0 2px',
+        margin: '0 12px 0 8px',
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px'
@@ -103,7 +103,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         const underscoreCount = matches[i].length;
         // Add a space before the logo to ensure clear separation from preceding text
         if (i > 0 && parts[i] && !parts[i].endsWith(' ')) {
-          result.push(<span key={`space-before-${i}`}> </span>);
+          result.push(<span key={`space-before-${i}`}>  </span>);
         }
         result.push(
           <MiniUnDefineLogo 
@@ -113,7 +113,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         );
         // Add a space after the logo to ensure clear separation from following text
         if (i < parts.length - 1 && parts[i + 1] && !parts[i + 1].startsWith(' ')) {
-          result.push(<span key={`space-after-${i}`}> </span>);
+          result.push(<span key={`space-after-${i}`}>  </span>);
         }
       }
     }
