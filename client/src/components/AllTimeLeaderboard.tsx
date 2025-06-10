@@ -149,7 +149,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
           
           {activeTab === 'winRate' && (
             <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {player.win_percentage}% ({player.total_wins}/{player.total_games}) • Win streak: {player.current_streak}
+              {player.win_percentage}% ({player.total_wins}/{player.total_games})
             </div>
           )}
           
