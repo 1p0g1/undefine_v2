@@ -74,7 +74,10 @@ async function handler(
     }
 
     // Get unique player IDs to fetch names separately
-    const uniquePlayerIds = Array.from(new Set((rawData || []).map(row => row.player_id)));
+    const uniquePlayerIds = Array.from(new Set((rawData || [])
+      .map(row => row.player_id)
+      .filter(id => id && id !== 'null' && id !== 'undefined') // Filter out invalid IDs
+    ));
     
     // Query players table separately
     const { data: playersData, error: playersError } = await supabase
@@ -180,6 +183,11 @@ async function calculateAllTimeStatsFromSessions(streakMap: Record<string, Strea
   // Group games by player
   const playerGroups = (completedGames || []).reduce((groups, game) => {
     const playerId = game.player_id;
+    // Skip games with invalid player IDs
+    if (!playerId || playerId === 'null' || playerId === 'undefined') {
+      return groups;
+    }
+    
     if (!groups[playerId]) {
       groups[playerId] = { wins: [], losses: [], totalGames: 0 };
     }
@@ -318,6 +326,11 @@ async function calculateTop10FinishesFromSnapshots(playerNameMap: Record<string,
 
     for (const playerData of rankings) {
       const playerId = playerData.player_id;
+      
+      // Skip invalid player IDs
+      if (!playerId || playerId === 'null' || playerId === 'undefined') {
+        continue;
+      }
       
       if (!playerTop10Counts[playerId]) {
         playerTop10Counts[playerId] = {
