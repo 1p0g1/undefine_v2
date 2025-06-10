@@ -42,7 +42,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
           fontSize: `${fontSize * 0.8}px`,
           transform: 'rotate(45deg)',
           boxShadow: '0 1px 3px rgba(26, 35, 126, 0.1)',
-          flexShrink: 0
+          flexShrink: 0,
+          opacity: 0.7
         }}>
           <span style={{ 
             transform: 'rotate(-45deg)',
@@ -70,7 +71,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
               fontWeight: '700',
               color: '#1a237e',
               boxShadow: '0 1px 3px rgba(26, 35, 126, 0.04)',
-              letterSpacing: '0.02em'
+              letterSpacing: '0.02em',
+              opacity: 0.7
             }}
           >
             {letter}
