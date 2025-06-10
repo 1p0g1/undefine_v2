@@ -486,7 +486,7 @@ function App() {
         <div className="hint-blocks" style={{ 
           width: '100%', 
           maxWidth: 420, 
-          margin: '0 auto',
+          margin: '1.5rem auto 0 auto',
           gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
         }}>
           {visibleClues.map((clue, idx) => {

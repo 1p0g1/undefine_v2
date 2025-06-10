@@ -82,8 +82,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
 
   // Function to replace underscore sequences with the mini logo
   const renderTextWithLogo = (inputText: string) => {
-    // Find sequences of underscores (3 or more in a row)
-    const underscorePattern = /_{3,}/g;
+    // Find sequences of underscores (3 or more in a row, or individual underscores representing the word)
+    const underscorePattern = /_{3,}|_+/g;
     const parts = inputText.split(underscorePattern);
     const matches = inputText.match(underscorePattern);
 
@@ -101,12 +101,20 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
       // Add the mini logo if there's a corresponding match
       if (matches[i]) {
         const underscoreCount = matches[i].length;
+        // Add a space before the logo to ensure clear separation from preceding text
+        if (i > 0 && parts[i] && !parts[i].endsWith(' ')) {
+          result.push(<span key={`space-before-${i}`}> </span>);
+        }
         result.push(
           <MiniUnDefineLogo 
             key={`logo-${i}`} 
             underscoreCount={underscoreCount}
           />
         );
+        // Add a space after the logo to ensure clear separation from following text
+        if (i < parts.length - 1 && parts[i + 1] && !parts[i + 1].startsWith(' ')) {
+          result.push(<span key={`space-after-${i}`}> </span>);
+        }
       }
     }
 

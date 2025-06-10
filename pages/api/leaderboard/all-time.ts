@@ -89,7 +89,10 @@ async function handler(
 
     // Create player name lookup map
     const playerNameMap = (playersData || []).reduce((map, player) => {
-      map[player.id] = player.display_name;
+      // Only store non-null display names
+      if (player.display_name) {
+        map[player.id] = player.display_name;
+      }
       return map;
     }, {} as Record<string, string>);
 
