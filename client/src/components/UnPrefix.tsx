@@ -2,11 +2,12 @@ import React from 'react';
 
 interface UnPrefixProps {
   scaled?: boolean; // For use in GameSummaryModal with transform scale
+  onClick?: () => void;
 }
 
-export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
-  // Make Un diamond larger and more prominent than DEFINE boxes
-  const baseSize = scaled ? 'clamp(3.5rem, 9vw, 4rem)' : 'clamp(3.8rem, 10vw, 4.5rem)';
+export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
+  // Make Un diamond proportionally smaller for better mobile fit
+  const baseSize = scaled ? 'clamp(3rem, 8vw, 3.5rem)' : 'clamp(3.2rem, 8.5vw, 4rem)';
   
   const containerStyle = {
     width: baseSize,
@@ -29,11 +30,38 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false }) => {
     transform: scaled ? 'rotate(45deg) scale(0.85)' : 'rotate(45deg)',
     // Add subtle shadow and glow for more visual impact
     boxShadow: '0 4px 12px rgba(26, 35, 126, 0.15), 0 0 0 1px rgba(26, 35, 126, 0.1)',
-    transition: 'all 0.2s ease-in-out'
+    transition: 'all 0.2s ease-in-out',
+    // Add pointer cursor when clickable
+    cursor: onClick ? 'pointer' : 'default'
+  };
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onClick) {
+      e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.88)' : 'rotate(45deg) scale(1.05)';
+      e.currentTarget.style.boxShadow = '0 6px 16px rgba(26, 35, 126, 0.25), 0 0 0 2px rgba(26, 35, 126, 0.15)';
+    }
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onClick) {
+      e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.85)' : 'rotate(45deg)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(26, 35, 126, 0.15), 0 0 0 1px rgba(26, 35, 126, 0.1)';
+    }
   };
 
   return (
-    <div style={containerStyle}>
+    <div 
+      style={containerStyle}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* "Un·" text - counter-rotate to keep text upright and include interpunct */}
       <span style={{ 
         position: 'relative', 
