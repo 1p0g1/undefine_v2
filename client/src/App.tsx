@@ -371,9 +371,9 @@ function App() {
         >
           <b>Objective:</b> 'Un·Define' (reverse engineer) today's word in 6 guesses or less.
           <br /><br />
-          The D-E-F-I-N-E boxes represent different linguistic clues<br />(hover over to learn more).
+          The D-E-F-I-N-E boxes represent 6 different clues (hover over to learn more).
           <br /><br />
-          Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
+          Clues are revealed on each guess. Fastest time with the fewest guesses wins. Good luck!
         </div>
       )}
       
