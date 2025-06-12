@@ -85,6 +85,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
 
   // Function to replace underscore sequences with the mini logo
   const renderTextWithLogo = (inputText: string) => {
+    console.log('SentenceWithLogo - Input text:', inputText);
+    
     // Pattern that captures a single letter or word before underscores
     // (\S+|\S)\s* captures either a word or single letter + optional space
     // _{3,} matches underscores (which we'll remove)
@@ -93,8 +95,11 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
     
     // If no matches, return as-is
     if (!wordUnderscorePattern.test(inputText)) {
+      console.log('SentenceWithLogo - No matches found, returning as-is');
       return <span>{inputText}</span>;
     }
+    
+    console.log('SentenceWithLogo - Pattern matches found, processing...');
     
     // Reset regex for actual replacement
     wordUnderscorePattern.lastIndex = 0;
@@ -109,15 +114,30 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
       const underscoreMatch = fullMatch.match(/_{3,}/);
       const underscoreCount = underscoreMatch ? underscoreMatch[0].length : 6;
       
+      console.log('SentenceWithLogo - Match details:', {
+        fullMatch,
+        beforeText,
+        afterSpace,
+        matchStart,
+        underscoreCount
+      });
+      
       // Add any text before this match
       if (matchStart > lastIndex) {
         const beforeMatchText = inputText.slice(lastIndex, matchStart);
+        console.log('SentenceWithLogo - Adding before text:', beforeMatchText);
         result.push(<span key={`before-${matchStart}`}>{beforeMatchText}</span>);
       }
       
       // Create the unbreakable word/letter + logo unit
       const textPart = beforeText.trimEnd();
       const hasSpaceAfterText = beforeText.endsWith(' ');
+      
+      console.log('SentenceWithLogo - Creating logo unit:', {
+        textPart,
+        hasSpaceAfterText,
+        afterSpace
+      });
       
       result.push(
         <span 
@@ -139,9 +159,12 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
     
     // Add any remaining text
     if (lastIndex < inputText.length) {
-      result.push(<span key={`after-${lastIndex}`}>{inputText.slice(lastIndex)}</span>);
+      const remainingText = inputText.slice(lastIndex);
+      console.log('SentenceWithLogo - Adding remaining text:', remainingText);
+      result.push(<span key={`after-${lastIndex}`}>{remainingText}</span>);
     }
     
+    console.log('SentenceWithLogo - Final result array length:', result.length);
     return <>{result}</>;
   };
 
