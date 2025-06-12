@@ -20,7 +20,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         display: 'inline-flex', 
         alignItems: 'center', 
         gap: '2px',
-        margin: '0 12px 0 8px',
+        margin: '0 4px', // Reduced margin to prevent spacing issues
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px',
@@ -85,38 +85,62 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
 
   // Function to replace underscore sequences with the mini logo
   const renderTextWithLogo = (inputText: string) => {
-    // Find sequences of underscores (3 or more in a row, or individual underscores representing the word)
-    const underscorePattern = /_{3,}|_+/g;
-    const parts = inputText.split(underscorePattern);
-    const matches = inputText.match(underscorePattern);
-
-    if (!matches) {
+    // Pattern that captures a word before underscores, handling various spacing scenarios
+    // (\S+\s*) captures word + optional space, _{3,} matches underscores, (\s*) captures trailing space
+    const wordUnderscorePattern = /(\S+\s*)_{3,}(\s*)/g;
+    
+    // If no matches, return as-is
+    if (!wordUnderscorePattern.test(inputText)) {
       return <span>{inputText}</span>;
     }
-
+    
+    // Reset regex for actual replacement
+    wordUnderscorePattern.lastIndex = 0;
+    
     const result = [];
-    for (let i = 0; i < parts.length; i++) {
-      // Add the text part
-      if (parts[i]) {
-        result.push(<span key={`text-${i}`}>{parts[i]}</span>);
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = wordUnderscorePattern.exec(inputText)) !== null) {
+      const [fullMatch, beforeText, afterSpace] = match;
+      const matchStart = match.index;
+      const underscoreMatch = fullMatch.match(/_{3,}/);
+      const underscoreCount = underscoreMatch ? underscoreMatch[0].length : 6;
+      
+      // Add any text before this match
+      if (matchStart > lastIndex) {
+        const beforeMatchText = inputText.slice(lastIndex, matchStart);
+        result.push(<span key={`before-${matchStart}`}>{beforeMatchText}</span>);
       }
       
-      // Add the mini logo if there's a corresponding match
-      if (matches[i]) {
-        const underscoreCount = matches[i].length;
-        result.push(
-          <span key={`logo-group-${i}`} style={{ whiteSpace: 'nowrap' }}>
-            {' '}
-            <MiniUnDefineLogo 
-              key={`logo-${i}`} 
-              underscoreCount={underscoreCount}
-            />
-            {' '}
-          </span>
-        );
-      }
+      // Create the unbreakable word + logo unit
+      // Ensure proper spacing by handling the word and spaces carefully
+      const wordPart = beforeText.trimEnd();
+      const hasSpaceAfterWord = beforeText.endsWith(' ');
+      
+      result.push(
+        <span 
+          key={`word-logo-${matchStart}`}
+          style={{ 
+            whiteSpace: 'nowrap',
+            display: 'inline-block'
+          }}
+        >
+          {wordPart}
+          {hasSpaceAfterWord && ' '}
+          <MiniUnDefineLogo underscoreCount={underscoreCount} />
+          {afterSpace}
+        </span>
+      );
+      
+      lastIndex = matchStart + fullMatch.length;
     }
-
+    
+    // Add any remaining text
+    if (lastIndex < inputText.length) {
+      result.push(<span key={`after-${lastIndex}`}>{inputText.slice(lastIndex)}</span>);
+    }
+    
     return <>{result}</>;
   };
 
