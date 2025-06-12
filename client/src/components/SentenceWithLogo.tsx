@@ -85,9 +85,11 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
 
   // Function to replace underscore sequences with the mini logo
   const renderTextWithLogo = (inputText: string) => {
-    // Pattern that captures a word before underscores, handling various spacing scenarios
-    // (\S+\s*) captures word + optional space, _{3,} matches underscores, (\s*) captures trailing space
-    const wordUnderscorePattern = /(\S+\s*)_{3,}(\s*)/g;
+    // Pattern that captures a single letter or word before underscores
+    // (\S+|\S)\s* captures either a word or single letter + optional space
+    // _{3,} matches underscores (which we'll remove)
+    // (\s*) captures trailing space
+    const wordUnderscorePattern = /([a-zA-Z]\s*|[a-zA-Z]+\s*)_{3,}(\s*)/g;
     
     // If no matches, return as-is
     if (!wordUnderscorePattern.test(inputText)) {
@@ -113,10 +115,9 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         result.push(<span key={`before-${matchStart}`}>{beforeMatchText}</span>);
       }
       
-      // Create the unbreakable word + logo unit
-      // Ensure proper spacing by handling the word and spaces carefully
-      const wordPart = beforeText.trimEnd();
-      const hasSpaceAfterWord = beforeText.endsWith(' ');
+      // Create the unbreakable word/letter + logo unit
+      const textPart = beforeText.trimEnd();
+      const hasSpaceAfterText = beforeText.endsWith(' ');
       
       result.push(
         <span 
@@ -126,8 +127,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
             display: 'inline-block'
           }}
         >
-          {wordPart}
-          {hasSpaceAfterWord && ' '}
+          {textPart}
+          {hasSpaceAfterText && ' '}
           <MiniUnDefineLogo underscoreCount={underscoreCount} />
           {afterSpace}
         </span>
