@@ -23,7 +23,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         margin: '0 12px 0 8px',
         verticalAlign: 'middle',
         position: 'relative',
-        top: '-1px'
+        top: '-1px',
+        whiteSpace: 'nowrap'
       }}>
         {/* Un· diamond - matching UnPrefix styling but smaller */}
         <div style={{
@@ -103,20 +104,16 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
       // Add the mini logo if there's a corresponding match
       if (matches[i]) {
         const underscoreCount = matches[i].length;
-        // Add a space before the logo to ensure clear separation from preceding text
-        if (i > 0 && parts[i] && !parts[i].endsWith(' ')) {
-          result.push(<span key={`space-before-${i}`}>  </span>);
-        }
         result.push(
-          <MiniUnDefineLogo 
-            key={`logo-${i}`} 
-            underscoreCount={underscoreCount}
-          />
+          <span key={`logo-group-${i}`} style={{ whiteSpace: 'nowrap' }}>
+            {' '}
+            <MiniUnDefineLogo 
+              key={`logo-${i}`} 
+              underscoreCount={underscoreCount}
+            />
+            {' '}
+          </span>
         );
-        // Add a space after the logo to ensure clear separation from following text
-        if (i < parts.length - 1 && parts[i + 1] && !parts[i + 1].startsWith(' ')) {
-          result.push(<span key={`space-after-${i}`}>  </span>);
-        }
       }
     }
 
@@ -124,7 +121,11 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
   };
 
   return (
-    <span style={{ lineHeight: '1.6' }}>
+    <span style={{ 
+      lineHeight: '1.6',
+      display: 'inline',
+      wordBreak: 'keep-all' // Prevent breaking within words/logos
+    }}>
       {renderTextWithLogo(text)}
     </span>
   );
