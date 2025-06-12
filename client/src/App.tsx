@@ -326,13 +326,13 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.15rem, 0.6vw, 0.25rem)',
+          gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
           width: '100%',
           maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
-          minHeight: 'clamp(3.5rem, 10vw, 4.5rem)',
+          minHeight: 'clamp(3.2rem, 8.5vw, 4rem)',
           padding: '0 clamp(0.5rem, 2vw, 1rem)',
           boxSizing: 'border-box'
         }}
@@ -341,7 +341,7 @@ function App() {
         <UnPrefix />
         <div className="define-boxes" style={{ 
           display: 'flex', 
-          gap: 'clamp(0.08rem, 0.25vw, 0.12rem)',
+          gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
           flex: '0 0 auto',
           flexShrink: 0
         }}>
@@ -369,7 +369,7 @@ function App() {
             padding: '0 1rem'
           }}
         >
-          Objective: <b>reverse engineer ('Un·Define') today's word</b> using up to 6 clues tied to D-E-F-I-N-E (hover over them to learn more).
+          Objective: <b>reverse engineer ('Un·Define') today's word</b> using up to 6 clues tied to<br />D-E-F-I-N-E (hover over them to learn more).
           <br /><br />
           Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
         </div>

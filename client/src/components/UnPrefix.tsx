@@ -6,8 +6,8 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
-  // Make Un diamond proportionally smaller for better mobile fit
-  const baseSize = scaled ? 'clamp(3rem, 8vw, 3.5rem)' : 'clamp(3.2rem, 8.5vw, 4rem)';
+  // Make Un diamond even smaller for better mobile alignment
+  const baseSize = scaled ? 'clamp(2.8rem, 7vw, 3.2rem)' : 'clamp(3rem, 7.5vw, 3.6rem)';
   
   const containerStyle = {
     width: baseSize,
