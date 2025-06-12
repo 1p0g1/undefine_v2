@@ -369,9 +369,9 @@ function App() {
             padding: '0 1rem'
           }}
         >
-          <b>Objective:</b> 'Un·Define' (reverse engineer) today's word using up to 6 clues<br />(D-E-F-I-N-E).
+          <b>Objective:</b> 'Un·Define' (reverse engineer) today's word using up to 6 clues:<br />D-E-F-I-N-E (hover over the boxes above to learn more).
           <br /><br />
-          Clues are revealed after each guess (hover over them to learn more). Fastest player with the<br />fewest guesses wins. Good luck!
+          Clues are revealed after each guess. Fastest player with the fewest guesses wins. Good luck!
         </div>
       )}
       
