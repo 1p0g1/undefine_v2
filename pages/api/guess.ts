@@ -371,6 +371,15 @@ interface GameSessionWithWord extends GameSession {
   clue_status?: Record<string, boolean>;
 }
 
+export interface GuessRequest {
+  gameId: string;
+  guess: string;
+  playerId: string;
+  wordId: string;
+  start_time: string;
+  themeGuess?: string; // Optional theme guess
+}
+
 export default withCors(async function handler(
   req: NextApiRequest,
   res: NextApiResponse<GuessResponse | { error: string, details?: any }>

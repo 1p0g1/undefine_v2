@@ -16,6 +16,7 @@ export interface WordRow {
   etymology: string;
   difficulty: number;
   date: string;
+  theme?: string; // Optional theme for Theme of the Week feature
 }
 
 /**
@@ -32,6 +33,7 @@ export interface WordResponseShape {
   etymology: string;
   difficulty: number;
   date: string;
+  theme?: string; // Optional theme for Theme of the Week feature
 }
 
 /**
