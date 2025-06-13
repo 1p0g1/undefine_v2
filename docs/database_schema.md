@@ -88,7 +88,8 @@ is_complete BOOLEAN DEFAULT FALSE,
 is_won BOOLEAN DEFAULT FALSE,
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  clue_status JSONB DEFAULT '{"definition": false, "equivalents": false, "first_letter": false, "in_a_sentence": false, "number_of_letters": false, "etymology": false}'::jsonb
+  clue_status JSONB DEFAULT '{"definition": false, "equivalents": false, "first_letter": false, "in_a_sentence": false, "number_of_letters": false, "etymology": false}'::jsonb,
+  theme_guess TEXT -- Nullable, stores player's guess for the weekly theme
 );
 
 CREATE INDEX idx_game_sessions_player_id ON game_sessions(player_id);
