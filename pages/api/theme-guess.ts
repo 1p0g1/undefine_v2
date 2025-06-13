@@ -19,7 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
-import { getCurrentTheme, isThemeGuessCorrect, getThemeProgress } from '@/src/game/theme';
+import { getCurrentTheme, submitThemeAttempt, getThemeProgress } from '@/src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -99,28 +99,24 @@ export default withCors(async function handler(
       });
     }
 
-    console.log('[/api/theme-guess] Validating guess against theme:', { 
+    console.log('[/api/theme-guess] Submitting theme attempt:', { 
       guess, 
       currentTheme 
     });
 
-    // Validate the theme guess
-    const isCorrect = isThemeGuessCorrect(guess, currentTheme);
+    // Submit theme attempt (handles validation and daily constraint)
+    const attemptResult = await submitThemeAttempt(player_id, currentTheme, guess);
 
-    // Store the theme guess in the game session
-    const { error: updateError } = await supabase
-      .from('game_sessions')
-      .update({ 
-        theme_guess: guess.trim(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', gameId);
-
-    if (updateError) {
-      console.error('[/api/theme-guess] Failed to update game session:', updateError);
+    if (!attemptResult.success) {
+      if (attemptResult.alreadyGuessedToday) {
+        return res.status(400).json({ 
+          error: 'Already guessed today',
+          details: { message: 'You can only make one theme guess per day' }
+        });
+      }
+      
       return res.status(500).json({ 
-        error: 'Failed to store theme guess',
-        details: updateError.message
+        error: 'Failed to submit theme attempt'
       });
     }
 
@@ -128,7 +124,7 @@ export default withCors(async function handler(
     const progress = await getThemeProgress(player_id, currentTheme);
 
     console.log('[/api/theme-guess] Theme guess processed:', {
-      isCorrect,
+      isCorrect: attemptResult.isCorrect,
       guess,
       currentTheme,
       progress
@@ -136,13 +132,13 @@ export default withCors(async function handler(
 
     // Prepare response
     const response: ThemeGuessResponse = {
-      isCorrect,
+      isCorrect: attemptResult.isCorrect,
       guess: guess.trim(),
       progress
     };
 
     // Only reveal actual theme if guess was correct
-    if (isCorrect) {
+    if (attemptResult.isCorrect) {
       response.actualTheme = currentTheme;
     }
 

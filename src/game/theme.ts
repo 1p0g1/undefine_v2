@@ -146,6 +146,152 @@ export async function getCurrentTheme(): Promise<string | null> {
 }
 
 /**
+ * Submit a theme attempt (one per day per theme)
+ */
+export async function submitThemeAttempt(
+  playerId: string,
+  theme: string,
+  guess: string
+): Promise<{
+  success: boolean;
+  isCorrect: boolean;
+  alreadyGuessedToday: boolean;
+  wordsCompleted: number;
+  totalGuesses: number;
+}> {
+  try {
+    // Check if player already guessed today
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existingAttempt } = await supabase
+      .from('theme_attempts')
+      .select('id')
+      .eq('player_id', playerId)
+      .eq('theme', theme)
+      .eq('attempt_date', today)
+      .single();
+
+    if (existingAttempt) {
+      return {
+        success: false,
+        isCorrect: false,
+        alreadyGuessedToday: true,
+        wordsCompleted: 0,
+        totalGuesses: 0
+      };
+    }
+
+    // Get statistics at time of guess
+    const progress = await getThemeProgress(playerId, theme);
+    const { data: totalGuessStats } = await supabase
+      .from('game_sessions')
+      .select('guesses')
+      .eq('player_id', playerId)
+      .eq('is_complete', true);
+
+    const totalWordGuesses = totalGuessStats?.reduce((sum, session) => 
+      sum + (session.guesses?.length || 0), 0) || 0;
+
+    // Validate the guess
+    const isCorrect = isThemeGuessCorrect(guess, theme);
+
+    // Insert theme attempt
+    const { error: insertError } = await supabase
+      .from('theme_attempts')
+      .insert({
+        player_id: playerId,
+        theme,
+        guess: guess.trim(),
+        is_correct: isCorrect,
+        attempt_date: today,
+        words_completed_when_guessed: progress.completedWords,
+        total_word_guesses: totalWordGuesses
+      });
+
+    if (insertError) {
+      console.error('[submitThemeAttempt] Insert error:', insertError);
+      return {
+        success: false,
+        isCorrect: false,
+        alreadyGuessedToday: false,
+        wordsCompleted: progress.completedWords,
+        totalGuesses: totalWordGuesses
+      };
+    }
+
+    return {
+      success: true,
+      isCorrect,
+      alreadyGuessedToday: false,
+      wordsCompleted: progress.completedWords,
+      totalGuesses: totalWordGuesses
+    };
+  } catch (error) {
+    console.error('[submitThemeAttempt] Error:', error);
+    return {
+      success: false,
+      isCorrect: false,
+      alreadyGuessedToday: false,
+      wordsCompleted: 0,
+      totalGuesses: 0
+    };
+  }
+}
+
+/**
+ * Get theme statistics for a player
+ */
+export async function getPlayerThemeStats(playerId: string): Promise<{
+  totalThemeAttempts: number;
+  correctThemeGuesses: number;
+  averageAttemptsPerTheme: number;
+  averageWordsCompletedWhenGuessing: number;
+  themesGuessed: string[];
+}> {
+  try {
+    const { data: attempts, error } = await supabase
+      .from('theme_attempts')
+      .select('theme, is_correct, words_completed_when_guessed')
+      .eq('player_id', playerId);
+
+    if (error) {
+      console.error('[getPlayerThemeStats] Error:', error);
+      return {
+        totalThemeAttempts: 0,
+        correctThemeGuesses: 0,
+        averageAttemptsPerTheme: 0,
+        averageWordsCompletedWhenGuessing: 0,
+        themesGuessed: []
+      };
+    }
+
+    const totalAttempts = attempts?.length || 0;
+    const correctGuesses = attempts?.filter(a => a.is_correct).length || 0;
+    const uniqueThemes = Array.from(new Set(attempts?.map(a => a.theme) || []));
+    const averageAttempts = uniqueThemes.length > 0 ? totalAttempts / uniqueThemes.length : 0;
+    const averageWordsCompleted = totalAttempts > 0 
+      ? (attempts?.reduce((sum, a) => sum + (a.words_completed_when_guessed || 0), 0) || 0) / totalAttempts 
+      : 0;
+
+    return {
+      totalThemeAttempts: totalAttempts,
+      correctThemeGuesses: correctGuesses,
+      averageAttemptsPerTheme: Math.round(averageAttempts * 100) / 100,
+      averageWordsCompletedWhenGuessing: Math.round(averageWordsCompleted * 100) / 100,
+      themesGuessed: attempts?.filter(a => a.is_correct).map(a => a.theme) || []
+    };
+  } catch (error) {
+    console.error('[getPlayerThemeStats] Error:', error);
+    return {
+      totalThemeAttempts: 0,
+      correctThemeGuesses: 0,
+      averageAttemptsPerTheme: 0,
+      averageWordsCompletedWhenGuessing: 0,
+      themesGuessed: []
+    };
+  }
+}
+
+/**
  * Get theme progress for a player
  */
 export async function getThemeProgress(playerId: string, theme: string): Promise<{
@@ -153,6 +299,8 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
   completedWords: number;
   themeGuess: string | null;
   canGuessTheme: boolean;
+  hasGuessedToday: boolean;
+  isCorrectGuess: boolean;
 }> {
   try {
     // Get all words for this theme
@@ -163,7 +311,7 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     
     const { data: sessions, error } = await supabase
       .from('game_sessions')
-      .select('word_id, is_complete, theme_guess')
+      .select('word_id, is_complete')
       .eq('player_id', playerId)
       .in('word_id', wordIds);
 
@@ -173,18 +321,35 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
         totalWords: themeWords.length,
         completedWords: 0,
         themeGuess: null,
-        canGuessTheme: false
+        canGuessTheme: false,
+        hasGuessedToday: false,
+        isCorrectGuess: false
       };
     }
 
     const completedSessions = sessions?.filter(s => s.is_complete) || [];
-    const sessionWithThemeGuess = sessions?.find(s => s.theme_guess);
+
+    // Check today's theme attempt
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayAttempt, error: attemptError } = await supabase
+      .from('theme_attempts')
+      .select('guess, is_correct')
+      .eq('player_id', playerId)
+      .eq('theme', theme)
+      .eq('attempt_date', today)
+      .single();
+
+    if (attemptError && attemptError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('[getThemeProgress] Theme attempt error:', attemptError);
+    }
 
     return {
       totalWords: themeWords.length,
       completedWords: completedSessions.length,
-      themeGuess: sessionWithThemeGuess?.theme_guess || null,
-      canGuessTheme: completedSessions.length > 0 // Can guess after completing at least one word
+      themeGuess: todayAttempt?.guess || null,
+      canGuessTheme: completedSessions.length > 0 && !todayAttempt, // Can guess if completed words AND haven't guessed today
+      hasGuessedToday: !!todayAttempt,
+      isCorrectGuess: todayAttempt?.is_correct || false
     };
   } catch (error) {
     console.error('[getThemeProgress] Error:', error);
@@ -192,7 +357,9 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       totalWords: 0,
       completedWords: 0,
       themeGuess: null,
-      canGuessTheme: false
+      canGuessTheme: false,
+      hasGuessedToday: false,
+      isCorrectGuess: false
     };
   }
 } 
