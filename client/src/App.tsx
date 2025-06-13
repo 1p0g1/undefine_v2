@@ -14,6 +14,7 @@ import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
+import { ThemeGuessModal } from './components/ThemeGuessModal';
 
 function App() {
   const {
@@ -55,6 +56,9 @@ function App() {
 
   // All-time leaderboard state
   const [showAllTimeLeaderboard, setShowAllTimeLeaderboard] = useState(false);
+
+  // Theme modal state
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -258,6 +262,15 @@ function App() {
     setGameStarted(true);
   };
 
+  // Theme modal handlers
+  const handleThemeClick = () => {
+    setShowThemeModal(true);
+  };
+
+  const handleCloseThemeModal = () => {
+    setShowThemeModal(false);
+  };
+
   return (
     <div
       className="flex flex-col items-center text-center w-full min-h-screen main-container"
@@ -338,7 +351,7 @@ function App() {
         }}
       >
         {/* Un· enhanced design */}
-        <UnPrefix />
+        <UnPrefix onClick={handleThemeClick} />
         <div className="define-boxes" style={{ 
           display: 'flex', 
           gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
@@ -627,6 +640,14 @@ function App() {
         open={showAllTimeLeaderboard}
         onClose={() => setShowAllTimeLeaderboard(false)}
       />
+
+      {/* Theme Guess Modal */}
+      <ThemeGuessModal
+        open={showThemeModal}
+        onClose={handleCloseThemeModal}
+        gameId={gameState.gameId}
+      />
+
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }
