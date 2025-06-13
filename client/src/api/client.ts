@@ -231,9 +231,25 @@ export const apiClient = {
       completedWords: number;
       themeGuess: string | null;
       canGuessTheme: boolean;
-      isCorrectGuess?: boolean;
+      hasGuessedToday: boolean;
+      isCorrectGuess: boolean;
     };
   }> {
     return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
+  },
+
+  /**
+   * Get theme statistics for a player
+   * @param playerId The player ID
+   * @returns Promise with the theme statistics response
+   */
+  async getThemeStats(playerId: string): Promise<{
+    totalThemeAttempts: number;
+    correctThemeGuesses: number;
+    averageAttemptsPerTheme: number;
+    averageWordsCompletedWhenGuessing: number;
+    themesGuessed: string[];
+  }> {
+    return fetchFromApi(`/api/theme-stats?player_id=${playerId}`);
   },
 };
