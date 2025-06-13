@@ -51,7 +51,6 @@ export interface GameSession {
   end_time: string | null;
   created_at: string;
   updated_at: string;
-  theme_guess?: string; // Optional theme guess
 }
 
 interface GameSessionWithWord extends GameSession {

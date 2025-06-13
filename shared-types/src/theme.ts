@@ -1,36 +1,59 @@
 /**
- * Theme-related types for the Theme of the Week feature
+ * Types shared between frontend and backend for Theme of the Week functionality
  */
 
 /**
- * Theme progress for a player
+ * Theme guess request payload
+ */
+export interface ThemeGuessRequest {
+  player_id: string;
+  guess: string;
+  gameId: string;
+}
+
+/**
+ * Theme guess response
+ */
+export interface ThemeGuessResponse {
+  isCorrect: boolean;
+  guess: string;
+  actualTheme?: string;
+  progress: ThemeProgress;
+}
+
+/**
+ * Theme status response
+ */
+export interface ThemeStatusResponse {
+  currentTheme?: string | null;
+  hasActiveTheme: boolean;
+  progress: ThemeProgress;
+}
+
+/**
+ * Theme progress information
  */
 export interface ThemeProgress {
-  theme: string;
   totalWords: number;
   completedWords: number;
   themeGuess: string | null;
-  hasGuessedTheme: boolean;
-  canGuessTheme: boolean; // Can guess after completing any word
+  canGuessTheme: boolean;
+  isCorrectGuess?: boolean;
 }
 
 /**
- * Theme validation result
+ * Word with theme information
  */
-export interface ThemeValidationResult {
-  isCorrect: boolean;
-  similarity: number; // 0-1 similarity score
-  matchReason?: string; // e.g., "exact", "synonym", "fuzzy"
+export interface ThemedWord {
+  id: string;
+  word: string;
+  date: string;
+  theme?: string;
 }
 
 /**
- * Theme statistics for leaderboard
+ * Theme synonyms mapping for fuzzy matching
  */
-export interface ThemeStats {
-  playerId: string;
-  playerName: string;
-  themesGuessed: number;
-  correctThemeGuesses: number;
-  themeAccuracy: number; // percentage
-  averageGuessDay: number; // average day of week when they guess themes
+export interface ThemeSynonyms {
+  [theme: string]: string[];
 } 

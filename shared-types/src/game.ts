@@ -51,7 +51,6 @@ export interface GameSessionState {
   isWon: boolean;
   score: number | null;
   startTime: string;  // ISO string of game start time
-  themeGuess?: string; // Optional theme guess
 }
 
 /**

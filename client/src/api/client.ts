@@ -190,4 +190,50 @@ export const apiClient = {
     }
     return fetchFromApi<LeaderboardResponse>(`/api/leaderboard?${params.toString()}`);
   },
+
+  /**
+   * Submit a theme guess
+   * @param request The theme guess request
+   * @returns Promise with the theme guess response
+   */
+  async submitThemeGuess(request: {
+    player_id: string;
+    guess: string;
+    gameId: string;
+  }): Promise<{
+    isCorrect: boolean;
+    guess: string;
+    actualTheme?: string;
+    progress: {
+      totalWords: number;
+      completedWords: number;
+      themeGuess: string | null;
+      canGuessTheme: boolean;
+      isCorrectGuess?: boolean;
+    };
+  }> {
+    return fetchFromApi('/api/theme-guess', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  /**
+   * Get theme status and progress
+   * @param playerId The player ID
+   * @returns Promise with the theme status response
+   */
+  async getThemeStatus(playerId: string): Promise<{
+    currentTheme?: string | null;
+    hasActiveTheme: boolean;
+    progress: {
+      totalWords: number;
+      completedWords: number;
+      themeGuess: string | null;
+      canGuessTheme: boolean;
+      isCorrectGuess?: boolean;
+    };
+  }> {
+    return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
+  },
 };
