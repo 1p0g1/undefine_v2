@@ -519,7 +519,7 @@ function App() {
               borderRadius: '0.5rem',
               border: '1px solid #e0e4ff'
             }}>
-              📚 All clues revealed - the green boxes show when you actually solved it!
+              📚 All clues revealed - light green clues were unlocked during your game!
             </div>
           )}
           
@@ -528,12 +528,21 @@ function App() {
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
             const clueLabel = CLUE_LABELS[clueKey];
             
+            // Check if this clue was actually revealed during gameplay
+            const wasActuallyRevealed = gameState.isComplete 
+              ? gameState.revealedClues.includes(clueKey)
+              : true; // During gameplay, only revealed clues are shown anyway
+            
             return (
               <div className="hint-row" key={clue.key}>
                 <div className="hint-letter" style={{
                   fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
                 }}>{clue.key}</div>
-                <div className="hint-box">
+                <div className="hint-box" style={{
+                  backgroundColor: wasActuallyRevealed ? '#f0fdf4' : '#fff', // Light green for unlocked clues
+                  borderColor: wasActuallyRevealed ? '#d1fae5' : '#e5e7eb', // Slightly green border for unlocked
+                  transition: 'background-color 0.2s ease'
+                }}>
                   <div className="hint-title" style={{
                     fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
                     fontWeight: 600,
