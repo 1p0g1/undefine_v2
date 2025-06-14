@@ -62,8 +62,10 @@ export default withCors(async function handler(
 
     // Get current theme
     const currentTheme = await getCurrentTheme();
+    console.log('[/api/theme-status] Current theme from getCurrentTheme():', currentTheme);
     
     if (!currentTheme) {
+      console.log('[/api/theme-status] No current theme found, returning inactive status');
       return res.status(200).json({
         hasActiveTheme: false,
         progress: {

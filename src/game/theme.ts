@@ -414,29 +414,29 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
 
     const wordIds = themedWords.map(w => w.id);
 
-    // Find which ones player has completed (has a score entry with completion time)
-    const { data: completedScores, error: scoresError } = await supabase
-      .from('scores')
+    // Find which ones player has completed using game_sessions (consistent with getThemeProgress)
+    const { data: completedSessions, error: sessionsError } = await supabase
+      .from('game_sessions')
       .select('word_id, created_at')
       .eq('player_id', playerId)
-      .in('word_id', wordIds)
-      .not('completion_time_sec', 'is', null);
+      .eq('is_complete', true)
+      .in('word_id', wordIds);
 
-    if (scoresError) {
-      console.error('[getPlayerWeeklyThemedWords] Error fetching completed scores:', scoresError);
+    if (sessionsError) {
+      console.error('[getPlayerWeeklyThemedWords] Error fetching completed sessions:', sessionsError);
       return [];
     }
 
     // Match completed words with their theme word data
     const completedWords = themedWords
-      .filter(word => completedScores?.some(score => score.word_id === word.id))
+      .filter(word => completedSessions?.some(session => session.word_id === word.id))
       .map(word => {
-        const score = completedScores?.find(s => s.word_id === word.id);
+        const session = completedSessions?.find(s => s.word_id === word.id);
         return {
           id: word.id,
           word: word.word,
           date: word.date,
-          completedOn: score?.created_at || word.date
+          completedOn: session?.created_at || word.date
         };
       });
 
