@@ -88,11 +88,47 @@ const weeklyWords = await getPlayerWeeklyThemedWords(playerId, theme);
 
 ## 🚀 Next Steps
 
-1. **Immediate**: Check and fix `VITE_API_BASE_URL` environment variable
-2. **Verify**: Test theme endpoints directly on backend URL
-3. **Deploy**: Redeploy frontend with correct environment configuration
-4. **Test**: Verify complete theme feature functionality
-5. **Document**: Update implementation status once resolved
+Since environment variables are correctly configured, the next steps are:
+
+### 1. Database Setup ✅ READY
+- Theme migrations exist and are ready to apply
+- Your curated words database is ready
+- Need to add `theme` column values to your existing words
+
+### 2. Apply Database Migrations
+```sql
+-- Apply the theme column migration (if not already applied)
+-- This adds the theme column to your words table
+```
+
+### 3. Add Theme Data to Your Words
+You need to populate the `theme` column in your existing words table:
+```sql
+-- Example: Update words with themes
+UPDATE words SET theme = 'your_theme_name' 
+WHERE date BETWEEN '2024-12-09' AND '2024-12-15';
+```
+
+### 4. Deploy Backend Changes
+- Theme endpoints are already implemented
+- Deploy backend with theme functionality
+
+### 5. Deploy Frontend Changes  
+- Weekly words display UI is implemented
+- Deploy frontend with updated ThemeGuessModal
+
+### 6. Test Complete Feature
+- Verify theme modal opens
+- Check weekly words display
+- Test theme guessing functionality
+
+## 📋 Immediate Action Items
+
+1. **Database**: Add theme values to your curated words
+2. **Deploy**: Push backend and frontend changes to production
+3. **Test**: Verify theme feature works end-to-end
+
+The code is ready - you just need to populate themes in your database and deploy!
 
 ## 📝 Environment Variable Debug
 

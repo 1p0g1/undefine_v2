@@ -213,41 +213,25 @@ const synonymMap = {
 ## Sample Data
 
 ### Weekly Words Display Example
-**Current Week**: December 9-15, 2024
-**Theme**: "emotions"
-**All Themed Words**: HAPPY, ANGRY, EXCITED, NERVOUS, CALM, JEALOUS, PROUD
-**Player Completed**: HAPPY (Mon), EXCITED (Wed), CALM (Fri)
+**Current Week**: Example week
+**Theme**: [Your curated theme]
 **Display in Modal**:
 ```json
 {
   "weeklyThemedWords": [
     {
-      "word": "HAPPY",
+      "word": "EXAMPLE_WORD",
       "date": "2024-12-09",
       "completedOn": "2024-12-09T10:30:00Z"
-    },
-    {
-      "word": "EXCITED", 
-      "date": "2024-12-11",
-      "completedOn": "2024-12-11T14:15:00Z"
-    },
-    {
-      "word": "CALM",
-      "date": "2024-12-13", 
-      "completedOn": "2024-12-13T09:45:00Z"
     }
   ],
   "weekProgress": {
-    "completed": 3,
+    "completed": 1,
     "total": 7,
     "canGuessTheme": true
   }
 }
 ```
-
-### Current Theme (December 9-15, 2024)
-**Theme**: "emotions"
-**Words**: HAPPY, ANGRY, EXCITED, NERVOUS, CALM, JEALOUS, PROUD
 
 ### Example Statistics Response
 ```json
@@ -256,7 +240,7 @@ const synonymMap = {
   "correctThemeGuesses": 3,
   "averageAttemptsPerTheme": 1.25,
   "averageWordsCompletedWhenGuessing": 2.4,
-  "themesGuessed": ["emotions", "colors", "animals"]
+  "themesGuessed": ["theme1", "theme2", "theme3"]
 }
 ```
 
