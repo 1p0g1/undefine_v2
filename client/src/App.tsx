@@ -519,7 +519,7 @@ function App() {
               borderRadius: '0.5rem',
               border: '1px solid #e0e4ff'
             }}>
-              📚 All clues revealed - light green clues were unlocked during your game!
+              📚 All clues revealed - the light green clue shows when you solved it!
             </div>
           )}
           
@@ -528,10 +528,15 @@ function App() {
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
             const clueLabel = CLUE_LABELS[clueKey];
             
-            // Check if this clue was actually revealed during gameplay
-            const wasActuallyRevealed = gameState.isComplete 
-              ? gameState.revealedClues.includes(clueKey)
-              : true; // During gameplay, only revealed clues are shown anyway
+            // Only highlight clues after game completion, and only the winning clue
+            let wasWinningClue = false;
+            if (gameState.isComplete && gameState.isWon) {
+              // Map guess number to DEFINE letter: 1st guess = D, 2nd = E, 3rd = F, 4th = I, etc.
+              const winningGuessNumber = gameState.guesses.length;
+              const clueLetters = ['D', 'E', 'F', 'I', 'N', 'E2'];
+              const winningClueKey = clueLetters[winningGuessNumber - 1];
+              wasWinningClue = clue.key === winningClueKey;
+            }
             
             return (
               <div className="hint-row" key={clue.key}>
@@ -539,8 +544,8 @@ function App() {
                   fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
                 }}>{clue.key}</div>
                 <div className="hint-box" style={{
-                  backgroundColor: wasActuallyRevealed ? '#f0fdf4' : '#fff', // Light green for unlocked clues
-                  borderColor: wasActuallyRevealed ? '#d1fae5' : '#e5e7eb', // Slightly green border for unlocked
+                  backgroundColor: wasWinningClue ? '#f0fdf4' : '#fff', // Light green only for winning clue
+                  borderColor: wasWinningClue ? '#d1fae5' : '#e5e7eb', // Slightly green border only for winning clue
                   transition: 'background-color 0.2s ease'
                 }}>
                   <div className="hint-title" style={{
