@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import useGame from './hooks/useGame';
 import { DefineBoxes } from './components/DefineBoxes';
-import { getVisibleClues } from './hooks/useGame';
+import { getVisibleClues, getAllClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
 import DebugPanel from './components/DebugPanel';
@@ -139,8 +139,10 @@ function App() {
   };
 
   const visibleClues = gameState.clues
-    ? getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
-      : [];
+    ? gameState.isComplete 
+      ? getAllClues(gameState.clues) // Show all clues when game is complete
+      : getVisibleClues(gameState.clues, gameState.guesses, gameState.wordText)
+    : [];
   const revealedClueKeys = visibleClues.map(c => c.key);
 
   // Compute box status for each box
@@ -504,6 +506,23 @@ function App() {
           margin: '1.5rem auto 0 auto',
           gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
         }}>
+          {/* Show all clues message when game is complete */}
+          {gameState.isComplete && (
+            <div style={{
+              textAlign: 'center',
+              fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+              color: '#666',
+              fontStyle: 'italic',
+              marginBottom: '0.75rem',
+              padding: '0.5rem',
+              backgroundColor: '#f8f9ff',
+              borderRadius: '0.5rem',
+              border: '1px solid #e0e4ff'
+            }}>
+              📚 All clues revealed - the green boxes show when you actually solved it!
+            </div>
+          )}
+          
           {visibleClues.map((clue, idx) => {
             // Get the full label for the clue heading
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];

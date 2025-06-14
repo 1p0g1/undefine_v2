@@ -214,4 +214,49 @@ export function getVisibleClues(
   return visibleClues;
 }
 
+/**
+ * Returns all clues for display after game completion
+ */
+export function getAllClues(
+  clues: Record<ClueKey, string>
+): { key: ShortClueKey; label: string; value: string }[] {
+  if (!clues) return [];
+  
+  const allClues: { key: ShortClueKey; label: string; value: string }[] = [];
+
+  // Show all clues in D-E-F-I-N-E order
+  allClues.push({ 
+    key: 'D', 
+    label: CLUE_LABELS[CLUE_KEY_MAP.D], 
+    value: clues[CLUE_KEY_MAP.D] 
+  });
+  allClues.push({
+    key: 'E',
+    label: CLUE_LABELS[CLUE_KEY_MAP.E],
+    value: clues[CLUE_KEY_MAP.E],
+  });
+  allClues.push({ 
+    key: 'F', 
+    label: CLUE_LABELS[CLUE_KEY_MAP.F], 
+    value: clues[CLUE_KEY_MAP.F] 
+  });
+  allClues.push({ 
+    key: 'I', 
+    label: CLUE_LABELS[CLUE_KEY_MAP.I], 
+    value: clues[CLUE_KEY_MAP.I] 
+  });
+  allClues.push({
+    key: 'N',
+    label: CLUE_LABELS[CLUE_KEY_MAP.N],
+    value: clues[CLUE_KEY_MAP.N],
+  });
+  allClues.push({ 
+    key: 'E2', 
+    label: CLUE_LABELS[CLUE_KEY_MAP.E2], 
+    value: clues[CLUE_KEY_MAP.E2] 
+  });
+
+  return allClues;
+}
+
 export default useGame;
