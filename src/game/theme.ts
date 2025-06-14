@@ -362,4 +362,93 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       isCorrectGuess: false
     };
   }
+}
+
+/**
+ * Get current theme week boundaries (Monday-Sunday)
+ */
+function getThemeWeekBoundaries(date: Date = new Date()) {
+  const monday = getWeekStart(date);
+  const sunday = getWeekEnd(date);
+  return { monday, sunday };
+}
+
+/**
+ * Get player's completed themed words for current week only
+ * This is the core logic for weekly words display feature
+ */
+export async function getPlayerWeeklyThemedWords(playerId: string, theme: string): Promise<Array<{
+  id: string;
+  word: string;
+  date: string;
+  completedOn: string;
+}>> {
+  try {
+    const { monday, sunday } = getThemeWeekBoundaries();
+    
+    console.log('[getPlayerWeeklyThemedWords] Getting weekly themed words for player:', {
+      playerId,
+      theme,
+      weekStart: monday.toISOString().split('T')[0],
+      weekEnd: sunday.toISOString().split('T')[0]
+    });
+
+    // Find all words from current week with matching theme
+    const { data: themedWords, error: wordsError } = await supabase
+      .from('words')
+      .select('id, word, date')
+      .eq('theme', theme)
+      .gte('date', monday.toISOString().split('T')[0])
+      .lte('date', sunday.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
+    if (wordsError) {
+      console.error('[getPlayerWeeklyThemedWords] Error fetching themed words:', wordsError);
+      return [];
+    }
+
+    if (!themedWords || themedWords.length === 0) {
+      console.log('[getPlayerWeeklyThemedWords] No themed words found for current week');
+      return [];
+    }
+
+    const wordIds = themedWords.map(w => w.id);
+
+    // Find which ones player has completed (has a score entry with completion time)
+    const { data: completedScores, error: scoresError } = await supabase
+      .from('scores')
+      .select('word_id, created_at')
+      .eq('player_id', playerId)
+      .in('word_id', wordIds)
+      .not('completion_time_sec', 'is', null);
+
+    if (scoresError) {
+      console.error('[getPlayerWeeklyThemedWords] Error fetching completed scores:', scoresError);
+      return [];
+    }
+
+    // Match completed words with their theme word data
+    const completedWords = themedWords
+      .filter(word => completedScores?.some(score => score.word_id === word.id))
+      .map(word => {
+        const score = completedScores?.find(s => s.word_id === word.id);
+        return {
+          id: word.id,
+          word: word.word,
+          date: word.date,
+          completedOn: score?.created_at || word.date
+        };
+      });
+
+    console.log('[getPlayerWeeklyThemedWords] Found completed themed words:', {
+      totalThemedWords: themedWords.length,
+      completedCount: completedWords.length,
+      completedWords: completedWords.map(w => ({ word: w.word, date: w.date }))
+    });
+
+    return completedWords;
+  } catch (error) {
+    console.error('[getPlayerWeeklyThemedWords] Error:', error);
+    return [];
+  }
 } 

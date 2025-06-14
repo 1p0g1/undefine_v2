@@ -8,6 +8,7 @@
  * @apiSuccess {string|null} response.currentTheme Current week's theme (only if already guessed correctly)
  * @apiSuccess {boolean} response.hasActiveTheme Whether there's an active theme this week
  * @apiSuccess {Object} response.progress Theme progress information
+ * @apiSuccess {Array} response.weeklyThemedWords Player's completed themed words from current week
  * @apiError {Object} error Error response
  */
 
@@ -15,7 +16,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
-import { getCurrentTheme, getThemeProgress, isThemeGuessCorrect } from '@/src/game/theme';
+import { 
+  getCurrentTheme, 
+  getThemeProgress, 
+  isThemeGuessCorrect, 
+  getPlayerWeeklyThemedWords 
+} from '@/src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -29,6 +35,12 @@ interface ThemeStatusResponse {
     canGuessTheme: boolean;
     isCorrectGuess?: boolean;
   };
+  weeklyThemedWords: Array<{
+    id: string;
+    word: string;
+    date: string;
+    completedOn: string;
+  }>;
 }
 
 export default withCors(async function handler(
@@ -59,12 +71,16 @@ export default withCors(async function handler(
           completedWords: 0,
           themeGuess: null,
           canGuessTheme: false
-        }
+        },
+        weeklyThemedWords: []
       });
     }
 
     // Get theme progress for player
     const progress = await getThemeProgress(playerId, currentTheme);
+
+    // Get player's completed themed words from current week
+    const weeklyThemedWords = await getPlayerWeeklyThemedWords(playerId, currentTheme);
 
     // Check if player's guess was correct (if they made one)
     let isCorrectGuess = false;
@@ -77,7 +93,8 @@ export default withCors(async function handler(
       progress: {
         ...progress,
         isCorrectGuess
-      }
+      },
+      weeklyThemedWords
     };
 
     // Only reveal the actual theme if player guessed correctly
@@ -90,7 +107,8 @@ export default withCors(async function handler(
       currentTheme,
       hasGuess: !!progress.themeGuess,
       isCorrectGuess,
-      progress: progress
+      progress: progress,
+      weeklyWordsCount: weeklyThemedWords.length
     });
 
     return res.status(200).json(response);

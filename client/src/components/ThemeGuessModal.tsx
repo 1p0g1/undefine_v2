@@ -21,6 +21,12 @@ interface ThemeStatus {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
   };
+  weeklyThemedWords: Array<{
+    id: string;
+    word: string;
+    date: string;
+    completedOn: string;
+  }>;
 }
 
 interface ThemeStats {
@@ -62,7 +68,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         apiClient.getThemeStats(playerId)
       ]);
 
-      setThemeStatus(statusResult);
+      // Ensure weeklyThemedWords is present (fallback for compatibility)
+      const statusWithWeeklyWords = {
+        ...statusResult,
+        weeklyThemedWords: statusResult.weeklyThemedWords || []
+      };
+
+      setThemeStatus(statusWithWeeklyWords);
       setThemeStats(statsResult);
     } catch (error) {
       console.error('Failed to load theme data:', error);
@@ -188,9 +200,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 alignItems: 'center',
                 marginBottom: '0.5rem' 
               }}>
-                <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Progress</span>
+                <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Weekly Progress</span>
                 <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                  {themeStatus.progress.completedWords} / {themeStatus.progress.totalWords} words
+                  {themeStatus.weeklyThemedWords.length} / {themeStatus.progress.totalWords} themed words completed this week
                 </span>
               </div>
               <div style={{
@@ -201,7 +213,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 overflow: 'hidden'
               }}>
                 <div style={{
-                  width: `${(themeStatus.progress.completedWords / themeStatus.progress.totalWords) * 100}%`,
+                  width: `${(themeStatus.weeklyThemedWords.length / themeStatus.progress.totalWords) * 100}%`,
                   height: '100%',
                   backgroundColor: '#1a237e',
                   borderRadius: '4px',
@@ -209,6 +221,72 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 }} />
               </div>
             </div>
+
+            {/* Weekly Themed Words Section */}
+            {themeStatus.weeklyThemedWords.length > 0 && (
+              <div style={{
+                backgroundColor: '#f8fffe',
+                border: '1px solid #d1fae5',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{ 
+                  margin: '0 0 0.75rem 0', 
+                  fontSize: '0.95rem', 
+                  fontWeight: '600',
+                  color: '#065f46'
+                }}>
+                  📚 This Week's Themed Words ({themeStatus.weeklyThemedWords.length})
+                </h3>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                  gap: '0.5rem'
+                }}>
+                  {themeStatus.weeklyThemedWords.map((wordInfo, index) => (
+                    <div 
+                      key={wordInfo.id}
+                      style={{
+                        backgroundColor: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '0.375rem',
+                        padding: '0.5rem',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600',
+                        color: '#047857' 
+                      }}>
+                        {wordInfo.word}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.7rem', 
+                        color: '#059669',
+                        marginTop: '0.25rem'
+                      }}>
+                        {new Date(wordInfo.date).toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#047857', 
+                  marginTop: '0.75rem',
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}>
+                  These are the themed words you've completed this week
+                </div>
+              </div>
+            )}
 
             {/* Current Status */}
             {themeStatus.progress.hasGuessedToday ? (
@@ -232,7 +310,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   </div>
                 )}
               </div>
-            ) : !themeStatus.progress.canGuessTheme ? (
+            ) : themeStatus.weeklyThemedWords.length === 0 ? (
               <div style={{
                 backgroundColor: '#f3f4f6',
                 border: '2px solid #d1d5db',
@@ -242,10 +320,10 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 textAlign: 'center'
               }}>
                 <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                  🔒 Complete a word first
+                  🔒 Complete a themed word first
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                  You need to complete at least one themed word before you can guess the theme.
+                  You need to complete at least one themed word from this week before you can guess the theme.
                 </div>
               </div>
             ) : (
@@ -258,7 +336,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     marginBottom: '0.5rem',
                     fontSize: '0.9rem'
                   }}>
-                    What's the theme?
+                    What's the theme connecting these words?
                   </label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
@@ -309,7 +387,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     color: '#666', 
                     marginTop: '0.5rem' 
                   }}>
-                    💡 Tip: Think about what connects all the themed words!
+                    💡 Think about what connects the {themeStatus.weeklyThemedWords.length} word{themeStatus.weeklyThemedWords.length !== 1 ? 's' : ''} you've completed this week!
                   </div>
                 </div>
               </>

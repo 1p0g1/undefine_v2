@@ -9,14 +9,37 @@ The Theme of the Week feature allows players to guess the weekly theme that conn
 - **Weekly Themes**: 7 words per week (Monday-Sunday) share a common theme
 - **Daily Guessing**: One theme guess attempt per player per day
 - **Progress Tracking**: Players can see how many themed words they've completed
+- **Weekly Words Display**: When attempting theme guess, show only the words from current week that the player has already completed
 - **Statistics**: Comprehensive tracking of theme guessing performance
 - **Fuzzy Matching**: Accepts variations (e.g., "emotions" = "feelings", "moods")
 
 ### User Interface
 - **Access**: Click the 'Un·' diamond to open theme guessing modal
-- **Modal Interface**: Shows progress, current status, guess input, and statistics
+- **Modal Interface**: Shows progress, current status, guess input, weekly words, and statistics
+- **Weekly Words Section**: Displays only the themed words from current week that player has completed
 - **Visual Feedback**: Clear indication of correct/incorrect guesses
 - **Daily Constraints**: Prevents multiple attempts per day
+
+### Weekly Words Display Logic
+When a player clicks the 'Un·' diamond to attempt theme guessing:
+
+1. **Week Calculation**: Determine current theme week (Monday-Sunday)
+2. **Word Filtering**: Find all words from current week that have theme matching current week's theme
+3. **Player Progress**: Check which of these themed words the player has actually completed
+4. **Display**: Show only completed themed words from current week (not all-time themed words)
+
+**Example Scenarios**:
+- Week: Dec 9-15, 2024 (Theme: "emotions")
+- Themed words: HAPPY (Mon), ANGRY (Tue), EXCITED (Wed), NERVOUS (Thu), CALM (Fri), JEALOUS (Sat), PROUD (Sun)
+- Player logged in Mon, Wed, Fri and completed those words
+- **Display**: Only show HAPPY, EXCITED, CALM (3 words) when attempting theme guess
+- **Progress**: "3/7 themed words completed this week"
+
+**Important Notes**:
+- Only show words from CURRENT theme week (Monday-Sunday)
+- Only show words the player has actually completed/solved
+- If player hasn't completed any themed words this week, they cannot attempt theme guess
+- Reset weekly progress every Monday (new theme week begins)
 
 ## Implementation Details
 
@@ -102,6 +125,45 @@ ALTER TABLE words ADD COLUMN theme TEXT;
 
 ### 4. Business Logic
 
+#### Weekly Words Display Logic
+```typescript
+// Get current theme week boundaries
+const getThemeWeekBoundaries = (date: Date) => {
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - date.getDay() + 1); // Get Monday
+  monday.setHours(0, 0, 0, 0);
+  
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6); // Get Sunday
+  sunday.setHours(23, 59, 59, 999);
+  
+  return { monday, sunday };
+};
+
+// Get player's completed themed words for current week
+const getPlayerWeeklyThemedWords = async (playerId: string, theme: string) => {
+  const { monday, sunday } = getThemeWeekBoundaries(new Date());
+  
+  // Find all words from current week with matching theme
+  const themedWords = await supabase
+    .from('words')
+    .select('*')
+    .eq('theme', theme)
+    .gte('date', monday.toISOString().split('T')[0])
+    .lte('date', sunday.toISOString().split('T')[0]);
+  
+  // Find which ones player has completed
+  const completedWords = await supabase
+    .from('scores')
+    .select('word_id, words(*)')
+    .eq('player_id', playerId)
+    .in('word_id', themedWords.data?.map(w => w.id) || [])
+    .not('completion_time_sec', 'is', null);
+  
+  return completedWords.data || [];
+};
+```
+
 #### Daily Constraint Enforcement
 ```typescript
 // Database constraint ensures one attempt per day
@@ -130,6 +192,14 @@ const synonymMap = {
 
 ### 5. Data Flow
 
+#### Weekly Words Display Flow
+1. User clicks 'Un·' diamond → Opens modal
+2. Modal calculates current theme week (Monday-Sunday boundaries)
+3. Fetches all themed words from current week
+4. Filters to only words player has completed
+5. Displays completed themed words with count (e.g., "3/7 themed words completed")
+6. Enables/disables theme guessing based on completion count (≥1 required)
+
 #### Theme Guess Submission
 1. User clicks 'Un·' diamond → Opens modal
 2. Modal loads current theme status and player statistics
@@ -140,13 +210,40 @@ const synonymMap = {
 7. Response returned with success/failure
 8. Modal updates with new status
 
-#### Progress Tracking
-1. Game completion triggers theme word check
-2. Theme progress calculated across all themed words
-3. Player eligibility determined (≥1 word completed)
-4. Modal displays current progress visually
-
 ## Sample Data
+
+### Weekly Words Display Example
+**Current Week**: December 9-15, 2024
+**Theme**: "emotions"
+**All Themed Words**: HAPPY, ANGRY, EXCITED, NERVOUS, CALM, JEALOUS, PROUD
+**Player Completed**: HAPPY (Mon), EXCITED (Wed), CALM (Fri)
+**Display in Modal**:
+```json
+{
+  "weeklyThemedWords": [
+    {
+      "word": "HAPPY",
+      "date": "2024-12-09",
+      "completedOn": "2024-12-09T10:30:00Z"
+    },
+    {
+      "word": "EXCITED", 
+      "date": "2024-12-11",
+      "completedOn": "2024-12-11T14:15:00Z"
+    },
+    {
+      "word": "CALM",
+      "date": "2024-12-13", 
+      "completedOn": "2024-12-13T09:45:00Z"
+    }
+  ],
+  "weekProgress": {
+    "completed": 3,
+    "total": 7,
+    "canGuessTheme": true
+  }
+}
+```
 
 ### Current Theme (December 9-15, 2024)
 **Theme**: "emotions"
@@ -165,11 +262,19 @@ const synonymMap = {
 
 ## User Experience
 
+### Weekly Words Section
+- **Title**: "This Week's Themed Words" or "Words You've Completed This Week"
+- **Display**: List of completed themed words from current week only
+- **Format**: Word name with completion date/day
+- **Progress Indicator**: "X/7 themed words completed this week"
+- **Empty State**: "Complete at least one themed word this week to guess the theme"
+
 ### Access Flow
-1. Player completes at least one themed word
+1. Player completes at least one themed word from current week
 2. Clicks 'Un·' diamond (enhanced with click cursor)
 3. Modal opens showing:
-   - Weekly progress (X/7 words completed)
+   - Weekly progress (X/7 themed words completed this week)
+   - List of completed themed words from current week
    - Current guess status
    - Input field (if eligible)
    - Personal statistics

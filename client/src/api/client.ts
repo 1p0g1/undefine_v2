@@ -234,6 +234,12 @@ export const apiClient = {
       hasGuessedToday: boolean;
       isCorrectGuess: boolean;
     };
+    weeklyThemedWords: Array<{
+      id: string;
+      word: string;
+      date: string;
+      completedOn: string;
+    }>;
   }> {
     return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
   },
