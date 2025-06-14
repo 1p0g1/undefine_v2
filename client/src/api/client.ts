@@ -297,28 +297,6 @@ export const apiClient = {
       isCorrectGuess?: boolean;
     };
   }> {
-    // Theme endpoints are in frontend /pages/api/, use relative path
-    const headers = new Headers();
-    headers.set('Content-Type', 'application/json');
-    headers.set('Accept', 'application/json');
-    
-    const playerId = getPlayerId();
-    if (playerId) {
-      headers.set('player-id', playerId);
-    }
-
-    const response = await fetch('/api/theme-guess', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ApiError(`Theme guess failed: ${errorText}`, response.status);
-    }
-
-    return response.json();
   },
 
   /**
@@ -344,27 +322,6 @@ export const apiClient = {
       completedOn: string;
     }>;
   }> {
-    // Theme endpoints are in frontend /pages/api/, use relative path
-    const headers = new Headers();
-    headers.set('Content-Type', 'application/json');
-    headers.set('Accept', 'application/json');
-    
-    const currentPlayerId = getPlayerId();
-    if (currentPlayerId) {
-      headers.set('player-id', currentPlayerId);
-    }
-
-    const response = await fetch(`/api/theme-status?player_id=${playerId}`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ApiError(`Theme status failed: ${errorText}`, response.status);
-    }
-
-    return response.json();
   },
 
   /**
@@ -379,26 +336,5 @@ export const apiClient = {
     averageWordsCompletedWhenGuessing: number;
     themesGuessed: string[];
   }> {
-    // Theme endpoints are in frontend /pages/api/, use relative path
-    const headers = new Headers();
-    headers.set('Content-Type', 'application/json');
-    headers.set('Accept', 'application/json');
-    
-    const currentPlayerId = getPlayerId();
-    if (currentPlayerId) {
-      headers.set('player-id', currentPlayerId);
-    }
-
-    const response = await fetch(`/api/theme-stats?player_id=${playerId}`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ApiError(`Theme stats failed: ${errorText}`, response.status);
-    }
-
-    return response.json();
   },
 };
