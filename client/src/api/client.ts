@@ -50,6 +50,91 @@ export class ApiError extends Error {
 }
 
 /**
+ * Fetches from theme APIs (which are in frontend /pages/api/) with proper error handling
+ * @param path The API path to fetch from
+ * @param options Optional fetch options
+ * @returns Promise with the typed response
+ */
+export const fetchFromThemeApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+  // Get existing headers from options
+  const existingHeaders = options.headers || {};
+  
+  // Create new headers with our required values
+  const headers = new Headers(existingHeaders);
+  headers.set('Content-Type', 'application/json');
+  headers.set('Accept', 'application/json');
+  
+  // Add player-id if available
+  const playerId = getPlayerId();
+  if (playerId) {
+    headers.set('player-id', playerId);
+  }
+
+  const normalizedPath = normalizePath(path);
+  // Use relative path for theme endpoints (they're in frontend /pages/api/)
+  const url = normalizedPath;
+  
+  const requestId = Math.random().toString(36).substring(7);
+  
+  try {
+    console.log(`[Theme API ${requestId}] Request:`, {
+      url,
+      method: options.method || 'GET',
+      headers: Object.fromEntries(headers.entries()),
+      body: options.body ? JSON.parse(options.body as string) : undefined
+    });
+
+    const startTime = performance.now();
+    
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      mode: 'cors',
+      cache: getCacheConfig(path).cache,
+    });
+
+    const duration = Math.round(performance.now() - startTime);
+    console.log(`[Theme API ${requestId}] Response received in ${duration}ms:`, {
+      status: response.status,
+      statusText: response.statusText,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Theme API ${requestId}] Error:`, {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        url,
+      });
+      throw new ApiError(
+        `Theme API request failed: ${errorText}`,
+        response.status,
+        response.statusText,
+        errorText
+      );
+    }
+
+    const data = await response.json();
+    console.log(`[Theme API ${requestId}] Success:`, { data });
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    console.error(`[Theme API ${requestId}] Fetch Error:`, {
+      url,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    throw new ApiError(
+      error instanceof Error ? error.message : 'Theme API request failed',
+      0,
+      'Network Error'
+    );
+  }
+};
+
+/**
  * Fetches from the API with proper error handling and type safety
  * @param path The API path to fetch from
  * @param options Optional fetch options
@@ -212,10 +297,28 @@ export const apiClient = {
       isCorrectGuess?: boolean;
     };
   }> {
-    return fetchFromApi('/api/theme-guess', {
+    // Theme endpoints are in frontend /pages/api/, use relative path
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.set('Accept', 'application/json');
+    
+    const playerId = getPlayerId();
+    if (playerId) {
+      headers.set('player-id', playerId);
+    }
+
+    const response = await fetch('/api/theme-guess', {
       method: 'POST',
+      headers,
       body: JSON.stringify(request),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(`Theme guess failed: ${errorText}`, response.status);
+    }
+
+    return response.json();
   },
 
   /**
@@ -241,7 +344,7 @@ export const apiClient = {
       completedOn: string;
     }>;
   }> {
-    return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
+    return fetchFromThemeApi(`/api/theme-status?player_id=${playerId}`);
   },
 
   /**
@@ -256,6 +359,6 @@ export const apiClient = {
     averageWordsCompletedWhenGuessing: number;
     themesGuessed: string[];
   }> {
-    return fetchFromApi(`/api/theme-stats?player_id=${playerId}`);
+    return fetchFromThemeApi(`/api/theme-stats?player_id=${playerId}`);
   },
 };
