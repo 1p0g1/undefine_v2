@@ -74,13 +74,26 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         apiClient.getThemeStats(playerId)
       ]);
 
+      // Validate the status result
+      if (!statusResult) {
+        throw new Error('Failed to load theme status');
+      }
+
       // Check if we got an error response
-      if ('error' in statusResult && typeof statusResult.error === 'string') {
+      if (typeof statusResult === 'object' && 'error' in statusResult && typeof statusResult.error === 'string') {
         throw new Error(statusResult.error);
       }
 
-      setThemeStatus(statusResult as ThemeStatus);
-      setThemeStats(statsResult);
+      // Cast the result to ThemeStatus
+      const status = statusResult as ThemeStatus;
+      
+      // If player hasn't completed any words this week, show a friendly message
+      if (status.hasActiveTheme && status.weeklyThemedWords.length === 0) {
+        setError('Complete at least one word this week to unlock theme guessing!');
+      } else {
+        setThemeStatus(status);
+        setThemeStats(statsResult);
+      }
     } catch (err) {
       console.error('Failed to load theme data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load theme information');
@@ -201,6 +214,23 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <div style={{ fontSize: '0.9rem', color: '#666' }}>
               No active theme this week. Check back soon!
+            </div>
+          </div>
+        ) : themeStatus.weeklyThemedWords.length === 0 ? (
+          <div style={{
+            backgroundColor: '#f3f4f6',
+            border: '2px solid #d1d5db',
+            borderRadius: '0.5rem',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#1a237e' }}>
+              🔒 Complete Today's Word First
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.4' }}>
+              You need to complete at least one word this week before you can guess the theme.
+              Try solving today's word to unlock theme guessing!
             </div>
           </div>
         ) : (
