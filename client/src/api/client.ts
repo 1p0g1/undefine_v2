@@ -4,9 +4,13 @@ import { getPlayerId } from '../utils/player';
 // Use environment variable for backend URL with fallback
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
 
+// Get the current frontend URL for theme API endpoints in preview deployments
+const FRONTEND_URL = typeof window !== 'undefined' ? window.location.origin : '';
+
 // Log initial configuration
 console.log('[API Client] Initialized with:', {
   baseUrl: BASE_URL,
+  frontendUrl: FRONTEND_URL,
   env: import.meta.env.MODE
 });
 
