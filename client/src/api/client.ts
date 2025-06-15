@@ -50,7 +50,7 @@ export class ApiError extends Error {
 }
 
 /**
- * Fetches from theme APIs (which are in frontend /pages/api/) with proper error handling
+ * Fetches from theme APIs with proper error handling
  * @param path The API path to fetch from
  * @param options Optional fetch options
  * @returns Promise with the typed response
@@ -71,8 +71,8 @@ export const fetchFromThemeApi = async <T>(path: string, options: RequestInit = 
   }
 
   const normalizedPath = normalizePath(path);
-  // Use relative path for theme endpoints (they're in frontend /pages/api/)
-  const url = normalizedPath;
+  // Use backend URL for theme endpoints
+  const url = `${BASE_URL}${normalizedPath}`;
   
   const requestId = Math.random().toString(36).substring(7);
   
@@ -297,6 +297,10 @@ export const apiClient = {
       isCorrectGuess?: boolean;
     };
   }> {
+    return fetchFromThemeApi('/api/theme-guess', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
   },
 
   /**
@@ -322,6 +326,7 @@ export const apiClient = {
       completedOn: string;
     }>;
   }> {
+    return fetchFromThemeApi(`/api/theme-status?player_id=${playerId}`);
   },
 
   /**
@@ -336,5 +341,6 @@ export const apiClient = {
     averageWordsCompletedWhenGuessing: number;
     themesGuessed: string[];
   }> {
+    return fetchFromThemeApi(`/api/theme-stats?player_id=${playerId}`);
   },
 };
