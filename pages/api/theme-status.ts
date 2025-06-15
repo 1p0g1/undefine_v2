@@ -33,7 +33,8 @@ interface ThemeStatusResponse {
     completedWords: number;
     themeGuess: string | null;
     canGuessTheme: boolean;
-    isCorrectGuess?: boolean;
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
   };
   weeklyThemedWords: Array<{
     id: string;
@@ -72,7 +73,9 @@ export default withCors(async function handler(
           totalWords: 0,
           completedWords: 0,
           themeGuess: null,
-          canGuessTheme: false
+          canGuessTheme: false,
+          hasGuessedToday: false,
+          isCorrectGuess: false
         },
         weeklyThemedWords: []
       });
@@ -110,7 +113,8 @@ export default withCors(async function handler(
       hasGuess: !!progress.themeGuess,
       isCorrectGuess,
       progress: progress,
-      weeklyWordsCount: weeklyThemedWords.length
+      weeklyWordsCount: weeklyThemedWords.length,
+      canGuessTheme: progress.canGuessTheme
     });
 
     return res.status(200).json(response);
