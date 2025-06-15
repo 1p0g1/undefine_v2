@@ -37,6 +37,10 @@ interface ThemeStats {
   themesGuessed: string[];
 }
 
+interface ErrorResponse {
+  error: string;
+}
+
 export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({ 
   open, 
   onClose, 
@@ -47,7 +51,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [themeStatus, setThemeStatus] = useState<ThemeStatus | null>(null);
   const [themeStats, setThemeStats] = useState<ThemeStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; isVisible: boolean } | null>(null);
 
   const playerId = getPlayerId();
 
@@ -62,23 +67,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     if (!playerId) return;
 
     setIsLoading(true);
+    setError(null);
     try {
       const [statusResult, statsResult] = await Promise.all([
         apiClient.getThemeStatus(playerId),
         apiClient.getThemeStats(playerId)
       ]);
 
-      // Ensure weeklyThemedWords is present (fallback for compatibility)
-      const statusWithWeeklyWords = {
-        ...statusResult,
-        weeklyThemedWords: statusResult.weeklyThemedWords || []
-      };
+      // Check if we got an error response
+      if ('error' in statusResult && typeof statusResult.error === 'string') {
+        throw new Error(statusResult.error);
+      }
 
-      setThemeStatus(statusWithWeeklyWords);
+      setThemeStatus(statusResult as ThemeStatus);
       setThemeStats(statsResult);
-    } catch (error) {
-      console.error('Failed to load theme data:', error);
-      setToast({ message: 'Failed to load theme information', type: 'error' });
+    } catch (err) {
+      console.error('Failed to load theme data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load theme information');
+      setToast({ message: 'Failed to load theme information', isVisible: true });
     } finally {
       setIsLoading(false);
     }
@@ -96,21 +102,22 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       });
 
       if (result.isCorrect) {
-        setToast({ message: `🎉 Correct! The theme was "${result.actualTheme}"`, type: 'success' });
+        setToast({ message: `🎉 Correct! The theme was "${result.actualTheme}"`, isVisible: true });
       } else {
-        setToast({ message: `Not quite right. Try again tomorrow!`, type: 'error' });
+        setToast({ message: `Not quite right. Try again tomorrow!`, isVisible: true });
       }
 
       // Reload theme data to reflect the new guess
       await loadThemeData();
       setGuess('');
-    } catch (error: any) {
-      console.error('Failed to submit theme guess:', error);
+    } catch (err) {
+      console.error('Failed to submit theme guess:', err);
       
-      if (error.message?.includes('Already guessed today')) {
-        setToast({ message: 'You can only guess the theme once per day', type: 'error' });
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit guess';
+      if (errorMessage.includes('Already guessed today')) {
+        setToast({ message: 'You can only guess the theme once per day', isVisible: true });
       } else {
-        setToast({ message: 'Failed to submit guess. Please try again.', type: 'error' });
+        setToast({ message: 'Failed to submit guess. Please try again.', isVisible: true });
       }
     } finally {
       setIsSubmitting(false);
@@ -183,6 +190,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <div style={{ fontSize: '0.9rem', color: '#666' }}>Loading theme information...</div>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div style={{ fontSize: '0.9rem', color: '#dc2626' }}>
+              {error}
+            </div>
           </div>
         ) : !themeStatus?.hasActiveTheme ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -466,7 +479,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       {toast && (
         <Toast
           message={toast.message}
-          type={toast.type}
+          isVisible={toast.isVisible}
           onClose={() => setToast(null)}
         />
       )}
