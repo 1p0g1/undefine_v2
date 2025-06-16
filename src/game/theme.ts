@@ -3,8 +3,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { env } from '@/src/env.server';
-import { normalizeText } from '@/src/utils/text';
+import { env } from '../env.server';
+import { normalizeText } from '../utils/text';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 

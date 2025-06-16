@@ -14,14 +14,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { env } from '@/src/env.server';
-import { withCors } from '@/lib/withCors';
+import { env } from '../../src/env.server';
+import { withCors } from '../../lib/withCors';
 import { 
   getCurrentTheme, 
   getThemeProgress, 
   isThemeGuessCorrect, 
   getPlayerWeeklyThemedWords 
-} from '@/src/game/theme';
+} from '../../src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
