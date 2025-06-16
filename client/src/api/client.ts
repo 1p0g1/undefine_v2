@@ -4,13 +4,9 @@ import { getPlayerId } from '../utils/player';
 // Use environment variable for backend URL with fallback
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
 
-// Get the current frontend URL for theme API endpoints in preview deployments
-const FRONTEND_URL = typeof window !== 'undefined' ? window.location.origin : '';
-
 // Log initial configuration
 console.log('[API Client] Initialized with:', {
   baseUrl: BASE_URL,
-  frontendUrl: FRONTEND_URL,
   env: import.meta.env.MODE
 });
 
@@ -54,7 +50,7 @@ export class ApiError extends Error {
 }
 
 /**
- * Fetches from theme APIs with proper error handling
+ * Fetches from theme APIs (which are in frontend /pages/api/) with proper error handling
  * @param path The API path to fetch from
  * @param options Optional fetch options
  * @returns Promise with the typed response
@@ -75,8 +71,8 @@ export const fetchFromThemeApi = async <T>(path: string, options: RequestInit = 
   }
 
   const normalizedPath = normalizePath(path);
-  // Use backend URL for theme endpoints
-  const url = `${BASE_URL}${normalizedPath}`;
+  // Use relative path for theme endpoints (they're in frontend /pages/api/)
+  const url = normalizedPath;
   
   const requestId = Math.random().toString(36).substring(7);
   
