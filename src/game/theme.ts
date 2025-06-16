@@ -29,6 +29,7 @@ export async function getThemeForDate(date: string): Promise<string | null> {
       .gte('date', weekStart.toISOString().split('T')[0])
       .lte('date', weekEnd.toISOString().split('T')[0])
       .not('theme', 'is', null)
+      .order('date', { ascending: true })
       .limit(1);
 
     if (error) {
@@ -93,7 +94,8 @@ export function isThemeGuessCorrect(guess: string, actualTheme: string): boolean
     'colors': ['colours', 'hues', 'shades', 'tints', 'colors'],
     'weather': ['climate', 'meteorology', 'atmospheric', 'weather'],
     'music': ['musical', 'songs', 'melodies', 'instruments', 'music'],
-    'sports': ['athletics', 'games', 'competition', 'physical', 'sports']
+    'sports': ['athletics', 'games', 'competition', 'physical', 'sports'],
+    'language': ['words', 'vocabulary', 'linguistics', 'speech', 'terminology', 'lexicon', 'language']
   };
 
   // Get synonyms for the actual theme
@@ -343,11 +345,15 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       console.error('[getThemeProgress] Theme attempt error:', attemptError);
     }
 
+    // Get completed words from this week only
+    const weeklyWords = await getPlayerWeeklyThemedWords(playerId, theme);
+    const hasCompletedWordThisWeek = weeklyWords.length > 0;
+
     return {
       totalWords: themeWords.length,
       completedWords: completedSessions.length,
       themeGuess: todayAttempt?.guess || null,
-      canGuessTheme: completedSessions.length > 0 && !todayAttempt, // Can guess if completed words AND haven't guessed today
+      canGuessTheme: hasCompletedWordThisWeek && !todayAttempt, // Can guess if completed words THIS WEEK AND haven't guessed today
       hasGuessedToday: !!todayAttempt,
       isCorrectGuess: todayAttempt?.is_correct || false
     };
