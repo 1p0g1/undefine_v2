@@ -340,6 +340,79 @@ supabase db reset --linked
 3. **Fuzzy Matching**: Test synonym recognition
 4. **Statistics Calculation**: Verify mathematical accuracy
 
+## 🚨 CURRENT PRODUCTION ISSUES (June 16, 2025)
+
+### **Issue Summary**
+Theme feature modal opens but shows "Unexpected token '<', '<!doctype'... is not valid JSON" errors.
+
+### **Root Cause Analysis**
+1. ✅ **Frontend Implementation**: Theme modal, UI, and API client are working correctly
+2. ✅ **Backend APIs**: Theme endpoints exist and compile successfully  
+3. ✅ **Environment Variables**: Vercel has correct SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DB_PROVIDER
+4. ❌ **Database State**: Missing theme data or no current theme found
+
+### **Critical Implementation Fix**
+**CORRECTED DATABASE QUERY** (Documentation was wrong):
+```typescript
+// CORRECT: Use game_sessions table (not scores table)
+const { data: completedSessions, error: sessionsError } = await supabase
+  .from('game_sessions')  // ✅ CORRECT TABLE
+  .select('word_id, created_at')
+  .eq('player_id', playerId)
+  .eq('is_complete', true)
+  .in('word_id', wordIds);
+```
+
+**WRONG DOCUMENTATION** (was using scores table):
+```typescript
+// ❌ INCORRECT - Documentation error
+const completedWords = await supabase
+  .from('scores')  // ❌ WRONG TABLE
+  .select('word_id, words(*)')
+  .eq('player_id', playerId)
+  .in('word_id', themedWords.data?.map(w => w.id) || [])
+  .not('completion_time_sec', 'is', null);
+```
+
+### **Likely Database Issues**
+1. **Missing Theme Data**: `words` table `theme` column is NULL/empty for current week
+2. **getCurrentTheme() Returns NULL**: No theme found for current week dates
+3. **Week Boundary Logic**: Theme week calculation may be incorrect
+
+### **Debugging Steps**
+1. Check if current week has theme data:
+```sql
+SELECT * FROM words 
+WHERE date >= '2025-06-16'::date - INTERVAL '6 days'  -- Current Monday
+  AND date <= '2025-06-16'::date + INTERVAL '0 days'   -- Current Sunday
+  AND theme IS NOT NULL;
+```
+
+2. Check player's completed sessions:
+```sql
+SELECT gs.*, w.word, w.date, w.theme 
+FROM game_sessions gs
+JOIN words w ON gs.word_id = w.id
+WHERE gs.player_id = 'YOUR_PLAYER_ID'
+  AND gs.is_complete = true
+  AND w.date >= '2025-06-16'::date - INTERVAL '6 days';
+```
+
+3. Test getCurrentTheme() manually:
+```sql
+-- Check what getCurrentTheme() should return
+SELECT DISTINCT theme FROM words 
+WHERE date >= '2025-06-16'::date - INTERVAL '6 days'
+  AND date <= '2025-06-16'::date + INTERVAL '0 days'
+  AND theme IS NOT NULL
+ORDER BY date LIMIT 1;
+```
+
+### **Quick Fix Options**
+1. **Add Theme Data**: Populate `theme` column for current week's words
+2. **Verify Week Logic**: Ensure Monday-Sunday calculation is correct for June 16, 2025
+3. **Test with Known Data**: Add a test theme for current week
+
 ---
 
 ## Summary
