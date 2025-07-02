@@ -6,3 +6,4 @@ This file exists to trigger a new Vercel deployment.
 **Purpose**: Force deployment of enhanced leaderboard API endpoints
 
 ## Status: Triggered at current timestamp # Deployment trigger Wed Jul  2 16:08:35 BST 2025
+# Trigger redeploy with new env vars Wed Jul  2 18:08:17 BST 2025
