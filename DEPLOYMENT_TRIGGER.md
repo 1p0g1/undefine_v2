@@ -9,3 +9,4 @@ This file exists to trigger a new Vercel deployment.
 # Trigger redeploy with new env vars Wed Jul  2 18:08:17 BST 2025
 # Deploy with complete env vars Wed Jul  2 18:25:39 BST 2025
 # Force clean deployment Wed Jul  2 18:43:29 BST 2025
+# Trigger deployment with corrected Vercel settings Wed Jul  2 19:54:01 BST 2025
