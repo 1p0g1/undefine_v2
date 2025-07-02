@@ -375,6 +375,338 @@ ORDER BY rank;
 4. How should we handle tie-breaking in rankings?
 5. Should we add session validation to prevent stale modal displays?
 
+## 🔍 **Streak Tracking Investigation & Table Audit**
+
+### **Beth's Streak Investigation (ID: 277b7094-7c6c-4644-bddf-5dd33e2fec9e)**
+
+#### **Step 1: Check Current Streak Data**
+```sql
+-- Check Beth's current streak record
+SELECT 
+  player_id,
+  current_streak,
+  best_streak,
+  last_win_date,
+  updated_at
+FROM player_streaks 
+WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e';
+```
+
+#### **Step 2: Analyze Beth's Game History**
+```sql
+-- Get Beth's recent game sessions to verify wins
+SELECT 
+  DATE(created_at) as game_date,
+  is_won,
+  guesses_used,
+  time_taken,
+  score,
+  created_at
+FROM game_sessions 
+WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+#### **Step 3: Calculate Expected Streak Manually**
+```sql
+-- Calculate consecutive wins from most recent backwards
+WITH recent_games AS (
+  SELECT 
+    DATE(created_at) as game_date,
+    is_won,
+    ROW_NUMBER() OVER (ORDER BY created_at DESC) as game_order
+  FROM game_sessions 
+  WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
+    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days'
+  ORDER BY created_at DESC
+),
+consecutive_wins AS (
+  SELECT 
+    game_date,
+    is_won,
+    game_order,
+    -- Stop counting when we hit the first loss
+    CASE 
+      WHEN is_won THEN 1 
+      ELSE 0 
+    END as win_flag
+  FROM recent_games
+)
+SELECT 
+  COUNT(*) as calculated_current_streak
+FROM consecutive_wins 
+WHERE win_flag = 1 
+  AND game_order <= (
+    SELECT COALESCE(MIN(game_order), 999) 
+    FROM consecutive_wins 
+    WHERE win_flag = 0
+  );
+```
+
+#### **Step 4: Check Streak Update Triggers**
+```sql
+-- Find all functions/triggers related to streak updates
+SELECT 
+  schemaname,
+  tablename,
+  triggername,
+  tgtype,
+  proname as function_name
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+JOIN pg_proc p ON t.tgfoid = p.oid
+WHERE c.relname IN ('game_sessions', 'player_streaks')
+ORDER BY tablename, triggername;
+```
+
+#### **Step 5: Audit Streak Calculation Logic**
+```sql
+-- Check if there are any obvious data inconsistencies
+SELECT 
+  p.nickname,
+  ps.current_streak,
+  ps.best_streak,
+  ps.last_win_date,
+  COUNT(CASE WHEN gs.is_won THEN 1 END) as total_wins,
+  MAX(CASE WHEN gs.is_won THEN DATE(gs.created_at) END) as actual_last_win_date,
+  COUNT(gs.id) as total_games
+FROM players p
+LEFT JOIN player_streaks ps ON p.id = ps.player_id
+LEFT JOIN game_sessions gs ON p.id = gs.player_id
+WHERE p.id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
+GROUP BY p.id, p.nickname, ps.current_streak, ps.best_streak, ps.last_win_date;
+```
+
+### **Database Table Usage Audit**
+
+Based on the Supabase schema shown, let's audit which tables are actually used:
+
+#### **✅ ACTIVELY USED TABLES**
+
+1. **`players`** - ✅ **ESSENTIAL**
+   - Stores player IDs, nicknames
+   - Used by: All game logic, leaderboards, authentication
+   - **Verdict**: Keep
+
+2. **`words`** - ✅ **ESSENTIAL** 
+   - Stores daily words, clues, definitions
+   - Used by: Word API, game initialization
+   - **Verdict**: Keep
+
+3. **`game_sessions`** - ✅ **ESSENTIAL**
+   - Stores individual game records
+   - Used by: Game logic, leaderboards, scoring
+   - **Verdict**: Keep
+
+4. **`player_streaks`** - ✅ **ESSENTIAL**
+   - Stores current/best streaks
+   - Used by: Leaderboard streak tab, game completion
+   - **Verdict**: Keep (but needs fixing)
+
+5. **`theme_attempts`** - ✅ **ESSENTIAL**
+   - Stores theme guesses
+   - Used by: Theme of the Week feature
+   - **Verdict**: Keep
+
+#### **🤔 POTENTIALLY REDUNDANT TABLES**
+
+6. **`leaderboard_summary`** - ❓ **QUESTIONABLE**
+   - Purpose: Pre-computed leaderboard data?
+   - **Investigation needed**: Do we actually use this or compute leaderboards on-demand?
+   - **Query to check**:
+   ```sql
+   -- Check if leaderboard_summary is being populated
+   SELECT COUNT(*), MAX(updated_at), MIN(updated_at) 
+   FROM leaderboard_summary;
+   ```
+
+7. **`daily_leaderboard_snapshots`** - ❓ **QUESTIONABLE**
+   - Purpose: Historical daily leaderboard records?
+   - **Investigation needed**: Are we using this for historical analysis?
+   - **Query to check**:
+   ```sql
+   -- Check if snapshots are being created
+   SELECT snapshot_date, COUNT(*) as entries
+   FROM daily_leaderboard_snapshots 
+   GROUP BY snapshot_date 
+   ORDER BY snapshot_date DESC 
+   LIMIT 10;
+   ```
+
+8. **`user_stats`** - ❓ **QUESTIONABLE**
+   - Purpose: Aggregated user statistics?
+   - **Investigation needed**: Is this redundant with game_sessions aggregation?
+   - **Query to check**:
+   ```sql
+   -- Compare user_stats with game_sessions aggregation
+   SELECT 
+     'user_stats' as source,
+     COUNT(*) as player_count,
+     AVG(games_played) as avg_games
+   FROM user_stats
+   UNION ALL
+   SELECT 
+     'game_sessions' as source,
+     COUNT(DISTINCT player_id) as player_count,
+     AVG(game_count) as avg_games
+   FROM (
+     SELECT player_id, COUNT(*) as game_count 
+     FROM game_sessions 
+     GROUP BY player_id
+   ) gs;
+   ```
+
+9. **`scores`** - ❓ **QUESTIONABLE**
+   - Purpose: Separate scoring table?
+   - **Investigation needed**: Is this redundant with game_sessions.score?
+   - **Query to check**:
+   ```sql
+   -- Check if scores table is populated and used
+   SELECT COUNT(*), MAX(created_at) FROM scores;
+   ```
+
+#### **🔧 UTILITY TABLES**
+
+10. **`schema_migrations`** - ✅ **KEEP**
+    - Database migration tracking
+    - **Verdict**: Essential for deployment
+
+11. **`trigger_log`** - 🔍 **AUDIT**
+    - Debug logging for triggers
+    - **Query to check usage**:
+    ```sql
+    -- Check if trigger_log is actively used
+    SELECT 
+      trigger_name,
+      COUNT(*) as log_count,
+      MAX(created_at) as last_logged
+    FROM trigger_log 
+    GROUP BY trigger_name 
+    ORDER BY last_logged DESC;
+    ```
+
+12. **`v_trigger_performance`** - 🔍 **AUDIT**
+    - Performance monitoring view
+    - **Query to check**:
+    ```sql
+    -- Check if this view is actually used
+    SELECT * FROM v_trigger_performance LIMIT 5;
+    ```
+
+### **Recommended Investigation Steps**
+
+#### **Step 1: Run Beth's Streak Analysis**
+```bash
+# Create a script to run these queries
+cat > investigate_beth_streak.sql << 'EOF'
+-- Beth's Streak Investigation
+-- ID: 277b7094-7c6c-4644-bddf-5dd33e2fec9e
+
+\echo 'Current streak record:'
+SELECT 
+  current_streak,
+  best_streak,
+  last_win_date,
+  updated_at
+FROM player_streaks 
+WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e';
+
+\echo 'Recent game history:'
+SELECT 
+  DATE(created_at) as game_date,
+  is_won,
+  guesses_used,
+  time_taken,
+  created_at
+FROM game_sessions 
+WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
+ORDER BY created_at DESC
+LIMIT 15;
+
+\echo 'Consecutive wins calculation:'
+WITH recent_games AS (
+  SELECT 
+    DATE(created_at) as game_date,
+    is_won,
+    ROW_NUMBER() OVER (ORDER BY created_at DESC) as game_order
+  FROM game_sessions 
+  WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
+    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days'
+  ORDER BY created_at DESC
+)
+SELECT 
+  game_date,
+  is_won,
+  game_order,
+  SUM(CASE WHEN is_won THEN 1 ELSE 0 END) OVER (ORDER BY game_order) as running_wins
+FROM recent_games
+ORDER BY game_order;
+EOF
+```
+
+#### **Step 2: Create Table Usage Analysis Script**
+```bash
+# Create a comprehensive table audit
+cat > audit_table_usage.sql << 'EOF'
+-- Table Usage Audit
+
+\echo 'Table sizes and activity:'
+SELECT 
+  schemaname,
+  tablename,
+  n_tup_ins as inserts,
+  n_tup_upd as updates,
+  n_tup_del as deletes,
+  n_live_tup as live_rows,
+  last_vacuum,
+  last_analyze
+FROM pg_stat_user_tables 
+ORDER BY n_live_tup DESC;
+
+\echo 'Recent activity by table:'
+SELECT 
+  schemaname,
+  tablename,
+  GREATEST(last_vacuum, last_autovacuum, last_analyze, last_autoanalyze) as last_activity
+FROM pg_stat_user_tables 
+ORDER BY last_activity DESC NULLS LAST;
+EOF
+```
+
+#### **Step 3: Potential Table Cleanup Recommendations**
+
+Based on investigation results, we may be able to:
+
+1. **Merge redundant tables**:
+   - If `user_stats` duplicates `game_sessions` aggregation → Remove `user_stats`
+   - If `scores` duplicates `game_sessions.score` → Remove `scores`
+
+2. **Archive historical tables**:
+   - `daily_leaderboard_snapshots` → Keep if used for analytics, archive if not
+   - `trigger_log` → Truncate old entries, keep recent for debugging
+
+3. **Optimize frequently used tables**:
+   - Add indexes on `game_sessions` for common queries
+   - Optimize `player_streaks` trigger performance
+
+### **Expected Findings**
+
+**If Beth's streak is actually correct (1)**:
+- She may have had a recent loss breaking her streak
+- The bug fix prevented the modal issue but streak calculation was working
+
+**If Beth's streak is incorrect**:
+- Trigger logic has bugs in consecutive win calculation
+- `last_win_date` doesn't match actual last win
+- Need to rebuild streak data from game_sessions
+
+**Table Usage Results**:
+- Likely 3-4 tables can be removed or merged
+- Some tables may be legacy from old implementations
+- Focus resources on the core 5-6 essential tables
+
 ---
 
 *This document should be reviewed and approved before implementation begins.* 
