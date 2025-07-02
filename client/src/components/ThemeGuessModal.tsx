@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { Toast } from './Toast';
 
 interface ThemeGuessModalProps {
   open: boolean;
@@ -52,7 +51,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [themeStats, setThemeStats] = useState<ThemeStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; isVisible: boolean } | null>(null);
 
   const playerId = getPlayerId();
 
@@ -97,7 +95,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     } catch (err) {
       console.error('Failed to load theme data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load theme information');
-      setToast({ message: 'Failed to load theme information', isVisible: true });
     } finally {
       setIsLoading(false);
     }
@@ -114,24 +111,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         gameId
       });
 
-      if (result.isCorrect) {
-        setToast({ message: `🎉 Correct! The theme was "${result.actualTheme}"`, isVisible: true });
-      } else {
-        setToast({ message: `Not quite right. Try again tomorrow!`, isVisible: true });
-      }
-
       // Reload theme data to reflect the new guess
       await loadThemeData();
       setGuess('');
     } catch (err) {
       console.error('Failed to submit theme guess:', err);
-      
-      const errorMessage = err instanceof Error ? err.message : 'Failed to submit guess';
-      if (errorMessage.includes('Already guessed today')) {
-        setToast({ message: 'You can only guess the theme once per day', isVisible: true });
-      } else {
-        setToast({ message: 'Failed to submit guess. Please try again.', isVisible: true });
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -504,15 +488,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Toast Notifications */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          isVisible={toast.isVisible}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 
