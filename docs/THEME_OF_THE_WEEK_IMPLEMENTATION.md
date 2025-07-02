@@ -413,7 +413,40 @@ ORDER BY date LIMIT 1;
 2. **Verify Week Logic**: Ensure Monday-Sunday calculation is correct for June 16, 2025
 3. **Test with Known Data**: Add a test theme for current week
 
----
+### **✅ CONFIRMED DATABASE STATUS (from Supabase screenshots)**
+1. **Words Table**: ✅ HAS `theme` column populated with values:
+   - **CRITICAL**: Column is called `word` NOT `word_text`
+   - Current week (June 30 - July 6, 2025): 7 words ALL with theme="theme"
+
+2. **Game_sessions Table**: ✅ HAS `theme_guess` column (TEXT type)
+
+3. **Theme_attempts Table**: ✅ EXISTS
+
+4. **Current Week Theme**: "theme" (literal string) - 7 words for June 30 - July 6, 2025
+
+### **🔧 CORRECTED SQL QUERIES**
+```sql
+-- CORRECT: Use 'word' column name
+SELECT date, word, theme, id
+FROM words 
+WHERE date >= '2025-06-30' AND date <= '2025-07-06'
+ORDER BY date;
+
+-- CORRECT: Join with proper column names
+SELECT gs.player_id, w.word, w.theme, gs.is_complete
+FROM game_sessions gs
+JOIN words w ON gs.word_id = w.id
+WHERE w.date >= '2025-06-30' AND w.date <= '2025-07-06'
+AND gs.is_complete = true;
+```
+
+### **📋 DATABASE STATUS: ALL REQUIREMENTS MET**
+- ✅ theme_guess column in game_sessions
+- ✅ theme_attempts table exists  
+- ✅ Current week has 7 words with consistent theme
+- ✅ All database structure is correct
+
+**The theme feature should work - the issue is likely in the API logic or environment variables.**
 
 ## Summary
 
