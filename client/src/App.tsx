@@ -78,7 +78,7 @@ function App() {
   }, [startNewGame]);
 
   useEffect(() => {
-    if (gameState.isComplete) {
+    if (gameState.isComplete && gameStarted) {
       if (timerRef.current) clearInterval(timerRef.current);
       summaryTimeoutRef.current = setTimeout(() => {
         setShowSummary(true);
