@@ -16,20 +16,15 @@ export async function getNewWord(): Promise<{ word: WordResponseShape; isFallbac
     const now = new Date();
     const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
     
-    // Try to get today's word first
+    // Try to get today's word first - only select columns that exist
     const { data: todayWord, error: todayError } = await supabase
       .from('words')
       .select(`
         id,
         word,
         definition,
-        first_letter,
-        in_a_sentence,
-        equivalents,
-        number_of_letters,
-        etymology,
-        difficulty,
-        date
+        date,
+        theme
       `)
       .eq('date', today)
       .single();
