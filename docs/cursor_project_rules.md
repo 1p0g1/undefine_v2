@@ -10,7 +10,7 @@
    1. docs/mvp.md
    2. docs/implementation-plan.mdc
    3. docs/ARCHITECTURE.md
-   4. docs/supa_alignment.md
+   4. docs/ACTUAL_DATABASE_SCHEMA.md
    5. Relevant component docs
    ```
 
@@ -56,7 +56,7 @@ EVERY response MUST check these documents in this order:
 1. `docs/mvp.md` - Primary source of truth for project requirements
 2. `docs/implementation-plan.mdc` - Current progress and implementation details
 3. `docs/ARCHITECTURE.md` - Technical architecture and patterns
-4. `docs/supa_alignment.md` - Database schema and relationships
+4. `docs/ACTUAL_DATABASE_SCHEMA.md` - Database schema and relationships
 5. `docs/README.md` - Documentation hierarchy and guidelines
 
 This check must be performed BEFORE any code changes or suggestions are made.
@@ -212,7 +212,7 @@ Additional documentation guidelines:
    - `docs/mvp.md` - Primary source of truth
    - `docs/implementation-plan.mdc` - Implementation status
    - `docs/ARCHITECTURE.md` - Technical architecture
-   - `docs/supa_alignment.md` - Database schema
+   - `docs/ACTUAL_DATABASE_SCHEMA.md` - Database schema
    - Component-specific docs in their directories
 
 ### 🔄 Change Tracking Process

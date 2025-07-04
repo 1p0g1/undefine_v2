@@ -1,11 +1,12 @@
 # Un-Define Architecture
 
-## Status (Last Updated: May 2024)
+## Status (Last Updated: July 2025)
 - ✅ Backend and frontend deployed as separate Vercel projects
 - ✅ Supabase integration complete with permissive anon access
 - ⚠️ RLS disabled (development)
 - ✅ Game logic validation
 - ✅ Word handling refactored for proper foreign key usage
+- ✅ Database cleanup completed (July 2025)
 - 🚧 End-to-end test automation pending
 
 ## Project Structure
@@ -129,7 +130,7 @@ export default withCors(async function handler(req, res) {
 
 ### Database Schema
 
-For detailed schema information, see `docs/supa_alignment.md`. Key points:
+For detailed schema information, see `docs/ACTUAL_DATABASE_SCHEMA.md`. Key points:
 
 1. **Core Tables**
    - `words`: Daily word bank with clues
@@ -150,6 +151,13 @@ For detailed schema information, see `docs/supa_alignment.md`. Key points:
      - `word_id` (uuid): FK to words.id
      - `word` (text): Direct word reference
      - Other score fields...
+
+   - `user_stats`: Player statistics (FK-only until rebuild)
+     - `player_id` (text): Primary key
+     - `current_streak` (int): Currently minimal/zero
+     - `highest_streak` (int): Not `longest_streak` - column name verified
+     - Other stats fields (currently minimal for FK constraints)
+     - **Status**: Scheduled for proper population in future phase
 
 2. **Foreign Key Constraints**
 ```sql

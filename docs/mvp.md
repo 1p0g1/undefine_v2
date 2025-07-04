@@ -54,7 +54,7 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
    ```
 
 4. Database Schema:
-   For the complete and authoritative database schema, see `docs/supa_alignment.md`. Key highlights:
+   For the complete and authoritative database schema, see `docs/ACTUAL_DATABASE_SCHEMA.md`. Key highlights:
 
    1. **Core Tables**
       - `words`: Daily word bank with clues
@@ -479,7 +479,7 @@ The `/api/word` endpoint now has:
 ## Deployment Verification
 ✅ Before deploying, verify against:
 - `docs/Cleanup_Checklist.md` for environment and configuration checks
-- `docs/supa_alignment.md` for database schema compliance
+- `docs/ACTUAL_DATABASE_SCHEMA.md` for database schema compliance
 
 This ensures:
 1. All environment variables are properly set

@@ -2,6 +2,42 @@
 *Created: July 2, 2025*
 *Updated: July 2, 2025 - Added Critical Bug Analysis & Game Data Flow Documentation*
 
+## 🚨 **CRITICAL SCHEMA DISCOVERY - UPDATED JULY 2, 2025**
+
+### **Root Cause of Investigation Failures Found!**
+
+After auditing the actual database schema via command line, we discovered **major inconsistencies** between documentation and reality:
+
+#### **❌ Original Investigation Failed Because:**
+
+1. **Wrong Column Names**: Script looked for `best_streak` but actual column is `highest_streak`
+2. **Missing Tables in Types**: `player_streaks` and `theme_attempts` exist but missing from `supabase/types.ts`
+3. **Duplicate Streak Tracking**: Both `user_stats` AND `player_streaks` have streak columns
+4. **Foreign Key Confusion**: Different tables reference different player ID sources
+
+#### **✅ Verified Actual Schema:**
+
+**Streak Tracking - TWO TABLES:**
+- **`user_stats`**: `current_streak`, `longest_streak` (confirmed in types.ts)
+- **`player_streaks`**: `current_streak`, `highest_streak` (exists but missing from types)
+
+**Foreign Key Issues:**
+- `player_streaks.player_id` → `players.id`
+- `user_stats.player_id` → `players.id` 
+- `leaderboard_summary.player_id` → `user_stats.player_id` ⚠️
+- `theme_attempts.player_id` → `user_stats.player_id` ⚠️
+
+#### **🔧 Immediate Fixes Required:**
+
+1. **Regenerate Supabase Types** to include missing tables
+2. **Determine Streak Source of Truth** - which table should be authoritative?
+3. **Fix Foreign Key Inconsistencies** - standardize player ID references
+4. **Update All Investigation Scripts** with correct schema
+
+**📋 CORRECTED Investigation:** Created `investigate_beth_streak_CORRECTED.sql` with proper schema.
+
+---
+
 ## 🚨 CRITICAL BUG DISCOVERED
 
 ### **Issue**: Incorrect Leaderboard Modal Display
@@ -377,335 +413,97 @@ ORDER BY rank;
 
 ## 🔍 **Streak Tracking Investigation & Table Audit**
 
-### **Beth's Streak Investigation (ID: 277b7094-7c6c-4644-bddf-5dd33e2fec9e)**
+### **🚨 **CRITICAL SCHEMA DISCOVERY - UPDATED JULY 2, 2025**
 
-#### **Step 1: Check Current Streak Data**
-```sql
--- Check Beth's current streak record
-SELECT 
-  player_id,
-  current_streak,
-  best_streak,
-  last_win_date,
-  updated_at
-FROM player_streaks 
-WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e';
-```
+### **Root Cause of Investigation Failures Found!**
 
-#### **Step 2: Analyze Beth's Game History**
-```sql
--- Get Beth's recent game sessions to verify wins
-SELECT 
-  DATE(created_at) as game_date,
-  is_won,
-  guesses_used,
-  time_taken,
-  score,
-  created_at
-FROM game_sessions 
-WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
-ORDER BY created_at DESC
-LIMIT 20;
-```
+After auditing the actual database schema via command line, we discovered **major inconsistencies** between documentation and reality:
 
-#### **Step 3: Calculate Expected Streak Manually**
-```sql
--- Calculate consecutive wins from most recent backwards
-WITH recent_games AS (
-  SELECT 
-    DATE(created_at) as game_date,
-    is_won,
-    ROW_NUMBER() OVER (ORDER BY created_at DESC) as game_order
-  FROM game_sessions 
-  WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
-    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days'
-  ORDER BY created_at DESC
-),
-consecutive_wins AS (
-  SELECT 
-    game_date,
-    is_won,
-    game_order,
-    -- Stop counting when we hit the first loss
-    CASE 
-      WHEN is_won THEN 1 
-      ELSE 0 
-    END as win_flag
-  FROM recent_games
-)
-SELECT 
-  COUNT(*) as calculated_current_streak
-FROM consecutive_wins 
-WHERE win_flag = 1 
-  AND game_order <= (
-    SELECT COALESCE(MIN(game_order), 999) 
-    FROM consecutive_wins 
-    WHERE win_flag = 0
-  );
-```
+#### **❌ Original Investigation Failed Because:**
 
-#### **Step 4: Check Streak Update Triggers**
-```sql
--- Find all functions/triggers related to streak updates
-SELECT 
-  schemaname,
-  tablename,
-  triggername,
-  tgtype,
-  proname as function_name
-FROM pg_trigger t
-JOIN pg_class c ON t.tgrelid = c.oid
-JOIN pg_namespace n ON c.relnamespace = n.oid
-JOIN pg_proc p ON t.tgfoid = p.oid
-WHERE c.relname IN ('game_sessions', 'player_streaks')
-ORDER BY tablename, triggername;
-```
+1. **Wrong Column Names**: Script looked for `best_streak` but actual column is `highest_streak`
+2. **Missing Tables in Types**: `player_streaks` and `theme_attempts` exist but missing from `supabase/types.ts`
+3. **Duplicate Streak Tracking**: Both `user_stats` AND `player_streaks` have streak columns
+4. **Foreign Key Confusion**: Different tables reference different player ID sources
 
-#### **Step 5: Audit Streak Calculation Logic**
-```sql
--- Check if there are any obvious data inconsistencies
-SELECT 
-  p.nickname,
-  ps.current_streak,
-  ps.best_streak,
-  ps.last_win_date,
-  COUNT(CASE WHEN gs.is_won THEN 1 END) as total_wins,
-  MAX(CASE WHEN gs.is_won THEN DATE(gs.created_at) END) as actual_last_win_date,
-  COUNT(gs.id) as total_games
-FROM players p
-LEFT JOIN player_streaks ps ON p.id = ps.player_id
-LEFT JOIN game_sessions gs ON p.id = gs.player_id
-WHERE p.id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
-GROUP BY p.id, p.nickname, ps.current_streak, ps.best_streak, ps.last_win_date;
-```
+#### **✅ Verified Actual Schema:**
 
-### **Database Table Usage Audit**
+**Streak Tracking - TWO TABLES:**
+- **`user_stats`**: `current_streak`, `longest_streak` (confirmed in types.ts)
+- **`player_streaks`**: `current_streak`, `highest_streak` (exists but missing from types)
 
-Based on the Supabase schema shown, let's audit which tables are actually used:
+**Foreign Key Issues:**
+- `player_streaks.player_id` → `players.id`
+- `user_stats.player_id` → `players.id` 
+- `leaderboard_summary.player_id` → `user_stats.player_id` ⚠️
+- `theme_attempts.player_id` → `user_stats.player_id` ⚠️
 
-#### **✅ ACTIVELY USED TABLES**
+#### **🔧 Immediate Fixes Required:**
 
-1. **`players`** - ✅ **ESSENTIAL**
-   - Stores player IDs, nicknames
-   - Used by: All game logic, leaderboards, authentication
-   - **Verdict**: Keep
+1. **Regenerate Supabase Types** to include missing tables
+2. **Determine Streak Source of Truth** - which table should be authoritative?
+3. **Fix Foreign Key Inconsistencies** - standardize player ID references
+4. **Update All Investigation Scripts** with correct schema
 
-2. **`words`** - ✅ **ESSENTIAL** 
-   - Stores daily words, clues, definitions
-   - Used by: Word API, game initialization
-   - **Verdict**: Keep
+#### **📋 CORRECTED Beth's Investigation:**
 
-3. **`game_sessions`** - ✅ **ESSENTIAL**
-   - Stores individual game records
-   - Used by: Game logic, leaderboards, scoring
-   - **Verdict**: Keep
+Created `investigate_beth_streak_CORRECTED.sql` with:
+- Checks BOTH `user_stats` and `player_streaks` tables
+- Uses correct column names (`highest_streak`, `longest_streak`)
+- Handles missing tables gracefully
+- Cross-references all data sources for consistency
 
-4. **`player_streaks`** - ✅ **ESSENTIAL**
-   - Stores current/best streaks
-   - Used by: Leaderboard streak tab, game completion
-   - **Verdict**: Keep (but needs fixing)
+#### **🎯 Schema Audit Results:**
 
-5. **`theme_attempts`** - ✅ **ESSENTIAL**
-   - Stores theme guesses
-   - Used by: Theme of the Week feature
-   - **Verdict**: Keep
+**CONFIRMED TABLES (in types.ts):**
+- ✅ `players`, `words`, `game_sessions`, `user_stats`, `scores`, `leaderboard_summary`, `schema_migrations`
 
-#### **🤔 POTENTIALLY REDUNDANT TABLES**
+**MISSING FROM TYPES (but exist in migrations):**
+- ❌ `player_streaks` (streak tracking)
+- ❌ `theme_attempts` (theme feature)
 
-6. **`leaderboard_summary`** - ❓ **QUESTIONABLE**
-   - Purpose: Pre-computed leaderboard data?
-   - **Investigation needed**: Do we actually use this or compute leaderboards on-demand?
-   - **Query to check**:
-   ```sql
-   -- Check if leaderboard_summary is being populated
-   SELECT COUNT(*), MAX(updated_at), MIN(updated_at) 
-   FROM leaderboard_summary;
-   ```
+**QUESTIONABLE (mentioned in docs but not found):**
+- ❓ `daily_leaderboard_snapshots`
+- ❓ `trigger_log`
 
-7. **`daily_leaderboard_snapshots`** - ❓ **QUESTIONABLE**
-   - Purpose: Historical daily leaderboard records?
-   - **Investigation needed**: Are we using this for historical analysis?
-   - **Query to check**:
-   ```sql
-   -- Check if snapshots are being created
-   SELECT snapshot_date, COUNT(*) as entries
-   FROM daily_leaderboard_snapshots 
-   GROUP BY snapshot_date 
-   ORDER BY snapshot_date DESC 
-   LIMIT 10;
-   ```
+#### **💡 Recommended Action Plan:**
 
-8. **`user_stats`** - ❓ **QUESTIONABLE**
-   - Purpose: Aggregated user statistics?
-   - **Investigation needed**: Is this redundant with game_sessions aggregation?
-   - **Query to check**:
-   ```sql
-   -- Compare user_stats with game_sessions aggregation
-   SELECT 
-     'user_stats' as source,
-     COUNT(*) as player_count,
-     AVG(games_played) as avg_games
-   FROM user_stats
-   UNION ALL
-   SELECT 
-     'game_sessions' as source,
-     COUNT(DISTINCT player_id) as player_count,
-     AVG(game_count) as avg_games
-   FROM (
-     SELECT player_id, COUNT(*) as game_count 
-     FROM game_sessions 
-     GROUP BY player_id
-   ) gs;
-   ```
+**Phase 1: Schema Alignment (Immediate)**
+1. Regenerate Supabase types to include all tables
+2. Run corrected Beth investigation to identify actual streak issue
+3. Choose single source of truth for streaks (`user_stats` vs `player_streaks`)
 
-9. **`scores`** - ❓ **QUESTIONABLE**
-   - Purpose: Separate scoring table?
-   - **Investigation needed**: Is this redundant with game_sessions.score?
-   - **Query to check**:
-   ```sql
-   -- Check if scores table is populated and used
-   SELECT COUNT(*), MAX(created_at) FROM scores;
-   ```
+**Phase 2: Data Consistency (Next)**
+1. Audit all foreign key relationships
+2. Standardize player ID references across tables
+3. Remove or deprecate redundant streak tracking
 
-#### **🔧 UTILITY TABLES**
+**Phase 3: Leaderboard Redesign (After fixes)**
+1. Implement simplified 3-tab system
+2. Fix any remaining streak calculation bugs
+3. Optimize query performance
 
-10. **`schema_migrations`** - ✅ **KEEP**
-    - Database migration tracking
-    - **Verdict**: Essential for deployment
+### **🔍 Updated Investigation Commands:**
 
-11. **`trigger_log`** - 🔍 **AUDIT**
-    - Debug logging for triggers
-    - **Query to check usage**:
-    ```sql
-    -- Check if trigger_log is actively used
-    SELECT 
-      trigger_name,
-      COUNT(*) as log_count,
-      MAX(created_at) as last_logged
-    FROM trigger_log 
-    GROUP BY trigger_name 
-    ORDER BY last_logged DESC;
-    ```
-
-12. **`v_trigger_performance`** - 🔍 **AUDIT**
-    - Performance monitoring view
-    - **Query to check**:
-    ```sql
-    -- Check if this view is actually used
-    SELECT * FROM v_trigger_performance LIMIT 5;
-    ```
-
-### **Recommended Investigation Steps**
-
-#### **Step 1: Run Beth's Streak Analysis**
+**For Beth's Streak:**
 ```bash
-# Create a script to run these queries
-cat > investigate_beth_streak.sql << 'EOF'
--- Beth's Streak Investigation
--- ID: 277b7094-7c6c-4644-bddf-5dd33e2fec9e
-
-\echo 'Current streak record:'
-SELECT 
-  current_streak,
-  best_streak,
-  last_win_date,
-  updated_at
-FROM player_streaks 
-WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e';
-
-\echo 'Recent game history:'
-SELECT 
-  DATE(created_at) as game_date,
-  is_won,
-  guesses_used,
-  time_taken,
-  created_at
-FROM game_sessions 
-WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
-ORDER BY created_at DESC
-LIMIT 15;
-
-\echo 'Consecutive wins calculation:'
-WITH recent_games AS (
-  SELECT 
-    DATE(created_at) as game_date,
-    is_won,
-    ROW_NUMBER() OVER (ORDER BY created_at DESC) as game_order
-  FROM game_sessions 
-  WHERE player_id = '277b7094-7c6c-4644-bddf-5dd33e2fec9e'
-    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days'
-  ORDER BY created_at DESC
-)
-SELECT 
-  game_date,
-  is_won,
-  game_order,
-  SUM(CASE WHEN is_won THEN 1 ELSE 0 END) OVER (ORDER BY game_order) as running_wins
-FROM recent_games
-ORDER BY game_order;
-EOF
+# Use the corrected SQL script
+cat investigate_beth_streak_CORRECTED.sql
+# Copy to Supabase SQL Editor and run
 ```
 
-#### **Step 2: Create Table Usage Analysis Script**
+**For Schema Verification:**
 ```bash
-# Create a comprehensive table audit
-cat > audit_table_usage.sql << 'EOF'
--- Table Usage Audit
-
-\echo 'Table sizes and activity:'
-SELECT 
-  schemaname,
-  tablename,
-  n_tup_ins as inserts,
-  n_tup_upd as updates,
-  n_tup_del as deletes,
-  n_live_tup as live_rows,
-  last_vacuum,
-  last_analyze
-FROM pg_stat_user_tables 
-ORDER BY n_live_tup DESC;
-
-\echo 'Recent activity by table:'
-SELECT 
-  schemaname,
-  tablename,
-  GREATEST(last_vacuum, last_autovacuum, last_analyze, last_autoanalyze) as last_activity
-FROM pg_stat_user_tables 
-ORDER BY last_activity DESC NULLS LAST;
-EOF
+# Regenerate types to see missing tables
+npx supabase gen types typescript --project-id YOUR_PROJECT_ID > supabase/types_new.ts
 ```
 
-#### **Step 3: Potential Table Cleanup Recommendations**
-
-Based on investigation results, we may be able to:
-
-1. **Merge redundant tables**:
-   - If `user_stats` duplicates `game_sessions` aggregation → Remove `user_stats`
-   - If `scores` duplicates `game_sessions.score` → Remove `scores`
-
-2. **Archive historical tables**:
-   - `daily_leaderboard_snapshots` → Keep if used for analytics, archive if not
-   - `trigger_log` → Truncate old entries, keep recent for debugging
-
-3. **Optimize frequently used tables**:
-   - Add indexes on `game_sessions` for common queries
-   - Optimize `player_streaks` trigger performance
-
-### **Expected Findings**
-
-**If Beth's streak is actually correct (1)**:
-- She may have had a recent loss breaking her streak
-- The bug fix prevented the modal issue but streak calculation was working
-
-**If Beth's streak is incorrect**:
-- Trigger logic has bugs in consecutive win calculation
-- `last_win_date` doesn't match actual last win
-- Need to rebuild streak data from game_sessions
-
-**Table Usage Results**:
-- Likely 3-4 tables can be removed or merged
-- Some tables may be legacy from old implementations
-- Focus resources on the core 5-6 essential tables
+**For Table Audit:**
+```bash
+# Use corrected table names in audit script
+cat audit_table_usage.sql
+# Update with actual schema before running
+```
 
 ---
 

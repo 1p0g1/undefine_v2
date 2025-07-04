@@ -96,29 +96,17 @@ function getNextClueKey(revealedClues: ClueKey[]): ClueKey | null {
 }
 
 /**
- * Update user stats based on game outcome
+ * CLEANUP PHASE 1: Minimal user_stats function - only ensures FK requirements
+ * Note: user_stats table is abandoned (all zeros) but required for foreign key constraints
  */
-async function updateUserStats(
-  playerId: string,
-  isWon: boolean,
-  guessesUsed: number,
-  completionTimeSeconds: number | null,
-  scoreResult: ScoreResult
-) {
-  if (!completionTimeSeconds) {
-    throw new Error('Completion time is required for updating stats');
-  }
-
-  // Step 1: Ensure a user_stats record exists for the player.
-  // This is crucial for foreign key constraints when the leaderboard trigger fires.
+async function ensureUserStatsForFK(playerId: string) {
+  // Only ensure a minimal record exists for foreign key constraints
+  // Do not update stats since user_stats is abandoned in favor of player_streaks and game_sessions
   const { error: upsertError } = await supabase
     .from('user_stats')
     .upsert(
       {
         player_id: playerId,
-        // Initialize with default values if it's a new record
-        // These will be overridden by the subsequent update if the record is new,
-        // or if it exists, these defaults won't apply due to onConflict.
         games_played: 0,
         games_won: 0,
         current_streak: 0,
@@ -130,74 +118,17 @@ async function updateUserStats(
         updated_at: new Date().toISOString()
       },
       {
-        onConflict: 'player_id', // If player_id already exists, do nothing for this upsert.
-        ignoreDuplicates: false, // Important: we want the conflict to be handled by onConflict.
+        onConflict: 'player_id',
+        ignoreDuplicates: true  // Don't overwrite existing records
       }
     );
 
   if (upsertError) {
-    console.error('[updateUserStats] Failed to upsert initial user_stats record:', upsertError);
-    // Depending on the error, we might want to throw or handle differently.
-    // For now, we'll log and proceed, as the select/update might still work if the record existed.
-    // However, if it was a critical error (e.g., DB connection), subsequent steps would also fail.
-  } else {
-    console.log('[updateUserStats] Initial user_stats record ensured for player:', playerId);
-  }
-
-  // Step 2: Fetch the current stats (which now definitely exists or was just created).
-  const { data: stats, error: statsError } = await supabase
-    .from('user_stats')
-    .select('*')
-    .eq('player_id', playerId)
-    .single();
-
-  if (statsError) {
-    console.error('[updateUserStats] Failed to fetch stats after upsert:', statsError);
-    throw statsError; // If we can't fetch, we can't reliably update.
-  }
-
-  // If stats is null here, it means the initial upsert failed silently or select failed,
-  // which should be caught by statsError. But as a safeguard:
-  if (!stats) {
-    console.error('[updateUserStats] user_stats record is null after upsert and select for player:', playerId);
-    throw new Error('Failed to retrieve or create user_stats record.');
+    console.error('[ensureUserStatsForFK] Failed to ensure user_stats FK record:', upsertError);
+    throw upsertError;
   }
   
-  console.log('[updateUserStats] Current stats for player:', playerId, stats);
-
-
-  // Step 3: Calculate and apply the new statistics.
-  const newStats = {
-    games_played: (stats.games_played || 0) + 1,
-    games_won: isWon ? (stats.games_won || 0) + 1 : (stats.games_won || 0),
-    current_streak: isWon ? (stats.current_streak || 0) + 1 : 0,
-    longest_streak: isWon 
-      ? Math.max(stats.longest_streak || 0, (stats.current_streak || 0) + 1)
-      : (stats.longest_streak || 0),
-    total_guesses: (stats.total_guesses || 0) + guessesUsed,
-    // Ensure games_played for average calculation is at least 1 (the current game)
-    average_guesses_per_game: ((stats.total_guesses || 0) + guessesUsed) / Math.max(1, (stats.games_played || 0) + 1),
-    total_play_time_seconds: (stats.total_play_time_seconds || 0) + completionTimeSeconds,
-    total_score: (stats.total_score || 0) + scoreResult.score,
-    updated_at: new Date().toISOString()
-  };
-  
-  console.log('[updateUserStats] Calculated new stats for player:', playerId, newStats);
-
-
-  const { error: updateError } = await supabase
-    .from('user_stats')
-    .update(newStats)
-    .eq('player_id', playerId);
-
-  if (updateError) {
-    console.error('[updateUserStats] Failed to update stats:', updateError);
-    throw updateError;
-  }
-  
-  console.log('[updateUserStats] Successfully updated stats for player:', playerId);
-
-  return newStats;
+  console.log('[ensureUserStatsForFK] FK record ensured for player:', playerId);
 }
 
 /**
@@ -767,16 +698,12 @@ export default withCors(async function handler(
               });
             }
 
-            console.log('[/api/guess] Step 2: Updating user stats');
+            console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
             try {
-              stats = await updateUserStats(
-                playerId,
-                result.isCorrect,
-                combinedSession.guesses.length + 1,
-                completionTimeSeconds,
-                scoreResult
-              );
-              console.log('[/api/guess] ✅ Step 2 completed: User stats updated successfully');
+              await ensureUserStatsForFK(playerId);
+              // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
+              stats = undefined; // Stats now come from player_streaks and game_sessions
+              console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
             } catch (statsError) {
               console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
                 error: statsError,
@@ -1023,16 +950,12 @@ export default withCors(async function handler(
           });
         }
 
-        console.log('[/api/guess] Step 2: Updating user stats');
+        console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
         try {
-          stats = await updateUserStats(
-        playerId,
-        result.isCorrect,
-        gameSession.guesses.length + 1,
-        completionTimeSeconds,
-        scoreResult
-      );
-          console.log('[/api/guess] ✅ Step 2 completed: User stats updated successfully');
+          await ensureUserStatsForFK(playerId);
+          // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
+          stats = undefined; // Stats now come from player_streaks and game_sessions
+          console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
         } catch (statsError) {
           console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
             error: statsError,

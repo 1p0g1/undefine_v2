@@ -49,19 +49,20 @@ async function handler(
       return res.status(400).json({ error: 'Missing player_id' });
     }
 
+    // CLEANUP PHASE 1: Use player_streaks instead of abandoned user_stats table
     const { data, error } = await supabase
-      .from('user_stats')
-      .select('current_streak,longest_streak')
+      .from('player_streaks')
+      .select('current_streak,highest_streak')
       .eq('player_id', player_id)
       .maybeSingle();
 
     if (error || !data) {
-      return res.status(404).json({ error: error?.message || 'No stats found' });
+      return res.status(404).json({ error: error?.message || 'No streak data found' });
     }
 
     return res.status(200).json({
       currentStreak: data.current_streak ?? 0,
-      longestStreak: data.longest_streak ?? 0
+      longestStreak: data.highest_streak ?? 0  // Note: player_streaks uses 'highest_streak' not 'longest_streak'
     });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });

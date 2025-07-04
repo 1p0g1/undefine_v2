@@ -1,3 +1,27 @@
+# ⚠️ **DEPRECATED DOCUMENT - ARCHIVED JULY 2, 2025** ⚠️
+
+**Date Deprecated**: July 2, 2025  
+**Reason**: Contains outdated schema references and wrong column names  
+**Replacement**: See `docs/ACTUAL_DATABASE_SCHEMA.md` for verified schema
+
+## **🚨 CRITICAL ISSUES WITH THIS DOCUMENT:**
+
+1. **WRONG COLUMN NAMES**: Uses `best_streak` vs actual `highest_streak`  
+   - **IMPACT**: SQL queries fail with "column does not exist" errors
+
+2. **OUTDATED REFERENCES**: Claims `user_stats` is actively populated  
+   - **REALITY**: `user_stats` is FK-only until rebuild (July 2025 strategic decision)
+
+3. **SCHEMA MISMATCHES**: References non-existent relationships  
+   - **IMPACT**: Database operations fail
+
+## **✅ USE THESE DOCUMENTS INSTEAD:**
+- `docs/ACTUAL_DATABASE_SCHEMA.md` - Verified table structures  
+- `docs/CRITICAL_DATABASE_ANALYSIS_JULY_2025.md` - Screenshot-verified facts
+- `docs/DOCUMENTATION_CONSOLIDATION_RULES.md` - Verification system
+
+---
+
 # Supabase Schema Alignment & Backend Audit
 
 Last Updated: May 2025

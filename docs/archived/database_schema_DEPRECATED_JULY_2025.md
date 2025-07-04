@@ -1,3 +1,28 @@
+# ⚠️ **DEPRECATED DOCUMENT - ARCHIVED JULY 2, 2025** ⚠️
+
+**Date Deprecated**: July 2, 2025  
+**Reason**: Contains incorrect database schema assumptions  
+**Replacement**: See `docs/CRITICAL_DATABASE_ANALYSIS_JULY_2025.md` for verified facts
+
+## **🚨 CRITICAL ISSUES WITH THIS DOCUMENT:**
+
+1. **FALSE ASSUMPTION**: Claims `user_stats` table is populated  
+   - **REALITY**: `user_stats` is completely empty (verified via screenshots)
+   - **IMPACT**: All stats come from `player_streaks` and `game_sessions`
+
+2. **WRONG COLUMN NAMES**: Uses `longest_streak` vs actual `highest_streak`  
+   - **IMPACT**: SQL queries fail with "column does not exist" errors
+
+3. **OUTDATED FOREIGN KEYS**: References non-existent relationships  
+   - **IMPACT**: Database operations fail
+
+## **✅ USE THESE DOCUMENTS INSTEAD:**
+- `docs/CRITICAL_DATABASE_ANALYSIS_JULY_2025.md` - Screenshot-verified facts
+- `docs/ACTUAL_DATABASE_SCHEMA.md` - Correct table structures  
+- `docs/DOCUMENTATION_CONSOLIDATION_RULES.md` - Verification system
+
+---
+
 # Database Schema
 
 This document defines the database schema for the Un-Define v2 project. The project uses Supabase as the database provider.

@@ -100,7 +100,7 @@ Managed through SQL migrations. Tables include:
 - `leaderboard_summary` — Schema ready, not yet active
 - `user_stats` — Global stats per anonymous player
 
-See `docs/ARCHITECTURE.md` and `docs/supa_alignment.md` for schema and ERD.
+See `docs/ARCHITECTURE.md` and `docs/ACTUAL_DATABASE_SCHEMA.md` for schema and ERD.
 
 ## 🔐 Row-Level Security (RLS)
 
