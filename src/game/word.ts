@@ -31,7 +31,8 @@ export async function getNewWord(): Promise<{ word: WordResponseShape; isFallbac
         number_of_letters,
         etymology,
         difficulty,
-        date
+        date,
+        theme
       `)
       .eq('date', today)
       .single();
