@@ -296,6 +296,11 @@ export const apiClient = {
       canGuessTheme: boolean;
       isCorrectGuess?: boolean;
     };
+    fuzzyMatch?: {
+      method: 'exact' | 'synonym' | 'semantic' | 'error';
+      confidence: number;
+      similarity?: number;
+    };
   }> {
     return fetchFromApi('/api/theme-guess', {
       method: 'POST',
