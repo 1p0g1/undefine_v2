@@ -240,7 +240,7 @@ Measure cost savings and accuracy impact of hybrid string+AI approach.
 6. 🔄 Integrate with existing theme system
 
 ### **2025-01-08 - Test Results Analysis**
-**API Token**: Working correctly (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)
+**API Token**: Working correctly (token rotated for security)
 
 **Key Findings:**
 - **Theme Matching**: Best model (all-mpnet-base-v2) achieved 50% accuracy with 85% threshold
@@ -352,7 +352,7 @@ Measure cost savings and accuracy impact of hybrid string+AI approach.
 ```bash
 # Add to Vercel backend deployment
 vercel env add HF_API_KEY
-# Enter your token: hf_your_new_token_here (generate a new one!)
+# Enter your token: hf_[your_new_token_here]
 ```
 
 #### **Step 2: Deploy Backend**
