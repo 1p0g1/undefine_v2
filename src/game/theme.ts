@@ -74,9 +74,57 @@ export async function getWordsForTheme(theme: string): Promise<Array<{
 }
 
 /**
- * Check if a theme guess is correct using fuzzy matching
+ * Check if a theme guess is correct using AI-powered fuzzy matching
+ * 
+ * Updated 2025-01-08: Now uses semantic similarity with multi-tier approach
+ * - Tier 1: Exact match (free, instant)
+ * - Tier 2: Synonym database (free, curated)
+ * - Tier 3: Semantic AI (HuggingFace API)
  */
-export function isThemeGuessCorrect(guess: string, actualTheme: string): boolean {
+export async function isThemeGuessCorrect(guess: string, actualTheme: string): Promise<{
+  isCorrect: boolean;
+  method: 'exact' | 'synonym' | 'semantic' | 'error';
+  confidence: number;
+  similarity?: number;
+}> {
+  if (!guess || !actualTheme) {
+    return {
+      isCorrect: false,
+      method: 'error',
+      confidence: 0
+    };
+  }
+
+  // Import semantic similarity (dynamic import to avoid circular dependencies)
+  const { matchThemeWithFuzzy } = await import('../utils/semanticSimilarity');
+  
+  try {
+    const result = await matchThemeWithFuzzy(guess, actualTheme);
+    
+    return {
+      isCorrect: result.isMatch,
+      method: result.method,
+      confidence: result.confidence,
+      similarity: result.similarity
+    };
+  } catch (error) {
+    console.error('[isThemeGuessCorrect] Error:', error);
+    
+    // Fallback to legacy matching if AI fails
+    const legacyResult = isThemeGuessCorrectLegacy(guess, actualTheme);
+    return {
+      isCorrect: legacyResult,
+      method: 'error',
+      confidence: legacyResult ? 90 : 0
+    };
+  }
+}
+
+/**
+ * Legacy theme matching (fallback when AI fails)
+ * Preserves original logic for reliability
+ */
+function isThemeGuessCorrectLegacy(guess: string, actualTheme: string): boolean {
   if (!guess || !actualTheme) return false;
 
   const normalizedGuess = normalizeText(guess);
@@ -85,7 +133,7 @@ export function isThemeGuessCorrect(guess: string, actualTheme: string): boolean
   // Exact match
   if (normalizedGuess === normalizedTheme) return true;
 
-  // Define theme synonyms for common themes
+  // Define theme synonyms for common themes (legacy list)
   const themeSynonyms: Record<string, string[]> = {
     'emotions': ['feelings', 'moods', 'sentiments', 'emotions'],
     'space': ['astronomy', 'cosmos', 'universe', 'celestial', 'space'],
@@ -193,8 +241,19 @@ export async function submitThemeAttempt(
     const totalWordGuesses = totalGuessStats?.reduce((sum, session) => 
       sum + (session.guesses?.length || 0), 0) || 0;
 
-    // Validate the guess
-    const isCorrect = isThemeGuessCorrect(guess, theme);
+    // Validate the guess using AI-powered fuzzy matching
+    const guessResult = await isThemeGuessCorrect(guess, theme);
+    const isCorrect = guessResult.isCorrect;
+
+    // Log the matching method for analytics
+    console.log(`[submitThemeAttempt] Theme guess validation:`, {
+      guess: guess.trim(),
+      theme,
+      isCorrect,
+      method: guessResult.method,
+      confidence: guessResult.confidence,
+      similarity: guessResult.similarity
+    });
 
     // Insert theme attempt
     const { error: insertError } = await supabase

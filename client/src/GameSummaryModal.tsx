@@ -31,6 +31,7 @@ interface GameSummaryModalProps {
   };
   currentDisplayName?: string;
   onOpenSettings?: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -51,6 +52,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   score,
   currentDisplayName,
   onOpenSettings,
+  onOpenThemeModal,
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -126,6 +128,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   const handleSkipNickname = () => {
     setShowNicknamePrompt(false);
     localStorage.setItem('hasSkippedNickname', 'true');
+  };
+
+  // Handle theme modal opening
+  const handleOpenThemeModal = () => {
+    onOpenThemeModal?.();
+    onClose(); // Close the summary modal when opening theme modal
   };
 
   // Get background color for top 3 positions
@@ -213,7 +221,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           }}
         >
           {/* Un· enhanced design with overlap effect */}
-          <UnPrefix scaled={false} />
+          <UnPrefix scaled={false} onClick={handleOpenThemeModal} />
           <div style={{ 
             display: 'flex', 
             gap: 'clamp(0.08rem, 0.25vw, 0.12rem)',
@@ -476,6 +484,48 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             onSkip={handleSkipNickname}
           />
         )}
+        
+                 {/* Theme Guessing Prompt - Always show for completed games */}
+         <div
+           style={{
+             backgroundColor: '#f8fafc',
+             border: '2px solid #e2e8f0',
+             borderRadius: '0.75rem',
+             padding: '1rem',
+             marginBottom: '1rem',
+             textAlign: 'center',
+             fontFamily: 'var(--font-primary)',
+           }}
+         >
+           <div style={{ 
+             fontSize: '0.9rem', 
+             color: '#1a237e',
+             marginBottom: '0.5rem',
+             fontWeight: 600
+           }}>
+             Guess the{' '}
+             <span 
+               onClick={handleOpenThemeModal}
+               style={{
+                 color: '#1a237e',
+                 fontWeight: 700,
+                 cursor: 'pointer',
+                 textDecoration: 'underline',
+                 textDecorationStyle: 'dotted'
+               }}
+             >
+               THEME
+             </span>{' '}
+             of the week
+           </div>
+           <div style={{ 
+             fontSize: '0.8rem', 
+             color: '#64748b',
+             lineHeight: '1.4'
+           }}>
+             Can you figure out what connects this week's words?
+           </div>
+         </div>
         
         <div
           className="gs-modal-actions"

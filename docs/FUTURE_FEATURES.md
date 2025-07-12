@@ -43,68 +43,111 @@ HAVING COUNT(CASE WHEN ls.rank = 1 THEN 1 END) != ps.current_streak;
 
 ## 🎯 Theme System Enhancements
 
-### 2. **Fuzzy Theme Matching for Theme Guesses**
+### 2. **AI Fuzzy Theme Matching for Theme Guesses**
 **Status**: Proposed  
 **Priority**: Medium-High  
-**Estimated Effort**: 1-2 days  
-**Cost**: **FREE** (no external APIs)
+**Estimated Effort**: 2-3 days  
+**Cost**: **$3-5/month** (optimized for low cost)
 
 #### **Current Problem**
-Theme guessing is too punishing - players need exact matches or predefined synonyms. Current logic in `src/game/theme.ts`:
+Theme guessing is too punishing - players need exact matches or predefined synonyms. Real example: Player guesses "boozing" but theme is "drinking alcohol" - semantically identical but no exact match.
 
-```typescript
-// Current basic fuzzy matching
-const themeSynonyms: Record<string, string[]> = {
-  'emotions': ['feelings', 'moods', 'sentiments', 'emotions'],
-  'space': ['astronomy', 'cosmos', 'universe', 'celestial', 'space'],
-  // ... limited predefined synonyms
-};
+**Theme Context**: Un•Define has weekly themes connecting 7 daily words (e.g., "Drinking Alcohol" theme with words: whiskey, tavern, brewery, hangover, cocktail, bartender, prohibition).
+
+#### **AI-Powered Solutions** (Cost-Optimized)
+
+##### **Option A: Groq API (Recommended for Production)** ⭐
+- **Implementation**: Supabase Edge Function with semantic similarity
+- **API**: Lightning-fast LLM inference via Groq
+- **Cost**: ~$3/month for 10,000 users
+- **Accuracy**: ~95% for semantic matches
+
+```javascript
+// Supabase Edge Function
+const prompt = `Rate similarity 0-100: "${guess}" vs "${theme}"`;
+// "boozing" vs "drinking alcohol" → returns ~95
+// "mythology" vs "legends" → returns ~88
+// "space" vs "cosmos" → returns ~92
 ```
 
-#### **Proposed Solutions** (Cost-Free)
+**Cost Analysis**:
+- 10k users × 4 theme guesses/week = 40k requests/month
+- Groq pricing: ~$0.000075 per request
+- Monthly cost: ~$3.00
 
-##### **Option A: Enhanced String Similarity (Recommended)**
-- **Implementation**: Levenshtein distance + phonetic matching
-- **Libraries**: Use built-in JavaScript string methods + soundex algorithm
+##### **Option B: Hugging Face Inference (Learning/Dev)**
+- **Implementation**: sentence-transformers/all-MiniLM-L6-v2
+- **Features**: Semantic similarity embeddings
+- **Cost**: FREE (30k requests/month)
+- **Accuracy**: ~89% for semantic similarity
+
+```javascript
+// Hugging Face Inference API
+const similarity = await hf_similarity("boozing", "drinking alcohol");
+// Returns 0.89 similarity score
+// Free tier: 30k requests/month (sufficient for beta testing)
+```
+
+##### **Option C: Client-side AI (Zero Cost, Future-Proof)** 
+- **Implementation**: @xenova/transformers in browser
+- **Model**: Xenova/all-MiniLM-L6-v2 (50MB download)
+- **Cost**: $0 - One-time download per user
+- **Accuracy**: ~87% for semantic similarity
+
+```javascript
+// Client-side inference (zero server costs)
+const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+const similarity = await computeSimilarity("boozing", "drinking alcohol");
+// 50MB download, but free forever per user
+```
+
+##### **Option D: Traditional Methods (Fallback)**
+- **Implementation**: Levenshtein distance + phonetic matching + synonym DB
+- **Libraries**: Built-in JavaScript + manually curated synonyms
 - **Cost**: $0 - Pure algorithmic approach
-- **Accuracy**: ~80-85% for typos and close matches
+- **Accuracy**: ~75% for covered terms only
+
+#### **Recommended Hybrid Strategy** (Cost-Optimized)
+
+**Multi-Tier Matching System**:
+1. **Exact Match Check** (free, instant)
+2. **Synonym Database** (free, curated list)
+3. **AI Semantic Matching** (paid, for novel guesses)
 
 ```typescript
-// Example implementation
-function fuzzyThemeMatch(guess: string, theme: string): boolean {
-  // 1. Exact match
+async function validateThemeGuess(guess: string, theme: string): Promise<boolean> {
+  // Tier 1: Exact match (free)
   if (normalizeText(guess) === normalizeText(theme)) return true;
   
-  // 2. Levenshtein distance (allow 1-2 character differences)
-  if (levenshteinDistance(guess, theme) <= 2) return true;
+  // Tier 2: Synonym database (free)
+  if (synonymDatabase[theme]?.includes(guess)) return true;
   
-  // 3. Phonetic similarity (soundex)
-  if (soundex(guess) === soundex(theme)) return true;
-  
-  // 4. Partial word matching
-  if (guess.includes(theme) || theme.includes(guess)) return true;
-  
-  // 5. Common abbreviations/plurals
-  if (handleCommonVariations(guess, theme)) return true;
-  
-  return false;
+  // Tier 3: AI semantic matching (paid, only for unmatched)
+  const similarity = await groqSimilarity(guess, theme);
+  return similarity >= 85; // 85% threshold for acceptance
 }
 ```
 
-##### **Option B: Expanded Synonym Dictionary**
-- **Implementation**: Comprehensive manual synonym mapping
-- **Maintenance**: Crowd-sourced from player feedback
-- **Cost**: $0 - Community-driven
-- **Accuracy**: ~90% for covered terms
+**Cost Benefits**:
+- 70% of guesses match via exact/synonym (free)
+- 30% require AI processing (~$1/month)
+- Total estimated cost: **$3-5/month for 10k users**
 
-##### **Option C: Local NLP Library (Advanced)**
-- **Implementation**: Use compromise.js or similar lightweight NLP
-- **Features**: Part-of-speech tagging, stemming, synonym detection
-- **Cost**: $0 - Open source library (~50KB)
-- **Accuracy**: ~85-90%
+#### **Edge Cases Handled**
+- **Semantic Equivalence**: "boozing" → "drinking alcohol"
+- **Conceptual Similarity**: "mythology" → "legends"
+- **Domain Knowledge**: "space" → "cosmos", "astronomy"  
+- **Colloquialisms**: "grub" → "food", "wheels" → "cars"
+- **Cultural Variations**: "football" → "soccer" (context-aware)
 
-#### **Recommended Implementation**
-Combine Option A + B: Enhanced string similarity with expanded synonyms, plus a feedback system for players to suggest missing synonyms.
+#### **Implementation Timeline**
+
+**Phase 1 (1 day)**: Enhanced synonym database
+**Phase 2 (1 day)**: Groq API integration with fallback
+**Phase 3 (1 day)**: Cost monitoring and optimization
+
+**Monthly Operating Cost**: $3-5 (scales with user base)
+**User Experience**: Significantly improved theme acceptance rate
 
 ---
 

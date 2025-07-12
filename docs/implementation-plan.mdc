@@ -33,6 +33,11 @@
 ## 🏗️ Production Deployment Architecture
 
 ### ✅ CORS Implementation (May 2024)
+# Un- Define Implementation Plan
+
+## 🏗️ Production Deployment Architecture
+
+### ✅ CORS Implementation (May 2024)
 
 ## 🚨 Critical Database Fixes (December 2024)
 
@@ -599,5 +604,17 @@ Implemented dynamic visual design for the "Un·" prefix that changes appearance 
 - Ready for production deployment
 
 **Next**: Phase 8 - Additional game enhancements
+
+## Theme Guessing Feature Implementation Plan
+
+1. Add a nullable `theme_guess` column to the `game_sessions` table to store a player's guess for the weekly theme. This column will be optional and can be left null if the player chooses not to guess.
+2. Do NOT add a `theme_guess_day` or `theme_bonus` column. The day can be inferred from the session's timestamp if needed, and theme performance will be tracked independently from daily word scoring.
+3. Track theme guesses for leaderboard/statistics by querying the `game_sessions` table for non-null `theme_guess` values. Correctness and fuzzy matching will be handled in application logic.
+4. The UI will allow players to optionally guess the theme at any time during the week, or skip guessing entirely.
+5. No new tables are required for this feature; all tracking is handled in the existing `game_sessions` table.
+
+---
+
+**Status:** In Progress
 
 # Un- Define Implementation Plan

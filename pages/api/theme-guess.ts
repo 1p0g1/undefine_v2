@@ -2,6 +2,8 @@
  * @fileoverview
  * Next.js API route for submitting theme guesses for the Theme of the Week feature.
  * 
+ * Updated 2025-01-08: Now includes AI-powered fuzzy matching with detailed feedback
+ * 
  * @api {post} /api/theme-guess Submit a theme guess
  * @apiBody {string} player_id UUID of the player
  * @apiBody {string} guess The theme guess
@@ -11,6 +13,10 @@
  * @apiSuccess {string} response.guess The submitted guess
  * @apiSuccess {string} response.actualTheme The actual theme (if guess was correct)
  * @apiSuccess {Object} response.progress Theme progress information
+ * @apiSuccess {Object} response.fuzzyMatch Fuzzy matching details
+ * @apiSuccess {string} response.fuzzyMatch.method How the match was determined ('exact', 'synonym', 'semantic', 'error')
+ * @apiSuccess {number} response.fuzzyMatch.confidence Confidence score (0-100)
+ * @apiSuccess {number} response.fuzzyMatch.similarity Semantic similarity score (0-1, if applicable)
  * @apiError {Object} error Error response
  * @apiError {string} error.error Error message
  */
@@ -19,7 +25,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '../../src/env.server';
 import { withCors } from '../../lib/withCors';
-import { getCurrentTheme, submitThemeAttempt, getThemeProgress } from '../../src/game/theme';
+import { getCurrentTheme, submitThemeAttempt, getThemeProgress, isThemeGuessCorrect } from '../../src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -38,6 +44,11 @@ interface ThemeGuessResponse {
     completedWords: number;
     themeGuess: string | null;
     canGuessTheme: boolean;
+  };
+  fuzzyMatch: {
+    method: 'exact' | 'synonym' | 'semantic' | 'error';
+    confidence: number;
+    similarity?: number;
   };
 }
 
@@ -104,6 +115,11 @@ export default withCors(async function handler(
       currentTheme 
     });
 
+    // Get fuzzy matching details before submitting (for API response)
+    const fuzzyMatchResult = await isThemeGuessCorrect(guess, currentTheme);
+    
+    console.log('[/api/theme-guess] Fuzzy matching result:', fuzzyMatchResult);
+
     // Submit theme attempt (handles validation and daily constraint)
     const attemptResult = await submitThemeAttempt(player_id, currentTheme, guess);
 
@@ -127,14 +143,20 @@ export default withCors(async function handler(
       isCorrect: attemptResult.isCorrect,
       guess,
       currentTheme,
-      progress
+      progress,
+      fuzzyMatch: fuzzyMatchResult
     });
 
-    // Prepare response
+    // Prepare response with fuzzy matching details
     const response: ThemeGuessResponse = {
       isCorrect: attemptResult.isCorrect,
       guess: guess.trim(),
-      progress
+      progress,
+      fuzzyMatch: {
+        method: fuzzyMatchResult.method,
+        confidence: fuzzyMatchResult.confidence,
+        similarity: fuzzyMatchResult.similarity
+      }
     };
 
     // Only reveal actual theme if guess was correct

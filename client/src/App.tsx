@@ -649,6 +649,7 @@ function App() {
         error={leaderboardError || undefined}
         currentDisplayName={currentDisplayName}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenThemeModal={handleThemeClick}
       />
       {/* Settings Modal */}
       <SettingsModal
