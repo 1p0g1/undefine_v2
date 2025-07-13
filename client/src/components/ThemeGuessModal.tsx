@@ -75,15 +75,34 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     return '🎲 Keep exploring different themes!';
   };
 
-  // Load theme status and stats when modal opens
+  // Load theme data when modal opens
   useEffect(() => {
     if (open && playerId) {
       // Clear previous guess results to prevent state persistence between sessions
       setLastGuessResult(null);
       
-      // Use cached data if available and recent (within 2 minutes)
+      // Check for pre-loaded data from GameSummaryModal
+      const preloadedData = typeof window !== 'undefined' ? (window as any).__themeDataCache : null;
+      
+      // Use pre-loaded data if available and recent (within 2 minutes)
       const now = Date.now();
+      if (preloadedData && (now - preloadedData.timestamp < 120000)) {
+        console.log('[ThemeGuessModal] Using pre-loaded theme data');
+        setThemeStatus(preloadedData.themeStatus);
+        setThemeStats(preloadedData.themeStats);
+        setIsLoading(false);
+        setError(null);
+        
+        // Clear the pre-loaded data after use
+        if (typeof window !== 'undefined') {
+          delete (window as any).__themeDataCache;
+        }
+        return;
+      }
+      
+      // Use cached data if available and recent (within 2 minutes)
       if (dataCache && (now - dataCache.timestamp < 120000)) {
+        console.log('[ThemeGuessModal] Using cached theme data');
         setThemeStatus(dataCache.themeStatus);
         setThemeStats(dataCache.themeStats);
         setIsLoading(false);

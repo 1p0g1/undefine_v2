@@ -76,6 +76,46 @@ const useGame = () => {
 
   const startNewGame = useCallback(async () => {
     try {
+      const newState = await gameService.initializeGame();
+      setGameState(newState);
+      
+      // Reconstruct guess status if this is a restored completed game
+      if (newState.isComplete && newState.guesses.length > 0) {
+        const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
+          ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
+        
+        newState.guesses.forEach((guess, index) => {
+          if (index < 6) {
+            // For restored games, check if the guess was the winning guess
+            if (newState.isWon && index === newState.guesses.length - 1) {
+              newGuessStatus[index] = 'correct';
+            } else {
+              // We can't easily determine if it was fuzzy from stored state
+              // so we'll mark non-winning guesses as incorrect
+              newGuessStatus[index] = 'incorrect';
+            }
+          }
+        });
+        
+        setGuessStatus(newGuessStatus);
+        console.log('[Game] Reconstructed guess status for restored game:', newGuessStatus);
+      } else {
+        // New game - reset to empty
+        setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      }
+      
+      setFuzzyMatchCount(0);
+      setShowLeaderboard(false);
+      setScoreDetails(null);
+    } catch (error) {
+      console.error('[Game] Failed to start new game:', error);
+      throw error;
+    }
+  }, []);
+
+  // Add a separate method for forcing a new game (Play Again)
+  const forceNewGame = useCallback(async () => {
+    try {
       const newState = await gameService.startNewGame();
       setGameState(newState);
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
@@ -83,7 +123,7 @@ const useGame = () => {
       setShowLeaderboard(false);
       setScoreDetails(null);
     } catch (error) {
-      console.error('[Game] Failed to start new game:', error);
+      console.error('[Game] Failed to force new game:', error);
       throw error;
     }
   }, []);
@@ -136,6 +176,7 @@ const useGame = () => {
   return {
     gameState,
     startNewGame,
+    forceNewGame,
     submitGuess,
     guessStatus,
     fuzzyMatchCount,

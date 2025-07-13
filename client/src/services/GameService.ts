@@ -77,6 +77,43 @@ class GameService {
     }
   }
 
+  /**
+   * Initialize the game - either restore completed state or start new game
+   * This should be called on app startup instead of startNewGame
+   */
+  public async initializeGame(): Promise<GameSessionState> {
+    try {
+      console.log('[GameService] Initializing game...');
+      
+      // Check if we have a saved completed state
+      if (this.currentState && this.currentState.isComplete) {
+        console.log('[GameService] Found completed game state, checking if it\'s for today\'s word...');
+        
+        // Get today's word to check if our saved state is still valid
+        const todaysWordData = await apiClient.getNewWord();
+        
+        // If the saved state is for today's word, restore it
+        if (this.currentState.wordId === todaysWordData.word.id) {
+          console.log('[GameService] Saved state is for today\'s word, restoring completed game');
+          return this.currentState;
+        } else {
+          console.log('[GameService] Saved state is for different word, starting new game');
+          // Clear old state and start new game
+          this.clearState();
+          return this.startNewGame();
+        }
+      }
+      
+      // If no saved state or it's not complete, start new game
+      console.log('[GameService] No completed state found, starting new game');
+      return this.startNewGame();
+    } catch (error) {
+      console.error('[GameService] Failed to initialize game:', error);
+      // Fallback to starting new game
+      return this.startNewGame();
+    }
+  }
+
   public async startNewGame(): Promise<GameSessionState> {
     try {
       console.log('[GameService] Starting new game...');

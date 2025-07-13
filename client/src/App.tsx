@@ -20,6 +20,7 @@ function App() {
   const {
     gameState,
     startNewGame,
+    forceNewGame,
     submitGuess,
     guessStatus,
     fuzzyMatchCount,
@@ -76,6 +77,22 @@ function App() {
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
+
+  // New effect to handle restored completed games
+  useEffect(() => {
+    if (gameState.isComplete && !gameStarted) {
+      // This is a restored completed game from localStorage
+      console.log('[App] Restored completed game, showing summary modal');
+      setGameStarted(true); // Mark as started so UI shows properly
+      setShowSummary(true);
+      setCanReopenSummary(false);
+      // Set timer to the final time if available or 0
+      if (gameState.score) {
+        // We don't have the exact timer value, but we can show the modal
+        setTimer(0);
+      }
+    }
+  }, [gameState.isComplete, gameState.gameId, gameStarted]);
 
   useEffect(() => {
     if (gameState.isComplete && gameStarted) {
@@ -180,7 +197,7 @@ function App() {
   const handlePlayAgain = () => {
     setGameStarted(false);
     setTimer(0);
-    startNewGame();
+    forceNewGame();
   };
 
   const launchConfetti = () => {
@@ -375,20 +392,95 @@ function App() {
         <div
           style={{
             fontFamily: 'var(--font-primary)',
-            fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
-            color: '#6b7280',
+            fontSize: 'clamp(1rem, 3vw, 1.25rem)', // Larger text inspired by Wordle
+            color: '#374151',
             textAlign: 'center',
-            lineHeight: '1.6',
-            margin: '1rem auto',
-            maxWidth: '420px',
-            padding: '0 1rem'
+            lineHeight: '1.7',
+            margin: '2rem auto',
+            maxWidth: '600px', // Wider for better readability
+            padding: '0 1.5rem'
           }}
         >
-          <b>Objective:</b> 'Un·Define' (reverse engineer) today's word in 6 guesses or less.
-          <br /><br />
-          The D-E-F-I-N-E boxes represent 6 different clues (hover over to learn more).
-          <br /><br />
-          Clues are revealed on each guess. Fastest time with the fewest guesses wins. Good luck!
+          {/* Objective */}
+          <div style={{ 
+            marginBottom: '1.5rem',
+            fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
+            fontWeight: '600'
+          }}>
+            <strong>Objective:</strong> 'Un·Define' (reverse engineer) today's word in 6 guesses or less.
+          </div>
+
+          {/* DEFINE boxes explanation with actual boxes */}
+          <div style={{ 
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}>
+            <div>These boxes</div>
+            <div style={{ 
+              display: 'flex', 
+              gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
+              scale: '0.7' // Slightly smaller version of the actual boxes
+            }}>
+              <DefineBoxes
+                gameState={{
+                  gameId: '',
+                  wordId: '',
+                  wordText: '',
+                  clues: {
+                    definition: '',
+                    equivalents: '',
+                    first_letter: '',
+                    in_a_sentence: '',
+                    number_of_letters: '',
+                    etymology: ''
+                  },
+                  guesses: [],
+                  revealedClues: [],
+                  clueStatus: {
+                    definition: false,
+                    equivalents: false,
+                    first_letter: false,
+                    in_a_sentence: false,
+                    number_of_letters: false,
+                    etymology: false
+                  },
+                  isComplete: false,
+                  isWon: false,
+                  score: null,
+                  startTime: ''
+                }}
+                revealedClues={[]}
+                guessStatus={['empty', 'empty', 'empty', 'empty', 'empty', 'empty']}
+                onBoxClick={() => {}}
+                isLoading={false}
+              />
+            </div>
+            <div>represent 6 different clues (hover over to learn more).</div>
+          </div>
+
+          {/* Un diamond theme explanation */}
+          <div style={{ 
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              The <UnPrefix onClick={() => {}} /> allows you to guess this week's theme
+            </div>
+            <div style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.1rem)', fontStyle: 'italic' }}>
+              (this will be easier the more daily words you guess).
+            </div>
+          </div>
+
+          {/* Game rules */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            Clues are revealed on each guess. Fastest time with the fewest guesses wins. Good luck!
+          </div>
         </div>
       )}
       
@@ -400,18 +492,19 @@ function App() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '1rem',
-            margin: '1rem 0',
-            maxWidth: '420px'
+            gap: '1.5rem', // Increased gap
+            margin: '1.5rem 0',
+            maxWidth: '600px' // Match intro text width
           }}
         >
           <div
             style={{
               fontFamily: 'var(--font-primary)',
-              fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)', // Larger timer notice
               color: '#6b7280',
               textAlign: 'center',
-              fontStyle: 'italic'
+              fontStyle: 'italic',
+              fontWeight: '500'
             }}
           >
             Your time starts when you click 'Ready'
@@ -420,26 +513,16 @@ function App() {
             onClick={handleStartGame}
             style={{
               fontFamily: 'var(--font-primary)',
-              fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+              fontSize: 'clamp(1rem, 3vw, 1.2rem)', // Larger button text
               fontWeight: 600,
-              padding: '0.75rem 2rem',
+              padding: '1rem 3rem', // Bigger button
               backgroundColor: 'var(--color-primary)',
               color: 'white',
               border: 'none',
-              borderRadius: '0.5rem',
+              borderRadius: '0.75rem', // More rounded
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(26, 35, 126, 0.2)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#1e2875';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(26, 35, 126, 0.3)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-primary)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(26, 35, 126, 0.2)';
+              boxShadow: '0 4px 12px rgba(26, 35, 126, 0.3)', // Subtle shadow
+              transition: 'all 0.2s ease'
             }}
           >
             Ready

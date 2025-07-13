@@ -96,29 +96,41 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
       // Reset pagination when modal opens
       setCurrentPage(1);
       
-      // Pre-load theme data for instant theme modal opening
-      preloadThemeData();
+      // Pre-load theme data for better UX when user clicks theme button
+      if (onOpenThemeModal) {
+        preloadThemeData();
+      }
     }
-  }, [open]);
+  }, [open, onOpenThemeModal]);
 
-  // Pre-load theme data to make theme modal instantly ready
+  // Pre-load theme data in background for better performance
   const preloadThemeData = async () => {
     try {
       const playerId = getPlayerId();
+      if (!playerId) return;
       
-      if (playerId) {
-        // Silently pre-load theme data in background
-        Promise.all([
-          apiClient.getThemeStatus(playerId),
-          apiClient.getThemeStats(playerId)
-        ]).catch(error => {
-          // Silent fail - don't block UI if pre-loading fails
-          console.log('Theme data pre-loading failed (silent):', error);
-        });
+      console.log('[GameSummaryModal] Pre-loading theme data...');
+      
+      // Load theme data in background
+      const [statusResult, statsResult] = await Promise.all([
+        apiClient.getThemeStatus(playerId),
+        apiClient.getThemeStats(playerId)
+      ]);
+      
+      console.log('[GameSummaryModal] Theme data pre-loaded successfully');
+      
+      // Store in a way that ThemeGuessModal can access it
+      // This helps the theme modal open instantly
+      if (typeof window !== 'undefined') {
+        (window as any).__themeDataCache = {
+          themeStatus: statusResult,
+          themeStats: statsResult,
+          timestamp: Date.now()
+        };
       }
     } catch (error) {
-      // Silent fail for pre-loading
-      console.log('Theme pre-loading error (silent):', error);
+      console.log('[GameSummaryModal] Theme data pre-loading failed:', error);
+      // Don't show error for pre-loading failures
     }
   };
 
