@@ -405,9 +405,8 @@ function App() {
           <div style={{ 
             marginBottom: '2rem',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
-            fontWeight: '600',
-            whiteSpace: 'nowrap',
-            overflow: 'visible'
+            fontWeight: '400',
+            lineHeight: '1.4'
           }}>
             Un·Define is a word game, won in two ways:
           </div>
@@ -493,26 +492,28 @@ function App() {
                 {/* Inline Un diamond */}
                 <div
                   style={{
-                    width: '1.6em',
-                    height: '1.6em',
-                    border: '2px solid #059669',
-                    borderRadius: '0.3rem',
+                    width: '2.4em',
+                    height: '2.4em',
+                    border: '3px solid #059669',
+                    borderRadius: '0.4rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: '0.7em',
+                    fontSize: '1em',
                     color: '#059669',
                     backgroundColor: 'white',
                     transform: 'rotate(45deg)',
                     flexShrink: 0,
-                    fontStyle: 'italic'
+                    fontStyle: 'italic',
+                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.1)'
                   }}
                 >
                   <span style={{ 
-                    transform: 'rotate(-45deg)',
-                    lineHeight: '1'
+                    transform: 'rotate(-45deg) translateX(-0.05em)',
+                    lineHeight: '1',
+                    marginLeft: '0.1em'
                   }}>
                     Un·
                   </span>
