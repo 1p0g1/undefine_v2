@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-
-interface ThemeGuessModalProps {
-  open: boolean;
-  onClose: () => void;
-  gameId?: string;
-}
+import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth } from '../utils/themeMessages';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -36,8 +30,10 @@ interface ThemeStats {
   themesGuessed: string[];
 }
 
-interface ErrorResponse {
-  error: string;
+interface ThemeGuessModalProps {
+  open: boolean;
+  onClose: () => void;
+  gameId: string;
 }
 
 export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({ 
@@ -53,6 +49,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [lastGuessResult, setLastGuessResult] = useState<{
     guess: string;
+    isCorrect: boolean;
+    actualTheme?: string;
     fuzzyMatch?: {
       method: 'exact' | 'synonym' | 'semantic' | 'error';
       confidence: number;
@@ -66,14 +64,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   } | null>(null);
 
   const playerId = getPlayerId();
-
-  // Helper functions for fuzzy rating bar
-  const getConfidenceMessage = (confidence: number): string => {
-    if (confidence > 80) return '🔥 Near enough! You\'re thinking along the right lines!';
-    if (confidence > 60) return '💡 Good guess! There\'s definitely a connection!';
-    if (confidence > 40) return '🤔 Some similarity there, but try a different angle!';
-    return '🎲 Keep exploring different themes!';
-  };
 
   // Load theme data when modal opens
   useEffect(() => {
@@ -142,527 +132,302 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setError('Complete at least one word this week to unlock theme guessing!');
       } else {
         setThemeStatus(status);
-        setThemeStats(statsResult);
+        setThemeStats(statsResult as ThemeStats);
         
-        // Cache the data with timestamp for better performance
+        // Cache the data for 2 minutes
         setDataCache({
           themeStatus: status,
-          themeStats: statsResult,
+          themeStats: statsResult as ThemeStats,
           timestamp: Date.now()
         });
       }
-    } catch (err) {
-      console.error('Failed to load theme data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load theme information');
+    } catch (error) {
+      console.error('[ThemeGuessModal] Error loading theme data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load theme data');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmitGuess = async () => {
-    if (!guess.trim() || !gameId || !playerId) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guess.trim() || isSubmitting || !playerId) return;
 
     setIsSubmitting(true);
+    setError(null);
+
     try {
-      const result = await apiClient.submitThemeGuess({
+      const response = await apiClient.submitThemeGuess({
         player_id: playerId,
         guess: guess.trim(),
         gameId
       });
 
-      // Store fuzzy match result for display
+      console.log('[ThemeGuessModal] Theme guess response:', response);
+
+      // Store the guess result for display
       setLastGuessResult({
         guess: guess.trim(),
-        fuzzyMatch: result.fuzzyMatch
+        isCorrect: response.isCorrect,
+        actualTheme: response.actualTheme,
+        fuzzyMatch: response.fuzzyMatch
       });
 
-      // Optimistic update: Update status based on API response (no additional API call needed)
+      // Update theme status based on response
       if (themeStatus) {
-        const updatedStatus = {
+        setThemeStatus({
           ...themeStatus,
           progress: {
             ...themeStatus.progress,
             hasGuessedToday: true,
             themeGuess: guess.trim(),
-            isCorrectGuess: result.isCorrect
+            isCorrectGuess: response.isCorrect
           }
-        };
-        
-        setThemeStatus(updatedStatus);
-        
-        // Update cache with optimistic data
-        if (dataCache) {
-          setDataCache({
-            themeStatus: updatedStatus,
-            themeStats: dataCache.themeStats,
-            timestamp: Date.now()
-          });
-        }
+        });
       }
-      
+
+      // Clear the guess input
       setGuess('');
-    } catch (err) {
-      console.error('Failed to submit theme guess:', err);
-      setLastGuessResult(null);
+
+    } catch (error) {
+      console.error('[ThemeGuessModal] Error submitting theme guess:', error);
+      setError('Failed to submit theme guess. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isSubmitting) {
-      handleSubmitGuess();
-    }
+  const handleClose = () => {
+    setGuess('');
+    setError(null);
+    setLastGuessResult(null);
+    onClose();
   };
 
   if (!open) return null;
 
-  const modalContent = (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem'
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: '#fdfbf6',
-          borderRadius: '1rem',
-          padding: '2rem',
-          width: '100%',
-          maxWidth: '480px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
-          color: '#1a237e',
-          fontFamily: 'var(--font-primary)'
-        }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ 
-            margin: '0 0 0.5rem 0', 
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            color: '#1a237e'
-          }}>
+  return (
+    <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
             🎯 Theme of the Week
           </h2>
-          <p style={{ 
-            margin: 0, 
-            fontSize: '0.9rem', 
-            color: '#666',
-            lineHeight: '1.4'
-          }}>
-            Can you guess the weekly theme connecting today's words?
-          </p>
+          <button
+            onClick={handleClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              padding: '0.25rem'
+            }}
+          >
+            ×
+          </button>
         </div>
 
-        {isLoading ? (
+        {/* Loading State */}
+        {isLoading && (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div style={{ fontSize: '0.9rem', color: '#666' }}>Loading theme information...</div>
+            <div style={{ marginBottom: '1rem' }}>🔄 Loading theme information...</div>
           </div>
-        ) : error ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div style={{ fontSize: '0.9rem', color: '#dc2626' }}>
-              {error}
-            </div>
-          </div>
-        ) : !themeStatus?.hasActiveTheme ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div style={{ fontSize: '0.9rem', color: '#666' }}>
-              No active theme this week. Check back soon!
-            </div>
-          </div>
-        ) : themeStatus.weeklyThemedWords.length === 0 ? (
+        )}
+
+        {/* Error State */}
+        {error && (
           <div style={{
-            backgroundColor: '#f3f4f6',
-            border: '2px solid #d1d5db',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
             borderRadius: '0.5rem',
-            padding: '1.5rem',
-            marginBottom: '1.5rem',
-            textAlign: 'center'
+            padding: '1rem',
+            color: '#dc2626',
+            marginBottom: '1rem'
           }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#1a237e' }}>
-              🔒 Complete Today's Word First
-            </div>
-            <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.4' }}>
-              You need to complete at least one word this week before you can guess the theme.
-              Try solving today's word to unlock theme guessing!
-            </div>
+            {error}
           </div>
-        ) : (
-          <>
-            {/* Progress Section */}
+        )}
+
+        {/* Main Content */}
+        {!isLoading && !error && themeStatus && themeStats && (
+          <div>
+            {/* Theme Status Display */}
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                marginBottom: '0.5rem' 
+                marginBottom: '0.5rem'
               }}>
-                <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Weekly Progress</span>
-                <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                  {themeStatus.weeklyThemedWords.length} / {themeStatus.progress.totalWords} themed words completed this week
+                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+                  Progress this week:
+                </span>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#059669' }}>
+                  {themeStatus.progress.completedWords} / {themeStatus.progress.totalWords}
                 </span>
               </div>
+              
+              {/* Word completion progress bar */}
               <div style={{
                 width: '100%',
                 height: '8px',
                 backgroundColor: '#e5e7eb',
                 borderRadius: '4px',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                marginBottom: '1rem'
               }}>
                 <div style={{
-                  width: `${(themeStatus.weeklyThemedWords.length / themeStatus.progress.totalWords) * 100}%`,
+                  width: `${(themeStatus.progress.completedWords / themeStatus.progress.totalWords) * 100}%`,
                   height: '100%',
-                  backgroundColor: '#1a237e',
-                  borderRadius: '4px',
+                  backgroundColor: '#059669',
                   transition: 'width 0.3s ease'
                 }} />
               </div>
             </div>
 
-            {/* Weekly Themed Words Section */}
-            {themeStatus.weeklyThemedWords.length > 0 && (
+            {/* Fuzzy Match Result Display */}
+            {lastGuessResult && lastGuessResult.fuzzyMatch && (
               <div style={{
-                backgroundColor: '#f8fffe',
-                border: '1px solid #d1fae5',
-                borderRadius: '0.5rem',
-                padding: '1rem',
+                backgroundColor: '#f8f9ff',
+                border: '2px solid #e0e4ff',
+                borderRadius: '0.75rem',
+                padding: '1.5rem',
                 marginBottom: '1.5rem'
               }}>
-                <h3 style={{ 
-                  margin: '0 0 0.75rem 0', 
-                  fontSize: '0.95rem', 
-                  fontWeight: '600',
-                  color: '#065f46'
-                }}>
-                  📚 This Week's Themed Words ({themeStatus.weeklyThemedWords.length})
-                </h3>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                  gap: '0.5rem'
-                }}>
-                  {themeStatus.weeklyThemedWords.map((wordInfo, index) => (
-                    <div 
-                      key={wordInfo.id}
-                      style={{
-                        backgroundColor: '#ecfdf5',
-                        border: '1px solid #a7f3d0',
-                        borderRadius: '0.375rem',
-                        padding: '0.5rem',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <div style={{ 
-                        fontSize: '0.85rem', 
-                        fontWeight: '600',
-                        color: '#047857' 
-                      }}>
-                        {wordInfo.word}
-                      </div>
-                      <div style={{ 
-                        fontSize: '0.7rem', 
-                        color: '#059669',
-                        marginTop: '0.25rem'
-                      }}>
-                        {new Date(wordInfo.date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Your guess: "{lastGuessResult.guess}"
+                  </div>
+                  
+                  {/* Similarity Score Bar */}
+                  <div style={{
+                    width: '100%',
+                    height: '12px',
+                    backgroundColor: '#e5e7eb',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      width: `${getSimilarityBarWidth(lastGuessResult.fuzzyMatch.confidence)}%`,
+                      height: '100%',
+                      backgroundColor: getSimilarityBarColor(lastGuessResult.fuzzyMatch.confidence),
+                      transition: 'width 0.8s ease',
+                      borderRadius: '6px'
+                    }} />
+                  </div>
+                  
+                  <div style={{
+                    fontSize: '0.9rem',
+                    color: '#6b7280',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Similarity: {lastGuessResult.fuzzyMatch.confidence}%
+                  </div>
+                </div>
+
+                {/* Funny Feedback Message */}
+                {(() => {
+                  const feedbackMessage = getThemeFeedbackMessage(
+                    lastGuessResult.fuzzyMatch.confidence,
+                    lastGuessResult.actualTheme,
+                    lastGuessResult.fuzzyMatch.method
+                  );
+                  
+                  return (
+                    <div style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      color: feedbackMessage.isCorrect ? '#059669' : '#dc2626'
+                    }}>
+                      {feedbackMessage.emoji} {feedbackMessage.message}
                     </div>
-                  ))}
-                </div>
-                <div style={{ 
-                  fontSize: '0.75rem', 
-                  color: '#047857', 
-                  marginTop: '0.75rem',
-                  textAlign: 'center',
-                  fontStyle: 'italic'
-                }}>
-                  These are the themed words you've completed this week
-                </div>
+                  );
+                })()}
               </div>
             )}
 
-            {/* Priority 1: Show similarity score if we have fuzzy match data (most valuable) */}
-            {lastGuessResult && lastGuessResult.fuzzyMatch && !themeStatus.progress.isCorrectGuess ? (
-              <div style={{
-                backgroundColor: '#fff7ed',
-                border: '2px solid #fed7aa',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#ea580c' }}>
-                  🎯 Similarity Score
-                </div>
-                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#666' }}>
-                  "{lastGuessResult.guess}" vs. actual theme
-                </div>
-                
-                {/* Progress Bar */}
-                <div style={{
-                  width: '100%',
-                  height: '20px',
-                  backgroundColor: '#fed7aa',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{
-                    width: `${lastGuessResult.fuzzyMatch.confidence}%`,
-                    height: '100%',
-                    backgroundColor: lastGuessResult.fuzzyMatch.confidence > 80 ? '#16a34a' : lastGuessResult.fuzzyMatch.confidence > 60 ? '#eab308' : '#dc2626',
-                    borderRadius: '10px',
-                    transition: 'width 0.8s ease-out, background-color 0.3s ease'
-                  }} />
-                </div>
-                
-                {/* Score and Method */}
-                <div style={{ 
-                  fontSize: '0.85rem', 
-                  color: '#666',
-                  marginBottom: '0.5rem'
-                }}>
-                  <strong>{Math.round(lastGuessResult.fuzzyMatch.confidence)}%</strong> similarity
-                  {lastGuessResult.fuzzyMatch.method === 'semantic' && ' (AI Match)'}
-                  {lastGuessResult.fuzzyMatch.method === 'synonym' && ' (Synonym Match)'}
-                </div>
-                
-                {/* Encouraging message based on score */}
-                <div style={{ 
-                  fontSize: '0.8rem', 
-                  color: '#666',
-                  fontStyle: 'italic'
-                }}>
-                  {getConfidenceMessage(lastGuessResult.fuzzyMatch.confidence)}
-                </div>
-                
-                {/* Show daily limit message below similarity score */}
-                <div style={{ 
-                  fontSize: '0.8rem', 
-                  color: '#dc2626', 
-                  marginTop: '0.75rem',
-                  padding: '0.5rem',
-                  backgroundColor: '#fef2f2',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #fecaca'
-                }}>
-                  ⏰ Try again tomorrow for another guess!
-                </div>
-              </div>
-            ) : 
-            /* Priority 2: Show correct guess celebration */
-            themeStatus.progress.isCorrectGuess ? (
-              <div style={{
-                backgroundColor: '#dcfce7',
-                border: '2px solid #16a34a',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                  🎉 Correct!
-                </div>
-                <div style={{ fontSize: '0.9rem' }}>
-                  Your guess: <strong>"{themeStatus.progress.themeGuess}"</strong>
-                </div>
-              </div>
-            ) : 
-            /* Priority 3: Show generic incorrect (only if no fuzzy match to show) */
-            themeStatus.progress.hasGuessedToday ? (
-              <div style={{
-                backgroundColor: '#fef2f2',
-                border: '2px solid #dc2626',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                  ❌ Not quite right
-                </div>
-                <div style={{ fontSize: '0.9rem' }}>
-                  Your guess: <strong>"{themeStatus.progress.themeGuess}"</strong>
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
-                  Try again tomorrow!
-                </div>
-              </div>
-            ) : 
-            /* Priority 4: Show locked state if no words completed */
-            themeStatus.weeklyThemedWords.length === 0 ? (
-              <div style={{
-                backgroundColor: '#f3f4f6',
-                border: '2px solid #d1d5db',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                  🔒 Complete a themed word first
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                  You need to complete at least one themed word from this week before you can guess the theme.
-                </div>
-              </div>
-            ) : (
-            /* Priority 5: Show input form (default state) */
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ 
-                  display: 'block', 
-                  fontWeight: '600', 
-                  marginBottom: '0.5rem',
-                  fontSize: '0.9rem'
-                }}>
-                  What's the theme connecting these words?
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {/* Theme Guess Form or Status */}
+            {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme ? (
+              <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold'
+                  }}>
+                    What connects this week's words?
+                  </label>
                   <input
                     type="text"
                     value={guess}
                     onChange={(e) => setGuess(e.target.value)}
-                    onKeyPress={handleKeyPress}
                     placeholder="Enter your theme guess..."
-                    disabled={isSubmitting}
                     style={{
-                      flex: 1,
+                      width: '100%',
                       padding: '0.75rem',
-                      border: '2px solid #d1d5db',
                       borderRadius: '0.5rem',
+                      border: '2px solid #e5e7eb',
                       fontSize: '1rem',
-                      fontFamily: 'var(--font-primary)',
-                      backgroundColor: isSubmitting ? '#f9fafb' : '#fff',
-                      outline: 'none'
+                      boxSizing: 'border-box'
                     }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#1a237e';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#d1d5db';
-                    }}
+                    disabled={isSubmitting}
                   />
-                  <button
-                    onClick={handleSubmitGuess}
-                    disabled={!guess.trim() || isSubmitting}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: (!guess.trim() || isSubmitting) ? '#d1d5db' : '#1a237e',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.9rem',
-                      fontWeight: '600',
-                      cursor: (!guess.trim() || isSubmitting) ? 'not-allowed' : 'pointer',
-                      fontFamily: 'var(--font-primary)',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {isSubmitting ? 'Guessing...' : 'Guess'}
-                  </button>
                 </div>
-                <div style={{ 
-                  fontSize: '0.8rem', 
-                  color: '#666', 
-                  marginTop: '0.5rem' 
-                }}>
-                  💡 Think about what connects the {themeStatus.weeklyThemedWords.length} word{themeStatus.weeklyThemedWords.length !== 1 ? 's' : ''} you've completed this week!
-                </div>
-              </div>
-            )}
-
-            {/* Statistics Section */}
-            {themeStats && themeStats.totalThemeAttempts > 0 && (
+                <button
+                  type="submit"
+                  disabled={!guess.trim() || isSubmitting}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: guess.trim() && !isSubmitting ? '#1a237e' : '#9ca3af',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: guess.trim() && !isSubmitting ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  {isSubmitting ? '🤔 Thinking...' : '🎯 Submit Guess'}
+                </button>
+              </form>
+            ) : (
               <div style={{
-                backgroundColor: '#f8f9ff',
-                border: '1px solid #e0e4ff',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                marginBottom: '1rem'
+                textAlign: 'center',
+                padding: '2rem',
+                backgroundColor: '#f9fafb',
+                borderRadius: '0.5rem'
               }}>
-                <h3 style={{ 
-                  margin: '0 0 1rem 0', 
-                  fontSize: '1rem', 
-                  fontWeight: '600',
-                  color: '#1a237e'
-                }}>
-                  📊 Your Theme Statistics
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a237e' }}>
-                      {themeStats.correctThemeGuesses}
+                {themeStatus.progress.hasGuessedToday ? (
+                  <div>
+                    <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                      ✅ You've already guessed today!
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Themes Guessed</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a237e' }}>
-                      {Math.round((themeStats.correctThemeGuesses / themeStats.totalThemeAttempts) * 100)}%
+                    <div style={{ color: '#6b7280' }}>
+                      Come back tomorrow to try again
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Success Rate</div>
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a237e' }}>
-                      {themeStats.averageWordsCompletedWhenGuessing}
+                ) : (
+                  <div>
+                    <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                      🔒 Complete more words to unlock theme guessing
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Avg Words Done</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a237e' }}>
-                      {themeStats.totalThemeAttempts}
+                    <div style={{ color: '#6b7280' }}>
+                      You need to finish at least one word this week
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Total Attempts</div>
                   </div>
-                </div>
+                )}
               </div>
             )}
-          </>
+          </div>
         )}
-
-        {/* Close Button */}
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '0.75rem 2rem',
-              backgroundColor: 'transparent',
-              color: '#1a237e',
-              border: '2px solid #1a237e',
-              borderRadius: '0.5rem',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-primary)'
-            }}
-          >
-            Close
-          </button>
-        </div>
       </div>
     </div>
   );
-
-  return createPortal(modalContent, document.body);
 }; 

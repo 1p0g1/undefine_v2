@@ -405,7 +405,9 @@ function App() {
           <div style={{ 
             marginBottom: '2rem',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
-            fontWeight: '600'
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            overflow: 'visible'
           }}>
             Un·Define is a word game, won in two ways:
           </div>
@@ -429,9 +431,41 @@ function App() {
                 fontWeight: '700',
                 fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
                 color: 'var(--color-primary)',
-                marginBottom: '0.75rem'
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
               }}>
                 Today:
+                {/* Inline DEFINE boxes */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.15rem',
+                  alignItems: 'center'
+                }}>
+                  {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.3rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}
+                    >
+                      {letter}
+                    </div>
+                  ))}
+                </div>
               </div>
               <div style={{ color: '#374151' }}>
                 Guess the word in 6 guesses or less. Clues are revealed after each guess.
@@ -450,9 +484,39 @@ function App() {
                 fontWeight: '700',
                 fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
                 color: '#059669',
-                marginBottom: '0.75rem'
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
               }}>
                 This week:
+                {/* Inline Un diamond */}
+                <div
+                  style={{
+                    width: '1.6em',
+                    height: '1.6em',
+                    border: '2px solid #059669',
+                    borderRadius: '0.3rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'var(--font-primary)',
+                    fontWeight: 800,
+                    fontSize: '0.7em',
+                    color: '#059669',
+                    backgroundColor: 'white',
+                    transform: 'rotate(45deg)',
+                    flexShrink: 0,
+                    fontStyle: 'italic'
+                  }}
+                >
+                  <span style={{ 
+                    transform: 'rotate(-45deg)',
+                    lineHeight: '1'
+                  }}>
+                    Un·
+                  </span>
+                </div>
               </div>
               <div style={{ color: '#374151' }}>
                 Before {(() => {
@@ -474,16 +538,6 @@ function App() {
               </div>
             </div>
           </div>
-
-          {/* Timer Notice */}
-          <div style={{ 
-            fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-            fontStyle: 'italic',
-            color: '#6b7280',
-            fontWeight: '500'
-          }}>
-            Your time starts when you click 'Ready'
-          </div>
         </div>
       )}
       
@@ -495,15 +549,15 @@ function App() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '1.5rem', // Increased gap
-            margin: '1.5rem 0',
-            maxWidth: '600px' // Match intro text width
+            gap: '1rem',
+            margin: '1rem 0',
+            maxWidth: '600px'
           }}
         >
           <div
             style={{
               fontFamily: 'var(--font-primary)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)', // Larger timer notice
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
               color: '#6b7280',
               textAlign: 'center',
               fontStyle: 'italic',
@@ -516,15 +570,15 @@ function App() {
             onClick={handleStartGame}
             style={{
               fontFamily: 'var(--font-primary)',
-              fontSize: 'clamp(1rem, 3vw, 1.2rem)', // Larger button text
+              fontSize: 'clamp(1rem, 3vw, 1.2rem)',
               fontWeight: 600,
-              padding: '1rem 3rem', // Bigger button
+              padding: '1rem 3rem',
               backgroundColor: 'var(--color-primary)',
               color: 'white',
               border: 'none',
-              borderRadius: '0.75rem', // More rounded
+              borderRadius: '0.75rem',
               cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(26, 35, 126, 0.3)', // Subtle shadow
+              boxShadow: '0 4px 12px rgba(26, 35, 126, 0.3)',
               transition: 'all 0.2s ease'
             }}
           >
