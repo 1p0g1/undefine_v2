@@ -475,7 +475,7 @@ function App() {
               </div>
               <ol style={{ 
                 margin: '0', 
-                padding: '0 0 0 1.8rem', 
+                padding: '0 0 0 2.2rem', 
                 fontSize: '0.75em',
                 lineHeight: '1.4',
                 color: '#374151'
@@ -497,7 +497,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>D</div>
-                    efinition
+                    <span style={{ color: 'var(--color-primary)' }}>efinition</span>
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
@@ -517,7 +517,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
-                    quivalents
+                    <span style={{ color: 'var(--color-primary)' }}>quivalents</span>
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
@@ -537,7 +537,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>F</div>
-                    irst Letter
+                    <span style={{ color: 'var(--color-primary)' }}>irst Letter</span>
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
@@ -557,7 +557,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>I</div>
-                    n a Sentence
+                    <span style={{ color: 'var(--color-primary)' }}>n a Sentence</span>
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
@@ -577,7 +577,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>N</div>
-                    umber of Letters
+                    <span style={{ color: 'var(--color-primary)' }}>umber of Letters</span>
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
@@ -597,7 +597,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
-                    tymology
+                    <span style={{ color: 'var(--color-primary)' }}>tymology</span>
                   </span>
                 </li>
               </ol>
