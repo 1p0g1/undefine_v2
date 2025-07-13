@@ -181,15 +181,15 @@ async function updateLeaderboardSummary(
   try {
     // Ensure player exists in players table before attempting leaderboard insert
     await ensurePlayerExists(playerId);
-    console.log('[updateLeaderboardSummary] Player existence confirmed');
+    console.log('[/api/guess] ✅ Step 1 completed: Player existence confirmed');
 
     // REMOVED: user_stats upsert - table dropped, FK now points to players.id
 
     // No need to manually update leaderboard_summary anymore
     // The trigger on game_sessions will handle this automatically
-    console.log('[updateLeaderboardSummary] Leaderboard will be updated by database trigger');
+    console.log('[/api/guess] Leaderboard will be updated by database trigger');
   } catch (error) {
-    console.error('[updateLeaderboardSummary] Error in leaderboard update:', {
+    console.error('[/api/guess] Error in leaderboard update:', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
       playerId,
@@ -650,14 +650,14 @@ export default withCors(async function handler(
               });
             }
 
-            console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
+            console.log('[/api/guess] Step 2: Ensuring player FK record');
             try {
               await ensurePlayerExists(playerId); // Foreign key now points to players.id
               // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
               stats = undefined; // Stats now come from player_streaks and game_sessions
-              console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
+              console.log('[/api/guess] ✅ Step 2 completed: Player FK record ensured');
             } catch (statsError) {
-              console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
+              console.error('[/api/guess] ❌ Step 2 failed: ensurePlayerExists error:', {
                 error: statsError,
                 message: statsError instanceof Error ? statsError.message : 'Unknown error',
                 code: (statsError as any)?.code,
@@ -902,14 +902,14 @@ export default withCors(async function handler(
           });
         }
 
-        console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
+        console.log('[/api/guess] Step 2: Ensuring player FK record');
         try {
           await ensurePlayerExists(playerId); // Foreign key now points to players.id
           // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
           stats = undefined; // Stats now come from player_streaks and game_sessions
-          console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
+          console.log('[/api/guess] ✅ Step 2 completed: Player FK record ensured');
         } catch (statsError) {
-          console.error('[/api/guess] ❌ Step 2 failed: updateUserStats error:', {
+          console.error('[/api/guess] ❌ Step 2 failed: ensurePlayerExists error:', {
             error: statsError,
             message: statsError instanceof Error ? statsError.message : 'Unknown error',
             code: (statsError as any)?.code,
