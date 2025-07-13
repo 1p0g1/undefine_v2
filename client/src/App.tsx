@@ -410,7 +410,7 @@ function App() {
             <strong>Objective:</strong> 'Un·Define' (reverse engineer) today's word in 6 guesses or less.
           </div>
 
-          {/* DEFINE boxes explanation with actual boxes */}
+          {/* DEFINE boxes explanation with inline boxes */}
           <div style={{ 
             marginBottom: '1.5rem',
             display: 'flex',
@@ -418,47 +418,32 @@ function App() {
             alignItems: 'center',
             gap: '0.75rem'
           }}>
-            <div>These boxes</div>
-            <div style={{ 
-              display: 'flex', 
-              gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
-              scale: '0.7' // Slightly smaller version of the actual boxes
-            }}>
-              <DefineBoxes
-                gameState={{
-                  gameId: '',
-                  wordId: '',
-                  wordText: '',
-                  clues: {
-                    definition: '',
-                    equivalents: '',
-                    first_letter: '',
-                    in_a_sentence: '',
-                    number_of_letters: '',
-                    etymology: ''
-                  },
-                  guesses: [],
-                  revealedClues: [],
-                  clueStatus: {
-                    definition: false,
-                    equivalents: false,
-                    first_letter: false,
-                    in_a_sentence: false,
-                    number_of_letters: false,
-                    etymology: false
-                  },
-                  isComplete: false,
-                  isWon: false,
-                  score: null,
-                  startTime: ''
-                }}
-                revealedClues={[]}
-                guessStatus={['empty', 'empty', 'empty', 'empty', 'empty', 'empty']}
-                onBoxClick={() => {}}
-                isLoading={false}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', gap: '0.5rem' }}>
+              <span>These boxes</span>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
+                  <div
+                    key={letter}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '1.8em',
+                      height: '1.8em',
+                      border: '2px solid var(--color-primary)',
+                      borderRadius: '0.25rem',
+                      backgroundColor: '#fff',
+                      color: 'var(--color-primary)',
+                      fontWeight: '600',
+                      fontSize: '0.9em'
+                    }}
+                  >
+                    {letter}
+                  </div>
+                ))}
+              </div>
+              <span>represent 6 different clues (hover over to learn more).</span>
             </div>
-            <div>represent 6 different clues (hover over to learn more).</div>
           </div>
 
           {/* Un diamond theme explanation */}
@@ -469,8 +454,28 @@ function App() {
             alignItems: 'center',
             gap: '0.75rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              The <UnPrefix onClick={() => {}} /> allows you to guess this week's theme
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <span>The</span>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '1.8em',
+                  height: '1.8em',
+                  backgroundColor: 'var(--color-primary)',
+                  color: '#fff',
+                  fontWeight: '700',
+                  fontSize: '0.8em',
+                  fontStyle: 'italic',
+                  transform: 'rotate(45deg)',
+                  borderRadius: '0.15rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ transform: 'rotate(-45deg)' }}>Un</span>
+              </div>
+              <span>allows you to guess this week's theme</span>
             </div>
             <div style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.1rem)', fontStyle: 'italic' }}>
               (this will be easier the more daily words you guess).
