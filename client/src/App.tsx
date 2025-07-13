@@ -392,99 +392,77 @@ function App() {
         <div
           style={{
             fontFamily: 'var(--font-primary)',
-            fontSize: 'clamp(1rem, 3vw, 1.25rem)', // Larger text inspired by Wordle
+            fontSize: 'clamp(1rem, 3vw, 1.25rem)',
             color: '#374151',
             textAlign: 'center',
             lineHeight: '1.7',
             margin: '2rem auto',
-            maxWidth: '600px', // Wider for better readability
+            maxWidth: '600px',
             padding: '0 1.5rem'
           }}
         >
-          {/* Objective */}
+          {/* Game Description */}
           <div style={{ 
-            marginBottom: '1.5rem',
+            marginBottom: '2rem',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
             fontWeight: '600'
           }}>
-            <strong>Objective:</strong> 'Un·Define' (reverse engineer) today's word in 6 guesses or less.
+            Un·Define is a word game, won in two ways:
           </div>
 
-          {/* DEFINE boxes explanation with inline boxes */}
+          {/* Today's Challenge */}
           <div style={{ 
             marginBottom: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.75rem'
+            textAlign: 'left',
+            maxWidth: '500px',
+            margin: '0 auto 1.5rem auto'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', gap: '0.5rem' }}>
-              <span>These boxes</span>
-              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
-                  <div
-                    key={letter}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '1.8em',
-                      height: '1.8em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      backgroundColor: '#fff',
-                      color: 'var(--color-primary)',
-                      fontWeight: '600',
-                      fontSize: '0.9em'
-                    }}
-                  >
-                    {letter}
-                  </div>
-                ))}
-              </div>
-              <span>represent 6 different clues (hover over to learn more).</span>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+              Today:
+            </div>
+            <div style={{ paddingLeft: '1rem' }}>
+              Guess the word in 6 guesses or less. Clues are revealed after each guess.
             </div>
           </div>
 
-          {/* Un diamond theme explanation */}
+          {/* This Week's Challenge */}
           <div style={{ 
-            marginBottom: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.75rem'
+            marginBottom: '2rem',
+            textAlign: 'left',
+            maxWidth: '500px',
+            margin: '0 auto 2rem auto'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <span>The</span>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '1.8em',
-                  height: '1.8em',
-                  backgroundColor: 'var(--color-primary)',
-                  color: '#fff',
-                  fontWeight: '700',
-                  fontSize: '0.8em',
-                  fontStyle: 'italic',
-                  transform: 'rotate(45deg)',
-                  borderRadius: '0.15rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <span style={{ transform: 'rotate(-45deg)' }}>Un</span>
-              </div>
-              <span>allows you to guess this week's theme</span>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+              This week:
             </div>
-            <div style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.1rem)', fontStyle: 'italic' }}>
-              (this will be easier the more daily words you guess).
+            <div style={{ paddingLeft: '1rem' }}>
+              Before {(() => {
+                const now = new Date();
+                const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
+                const nextSunday = new Date(now);
+                nextSunday.setDate(now.getDate() + daysUntilSunday);
+                
+                const day = nextSunday.getDate();
+                const getOrdinal = (n: number) => {
+                  const s = ["th", "st", "nd", "rd"];
+                  const v = n % 100;
+                  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+                
+                return `Sun ${getOrdinal(day)}`;
+              })()} 23:59, guess this week's theme
             </div>
           </div>
 
-          {/* Game rules */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            Clues are revealed on each guess. Fastest time with the fewest guesses wins. Good luck!
+          {/* Timer Notice */}
+          <div style={{ 
+            fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+            fontStyle: 'italic',
+            color: '#6b7280',
+            fontWeight: '500'
+          }}>
+            Your time starts when you click 'Ready'
           </div>
         </div>
       )}
