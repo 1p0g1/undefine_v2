@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface FuzzyTooltipProps {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ export const FuzzyTooltip: React.FC<FuzzyTooltipProps> = ({ children }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <div
         onClick={() => setIsVisible(!isVisible)}
         style={{ cursor: 'pointer' }}
@@ -16,76 +17,65 @@ export const FuzzyTooltip: React.FC<FuzzyTooltipProps> = ({ children }) => {
         {children}
       </div>
       
-      {isVisible && (
-        <>
-          {/* Backdrop to close tooltip */}
+      {isVisible && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            zIndex: 50,
+          }}
+          onClick={() => setIsVisible(false)}
+        >
           <div
             style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 999,
-            }}
-            onClick={() => setIsVisible(false)}
-          />
-          
-          {/* Tooltip content */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              marginTop: '8px',
-              backgroundColor: 'white',
-              border: '2px solid #e5e7eb',
-              borderRadius: '12px',
-              padding: '1.5rem',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-              zIndex: 1000,
-              width: '320px',
               fontFamily: 'var(--font-primary)',
+              background: 'var(--color-bg)',
+              color: 'var(--color-primary)',
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              padding: '2rem',
+              width: '100%',
+              maxWidth: '28rem',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               fontSize: '0.875rem',
               lineHeight: '1.5',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Arrow pointing up */}
-            <div
+            {/* Close button */}
+            <button
+              onClick={() => setIsVisible(false)}
               style={{
                 position: 'absolute',
-                top: '-8px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 0,
-                height: 0,
-                borderLeft: '8px solid transparent',
-                borderRight: '8px solid transparent',
-                borderBottom: '8px solid #e5e7eb',
+                top: '0.5rem',
+                right: '0.5rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#9ca3af',
+                fontFamily: 'var(--font-primary)',
               }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: '-6px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 0,
-                height: 0,
-                borderLeft: '7px solid transparent',
-                borderRight: '7px solid transparent',
-                borderBottom: '7px solid white',
-              }}
-            />
+            >
+              &times;
+            </button>
 
             {/* Title */}
             <div style={{ 
-              fontSize: '1rem', 
+              fontSize: '1.1rem', 
               fontWeight: 'bold', 
               color: '#1a237e',
-              marginBottom: '0.75rem',
+              marginBottom: '1rem',
               textAlign: 'center'
             }}>
               🧩 Fuzzy Matches Explained
@@ -181,7 +171,7 @@ export const FuzzyTooltip: React.FC<FuzzyTooltipProps> = ({ children }) => {
             </div>
 
             {/* Close button */}
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
               <button
                 onClick={() => setIsVisible(false)}
                 style={{
@@ -200,8 +190,9 @@ export const FuzzyTooltip: React.FC<FuzzyTooltipProps> = ({ children }) => {
               </button>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }; 
