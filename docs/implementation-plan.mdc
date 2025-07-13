@@ -23,11 +23,6 @@
 ## 🏗️ Production Deployment Architecture
 
 ### ✅ CORS Implementation (May 2024)
-# Un- Define Implementation Plan
-
-## 🏗️ Production Deployment Architecture
-
-### ✅ CORS Implementation (May 2024)
 
 ## 🚨 Critical Database Fixes (December 2024)
 
@@ -633,40 +628,41 @@ Implemented dynamic visual design for the "Un·" prefix that changes appearance 
 
 ---
 
-## ✅ PHASE 1: DAILY SNAPSHOTS SYSTEM - COMPLETE
+## Phase 4: Database Cleanup & Critical Fixes ✅ COMPLETE
 
-### Status: **100% IMPLEMENTED AND WORKING** ✅
-- **Date Verified**: January 3, 2025
-- **Method**: SQL queries run in Supabase database + code analysis
-- **Overall Progress**: 100% Complete
+### 4.1 Database Schema Audit ✅ COMPLETE
+- **Done**: Complete schema analysis via Supabase screenshots
+- **Summary**: Identified 11 tables total, found redundant/empty tables to remove
 
-### ✅ FULLY IMPLEMENTED SYSTEM:
-1. **daily_leaderboard_snapshots table** - EXISTS ✅
-2. **finalize_daily_leaderboard function** - EXISTS ✅  
-3. **get_historical_leaderboard function** - EXISTS ✅
-4. **update_leaderboard_from_game FK fix** - EXISTS ✅
-5. **daily snapshots data** - HAS DATA ✅
-6. **Automated cron job** - WORKING ✅
-7. **Core finalization logic** - FUNCTIONAL ✅
+### 4.2 Remove user_stats Table ✅ COMPLETE  
+- **Done**: Completely removed empty user_stats table
+- **Summary**: Updated all FK constraints to point to players table, removed from all API code, fixed database trigger
 
-### 🔍 ANALYSIS: "MISSING" FUNCTIONS NOT ACTUALLY NEEDED
-- **should_finalize_date function** - Unused utility (cron job calculates dates directly)
-- **auto_finalize_old_snapshots function** - Unused utility (cron job has own logic)
+### 4.3 All-Time Leaderboard Simplification ✅ COMPLETE
+- **Done**: Reduced from 5 tabs to 4 tabs (removed Top 10 tab)
+- **Summary**: Cleaner UI with Win Rate, Average Guesses, Highest Streak, Total Games
 
-**Key Discovery**: The production cron job at `/api/cron/finalize-daily-leaderboards.ts` implements its own date calculation and bulk processing logic. The "missing" functions were utilities from the original design that are not used by the actual working system.
+### 4.4 Production Crisis Resolution ✅ COMPLETE
+- **Done**: Fixed critical production errors caused by dropped table references
+- **Summary**: Updated database triggers, API endpoints, TypeScript types - games now work without errors
 
-### 📝 MIGRATION STATUS:
-- **20241202000008_create_daily_snapshots.sql**: ✅ 100% FUNCTIONALLY COMPLETE
-- **20241202000008_fix_trigger_foreign_key_issue.sql**: ✅ FULLY IMPLEMENTED (archived)
+### 4.5 Documentation System Refresh ✅ COMPLETE
+- **Done**: Updated tiering system, created comprehensive cleanup documentation
+- **Summary**: Created DATABASE_CLEANUP_JANUARY_2025.md with full record of changes
 
-### 🎯 WORKING FEATURES:
-1. **Immutable daily leaderboards** - End-of-day snapshots preserve final rankings
-2. **Automated midnight UTC finalization** - Cron job runs daily without intervention  
-3. **Historical leaderboard queries** - `?date=2024-12-01` parameter support
-4. **Real-time current day** - Live rankings for today's word
-5. **Final `was_top_10` values** - Based on end-of-day rankings when word closed
-6. **Admin tools** - Manual finalization for edge cases
-7. **Backward compatibility** - No changes to existing game flow
+## Phase 5: Next Database Optimizations (Future)
+
+### 5.1 Investigate scores Table
+- **Status**: IDENTIFIED - Contains only test data
+- **Action**: Determine if redundant with game_sessions data
+
+### 5.2 Leaderboard Table Consolidation Analysis
+- **Status**: PENDING
+- **Action**: Analyze if leaderboard_summary and daily_leaderboard_snapshots can be optimized
+
+### 5.3 Theme System Enhancements
+- **Status**: PROPOSED 
+- **Action**: AI fuzzy matching improvements, multiple daily words
 
 ### 🔄 NO OUTSTANDING WORK
 **The daily snapshots system is production-ready and fully functional.** All core features are working as designed.
