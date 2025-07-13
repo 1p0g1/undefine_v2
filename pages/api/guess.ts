@@ -96,40 +96,9 @@ function getNextClueKey(revealedClues: ClueKey[]): ClueKey | null {
 }
 
 /**
- * CLEANUP PHASE 1: Minimal user_stats function - only ensures FK requirements
- * Note: user_stats table is abandoned (all zeros) but required for foreign key constraints
+ * REMOVED: ensureUserStatsForFK function - user_stats table dropped
+ * Foreign key now points directly to players.id
  */
-async function ensureUserStatsForFK(playerId: string) {
-  // Only ensure a minimal record exists for foreign key constraints
-  // Do not update stats since user_stats is abandoned in favor of player_streaks and game_sessions
-  const { error: upsertError } = await supabase
-    .from('user_stats')
-    .upsert(
-      {
-        player_id: playerId,
-        games_played: 0,
-        games_won: 0,
-        current_streak: 0,
-        longest_streak: 0,
-        total_guesses: 0,
-        average_guesses_per_game: 0,
-        total_play_time_seconds: 0,
-        total_score: 0,
-        updated_at: new Date().toISOString()
-      },
-      {
-        onConflict: 'player_id',
-        ignoreDuplicates: true  // Don't overwrite existing records
-      }
-    );
-
-  if (upsertError) {
-    console.error('[ensureUserStatsForFK] Failed to ensure user_stats FK record:', upsertError);
-    throw upsertError;
-  }
-  
-  console.log('[ensureUserStatsForFK] FK record ensured for player:', playerId);
-}
 
 /**
  * Create a score entry for a completed game
@@ -214,24 +183,7 @@ async function updateLeaderboardSummary(
     await ensurePlayerExists(playerId);
     console.log('[updateLeaderboardSummary] Player existence confirmed');
 
-    // Ensure user_stats entry exists (required for foreign key)
-    const { error: statsError } = await supabase
-      .from('user_stats')
-      .upsert([{
-        player_id: playerId,
-        current_streak: 0,
-        longest_streak: 0,
-        best_rank: null,
-        top_10_count: 0
-      }], {
-        onConflict: 'player_id',
-        ignoreDuplicates: true
-      });
-
-    if (statsError) {
-      console.error('[updateLeaderboardSummary] Failed to ensure user_stats entry:', statsError);
-      throw statsError;
-    }
+    // REMOVED: user_stats upsert - table dropped, FK now points to players.id
 
     // No need to manually update leaderboard_summary anymore
     // The trigger on game_sessions will handle this automatically
@@ -700,7 +652,7 @@ export default withCors(async function handler(
 
             console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
             try {
-              await ensureUserStatsForFK(playerId);
+              await ensurePlayerExists(playerId); // Foreign key now points to players.id
               // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
               stats = undefined; // Stats now come from player_streaks and game_sessions
               console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
@@ -952,7 +904,7 @@ export default withCors(async function handler(
 
         console.log('[/api/guess] Step 2: Ensuring user_stats FK record');
         try {
-          await ensureUserStatsForFK(playerId);
+          await ensurePlayerExists(playerId); // Foreign key now points to players.id
           // CLEANUP PHASE 1: No longer calculating stats since user_stats is abandoned
           stats = undefined; // Stats now come from player_streaks and game_sessions
           console.log('[/api/guess] ✅ Step 2 completed: FK record ensured');
