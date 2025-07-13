@@ -404,11 +404,15 @@ function App() {
           {/* Game Description */}
           <div style={{ 
             marginBottom: '2rem',
-            fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
-            fontWeight: '400',
-            lineHeight: '1.4'
+            fontSize: 'clamp(1.2rem, 3.5vw, 1.6rem)',
+            fontWeight: '600',
+            lineHeight: '1.4',
+            background: 'linear-gradient(135deg, #1a237e 0%, #3b82f6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
           }}>
-            Un·Define is a word game, won in two ways:
+            Un·define is a word game, played over the course of a week
           </div>
 
           {/* Game Modes in Boxes */}
@@ -466,9 +470,9 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div style={{ color: '#374151' }}>
+              <div style={{ color: '#374151', fontSize: '0.9em' }}>
                 Guess today's word in 6 guesses or less. Clues revealed after each guess{' '}
-                <span style={{ fontSize: '0.8em' }}>
+                <span style={{ fontSize: '0.75em' }}>
                   (Definition, Equivalents, First Letter, In a Sentence, Number of Letters & Etymology)
                 </span>
               </div>
@@ -522,7 +526,7 @@ function App() {
                   </span>
                 </div>
               </div>
-              <div style={{ color: '#374151' }}>
+              <div style={{ color: '#374151', fontSize: '0.9em' }}>
                 Before {(() => {
                   const now = new Date();
                   const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
