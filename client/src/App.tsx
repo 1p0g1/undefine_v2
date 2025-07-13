@@ -474,108 +474,108 @@ function App() {
                 Guess today's word in 6 guesses or less. Clues revealed each round:{' '}
                 <span style={{ fontSize: '0.75em', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.3em' }}>
                   (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>D</div>
                     efinition,
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
                     quivalents,
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>F</div>
                     irst Letter,
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>I</div>
                     n a Sentence,
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>N</div>
                     umber of Letters &
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
-                      width: '0.9em',
-                      height: '0.9em',
-                      border: '1px solid var(--color-primary)',
-                      borderRadius: '0.15em',
+                      width: '1.35em',
+                      height: '1.35em',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '0.23em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.7em',
+                      fontSize: '0.67em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
