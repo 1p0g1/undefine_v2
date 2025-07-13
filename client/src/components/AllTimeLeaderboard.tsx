@@ -17,8 +17,6 @@ interface AllTimeStats {
 }
 
 interface AllTimeLeaderboardData {
-  topByWinRate: AllTimeStats[];
-  topByConsistency: AllTimeStats[];
   topByStreaks: AllTimeStats[];
   topByGames: AllTimeStats[];
   totalPlayers: number;
@@ -66,7 +64,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
   };
 
   const tabs = [
-    { id: 'totalGames' as LeaderboardTab, label: '📊 Leaderboard', description: 'Most games played' },
+    { id: 'totalGames' as LeaderboardTab, label: '📊 All Time Rankings', description: 'Most games played' },
     { id: 'streaks' as LeaderboardTab, label: '🔥 Highest Streak', description: 'Longest win streaks' }
   ];
 

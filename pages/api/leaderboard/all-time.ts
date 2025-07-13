@@ -31,8 +31,6 @@ interface StreakRow {
 interface AllTimeLeaderboardResponse {
   success: boolean;
   data?: {
-    topByWinRate: AllTimeStats[];
-    topByConsistency: AllTimeStats[];
     topByStreaks: AllTimeStats[];
     topByGames: AllTimeStats[];
     totalPlayers: number;
@@ -134,8 +132,6 @@ async function handler(
     return res.status(200).json({
       success: true,
       data: {
-        topByWinRate: [], // Removed - no longer needed
-        topByConsistency: [], // Removed - no longer needed
         topByStreaks,
         topByGames,
         totalPlayers,
