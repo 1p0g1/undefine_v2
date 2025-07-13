@@ -14,7 +14,6 @@ interface AllTimeStats {
   total_games: number;
   total_wins: number;
   last_played: string;
-  top_10_finishes?: number; // Optional field for top 10 finishes category
 }
 
 interface AllTimeLeaderboardData {
@@ -22,7 +21,6 @@ interface AllTimeLeaderboardData {
   topByConsistency: AllTimeStats[];
   topByStreaks: AllTimeStats[];
   topByGames: AllTimeStats[];
-  topByTop10Finishes: AllTimeStats[];
   totalPlayers: number;
   totalGames: number;
 }
@@ -32,7 +30,7 @@ interface AllTimeLeaderboardProps {
   onClose: () => void;
 }
 
-type LeaderboardTab = 'winRate' | 'consistency' | 'streaks' | 'activity' | 'top10';
+type LeaderboardTab = 'winRate' | 'avgGuesses' | 'streaks' | 'totalGames';
 
 export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, onClose }) => {
   const [data, setData] = useState<AllTimeLeaderboardData | null>(null);
@@ -69,10 +67,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
 
   const tabs = [
     { id: 'winRate' as LeaderboardTab, label: '🥇 Win Rate', description: 'Highest win percentage' },
-    { id: 'consistency' as LeaderboardTab, label: '🎯 Consistency', description: 'Fewest average guesses' },
-    { id: 'streaks' as LeaderboardTab, label: '🔥 Streaks', description: 'Longest win streaks' },
-    { id: 'activity' as LeaderboardTab, label: '📊 Activity', description: 'Most games played' },
-    { id: 'top10' as LeaderboardTab, label: '🏆 Top 10', description: 'Most top 10 finishes' }
+    { id: 'avgGuesses' as LeaderboardTab, label: '🎯 Average Guesses', description: 'Fewest average guesses' },
+    { id: 'streaks' as LeaderboardTab, label: '🔥 Highest Streak', description: 'Longest win streaks' },
+    { id: 'totalGames' as LeaderboardTab, label: '📊 Total Games', description: 'Most games played' }
   ];
 
   const getCurrentData = (): AllTimeStats[] => {
@@ -80,10 +77,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     
     switch (activeTab) {
       case 'winRate': return data.topByWinRate;
-      case 'consistency': return data.topByConsistency;
+      case 'avgGuesses': return data.topByConsistency;
       case 'streaks': return data.topByStreaks;
-      case 'activity': return data.topByGames;
-      case 'top10': return data.topByTop10Finishes;
+      case 'totalGames': return data.topByGames;
       default: return [];
     }
   };
@@ -97,7 +93,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
         primaryStat = `${player.win_percentage}%`;
         secondaryStats = [`${player.total_wins}/${player.total_games}`, `Current: ${player.current_streak}`];
         break;
-      case 'consistency':
+      case 'avgGuesses':
         primaryStat = `${player.average_guesses}`;
         secondaryStats = [`${player.total_wins} wins`, `${player.win_percentage}% win rate`];
         break;
@@ -105,12 +101,8 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
         primaryStat = `${player.highest_streak}`;
         secondaryStats = [`Current: ${player.current_streak}`, `Last: ${player.last_played}`];
         break;
-      case 'activity':
+      case 'totalGames':
         primaryStat = `${player.total_games}`;
-        secondaryStats = [`${player.win_percentage}% win rate`, `Last: ${player.last_played}`];
-        break;
-      case 'top10':
-        primaryStat = `${player.top_10_finishes || 0}`;
         secondaryStats = [`${player.win_percentage}% win rate`, `Last: ${player.last_played}`];
         break;
       default:
@@ -153,7 +145,7 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
             </div>
           )}
           
-          {activeTab === 'consistency' && (
+          {activeTab === 'avgGuesses' && (
             <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
               {player.average_guesses} avg guesses • {player.total_wins} wins • {player.win_percentage}%
             </div>
@@ -165,15 +157,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
             </div>
           )}
           
-          {activeTab === 'activity' && (
+          {activeTab === 'totalGames' && (
             <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
               {player.win_percentage}% win rate • Last played: {formatDate(player.last_played)}
-            </div>
-          )}
-          
-          {activeTab === 'top10' && (
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {player.top_10_finishes || 0} top 10s • {player.win_percentage}% win rate • Last: {formatDate(player.last_played)}
             </div>
           )}
         </div>
@@ -185,10 +171,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
           color: '#1f2937'
         }}>
           {activeTab === 'winRate' && `${player.win_percentage}%`}
-          {activeTab === 'consistency' && `${player.average_guesses}`}
+          {activeTab === 'avgGuesses' && `${player.average_guesses}`}
           {activeTab === 'streaks' && `${player.highest_streak}`}
-          {activeTab === 'activity' && `${player.total_games}`}
-          {activeTab === 'top10' && `${player.top_10_finishes || 0}`}
+          {activeTab === 'totalGames' && `${player.total_games}`}
         </div>
       </div>
     );
