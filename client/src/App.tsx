@@ -446,8 +446,8 @@ function App() {
                     <div
                       key={index}
                       style={{
-                        width: '1.6em',
-                        height: '1.6em',
+                        width: '1.8em',
+                        height: '1.8em',
                         border: '2px solid var(--color-primary)',
                         borderRadius: '0.3rem',
                         display: 'flex',
@@ -455,7 +455,7 @@ function App() {
                         justifyContent: 'center',
                         fontFamily: 'var(--font-primary)',
                         fontWeight: 700,
-                        fontSize: '0.8em',
+                        fontSize: '0.9em',
                         color: 'var(--color-primary)',
                         backgroundColor: 'white',
                         flexShrink: 0
@@ -466,12 +466,42 @@ function App() {
                   ))}
                 </div>
               </div>
+              <div style={{ color: '#374151', marginBottom: '1rem' }}>
+                Guess today's word in 6 guesses or less.
+              </div>
               <div style={{ color: '#374151' }}>
-                Guess the word in 6 guesses or less. Clues{' '}
-                <span style={{ fontSize: '0.85em' }}>
-                  (Definition, Equivalents, First Letter, In a Sentence, Number of Letters and Etymology)
-                </span>
-                {' '}are revealed after each guess.
+                <div style={{ marginBottom: '0.5rem' }}>6 clues revealed after each guess:</div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.25rem 1rem',
+                  fontSize: '0.85em'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    Definition
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    Equivalents
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    First Letter
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    In a Sentence
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    Number of Letters
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '0.5rem' }}>•</span>
+                    Etymology
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -532,13 +562,14 @@ function App() {
                   nextSunday.setDate(now.getDate() + daysUntilSunday);
                   
                   const day = nextSunday.getDate();
+                  const month = nextSunday.toLocaleString('default', { month: 'long' });
                   const getOrdinal = (n: number) => {
                     const s = ["th", "st", "nd", "rd"];
                     const v = n % 100;
                     return n + (s[(v - 20) % 10] || s[v] || s[0]);
                   };
                   
-                  return `Sun ${getOrdinal(day)}`;
+                  return `Sunday ${getOrdinal(day)} ${month}`;
                 })()} 23:59, guess this week's theme
               </div>
             </div>
