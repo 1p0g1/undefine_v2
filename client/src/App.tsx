@@ -476,15 +476,15 @@ function App() {
               <ol style={{ 
                 margin: '0', 
                 padding: '0 0 0 1.2rem', 
-                fontSize: '0.85em',
+                fontSize: '0.75em',
                 lineHeight: '1.4',
                 color: '#374151'
               }}>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -492,7 +492,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
@@ -501,10 +501,10 @@ function App() {
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -512,7 +512,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
@@ -521,10 +521,10 @@ function App() {
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -532,7 +532,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
@@ -541,10 +541,10 @@ function App() {
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -552,7 +552,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
@@ -561,10 +561,10 @@ function App() {
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -572,7 +572,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
@@ -581,10 +581,10 @@ function App() {
                   </span>
                 </li>
                 <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
                     <div style={{
-                      width: '1.4em',
-                      height: '1.4em',
+                      width: '1.6em',
+                      height: '1.6em',
                       border: '2px solid var(--color-primary)',
                       borderRadius: '0.25rem',
                       display: 'inline-flex',
@@ -592,7 +592,7 @@ function App() {
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.75em',
+                      fontSize: '0.8em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
