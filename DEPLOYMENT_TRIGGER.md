@@ -12,3 +12,4 @@ This file exists to trigger a new Vercel deployment.
 # Trigger deployment with corrected Vercel settings Wed Jul  2 19:54:01 BST 2025
 # Force redeploy after adding SUPABASE_SERVICE_ROLE_KEY Fri Jul  4 12:20:35 BST 2025
 # Trigger deployment with new HF_API_KEY Sat Jul 12 23:28:24 BST 2025
+# Deploy enhanced game instruction boxes and UI improvements Sun Jul 13 13:40:00 BST 2025
