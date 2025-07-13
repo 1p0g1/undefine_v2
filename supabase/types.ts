@@ -111,8 +111,8 @@ export type Database = {
             foreignKeyName: "fk_leaderboard_player"
             columns: ["player_id"]
             isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["player_id"]
+            referencedRelation: "players"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_leaderboard_word"
@@ -229,8 +229,8 @@ export type Database = {
             foreignKeyName: "fk_scores_player"
             columns: ["player_id"]
             isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["player_id"]
+            referencedRelation: "players"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_scores_word"
@@ -240,39 +240,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_stats: {
-        Row: {
-          average_completion_time: number | null
-          best_rank: number | null
-          current_streak: number | null
-          games_played: number | null
-          last_played_word: string | null
-          longest_streak: number | null
-          player_id: string
-          top_10_count: number | null
-        }
-        Insert: {
-          average_completion_time?: number | null
-          best_rank?: number | null
-          current_streak?: number | null
-          games_played?: number | null
-          last_played_word?: string | null
-          longest_streak?: number | null
-          player_id: string
-          top_10_count?: number | null
-        }
-        Update: {
-          average_completion_time?: number | null
-          best_rank?: number | null
-          current_streak?: number | null
-          games_played?: number | null
-          last_played_word?: string | null
-          longest_streak?: number | null
-          player_id?: string
-          top_10_count?: number | null
-        }
-        Relationships: []
       }
       words: {
         Row: {
