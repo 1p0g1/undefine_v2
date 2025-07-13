@@ -173,4 +173,40 @@ CREATE TRIGGER update_leaderboard_on_game_complete
 4. **Foreign key constraints** must be updated in correct order
 5. **Production deployment** happens automatically via Git commits
 
-**This cleanup resolved the major production issues and simplified the database schema significantly.** 
+**This cleanup resolved the major production issues and simplified the database schema significantly.**
+
+---
+
+## 🐛 **RANKING DISPLAY BUG FIX - JANUARY 13, 2025**
+
+### **The Problem**
+After database cleanup, players reported seeing "You didn't rank today" even after completing games successfully.
+
+### **Root Cause Analysis**
+**Not database triggers** (those were working correctly), but **frontend environment and timing issues**:
+
+1. **Vercel Preview Environment Variables**: Frontend using hardcoded fallback URLs instead of correct API endpoints
+2. **Timing Issues**: Leaderboard fetched immediately after game completion, sometimes before database triggers completed
+3. **Cross-Domain API Calls**: Preview deployments making unnecessary external calls instead of relative URLs
+
+### **Fix Applied**
+```typescript
+// Before: Hardcoded fallback to external domain
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
+
+// After: Relative URLs for same-domain deployments  
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+// Added: 500ms delay for database trigger completion
+setTimeout(async () => {
+  await fetchLeaderboard();
+}, 500);
+```
+
+### **Files Updated**
+- `client/src/api/client.ts` - Updated BASE_URL fallback and logging
+- `client/src/components/AllTimeLeaderboard.tsx` - Consistent relative URL usage
+- `client/src/hooks/useGame.ts` - Added delay for database trigger completion
+
+### **Result** 
+✅ Rankings now display correctly on both preview and production deployments 
