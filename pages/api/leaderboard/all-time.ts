@@ -117,25 +117,15 @@ async function handler(
     // Calculate statistics from raw data
     const playerStats = await calculateAllTimeStatsFromSessions(streakMap, playerNameMap);
     
-    // Sort into different leaderboard categories (simplified)
-    const topByWinRate = [...playerStats]
-      .filter(p => p.total_games >= 1) // Changed from 3 to 1 - any player with at least 1 win
-      .sort((a, b) => b.win_percentage - a.win_percentage)
-      .slice(0, 10);
-
-    const topByConsistency = [...playerStats]
-      .filter(p => p.total_wins >= 1) // Need at least one win to calculate average guesses
-      .sort((a, b) => a.average_guesses - b.average_guesses) // Lower is better
+    // Sort into the 2 leaderboard categories we're keeping
+    const topByGames = [...playerStats]
+      .filter(p => p.total_games >= 1) // At least 1 game
+      .sort((a, b) => b.total_games - a.total_games)
       .slice(0, 10);
 
     const topByStreaks = [...playerStats]
       .filter(p => p.highest_streak > 0) // Must have at least one win streak
       .sort((a, b) => b.highest_streak - a.highest_streak)
-      .slice(0, 10);
-
-    const topByGames = [...playerStats]
-      .filter(p => p.total_games >= 1) // Changed from no filter to at least 1 game
-      .sort((a, b) => b.total_games - a.total_games)
       .slice(0, 10);
 
     const totalPlayers = playerStats.length;
@@ -144,8 +134,8 @@ async function handler(
     return res.status(200).json({
       success: true,
       data: {
-        topByWinRate,
-        topByConsistency,
+        topByWinRate: [], // Removed - no longer needed
+        topByConsistency: [], // Removed - no longer needed
         topByStreaks,
         topByGames,
         totalPlayers,
