@@ -202,11 +202,14 @@ async function updateLeaderboardSummary(
 
 /**
  * Count fuzzy matches from game session guesses by re-evaluating each guess
- * This is needed because we don't store fuzzy match history
+ * Updated to use advanced fuzzy matching system
  */
-function countFuzzyMatches(guesses: string[], targetWord: string): number {
+async function countFuzzyMatches(guesses: string[], targetWord: string): Promise<number> {
   const normalizedTarget = normalizeText(targetWord);
   let fuzzyCount = 0;
+  
+  // Import the advanced fuzzy matcher
+  const { advancedFuzzyMatch } = await import('@/src/utils/advancedFuzzyMatcher');
   
   for (const guess of guesses) {
     const normalizedGuess = normalizeText(guess);
@@ -216,27 +219,56 @@ function countFuzzyMatches(guesses: string[], targetWord: string): number {
       continue;
     }
     
-    // Check if this guess would be considered fuzzy
-    // Simple check: shared characters without being correct
-    let sharedChars = 0;
-    const targetChars = normalizedTarget.split('');
-    
-    for (const char of normalizedGuess) {
-      const index = targetChars.indexOf(char);
-      if (index !== -1) {
-        sharedChars++;
-        targetChars.splice(index, 1); // Remove used character
+    // Check if this guess would be considered fuzzy using advanced matching
+    try {
+      const fuzzyResult = await advancedFuzzyMatch(normalizedGuess, normalizedTarget);
+      if (fuzzyResult.isFuzzy) {
+        fuzzyCount++;
+        console.log('[countFuzzyMatches] Fuzzy match found:', {
+          guess: normalizedGuess,
+          target: normalizedTarget,
+          method: fuzzyResult.method,
+          confidence: fuzzyResult.confidence,
+          explanation: fuzzyResult.explanation
+        });
       }
-    }
-    
-    // Consider it fuzzy if it shares at least 40% of characters
-    const similarity = sharedChars / Math.max(normalizedGuess.length, normalizedTarget.length);
-    if (similarity >= 0.4 && sharedChars >= 2) {
-      fuzzyCount++;
+    } catch (error) {
+      console.warn('[countFuzzyMatches] Error checking fuzzy match:', error);
+      
+      // Fallback to legacy character-based matching if advanced matching fails
+      const legacyResult = checkLegacyFuzzyMatch(normalizedGuess, normalizedTarget);
+      if (legacyResult) {
+        fuzzyCount++;
+        console.log('[countFuzzyMatches] Legacy fuzzy match found:', {
+          guess: normalizedGuess,
+          target: normalizedTarget,
+          method: 'legacy_character_overlap'
+        });
+      }
     }
   }
   
   return fuzzyCount;
+}
+
+/**
+ * Legacy fuzzy matching for fallback scenarios
+ */
+function checkLegacyFuzzyMatch(normalizedGuess: string, normalizedTarget: string): boolean {
+  let sharedChars = 0;
+  const targetChars = normalizedTarget.split('');
+  
+  for (const char of normalizedGuess) {
+    const index = targetChars.indexOf(char);
+    if (index !== -1) {
+      sharedChars++;
+      targetChars.splice(index, 1); // Remove used character
+    }
+  }
+  
+  // Consider it fuzzy if it shares at least 40% of characters
+  const similarity = sharedChars / Math.max(normalizedGuess.length, normalizedTarget.length);
+  return similarity >= 0.4 && sharedChars >= 2;
 }
 
 interface GameSessionWithWord extends GameSession {
@@ -529,7 +561,7 @@ export default withCors(async function handler(
 
         // Count fuzzy matches from session history
         const allGuesses = [...(combinedSession.guesses || []), result.guess];
-        const fuzzyMatchCount = countFuzzyMatches(
+        const fuzzyMatchCount = await countFuzzyMatches(
           combinedSession.guesses || [], 
           combinedSession.words.word
         );
@@ -781,7 +813,7 @@ export default withCors(async function handler(
 
     // Count fuzzy matches from session history
     const allGuesses = [...(gameSession.guesses || []), result.guess];
-    const fuzzyMatchCount = countFuzzyMatches(
+    const fuzzyMatchCount = await countFuzzyMatches(
       gameSession.guesses || [], 
       gameSession.words.word
     );
