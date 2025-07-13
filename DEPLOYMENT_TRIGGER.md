@@ -15,3 +15,4 @@ This file exists to trigger a new Vercel deployment.
 # Deploy enhanced game instruction boxes and UI improvements Sun Jul 13 13:40:00 BST 2025
 # Deploy simplified Today box layout with brackets format Sun Jul 13 13:50:00 BST 2025
 # Deploy enhanced title with gradient and optimized text sizing Sun Jul 13 14:00:00 BST 2025
+# Deploy mini DEFINE boxes and advanced text formatting Sun Jul 13 14:30:00 BST 2025
