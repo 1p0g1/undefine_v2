@@ -410,48 +410,68 @@ function App() {
             Un·Define is a word game, won in two ways:
           </div>
 
-          {/* Today's Challenge */}
+          {/* Game Modes in Boxes */}
           <div style={{ 
-            marginBottom: '1.5rem',
-            textAlign: 'left',
-            maxWidth: '500px',
-            margin: '0 auto 1.5rem auto'
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            marginBottom: '2rem'
           }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-              Today:
+            {/* Today's Challenge Box */}
+            <div style={{
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #e0e4ff',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              textAlign: 'left'
+            }}>
+              <div style={{ 
+                fontWeight: '700',
+                fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
+                color: 'var(--color-primary)',
+                marginBottom: '0.75rem'
+              }}>
+                Today:
+              </div>
+              <div style={{ color: '#374151' }}>
+                Guess the word in 6 guesses or less. Clues are revealed after each guess.
+              </div>
             </div>
-            <div style={{ paddingLeft: '1rem' }}>
-              Guess the word in 6 guesses or less. Clues are revealed after each guess.
-            </div>
-          </div>
 
-          {/* This Week's Challenge */}
-          <div style={{ 
-            marginBottom: '2rem',
-            textAlign: 'left',
-            maxWidth: '500px',
-            margin: '0 auto 2rem auto'
-          }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-              This week:
-            </div>
-            <div style={{ paddingLeft: '1rem' }}>
-              Before {(() => {
-                const now = new Date();
-                const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
-                const nextSunday = new Date(now);
-                nextSunday.setDate(now.getDate() + daysUntilSunday);
-                
-                const day = nextSunday.getDate();
-                const getOrdinal = (n: number) => {
-                  const s = ["th", "st", "nd", "rd"];
-                  const v = n % 100;
-                  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-                };
-                
-                return `Sun ${getOrdinal(day)}`;
-              })()} 23:59, guess this week's theme
+            {/* This Week's Challenge Box */}
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #d1fae5',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              textAlign: 'left'
+            }}>
+              <div style={{ 
+                fontWeight: '700',
+                fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
+                color: '#059669',
+                marginBottom: '0.75rem'
+              }}>
+                This week:
+              </div>
+              <div style={{ color: '#374151' }}>
+                Before {(() => {
+                  const now = new Date();
+                  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                  const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
+                  const nextSunday = new Date(now);
+                  nextSunday.setDate(now.getDate() + daysUntilSunday);
+                  
+                  const day = nextSunday.getDate();
+                  const getOrdinal = (n: number) => {
+                    const s = ["th", "st", "nd", "rd"];
+                    const v = n % 100;
+                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                  };
+                  
+                  return `Sun ${getOrdinal(day)}`;
+                })()} 23:59, guess this week's theme
+              </div>
             </div>
           </div>
 
