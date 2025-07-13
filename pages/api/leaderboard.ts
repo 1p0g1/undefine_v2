@@ -107,7 +107,7 @@ async function getCurrentDayLeaderboard(
 ): Promise<{ entries: LeaderboardEntry[]; totalEntries: number }> {
   console.log('[getCurrentDayLeaderboard] Fetching real-time data for:', wordId);
 
-  // Get entries from leaderboard_summary (real-time for current day)
+  // Get entries from leaderboard_summary and fetch fuzzy data separately
   const { data: allEntries, error: allEntriesError } = await supabase
     .from('leaderboard_summary')
     .select(`
@@ -144,20 +144,42 @@ async function getCurrentDayLeaderboard(
     playersData?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []
   );
 
+  // Get fuzzy data from scores table
+  const { data: scoresData } = await supabase
+    .from('scores')
+    .select('player_id, word_id, fuzzy_bonus')
+    .eq('word_id', wordId)
+    .in('player_id', playerIds);
+
+  const fuzzyDataMap = new Map(
+    (scoresData || []).map(score => [
+      score.player_id, 
+      {
+        fuzzy_bonus: score.fuzzy_bonus || 0,
+        fuzzy_matches: Math.floor((score.fuzzy_bonus || 0) / 25)
+      }
+    ])
+  );
+
   // Transform entries
-  const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => ({
-    id: entry.id,
-    word_id: entry.word_id,
-    player_id: entry.player_id,
-    player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
-    rank: entry.rank || 0,
-    guesses_used: entry.guesses_used || 0,
-    best_time: entry.best_time || 0,
-    date: entry.date || getCurrentUTCDate(),
-    created_at: new Date().toISOString(),
-    was_top_10: entry.was_top_10 || false,
-    is_current_player: entry.player_id === playerId
-  }));
+  const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => {
+    const fuzzyData = fuzzyDataMap.get(entry.player_id);
+    return {
+      id: entry.id,
+      word_id: entry.word_id,
+      player_id: entry.player_id,
+      player_name: playerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
+      rank: entry.rank || 0,
+      guesses_used: entry.guesses_used || 0,
+      best_time: entry.best_time || 0,
+      date: entry.date || getCurrentUTCDate(),
+      created_at: new Date().toISOString(),
+      was_top_10: entry.was_top_10 || false,
+      is_current_player: entry.player_id === playerId,
+      fuzzy_matches: fuzzyData?.fuzzy_matches || 0,
+      fuzzy_bonus: fuzzyData?.fuzzy_bonus || 0
+    };
+  });
 
   // Get top 10 + player's entry if not in top 10
   const topEntries = transformedEntries.slice(0, 10);
@@ -263,7 +285,9 @@ function transformHistoricalData(
     date: getCurrentUTCDate(), // Will be set to actual date in future
     created_at: new Date().toISOString(),
     was_top_10: entry.was_top_10,
-    is_current_player: entry.player_id === playerId
+    is_current_player: entry.player_id === playerId,
+    fuzzy_matches: entry.fuzzy_matches || 0,
+    fuzzy_bonus: entry.fuzzy_bonus || 0
   }));
 
   // Get top 10 + player's entry if not in top 10

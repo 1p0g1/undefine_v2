@@ -68,6 +68,8 @@ export interface LeaderboardEntry {
   created_at: string;
   was_top_10: boolean;
   is_current_player?: boolean;
+  fuzzy_matches?: number;      // Number of fuzzy matches (calculated from fuzzy_bonus / 25)
+  fuzzy_bonus?: number;        // Bonus points from fuzzy matches
 }
 
 /**

@@ -447,6 +447,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                   <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
                     Player
                   </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
+                    Guesses
+                  </th>
+                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
+                    Fuzzy
+                  </th>
                   <th
                     style={{
                       padding: '0.5rem 0.75rem',
@@ -455,9 +461,6 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                     }}
                   >
                     Time
-                  </th>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                    Guesses
                   </th>
                 </tr>
               </thead>
@@ -490,16 +493,25 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                               : entry.rank}
                       </span>
                     </td>
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                    <td style={{ 
+                      padding: '0.5rem 0.75rem', 
+                      verticalAlign: 'top',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100px'
+                    }}>
                         {entry.player_name}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}>
+                        {entry.guesses_used}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}>
+                        {entry.fuzzy_matches || 0}
                     </td>
                     <td
                       style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}
                     >
                         {formatTime(entry.best_time)}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                        {entry.guesses_used}
                     </td>
                   </tr>
                 ))}

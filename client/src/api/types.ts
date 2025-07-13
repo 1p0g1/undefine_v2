@@ -34,6 +34,8 @@ export interface LeaderboardEntry {
   date: string;
   created_at: string;
   is_current_player?: boolean;
+  fuzzy_matches?: number;       // Number of fuzzy matches (calculated from fuzzy_bonus / 25)
+  fuzzy_bonus?: number;         // Bonus points from fuzzy matches
 }
 
 /**
@@ -42,4 +44,5 @@ export interface LeaderboardEntry {
 export interface LeaderboardResponse {
   leaderboard: LeaderboardEntry[];
   playerRank: number | null;
+  totalEntries?: number;
 }
