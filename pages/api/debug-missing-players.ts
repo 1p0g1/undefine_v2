@@ -102,10 +102,8 @@ export default async function handler(
       .select('id, display_name, created_at')
       .in('id', allPlayerIds);
 
-    const { data: userStats } = await supabase
-      .from('user_stats')
-      .select('player_id, current_streak, longest_streak, best_rank')
-      .in('player_id', allPlayerIds);
+    // REMOVED: user_stats query - table was dropped
+    const userStats: any[] = []; // Empty since table no longer exists
 
     // Create maps for easy lookup
     const playersMap = new Map(players?.map(p => [p.id, p]) || []);
@@ -138,12 +136,12 @@ export default async function handler(
         },
         data_presence: {
           in_players: !!player,
-          in_user_stats: !!userStat,
+          in_user_stats: false, // Table was dropped - always false
           in_scores: !!score,
           in_leaderboard: !!leaderboardEntry
         },
         potential_issues: {
-          missing_user_stats: !userStat,
+          missing_user_stats: false, // Table intentionally removed
           missing_score: !score,
           missing_leaderboard: !leaderboardEntry,
           completion_time_mismatch: score && completionTime && Math.abs(score.completion_time_seconds - completionTime) > 2,
@@ -155,7 +153,6 @@ export default async function handler(
     // Find players specifically missing from leaderboard
     const missingFromLeaderboard = analysis.filter(a => 
       a.data_presence.in_players && 
-      a.data_presence.in_user_stats && 
       a.data_presence.in_scores && 
       !a.data_presence.in_leaderboard
     );
@@ -189,10 +186,10 @@ export default async function handler(
       },
       investigation_notes: {
         common_issues: [
-          'Missing user_stats entries (foreign key dependency)',
           'Database triggers not firing on game completion',
           'API leaderboard updates failing silently',
-          'Foreign key constraint violations'
+          'Foreign key constraint violations',
+          'Note: user_stats table was intentionally dropped'
         ],
         recommended_fixes: [
           'Strengthen foreign key chain validation',
