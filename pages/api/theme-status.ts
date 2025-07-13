@@ -90,7 +90,8 @@ export default withCors(async function handler(
     // Check if player's guess was correct (if they made one)
     let isCorrectGuess = false;
     if (progress.themeGuess) {
-      isCorrectGuess = isThemeGuessCorrect(progress.themeGuess, currentTheme);
+      const guessResult = await isThemeGuessCorrect(progress.themeGuess, currentTheme);
+      isCorrectGuess = guessResult.isCorrect;
     }
 
     const response: ThemeStatusResponse = {
