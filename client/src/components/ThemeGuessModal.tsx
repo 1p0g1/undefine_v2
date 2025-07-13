@@ -285,6 +285,72 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </div>
             </div>
 
+            {/* Weekly Themed Words Section */}
+            {themeStatus.weeklyThemedWords.length > 0 && (
+              <div style={{
+                backgroundColor: '#f8fffe',
+                border: '1px solid #d1fae5',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{ 
+                  margin: '0 0 0.75rem 0', 
+                  fontSize: '0.95rem', 
+                  fontWeight: '600',
+                  color: '#065f46'
+                }}>
+                  📚 This Week's Themed Words ({themeStatus.weeklyThemedWords.length})
+                </h3>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                  gap: '0.5rem'
+                }}>
+                  {themeStatus.weeklyThemedWords.map((wordInfo, index) => (
+                    <div 
+                      key={wordInfo.id}
+                      style={{
+                        backgroundColor: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '0.375rem',
+                        padding: '0.5rem',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600',
+                        color: '#047857' 
+                      }}>
+                        {wordInfo.word}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.7rem', 
+                        color: '#059669',
+                        marginTop: '0.25rem'
+                      }}>
+                        {new Date(wordInfo.date).toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#047857', 
+                  marginTop: '0.75rem',
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}>
+                  These are the themed words you've completed this week
+                </div>
+              </div>
+            )}
+
             {/* Fuzzy Match Result Display */}
             {lastGuessResult && lastGuessResult.fuzzyMatch && (
               <div style={{
