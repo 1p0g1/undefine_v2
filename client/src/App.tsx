@@ -466,42 +466,11 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div style={{ color: '#374151', marginBottom: '1rem' }}>
-                Guess today's word in 6 guesses or less.
-              </div>
               <div style={{ color: '#374151' }}>
-                <div style={{ marginBottom: '0.5rem' }}>6 clues revealed after each guess:</div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '0.25rem 1rem',
-                  fontSize: '0.85em'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    Definition
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    Equivalents
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    First Letter
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    In a Sentence
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    Number of Letters
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '0.5rem' }}>•</span>
-                    Etymology
-                  </div>
-                </div>
+                Guess today's word in 6 guesses or less. Clues revealed after each guess{' '}
+                <span style={{ fontSize: '0.8em' }}>
+                  (Definition, Equivalents, First Letter, In a Sentence, Number of Letters & Etymology)
+                </span>
               </div>
             </div>
 
