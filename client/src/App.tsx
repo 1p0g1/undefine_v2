@@ -412,7 +412,7 @@ function App() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            Un·define is a word game, played over a week
+            Un·define this today's secret word to un·lock this week's theme
           </div>
 
           {/* Game Modes in Boxes */}
@@ -470,119 +470,137 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div style={{ color: '#374151', fontSize: '0.9em' }}>
-                Guess today's word in 6 guesses or less. Clues revealed each round:{' '}
-                <span style={{ fontSize: '0.875em', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.15em' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+              <div style={{ color: '#374151', fontSize: '0.9em', marginBottom: '0.5rem' }}>
+                Guess today's word in 6 guesses or less. Clues revealed each round:
+              </div>
+              <ol style={{ 
+                margin: '0', 
+                padding: '0 0 0 1.2rem', 
+                fontSize: '0.85em',
+                lineHeight: '1.4',
+                color: '#374151'
+              }}>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>D</div>
-                    efinition,
+                    efinition
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                </li>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
-                    quivalents,
+                    quivalents
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                </li>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>F</div>
-                    irst Letter,
+                    irst Letter
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                </li>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>I</div>
-                    n a Sentence,
+                    n a Sentence
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                </li>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>N</div>
-                    umber of Letters &
+                    umber of Letters
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                </li>
+                <li style={{ marginBottom: '0.15rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25em' }}>
                     <div style={{
-                      width: '1.8em',
-                      height: '1.8em',
+                      width: '1.4em',
+                      height: '1.4em',
                       border: '2px solid var(--color-primary)',
-                      borderRadius: '0.3rem',
+                      borderRadius: '0.25rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: 'var(--font-primary)',
                       fontWeight: 700,
-                      fontSize: '0.9em',
+                      fontSize: '0.75em',
                       color: 'var(--color-primary)',
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
                     tymology
                   </span>
-                </span>
-              </div>
+                </li>
+              </ol>
             </div>
 
             {/* This Week's Challenge Box */}
