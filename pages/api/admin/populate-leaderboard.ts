@@ -251,22 +251,9 @@ export async function populateLeaderboard(options: {
  * Ensure user_stats entry exists for the player (required for foreign key)
  */
 async function ensureUserStatsExists(playerId: string): Promise<void> {
-  const { error } = await supabase
-    .from('user_stats')
-    .upsert([{
-      player_id: playerId,
-      current_streak: 0,
-      longest_streak: 0,
-      best_rank: null,
-      top_10_count: 0
-    }], {
-      onConflict: 'player_id',
-      ignoreDuplicates: true
-    });
-
-  if (error) {
-    throw new Error(`Failed to ensure user_stats entry: ${error.message}`);
-  }
+  // REMOVED: user_stats upsert - table dropped, FK now points to players.id
+  console.log('[ensureUserStatsEntry] Skipping user_stats - foreign key points to players.id');
+  return;
 }
 
 /**

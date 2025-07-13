@@ -78,12 +78,8 @@ export default async function handler(
       .order('date', { ascending: false })
       .limit(10);
 
-    // Get user stats
-    const { data: stats } = await supabase
-      .from('user_stats')
-      .select('*')
-      .eq('player_id', playerId)
-      .single();
+    // REMOVED: user_stats query - table was dropped
+    const userStats = null; // Table no longer exists
 
     // Check for DEFINE word specifically
     const { data: defineWord } = await supabase
@@ -118,7 +114,7 @@ export default async function handler(
       sessions,
       scores,
       leaderboard,
-      stats,
+      stats: userStats,
       defineWord,
       defineCompletions,
       debug: {

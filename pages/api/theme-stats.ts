@@ -28,15 +28,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ThemeStatsRespo
 
     console.log('[/api/theme-stats] Getting theme statistics for player:', player_id);
 
-    // Verify player exists
-    const { data: player, error: playerError } = await supabase
-      .from('user_stats')
-      .select('player_id')
-      .eq('player_id', player_id)
-      .single();
+    // REMOVED: user_stats query - table was dropped
+    // Calculate stats from actual game data instead
+    const { data: playerGames, error: playerError } = await supabase
+      .from('game_sessions')
+      .select('is_won')
+      .eq('player_id', player_id);
 
-    if (playerError || !player) {
-      console.error('[/api/theme-stats] Player not found:', playerError);
+    if (playerError) {
+      console.error('[/api/theme-stats] Error getting player games:', playerError);
       return res.status(404).json({ error: 'Player not found' });
     }
 
