@@ -7,6 +7,7 @@ import { FirstGamePrompt } from './components/FirstGamePrompt';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
+import { FuzzyTooltip } from './components/FuzzyTooltip';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -451,7 +452,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                     Guesses
                   </th>
                   <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
-                    Fuzzy
+                    <FuzzyTooltip>
+                      <span style={{ 
+                        color: '#1a237e',
+                        fontWeight: 600,
+                        borderBottom: '1px dotted #1a237e',
+                        cursor: 'pointer'
+                      }}>
+                        Fuzzy
+                      </span>
+                    </FuzzyTooltip>
                   </th>
                   <th
                     style={{

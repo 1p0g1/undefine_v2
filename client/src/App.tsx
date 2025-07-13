@@ -396,7 +396,7 @@ function App() {
             color: '#374151',
             textAlign: 'center',
             lineHeight: '1.7',
-            margin: '2rem auto',
+            margin: '1rem auto',
             maxWidth: '600px',
             padding: '0 1.5rem'
           }}
