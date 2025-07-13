@@ -159,9 +159,12 @@ const useGame = () => {
         
         setGuessStatus(newGuessStatus);
 
-        // Fetch leaderboard if game is complete
+        // Fetch leaderboard if game is complete (with small delay for database triggers)
         if (data.gameOver) {
-          await fetchLeaderboard();
+          // Small delay to ensure database triggers complete
+          setTimeout(async () => {
+            await fetchLeaderboard();
+          }, 500);
         }
 
         return data;

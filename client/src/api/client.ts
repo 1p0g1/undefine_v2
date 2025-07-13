@@ -1,13 +1,14 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
 
-// Use environment variable for backend URL with fallback
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
+// Use environment variable for backend URL with fallback to relative URLs for same-domain deployments
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Log initial configuration
 console.log('[API Client] Initialized with:', {
-  baseUrl: BASE_URL,
-  env: import.meta.env.MODE
+  baseUrl: BASE_URL || 'relative URLs',
+  env: import.meta.env.MODE,
+  preview: window.location.hostname.includes('vercel.app') ? 'vercel-preview' : 'other'
 });
 
 /**

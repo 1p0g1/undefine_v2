@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-// Import API base URL configuration
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
+// Import API base URL configuration - use relative URLs for same-domain deployments
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 interface AllTimeStats {
   player_id: string;
