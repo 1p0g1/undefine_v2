@@ -65,7 +65,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       padding: '0.15rem 0',
       position: 'relative'
     }}>
-      <div style={{ display: 'flex', gap: 'clamp(0.15rem, 0.5vw, 0.2rem)' }}>
+      <div style={{ display: 'flex', gap: '0.25rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -97,14 +97,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 // Removed click functionality - hover hints are sufficient
               }}
               style={{
-                width: 'clamp(3.5rem, 9vw, 4rem)',
-                height: 'clamp(3.5rem, 9vw, 4rem)',
+                width: '3.25rem',
+                height: '3.25rem',
                 border: `2px solid ${borderColor}`,
                 borderRadius: '0.4rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 'clamp(1.6rem, 4.5vw, 2rem)',
+                fontSize: '1.7rem',
                 fontWeight: 700,
                 color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
                 backgroundColor,

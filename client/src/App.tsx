@@ -473,7 +473,6 @@ function App() {
               <div style={{ color: '#374151', fontSize: '0.9em' }}>
                 Guess today's word in 6 guesses or less. Clues revealed each round:{' '}
                 <span style={{ fontSize: '0.875em', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.3em' }}>
-                  (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3em' }}>
                     <div style={{
                       width: '1.35em',
@@ -580,7 +579,7 @@ function App() {
                       backgroundColor: 'white',
                       flexShrink: 0
                     }}>E</div>
-                    tymology)
+                    tymology
                   </span>
                 </span>
               </div>
