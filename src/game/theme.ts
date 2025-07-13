@@ -364,12 +364,33 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
   isCorrectGuess: boolean;
 }> {
   try {
-    // Get all words for this theme
-    const themeWords = await getWordsForTheme(theme);
+    // Get current week boundaries
+    const { monday, sunday } = getThemeWeekBoundaries();
     
-    // Get player's game sessions for this theme's words
-    const wordIds = themeWords.map(w => w.id);
+    // Get themed words for this theme from CURRENT WEEK ONLY (not all-time)
+    const { data: themeWords, error: wordsError } = await supabase
+      .from('words')
+      .select('id, word, date')
+      .eq('theme', theme)
+      .gte('date', monday.toISOString().split('T')[0])
+      .lte('date', sunday.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
+    if (wordsError) {
+      console.error('[getThemeProgress] Database error:', wordsError);
+      return {
+        totalWords: 0,
+        completedWords: 0,
+        themeGuess: null,
+        canGuessTheme: false,
+        hasGuessedToday: false,
+        isCorrectGuess: false
+      };
+    }
+
+    const wordIds = themeWords?.map(w => w.id) || [];
     
+    // Get player's completed sessions for CURRENT WEEK themed words only
     const { data: sessions, error } = await supabase
       .from('game_sessions')
       .select('word_id, is_complete')
@@ -379,7 +400,7 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     if (error) {
       console.error('[getThemeProgress] Database error:', error);
       return {
-        totalWords: themeWords.length,
+        totalWords: themeWords?.length || 0,
         completedWords: 0,
         themeGuess: null,
         canGuessTheme: false,
@@ -404,15 +425,14 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       console.error('[getThemeProgress] Theme attempt error:', attemptError);
     }
 
-    // Get completed words from this week only
-    const weeklyWords = await getPlayerWeeklyThemedWords(playerId, theme);
-    const hasCompletedWordThisWeek = weeklyWords.length > 0;
+    // Can guess theme if completed at least one word this week and haven't guessed today
+    const hasCompletedWordThisWeek = completedSessions.length > 0;
 
     return {
-      totalWords: themeWords.length,
+      totalWords: themeWords?.length || 0,
       completedWords: completedSessions.length,
       themeGuess: todayAttempt?.guess || null,
-      canGuessTheme: hasCompletedWordThisWeek && !todayAttempt, // Can guess if completed words THIS WEEK AND haven't guessed today
+      canGuessTheme: hasCompletedWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,
       isCorrectGuess: todayAttempt?.is_correct || false
     };
