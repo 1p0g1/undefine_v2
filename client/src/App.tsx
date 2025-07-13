@@ -404,7 +404,7 @@ function App() {
           {/* Game Description */}
           <div style={{ 
             marginBottom: '2rem',
-            fontSize: 'clamp(1.2rem, 3.5vw, 1.6rem)',
+            fontSize: 'clamp(1rem, 3vw, 1.3rem)',
             fontWeight: '600',
             lineHeight: '1.4',
             background: 'linear-gradient(135deg, #1a237e 0%, #3b82f6 100%)',
@@ -412,7 +412,7 @@ function App() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            Un·define is a word game, played over the course of a week
+            Un·define is a word game, played over a week
           </div>
 
           {/* Game Modes in Boxes */}
@@ -471,9 +471,117 @@ function App() {
                 </div>
               </div>
               <div style={{ color: '#374151', fontSize: '0.9em' }}>
-                Guess today's word in 6 guesses or less. Clues revealed after each guess{' '}
-                <span style={{ fontSize: '0.75em' }}>
-                  (Definition, Equivalents, First Letter, In a Sentence, Number of Letters & Etymology)
+                Guess today's word in 6 guesses or less. Clues revealed each round:{' '}
+                <span style={{ fontSize: '0.75em', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.3em' }}>
+                  (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>D</div>
+                    efinition,
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>E</div>
+                    quivalents,
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>F</div>
+                    irst Letter,
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>I</div>
+                    n a Sentence,
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>N</div>
+                    umber of Letters &
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2em' }}>
+                    <div style={{
+                      width: '0.9em',
+                      height: '0.9em',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: '0.15em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.7em',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>E</div>
+                    tymology)
+                  </span>
                 </span>
               </div>
             </div>
@@ -527,23 +635,35 @@ function App() {
                 </div>
               </div>
               <div style={{ color: '#374151', fontSize: '0.9em' }}>
-                Before {(() => {
-                  const now = new Date();
-                  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                  const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
-                  const nextSunday = new Date(now);
-                  nextSunday.setDate(now.getDate() + daysUntilSunday);
-                  
-                  const day = nextSunday.getDate();
-                  const month = nextSunday.toLocaleString('default', { month: 'long' });
-                  const getOrdinal = (n: number) => {
-                    const s = ["th", "st", "nd", "rd"];
-                    const v = n % 100;
-                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-                  };
-                  
-                  return `Sunday ${getOrdinal(day)} ${month}`;
-                })()} 23:59, guess this week's theme
+                Before{' '}
+                <span style={{
+                  fontWeight: '700',
+                  color: '#059669',
+                  fontSize: '1.05em',
+                  background: 'linear-gradient(135deg, #059669 0%, #34d399 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  {(() => {
+                    const now = new Date();
+                    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                    const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
+                    const nextSunday = new Date(now);
+                    nextSunday.setDate(now.getDate() + daysUntilSunday);
+                    
+                    const day = nextSunday.getDate();
+                    const month = nextSunday.toLocaleString('default', { month: 'long' });
+                    const getOrdinal = (n: number) => {
+                      const s = ["th", "st", "nd", "rd"];
+                      const v = n % 100;
+                      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                    };
+                    
+                    return `Sunday ${getOrdinal(day)} ${month}`;
+                  })()}
+                </span>
+                {' '}23:59, guess this week's theme
               </div>
             </div>
           </div>
