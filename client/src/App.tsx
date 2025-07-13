@@ -467,7 +467,11 @@ function App() {
                 </div>
               </div>
               <div style={{ color: '#374151' }}>
-                Guess the word in 6 guesses or less. Clues are revealed after each guess.
+                Guess the word in 6 guesses or less. Clues{' '}
+                <span style={{ fontSize: '0.85em' }}>
+                  (Definition, Equivalents, First Letter, In a Sentence, Number of Letters and Etymology)
+                </span>
+                {' '}are revealed after each guess.
               </div>
             </div>
 
@@ -492,16 +496,16 @@ function App() {
                 {/* Inline Un diamond */}
                 <div
                   style={{
-                    width: '2.4em',
-                    height: '2.4em',
-                    border: '3px solid #059669',
-                    borderRadius: '0.4rem',
+                    width: '2.1em',
+                    height: '2.1em',
+                    border: '2px solid #059669',
+                    borderRadius: '0.35rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: '1em',
+                    fontSize: '0.9em',
                     color: '#059669',
                     backgroundColor: 'white',
                     transform: 'rotate(45deg)',
