@@ -412,7 +412,7 @@ function App() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            Un·define this today's secret word to un·lock this week's theme
+            Un·define today's secret word to un·lock this week's theme
           </div>
 
           {/* Game Modes in Boxes */}
@@ -475,7 +475,7 @@ function App() {
               </div>
               <ol style={{ 
                 margin: '0', 
-                padding: '0 0 0 1.2rem', 
+                padding: '0 0 0 1.8rem', 
                 fontSize: '0.75em',
                 lineHeight: '1.4',
                 color: '#374151'
@@ -618,7 +618,7 @@ function App() {
                 marginBottom: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem'
+                gap: '0.5rem'
               }}>
                 This week:
                 {/* Inline Un diamond */}
@@ -650,6 +650,14 @@ function App() {
                     Un·
                   </span>
                 </div>
+                <span style={{
+                  fontStyle: 'italic',
+                  fontSize: '0.95em',
+                  color: '#059669',
+                  marginLeft: '-0.25rem'
+                }}>
+                  lock
+                </span>
               </div>
               <div style={{ color: '#374151', fontSize: '0.9em' }}>
                 Before{' '}
