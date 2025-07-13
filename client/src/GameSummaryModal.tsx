@@ -5,6 +5,8 @@ import { LeaderboardEntry } from './api/types';
 import { createDefaultClueStatus } from '../../shared-types/src/clues';
 import { FirstGamePrompt } from './components/FirstGamePrompt';
 import { UnPrefix } from './components/UnPrefix';
+import { getPlayerId } from './utils/player';
+import { apiClient } from './api/client';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -81,7 +83,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
-  // Reset nickname prompt when modal opens
+  // Reset nickname prompt and pre-load theme data when modal opens
   useEffect(() => {
     if (open) {
       // Check if user has dismissed prompt before
@@ -93,8 +95,32 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
       
       // Reset pagination when modal opens
       setCurrentPage(1);
+      
+      // Pre-load theme data for instant theme modal opening
+      preloadThemeData();
     }
   }, [open]);
+
+  // Pre-load theme data to make theme modal instantly ready
+  const preloadThemeData = async () => {
+    try {
+      const playerId = getPlayerId();
+      
+      if (playerId) {
+        // Silently pre-load theme data in background
+        Promise.all([
+          apiClient.getThemeStatus(playerId),
+          apiClient.getThemeStats(playerId)
+        ]).catch(error => {
+          // Silent fail - don't block UI if pre-loading fails
+          console.log('Theme data pre-loading failed (silent):', error);
+        });
+      }
+    } catch (error) {
+      // Silent fail for pre-loading
+      console.log('Theme pre-loading error (silent):', error);
+    }
+  };
 
   if (!open) return null;
 
