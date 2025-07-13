@@ -51,13 +51,46 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [themeStats, setThemeStats] = useState<ThemeStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastGuessResult, setLastGuessResult] = useState<{
+    guess: string;
+    fuzzyMatch?: {
+      method: 'exact' | 'synonym' | 'semantic' | 'error';
+      confidence: number;
+      similarity?: number;
+    };
+  } | null>(null);
+  const [dataCache, setDataCache] = useState<{
+    themeStatus: ThemeStatus | null;
+    themeStats: ThemeStats | null;
+    timestamp: number;
+  } | null>(null);
 
   const playerId = getPlayerId();
+
+  // Helper functions for fuzzy rating bar
+  const getConfidenceMessage = (confidence: number): string => {
+    if (confidence > 80) return '🔥 Near enough! You\'re thinking along the right lines!';
+    if (confidence > 60) return '💡 Good guess! There\'s definitely a connection!';
+    if (confidence > 40) return '🤔 Some similarity there, but try a different angle!';
+    return '🎲 Keep exploring different themes!';
+  };
 
   // Load theme status and stats when modal opens
   useEffect(() => {
     if (open && playerId) {
-      loadThemeData();
+      // Clear previous guess results to prevent state persistence between sessions
+      setLastGuessResult(null);
+      
+      // Use cached data if available and recent (within 30 seconds)
+      const now = Date.now();
+      if (dataCache && (now - dataCache.timestamp < 30000)) {
+        setThemeStatus(dataCache.themeStatus);
+        setThemeStats(dataCache.themeStats);
+        setIsLoading(false);
+        setError(null);
+      } else {
+        loadThemeData();
+      }
     }
   }, [open, playerId]);
 
@@ -91,6 +124,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       } else {
         setThemeStatus(status);
         setThemeStats(statsResult);
+        
+        // Cache the data with timestamp for better performance
+        setDataCache({
+          themeStatus: status,
+          themeStats: statsResult,
+          timestamp: Date.now()
+        });
       }
     } catch (err) {
       console.error('Failed to load theme data:', err);
@@ -111,11 +151,38 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         gameId
       });
 
-      // Reload theme data to reflect the new guess
-      await loadThemeData();
+      // Store fuzzy match result for display
+      setLastGuessResult({
+        guess: guess.trim(),
+        fuzzyMatch: result.fuzzyMatch
+      });
+
+      // Only reload theme status (not stats) to avoid second loading screen
+      try {
+        const statusResult = await apiClient.getThemeStatus(playerId);
+        if (statusResult && typeof statusResult === 'object' && !('error' in statusResult)) {
+          const status = statusResult as ThemeStatus;
+          setThemeStatus(status);
+          
+          // Update cache with new status but keep existing stats
+          if (dataCache) {
+            setDataCache({
+              themeStatus: status,
+              themeStats: dataCache.themeStats,
+              timestamp: Date.now()
+            });
+          }
+        }
+      } catch (statusError) {
+        console.error('Failed to refresh theme status:', statusError);
+        // If status refresh fails, fallback to full reload
+        await loadThemeData();
+      }
+      
       setGuess('');
     } catch (err) {
       console.error('Failed to submit theme guess:', err);
+      setLastGuessResult(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -355,6 +422,63 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </div>
             ) : (
               <>
+                {/* Fuzzy Rating Bar - Show similarity score for close guesses */}
+                {lastGuessResult && lastGuessResult.fuzzyMatch && !themeStatus.progress.isCorrectGuess && (
+                  <div style={{
+                    backgroundColor: '#fff7ed',
+                    border: '2px solid #fed7aa',
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#ea580c' }}>
+                      🎯 Similarity Score
+                    </div>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#666' }}>
+                      "{lastGuessResult.guess}" vs. actual theme
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#fed7aa',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <div style={{
+                        width: `${lastGuessResult.fuzzyMatch.confidence}%`,
+                        height: '100%',
+                        backgroundColor: lastGuessResult.fuzzyMatch.confidence > 80 ? '#16a34a' : lastGuessResult.fuzzyMatch.confidence > 60 ? '#eab308' : '#dc2626',
+                        borderRadius: '10px',
+                        transition: 'width 0.8s ease-out, background-color 0.3s ease'
+                      }} />
+                    </div>
+                    
+                    {/* Score and Method */}
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      color: '#666',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <strong>{Math.round(lastGuessResult.fuzzyMatch.confidence)}%</strong> similarity
+                      {lastGuessResult.fuzzyMatch.method === 'semantic' && ' (AI Match)'}
+                      {lastGuessResult.fuzzyMatch.method === 'synonym' && ' (Synonym Match)'}
+                    </div>
+                    
+                    {/* Encouraging message based on score */}
+                    <div style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#666',
+                      fontStyle: 'italic'
+                    }}>
+                      {getConfidenceMessage(lastGuessResult.fuzzyMatch.confidence)}
+                    </div>
+                  </div>
+                )}
+
                 {/* Guess Input */}
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ 
