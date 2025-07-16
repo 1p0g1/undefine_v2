@@ -202,14 +202,14 @@ async function updateLeaderboardSummary(
 
 /**
  * Count fuzzy matches from game session guesses by re-evaluating each guess
- * Updated to use advanced fuzzy matching system
+ * Updated to use smart local fuzzy matching system (no API calls)
  */
 async function countFuzzyMatches(guesses: string[], targetWord: string): Promise<number> {
   const normalizedTarget = normalizeText(targetWord);
   let fuzzyCount = 0;
   
-  // Import the advanced fuzzy matcher
-  const { advancedFuzzyMatch } = await import('@/src/utils/advancedFuzzyMatcher');
+  // Import the smart local fuzzy matcher
+  const { smartLocalFuzzyMatch } = await import('@/src/utils/smartLocalFuzzy');
   
   for (const guess of guesses) {
     const normalizedGuess = normalizeText(guess);
@@ -219,12 +219,12 @@ async function countFuzzyMatches(guesses: string[], targetWord: string): Promise
       continue;
     }
     
-    // Check if this guess would be considered fuzzy using advanced matching
+    // Check if this guess would be considered fuzzy using smart local matching
     try {
-      const fuzzyResult = await advancedFuzzyMatch(normalizedGuess, normalizedTarget);
+      const fuzzyResult = smartLocalFuzzyMatch(normalizedGuess, normalizedTarget);
       if (fuzzyResult.isFuzzy) {
         fuzzyCount++;
-        console.log('[countFuzzyMatches] Fuzzy match found:', {
+        console.log('[countFuzzyMatches] Smart local fuzzy match found:', {
           guess: normalizedGuess,
           target: normalizedTarget,
           method: fuzzyResult.method,
@@ -235,7 +235,7 @@ async function countFuzzyMatches(guesses: string[], targetWord: string): Promise
     } catch (error) {
       console.warn('[countFuzzyMatches] Error checking fuzzy match:', error);
       
-      // Fallback to legacy character-based matching if advanced matching fails
+      // Fallback to legacy character-based matching if smart local matching fails
       const legacyResult = checkLegacyFuzzyMatch(normalizedGuess, normalizedTarget);
       if (legacyResult) {
         fuzzyCount++;
@@ -570,7 +570,6 @@ export default withCors(async function handler(
           guessesUsed: allGuesses.length,
           fuzzyMatches: fuzzyMatchCount + (result.isFuzzy ? 1 : 0), // Include current guess if fuzzy
           completionTimeSeconds: completionTimeSeconds || 0,
-          usedHint: false, // Hints are not implemented yet
           isWon: result.isCorrect
         }) : null;
 
@@ -822,7 +821,6 @@ export default withCors(async function handler(
       guessesUsed: allGuesses.length,
       fuzzyMatches: fuzzyMatchCount + (result.isFuzzy ? 1 : 0), // Include current guess if fuzzy
       completionTimeSeconds: completionTimeSeconds || 0,
-      usedHint: false, // Hints are not implemented yet
       isWon: result.isCorrect
     }) : null;
 

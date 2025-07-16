@@ -255,7 +255,7 @@ export async function submitThemeAttempt(
       similarity: guessResult.similarity
     });
 
-    // Insert theme attempt
+    // Insert theme attempt with similarity tracking
     const { error: insertError } = await supabase
       .from('theme_attempts')
       .insert({
@@ -265,7 +265,11 @@ export async function submitThemeAttempt(
         is_correct: isCorrect,
         attempt_date: today,
         words_completed_when_guessed: progress.completedWords,
-        total_word_guesses: totalWordGuesses
+        total_word_guesses: totalWordGuesses,
+        // Add similarity tracking data
+        similarity_score: guessResult.similarity || null,
+        confidence_percentage: guessResult.confidence,
+        matching_method: guessResult.method
       });
 
     if (insertError) {
@@ -362,6 +366,10 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
   canGuessTheme: boolean;
   hasGuessedToday: boolean;
   isCorrectGuess: boolean;
+  // Similarity tracking data (available when hasGuessedToday is true)
+  similarityScore?: number | null;
+  confidencePercentage?: number | null;
+  matchingMethod?: string | null;
 }> {
   try {
     // Get current week boundaries
@@ -384,7 +392,10 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
         themeGuess: null,
         canGuessTheme: false,
         hasGuessedToday: false,
-        isCorrectGuess: false
+        isCorrectGuess: false,
+        similarityScore: null,
+        confidencePercentage: null,
+        matchingMethod: null
       };
     }
 
@@ -405,17 +416,20 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
         themeGuess: null,
         canGuessTheme: false,
         hasGuessedToday: false,
-        isCorrectGuess: false
+        isCorrectGuess: false,
+        similarityScore: null,
+        confidencePercentage: null,
+        matchingMethod: null
       };
     }
 
     const completedSessions = sessions?.filter(s => s.is_complete) || [];
 
-    // Check today's theme attempt
+    // Check today's theme attempt with similarity data
     const today = new Date().toISOString().split('T')[0];
     const { data: todayAttempt, error: attemptError } = await supabase
       .from('theme_attempts')
-      .select('guess, is_correct')
+      .select('guess, is_correct, similarity_score, confidence_percentage, matching_method')
       .eq('player_id', playerId)
       .eq('theme', theme)
       .eq('attempt_date', today)
@@ -434,7 +448,11 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       themeGuess: todayAttempt?.guess || null,
       canGuessTheme: hasCompletedWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,
-      isCorrectGuess: todayAttempt?.is_correct || false
+      isCorrectGuess: todayAttempt?.is_correct || false,
+      // Include similarity data if available
+      similarityScore: todayAttempt?.similarity_score || null,
+      confidencePercentage: todayAttempt?.confidence_percentage || null,
+      matchingMethod: todayAttempt?.matching_method || null
     };
   } catch (error) {
     console.error('[getThemeProgress] Error:', error);
@@ -444,7 +462,10 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       themeGuess: null,
       canGuessTheme: false,
       hasGuessedToday: false,
-      isCorrectGuess: false
+      isCorrectGuess: false,
+      similarityScore: null,
+      confidencePercentage: null,
+      matchingMethod: null
     };
   }
 }

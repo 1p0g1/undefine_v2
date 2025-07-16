@@ -2,7 +2,7 @@
 import { ClueKey, CLUE_SEQUENCE, validateClueSequence } from '@/shared-types/src/clues';
 import { GuessRequest, GuessResponse } from '@/shared-types/src/game';
 import { normalizeText, normalizedEquals } from '@/src/utils/text';
-import { advancedFuzzyMatch } from '@/src/utils/advancedFuzzyMatcher';
+import { smartLocalFuzzyMatch } from '@/src/utils/smartLocalFuzzy';
 
 // Internal implementation that processes the guess
 const processGuess = async (
@@ -27,23 +27,21 @@ const processGuess = async (
   // Check for exact match
   const isCorrect = normalizedEquals(guess, targetWord);
   
-  // Calculate advanced fuzzy match analysis
-  const fuzzyResult = await advancedFuzzyMatch(normalizedGuess, normalizedTarget);
+  // Calculate smart local fuzzy match analysis (no API calls)
+  const fuzzyResult = smartLocalFuzzyMatch(normalizedGuess, normalizedTarget);
   const isFuzzy = fuzzyResult.isFuzzy;
   
   // Generate fuzzy positions for UI highlighting (legacy compatibility)
   const fuzzyPositions = isFuzzy ? generateFuzzyPositions(normalizedGuess, normalizedTarget) : [];
   
   // Log detailed fuzzy analysis
-  console.log('[FuzzyMatch] Advanced Analysis:', {
+  console.log('[FuzzyMatch] Smart Local Analysis:', {
     guess: normalizedGuess,
     target: normalizedTarget,
     isFuzzy,
     method: fuzzyResult.method,
     confidence: fuzzyResult.confidence,
     explanation: fuzzyResult.explanation,
-    distance: fuzzyResult.distance,
-    similarity: fuzzyResult.similarity,
     positions: fuzzyPositions
   });
   

@@ -1,99 +1,110 @@
-// Test script for enhanced leaderboard API
-// Tests both current-day (real-time) and historical (snapshot) queries
+// Leaderboard API Verification Test
+// Run with: node test_leaderboard_api.js
+
+const fetch = require('node-fetch');
+
+// UPDATED WITH YOUR BACKEND URL
+const BACKEND_URL = 'https://undefine-v2-back.vercel.app';
+const FRONTEND_URL = 'https://undefine-v2-front.vercel.app'; // Update with your frontend URL if needed
 
 async function testLeaderboardAPI() {
-  console.log('🧪 Testing Enhanced Leaderboard API\n');
-
-  const baseUrl = 'https://undefine-v2-front.vercel.app';
-  
-  try {
-    // Step 1: Test current day leaderboard (should use real-time data)
-    console.log('📊 Step 1: Testing current day leaderboard...');
-    
-    const currentResponse = await fetch(`${baseUrl}/api/leaderboard?wordId=test-word-id`);
-    if (!currentResponse.ok) {
-      console.log(`⚠️  Current day API returned ${currentResponse.status}: ${currentResponse.statusText}`);
-    } else {
-      const currentData = await currentResponse.json();
-      console.log(`✅ Current day API works:`, {
-        leaderboardCount: currentData.leaderboard?.length || 0,
-        totalEntries: currentData.totalEntries || 0,
-        source: 'real-time (expected)'
-      });
-    }
-
-    // Step 2: Test historical date leaderboard (should try snapshots)
-    console.log('\n📸 Step 2: Testing historical date leaderboard...');
-    
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayDate = yesterday.toISOString().split('T')[0];
-    
-    const historicalResponse = await fetch(`${baseUrl}/api/leaderboard?wordId=test-word-id&date=${yesterdayDate}`);
-    if (!historicalResponse.ok) {
-      console.log(`⚠️  Historical API returned ${historicalResponse.status}: ${historicalResponse.statusText}`);
-    } else {
-      const historicalData = await historicalResponse.json();
-      console.log(`✅ Historical API works:`, {
-        leaderboardCount: historicalData.leaderboard?.length || 0,
-        totalEntries: historicalData.totalEntries || 0,
-        date: yesterdayDate,
-        source: 'snapshot (expected) or fallback to real-time'
-      });
-    }
-
-    // Step 3: Test with player ID
-    console.log('\n👤 Step 3: Testing with player ID...');
-    
-    const playerResponse = await fetch(`${baseUrl}/api/leaderboard?wordId=test-word-id&playerId=test-player`);
-    if (!playerResponse.ok) {
-      console.log(`⚠️  Player API returned ${playerResponse.status}: ${playerResponse.statusText}`);
-    } else {
-      const playerData = await playerResponse.json();
-      console.log(`✅ Player API works:`, {
-        leaderboardCount: playerData.leaderboard?.length || 0,
-        playerRank: playerData.playerRank,
-        totalEntries: playerData.totalEntries || 0
-      });
-    }
-
-    // Step 4: Test finalization endpoint (if snapshot system is deployed)
-    console.log('\n📸 Step 4: Testing finalization endpoint...');
+    console.log('🔍 Testing Leaderboard API...\n');
     
     try {
-      const finalizeResponse = await fetch(`${baseUrl}/api/admin/finalize-daily-leaderboard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ autoFinalize: true })
-      });
-      
-      if (!finalizeResponse.ok) {
-        console.log(`⚠️  Finalization endpoint returned ${finalizeResponse.status}: ${finalizeResponse.statusText}`);
-        if (finalizeResponse.status === 404) {
-          console.log('📝 Note: Finalization endpoint not yet deployed');
+        // Test 1: Get current word
+        console.log('1. Testing /api/word endpoint...');
+        const wordResponse = await fetch(`${BACKEND_URL}/api/word`);
+        const wordData = await wordResponse.json();
+        console.log(`✅ Current word: ${wordData.word} (ID: ${wordData.id})`);
+        
+        const currentWordId = wordData.id;
+        
+        // Test 2: Get leaderboard for current word
+        console.log('\n2. Testing /api/leaderboard endpoint...');
+        const leaderboardResponse = await fetch(`${BACKEND_URL}/api/leaderboard?wordId=${currentWordId}`);
+        const leaderboardData = await leaderboardResponse.json();
+        
+        console.log(`✅ Leaderboard entries: ${leaderboardData.leaderboard.length}`);
+        console.log(`✅ Total entries: ${leaderboardData.totalEntries}`);
+        
+        if (leaderboardData.leaderboard.length > 0) {
+            console.log('📊 Top 3 entries:');
+            leaderboardData.leaderboard.slice(0, 3).forEach((entry, index) => {
+                console.log(`   ${index + 1}. ${entry.player_name} - ${entry.best_time}s, ${entry.guesses_used} guesses`);
+            });
         }
-      } else {
-        const finalizeData = await finalizeResponse.json();
-        console.log(`✅ Finalization endpoint works:`, {
-          success: finalizeData.success,
-          finalized: finalizeData.stats?.successCount || 0,
-          errors: finalizeData.stats?.errorCount || 0
+        
+        // Test 3: Check data structure
+        console.log('\n3. Validating data structure...');
+        if (leaderboardData.leaderboard.length > 0) {
+            const firstEntry = leaderboardData.leaderboard[0];
+            const requiredFields = ['player_id', 'player_name', 'rank', 'best_time', 'guesses_used', 'was_top_10'];
+            
+            const missingFields = requiredFields.filter(field => !(field in firstEntry));
+            if (missingFields.length === 0) {
+                console.log('✅ All required fields present');
+            } else {
+                console.log('❌ Missing fields:', missingFields);
+            }
+        }
+        
+        // Test 4: Test all-time leaderboard
+        console.log('\n4. Testing /api/leaderboard/all-time endpoint...');
+        const allTimeResponse = await fetch(`${BACKEND_URL}/api/leaderboard/all-time`);
+        const allTimeData = await allTimeResponse.json();
+        
+        if (allTimeData.success) {
+            console.log(`✅ All-time leaderboard loaded successfully`);
+            console.log(`✅ Total players: ${allTimeData.data.totalPlayers}`);
+            console.log(`✅ Total games: ${allTimeData.data.totalGames}`);
+            console.log(`✅ Top games leaders: ${allTimeData.data.topByGames.length}`);
+            console.log(`✅ Top streak leaders: ${allTimeData.data.topByStreaks.length}`);
+        } else {
+            console.log('❌ All-time leaderboard failed:', allTimeData.error);
+        }
+        
+        // Test 5: Test ranking consistency
+        console.log('\n5. Testing ranking consistency...');
+        const entries = leaderboardData.leaderboard;
+        let rankingConsistent = true;
+        
+        for (let i = 0; i < entries.length - 1; i++) {
+            const current = entries[i];
+            const next = entries[i + 1];
+            
+            // Check if ranking is consistent (better time = better rank)
+            if (current.best_time > next.best_time) {
+                console.log(`❌ Ranking inconsistency: Rank ${current.rank} (${current.best_time}s) > Rank ${next.rank} (${next.best_time}s)`);
+                rankingConsistent = false;
+            }
+        }
+        
+        if (rankingConsistent) {
+            console.log('✅ Ranking algorithm consistent');
+        }
+        
+        // Test 6: Test top 10 flag accuracy
+        console.log('\n6. Testing top 10 flag accuracy...');
+        let top10Accurate = true;
+        
+        entries.forEach(entry => {
+            const shouldBeTop10 = entry.rank <= 10;
+            if (entry.was_top_10 !== shouldBeTop10) {
+                console.log(`❌ Top 10 flag incorrect: Rank ${entry.rank}, flag: ${entry.was_top_10}`);
+                top10Accurate = false;
+            }
         });
-      }
-    } catch (finalizeError) {
-      console.log('⚠️  Finalization endpoint not available:', finalizeError.message);
+        
+        if (top10Accurate) {
+            console.log('✅ Top 10 flags accurate');
+        }
+        
+        console.log('\n🎉 API verification complete!');
+        
+    } catch (error) {
+        console.error('❌ API test failed:', error.message);
     }
-
-  } catch (error) {
-    console.error('❌ Test failed:', error.message);
-  }
 }
 
 // Run the test
-testLeaderboardAPI()
-  .then(() => {
-    console.log('\n🎉 Leaderboard API test completed!');
-  })
-  .catch(error => {
-    console.error('\n💥 Test failed:', error);
-  }); 
+testLeaderboardAPI(); 

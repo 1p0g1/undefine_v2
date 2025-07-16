@@ -13,6 +13,10 @@ interface ThemeStatus {
     canGuessTheme: boolean;
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
+    // Similarity tracking data
+    similarityScore?: number | null;
+    confidencePercentage?: number | null;
+    matchingMethod?: string | null;
   };
   weeklyThemedWords: Array<{
     id: string;
@@ -351,8 +355,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </div>
             )}
 
-            {/* Fuzzy Match Result Display */}
-            {lastGuessResult && lastGuessResult.fuzzyMatch && (
+            {/* Fuzzy Match Result Display - Show for fresh guess OR when user has already guessed today */}
+            {(lastGuessResult && lastGuessResult.fuzzyMatch) || (themeStatus.progress.hasGuessedToday && themeStatus.progress.themeGuess) ? (
               <div style={{
                 backgroundColor: '#f8f9ff',
                 border: '2px solid #e0e4ff',
@@ -366,38 +370,95 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     fontWeight: 'bold',
                     marginBottom: '0.5rem'
                   }}>
-                    Your guess: "{lastGuessResult.guess}"
+                    Your guess: "{lastGuessResult?.guess || themeStatus.progress.themeGuess}"
                   </div>
                   
-                  {/* Similarity Score Bar */}
-                  <div style={{
-                    width: '100%',
-                    height: '12px',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{
-                      width: `${getSimilarityBarWidth(lastGuessResult.fuzzyMatch.confidence)}%`,
-                      height: '100%',
-                      backgroundColor: getSimilarityBarColor(lastGuessResult.fuzzyMatch.confidence),
-                      transition: 'width 0.8s ease',
-                      borderRadius: '6px'
-                    }} />
-                  </div>
+                  {/* Show similarity score if available from fresh guess */}
+                  {lastGuessResult && lastGuessResult.fuzzyMatch && (
+                    <>
+                      {/* Similarity Score Bar */}
+                      <div style={{
+                        width: '100%',
+                        height: '12px',
+                        backgroundColor: '#e5e7eb',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        marginBottom: '1rem'
+                      }}>
+                        <div style={{
+                          width: `${getSimilarityBarWidth(lastGuessResult.fuzzyMatch.confidence)}%`,
+                          height: '100%',
+                          backgroundColor: getSimilarityBarColor(lastGuessResult.fuzzyMatch.confidence),
+                          transition: 'width 0.8s ease',
+                          borderRadius: '6px'
+                        }} />
+                      </div>
+                      
+                      <div style={{
+                        fontSize: '0.9rem',
+                        color: '#6b7280',
+                        marginBottom: '0.5rem'
+                      }}>
+                        Similarity: {lastGuessResult.fuzzyMatch.confidence}%
+                      </div>
+                    </>
+                  )}
                   
-                  <div style={{
-                    fontSize: '0.9rem',
-                    color: '#6b7280',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Similarity: {lastGuessResult.fuzzyMatch.confidence}%
-                  </div>
+                  {/* Show similarity score for already guessed users */}
+                  {themeStatus.progress.hasGuessedToday && !lastGuessResult && (
+                    <>
+                      {/* Show similarity score if available from stored data */}
+                      {themeStatus.progress.confidencePercentage !== null && themeStatus.progress.confidencePercentage !== undefined && (
+                        <>
+                          {/* Similarity Score Bar for stored data */}
+                          <div style={{
+                            width: '100%',
+                            height: '12px',
+                            backgroundColor: '#e5e7eb',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            marginBottom: '1rem'
+                          }}>
+                            <div style={{
+                              width: `${getSimilarityBarWidth(themeStatus.progress.confidencePercentage)}%`,
+                              height: '100%',
+                              backgroundColor: getSimilarityBarColor(themeStatus.progress.confidencePercentage),
+                              transition: 'width 0.8s ease',
+                              borderRadius: '6px'
+                            }} />
+                          </div>
+                          
+                          <div style={{
+                            fontSize: '0.9rem',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}>
+                            Similarity: {themeStatus.progress.confidencePercentage}%
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Fallback when no similarity data available */}
+                      {(themeStatus.progress.confidencePercentage === null || themeStatus.progress.confidencePercentage === undefined) && (
+                        <div style={{
+                          fontSize: '0.9rem',
+                          color: '#6b7280',
+                          marginBottom: '0.5rem',
+                          textAlign: 'center',
+                          fontStyle: 'italic'
+                        }}>
+                          {themeStatus.progress.isCorrectGuess ? 
+                            '🎯 Correct guess! Come back tomorrow for a new theme.' : 
+                            '📊 Use this guess to infer the theme! Similarity scores now saved for future visits.'
+                          }
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
-                {/* Funny Feedback Message */}
-                {(() => {
+                {/* Funny Feedback Message - only show for fresh guesses with similarity data */}
+                {lastGuessResult && lastGuessResult.fuzzyMatch && (() => {
                   const feedbackMessage = getThemeFeedbackMessage(
                     lastGuessResult.fuzzyMatch.confidence,
                     lastGuessResult.actualTheme,
@@ -415,8 +476,43 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     </div>
                   );
                 })()}
+                
+                {/* Enhanced feedback for already guessed users */}
+                {themeStatus.progress.hasGuessedToday && !lastGuessResult && (() => {
+                  // Use stored similarity data for better feedback if available
+                  if (themeStatus.progress.confidencePercentage !== null && themeStatus.progress.confidencePercentage !== undefined) {
+                    const feedbackMessage = getThemeFeedbackMessage(
+                      themeStatus.progress.confidencePercentage,
+                      themeStatus.progress.isCorrectGuess ? 'theme revealed' : undefined,
+                      themeStatus.progress.matchingMethod as any
+                    );
+                    
+                    return (
+                      <div style={{
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        color: feedbackMessage.isCorrect ? '#059669' : '#dc2626'
+                      }}>
+                        {feedbackMessage.emoji} {feedbackMessage.isCorrect ? 'Correct!' : feedbackMessage.message}
+                      </div>
+                    );
+                  }
+                  
+                  // Fallback to simple feedback
+                  return (
+                    <div style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      color: themeStatus.progress.isCorrectGuess ? '#059669' : '#dc2626'
+                    }}>
+                      {themeStatus.progress.isCorrectGuess ? '🎯 Correct!' : '❌ Try again tomorrow'}
+                    </div>
+                  );
+                })()}
               </div>
-            )}
+            ) : null}
 
             {/* Theme Guess Form or Status */}
             {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme ? (
