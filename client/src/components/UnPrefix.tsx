@@ -6,8 +6,8 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
-  // Restore original sizing - the mobile responsiveness should come from the DEFINE boxes
-  const baseSize = scaled ? '2.8rem' : '3.2rem';
+  // Reduce base size to fit better on mobile - make it smaller overall
+  const baseSize = scaled ? '2.4rem' : '2.8rem';
   
   const containerStyle = {
     width: baseSize,
@@ -22,7 +22,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) =
     fontStyle: 'italic',
     fontWeight: 800,
     color: '#1a237e',
-    fontSize: scaled ? '1.3rem' : '1.5rem',
+    fontSize: scaled ? '1.1rem' : '1.3rem',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
