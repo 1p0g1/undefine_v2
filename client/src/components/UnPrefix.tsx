@@ -6,40 +6,32 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
-  // Better mobile-responsive sizing
-  const baseSize = scaled 
-    ? 'clamp(2.4rem, 6vw, 2.8rem)' 
-    : 'clamp(2.6rem, 6.5vw, 3.2rem)';
+  // Restore original sizing - the mobile responsiveness should come from the DEFINE boxes
+  const baseSize = scaled ? '2.8rem' : '3.2rem';
   
   const containerStyle = {
     width: baseSize,
     height: baseSize,
-    borderRadius: '0.4rem', // Slightly smaller radius for mobile
+    borderRadius: '0.5rem',
     backgroundColor: '#f8f9ff',
-    border: '2px solid #1a237e', // Thinner border for mobile
+    border: '3px solid #1a237e',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontFamily: 'var(--font-primary)',
     fontStyle: 'italic',
-    fontWeight: 700, // Slightly lighter for mobile
+    fontWeight: 800,
     color: '#1a237e',
-    fontSize: scaled 
-      ? 'clamp(1rem, 3.5vw, 1.3rem)' 
-      : 'clamp(1.1rem, 4vw, 1.5rem)', // More conservative sizing
+    fontSize: scaled ? '1.3rem' : '1.5rem',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
     // Transform to diamond shape - rotate 45 degrees
     transform: scaled ? 'rotate(45deg) scale(0.9)' : 'rotate(45deg)',
-    // Reduced shadow for mobile performance
-    boxShadow: '0 2px 8px rgba(26, 35, 126, 0.12), 0 0 0 1px rgba(26, 35, 126, 0.08)',
+    boxShadow: '0 4px 12px rgba(26, 35, 126, 0.15), 0 0 0 1px rgba(26, 35, 126, 0.1)',
     transition: 'all 0.2s ease-in-out',
     // Add pointer cursor when clickable
     cursor: onClick ? 'pointer' : 'default',
-    // Ensure it doesn't overflow on mobile
-    maxWidth: '100%',
-    maxHeight: '100%',
     boxSizing: 'border-box' as const
   };
 
