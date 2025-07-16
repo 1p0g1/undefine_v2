@@ -33,6 +33,9 @@ const useGame = () => {
     };
   });
 
+  // Track if the current game was restored from a previous session
+  const [isRestoredGame, setIsRestoredGame] = useState(false);
+
   // Track guess status for each box (max 6)
   const [guessStatus, setGuessStatus] = useState<
     ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[]
@@ -76,8 +79,11 @@ const useGame = () => {
 
   const startNewGame = useCallback(async () => {
     try {
-      const newState = await gameService.initializeGame();
+      const result = await gameService.initializeGame();
+      const { isRestoredGame: restored, ...newState } = result;
+      
       setGameState(newState);
+      setIsRestoredGame(restored);
       
       // Reconstruct guess status if this is a restored completed game
       if (newState.isComplete && newState.guesses.length > 0) {
@@ -118,6 +124,7 @@ const useGame = () => {
     try {
       const newState = await gameService.startNewGame();
       setGameState(newState);
+      setIsRestoredGame(false); // New games are never restored
       setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setFuzzyMatchCount(0);
       setShowLeaderboard(false);
@@ -189,7 +196,9 @@ const useGame = () => {
     isLeaderboardLoading,
     leaderboardError,
     scoreDetails,
-    fetchLeaderboard
+    fetchLeaderboard,
+    isRestoredGame, // Add this to the return value
+    wasCompletedInSession: () => gameService.wasCompletedInSession()
   };
 };
 

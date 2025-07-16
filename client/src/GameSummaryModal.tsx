@@ -204,7 +204,9 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        zIndex: 50
+        zIndex: 50,
+        padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
+        boxSizing: 'border-box'
       }}
       onClick={onClose}
     >
@@ -217,27 +219,40 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           backgroundColor: 'white',
           borderRadius: '0.5rem',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          padding: '2rem',
+          padding: 'clamp(1rem, 4vw, 2rem)',
           width: '100%',
-          maxWidth: '28rem',
+          maxWidth: 'min(28rem, 90vw)',
           position: 'relative',
-          maxHeight: '90vh',
-          overflowY: 'auto'
+          maxHeight: 'min(90vh, calc(100vh - 2rem))',
+          overflowY: 'auto',
+          boxSizing: 'border-box'
         }}
         onClick={e => e.stopPropagation()}
       >
         <button
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
           onClick={onClose}
-          style={{ fontFamily: 'var(--font-primary)' }}
+          style={{ 
+            fontFamily: 'var(--font-primary)',
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            background: 'none',
+            border: 'none',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            color: '#9ca3af',
+            padding: '0.25rem',
+            zIndex: 1
+          }}
         >
-          &times;
+          ×
         </button>
         <div
           style={{
             fontFamily: 'var(--font-primary)',
             fontWeight: 700,
-            fontSize: '1.45rem',
+            fontSize: 'clamp(1.2rem, 4vw, 1.45rem)',
             textAlign: 'center',
             marginBottom: '1rem',
             color: 'var(--color-primary)',
@@ -254,16 +269,16 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.18rem, 0.7vw, 0.25rem)',
-            transform: 'scale(0.82)',
+            gap: 'clamp(0.15rem, 0.6vw, 0.22rem)',
+            transform: 'scale(clamp(0.7, 2vw, 0.82))',
             transformOrigin: 'center'
           }}
         >
           {/* Un· enhanced design with overlap effect */}
-          <UnPrefix scaled={false} onClick={handleOpenThemeModal} />
+          <UnPrefix scaled={true} onClick={handleOpenThemeModal} />
           <div style={{ 
             display: 'flex', 
-            gap: 'clamp(0.08rem, 0.25vw, 0.12rem)',
+            gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',
             flex: '0 0 auto'
           }}>
             <DefineBoxes

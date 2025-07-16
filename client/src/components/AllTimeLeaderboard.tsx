@@ -165,7 +165,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 1000,
+        padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
+        boxSizing: 'border-box'
       }}
       onClick={onClose}
     >
@@ -174,11 +176,12 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
           backgroundColor: '#fff',
           borderRadius: '0.75rem',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-          width: '90vw',
-          maxWidth: '28rem',
-          maxHeight: '80vh',
+          width: '100%',
+          maxWidth: 'min(28rem, 90vw)',
+          maxHeight: 'min(80vh, calc(100vh - 2rem))',
           overflow: 'hidden',
-          fontFamily: 'var(--font-primary)'
+          fontFamily: 'var(--font-primary)',
+          boxSizing: 'border-box'
         }}
         onClick={e => e.stopPropagation()}
       >

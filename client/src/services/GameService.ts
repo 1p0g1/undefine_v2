@@ -10,8 +10,11 @@ const STORAGE_KEY = 'undefine_game_state';
 class GameService {
   private static instance: GameService;
   private currentState: GameSessionState | null = null;
+  private sessionId: string; // Track current session
+  private completedInSession: boolean = false; // Track if game was completed in this session
 
   private constructor() {
+    this.sessionId = crypto.randomUUID(); // Generate unique session ID
     this.loadState();
   }
 
@@ -61,7 +64,12 @@ class GameService {
   private saveState(): void {
     try {
       if (this.currentState) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.currentState));
+        const stateToSave = {
+          ...this.currentState,
+          sessionId: this.sessionId,
+          completedInSession: this.completedInSession
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
       }
     } catch (error) {
       console.error('[GameService] Failed to save state:', error);
@@ -81,7 +89,7 @@ class GameService {
    * Initialize the game - either restore completed state or start new game
    * This should be called on app startup instead of startNewGame
    */
-  public async initializeGame(): Promise<GameSessionState> {
+  public async initializeGame(): Promise<GameSessionState & { isRestoredGame: boolean }> {
     try {
       console.log('[GameService] Initializing game...');
       
@@ -95,22 +103,46 @@ class GameService {
         // If the saved state is for today's word, restore it
         if (this.currentState.wordId === todaysWordData.word.id) {
           console.log('[GameService] Saved state is for today\'s word, restoring completed game');
-          return this.currentState;
+          
+          // Check if this was completed in a previous session
+          const savedData = localStorage.getItem(STORAGE_KEY);
+          const savedSessionId = savedData ? JSON.parse(savedData).sessionId : null;
+          const isRestoredGame = savedSessionId !== this.sessionId;
+          
+          // Reset completion flag for restored games
+          this.completedInSession = false;
+          
+          return {
+            ...this.currentState,
+            isRestoredGame
+          };
         } else {
           console.log('[GameService] Saved state is for different word, starting new game');
           // Clear old state and start new game
           this.clearState();
-          return this.startNewGame();
+          const newState = await this.startNewGame();
+          return {
+            ...newState,
+            isRestoredGame: false
+          };
         }
       }
       
       // If no saved state or it's not complete, start new game
       console.log('[GameService] No completed state found, starting new game');
-      return this.startNewGame();
+      const newState = await this.startNewGame();
+      return {
+        ...newState,
+        isRestoredGame: false
+      };
     } catch (error) {
       console.error('[GameService] Failed to initialize game:', error);
       // Fallback to starting new game
-      return this.startNewGame();
+      const newState = await this.startNewGame();
+      return {
+        ...newState,
+        isRestoredGame: false
+      };
     }
   }
 
@@ -120,6 +152,9 @@ class GameService {
       
       // Clear any previous state when starting a new game
       this.clearState();
+      
+      // Reset session completion flag
+      this.completedInSession = false;
       
       const data = await apiClient.getNewWord();
 
@@ -216,16 +251,18 @@ class GameService {
         score: response.score?.score ?? null
       };
 
-      // Always save state (including completed state)
-      this.saveState();
-      
+      // Mark as completed in this session if game is over
       if (response.gameOver) {
-        console.log('[GameService] Game completed:', {
+        this.completedInSession = true;
+        console.log('[GameService] Game completed in current session:', {
           isWon: response.isCorrect,
           score: response.score?.score
         });
       }
 
+      // Always save state (including completed state)
+      this.saveState();
+      
       return response;
     } catch (error) {
       console.error('[GameService] Failed to submit guess:', error);
@@ -239,6 +276,33 @@ class GameService {
 
   public isGameActive(): boolean {
     return !!this.currentState && !this.currentState.isComplete;
+  }
+
+  /**
+   * Check if the current game was completed in this session
+   */
+  public wasCompletedInSession(): boolean {
+    console.log('[GameService] wasCompletedInSession called:', {
+      completedInSession: this.completedInSession,
+      sessionId: this.sessionId,
+      currentState: this.currentState ? {
+        isComplete: this.currentState.isComplete,
+        isWon: this.currentState.isWon,
+        gameId: this.currentState.gameId
+      } : null
+    });
+    return this.completedInSession;
+  }
+
+  /**
+   * Get debug info about the current session
+   */
+  public getDebugInfo() {
+    return {
+      sessionId: this.sessionId,
+      completedInSession: this.completedInSession,
+      currentState: this.currentState
+    };
   }
 }
 

@@ -30,7 +30,9 @@ function App() {
     isLeaderboardLoading,
     leaderboardError,
     scoreDetails,
-    fetchLeaderboard
+    fetchLeaderboard,
+    isRestoredGame,
+    wasCompletedInSession
   } = useGame();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
@@ -78,11 +80,20 @@ function App() {
     startNewGame();
   }, [startNewGame]);
 
-  // New effect to handle restored completed games
+  // Updated effect to handle restored completed games - DON'T show modal for restored games
   useEffect(() => {
-    if (gameState.isComplete && !gameStarted) {
-      // This is a restored completed game from localStorage
-      console.log('[App] Restored completed game, showing summary modal');
+    console.log('[App] Restoration effect triggered:', {
+      isComplete: gameState.isComplete,
+      gameStarted,
+      isRestoredGame,
+      gameId: gameState.gameId,
+      wordText: gameState.wordText,
+      wasCompletedInSession: wasCompletedInSession()
+    });
+    
+    if (gameState.isComplete && !gameStarted && !isRestoredGame) {
+      // This is a game that was completed in the current session (not restored)
+      console.log('[App] Game completed in current session, showing summary modal');
       setGameStarted(true); // Mark as started so UI shows properly
       setShowSummary(true);
       setCanReopenSummary(false);
@@ -91,11 +102,17 @@ function App() {
         // We don't have the exact timer value, but we can show the modal
         setTimer(0);
       }
+    } else if (gameState.isComplete && !gameStarted && isRestoredGame) {
+      // This is a restored game - just mark as started but don't show modal
+      console.log('[App] Restored completed game, NOT showing summary modal');
+      setGameStarted(true);
+      setCanReopenSummary(true); // Allow user to manually reopen if desired
     }
-  }, [gameState.isComplete, gameState.gameId, gameStarted]);
+  }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession]);
 
   useEffect(() => {
-    if (gameState.isComplete && gameStarted) {
+    if (gameState.isComplete && gameStarted && wasCompletedInSession()) {
+      // Only show modal with delay if game was completed in this session
       if (timerRef.current) clearInterval(timerRef.current);
       summaryTimeoutRef.current = setTimeout(() => {
         setShowSummary(true);
@@ -110,7 +127,7 @@ function App() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameState.isComplete, gameStarted]);
+  }, [gameState.isComplete, gameStarted, wasCompletedInSession]);
 
   useEffect(() => {
     return () => {
@@ -180,13 +197,32 @@ function App() {
 
   // Handler to show leaderboard modal (View Results)
   const showLeaderboardModal = useCallback(async () => {
+    console.log('[App] showLeaderboardModal called with state:', {
+      wordId: gameState.wordId,
+      isComplete: gameState.isComplete,
+      isWon: gameState.isWon,
+      guessesLength: gameState.guesses.length,
+      isRestoredGame,
+      wasCompletedInSession: wasCompletedInSession()
+    });
+    
     if (!gameState.wordId) return;
+    
+    // Only show modal if game was actually completed (current session or restored)
+    if (!gameState.isComplete) {
+      console.log('[App] Attempted to show leaderboard modal for incomplete game - preventing');
+      setToastMessage('Complete today\'s word to see results!');
+      setShowToast(true);
+      return;
+    }
+    
+    console.log('[App] Showing leaderboard modal for completed game');
     setShowSummary(true);
     setCanReopenSummary(false);
     
     // Always fetch leaderboard data when modal is opened
     await fetchLeaderboard();
-  }, [gameState.wordId, fetchLeaderboard]);
+  }, [gameState.wordId, gameState.isComplete, gameState.isWon, gameState.guesses.length, isRestoredGame, wasCompletedInSession, fetchLeaderboard]);
 
   // Handler to show all-time leaderboard
   const handleShowAllTimeLeaderboard = useCallback(() => {
@@ -294,15 +330,16 @@ function App() {
     <div
       className="flex flex-col items-center text-center w-full min-h-screen main-container"
       style={{ 
-        paddingTop: '2rem',
-        paddingBottom: 32,
+        paddingTop: 'clamp(1rem, 4vw, 2rem)',
+        paddingBottom: 'clamp(1rem, 4vw, 2rem)',
         paddingLeft: 'clamp(0.5rem, 2vw, 1rem)',
         paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
-        minHeight: '100vh',
+        minHeight: '100dvh', // Dynamic viewport height for mobile
         width: '100%',
         maxWidth: 'min(100vw, 28rem)',
         margin: '0 auto',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        overflowX: 'hidden' // Prevent horizontal scrolling
       }}
     >
       {/* Timer Badge - Centered at top */}
@@ -358,22 +395,24 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
+          gap: 'clamp(0.08rem, 0.3vw, 0.15rem)',
           width: '100%',
           maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
-          minHeight: 'clamp(3.2rem, 8.5vw, 4rem)',
-          padding: '0 clamp(0.5rem, 2vw, 1rem)',
-          boxSizing: 'border-box'
+          minHeight: 'clamp(3rem, 8vw, 4rem)',
+          padding: '0 clamp(0.25rem, 1vw, 0.5rem)',
+          boxSizing: 'border-box',
+          // Ensure it fits on mobile
+          minWidth: 0
         }}
       >
         {/* Un· enhanced design */}
         <UnPrefix onClick={handleThemeClick} />
         <div className="define-boxes" style={{ 
           display: 'flex', 
-          gap: 'clamp(0.05rem, 0.2vw, 0.1rem)',
+          gap: 'clamp(0.06rem, 0.25vw, 0.12rem)',
           flex: '0 0 auto',
           flexShrink: 0
         }}>

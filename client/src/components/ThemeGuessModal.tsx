@@ -211,8 +211,33 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={handleClose} style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(10, 10, 10, 0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
+      boxSizing: 'border-box'
+    }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{
+        background: '#fdfbf6',
+        borderRadius: '1rem',
+        padding: 'clamp(1rem, 4vw, 2rem)',
+        width: '100%',
+        maxWidth: 'min(480px, 90vw)',
+        maxHeight: 'min(90vh, calc(100vh - 2rem))',
+        overflowY: 'auto',
+        boxShadow: '0 0 20px rgba(0, 0, 0, 0.1)',
+        color: '#1a237e',
+        fontSize: '1rem',
+        boxSizing: 'border-box'
+      }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
             🎯 Theme of the Week

@@ -162,7 +162,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        zIndex: 60
+        zIndex: 60,
+        padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
+        boxSizing: 'border-box'
       }}
       onClick={onClose}
     >
@@ -173,11 +175,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           backgroundColor: 'white',
           borderRadius: '0.75rem',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          padding: '2rem',
+          padding: 'clamp(1rem, 4vw, 2rem)',
           width: '100%',
-          maxWidth: '24rem',
+          maxWidth: 'min(24rem, 90vw)',
           position: 'relative',
           color: 'var(--color-primary, #1a237e)',
+          maxHeight: 'min(90vh, calc(100vh - 2rem))',
+          overflowY: 'auto',
+          boxSizing: 'border-box'
         }}
         onClick={e => e.stopPropagation()}
         tabIndex={-1}

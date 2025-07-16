@@ -664,5 +664,25 @@ Implemented dynamic visual design for the "Un·" prefix that changes appearance 
 - **Status**: PROPOSED 
 - **Action**: AI fuzzy matching improvements, multiple daily words
 
+---
+
+## ✅ **Theme Similarity Score Tracking (January 2025)** **COMPLETED**
+
+**Issue**: Users lost their theme similarity scores when returning to the theme modal after guessing, seeing only "You've already guessed today!" instead of their score and feedback.
+
+**Solution Implemented**:
+1. **Database Enhancement**: Added `similarity_score`, `confidence_percentage`, and `matching_method` columns to `theme_attempts` table
+2. **Backend Updates**: Modified `submitThemeAttempt()` and `getThemeProgress()` to store and retrieve similarity data
+3. **Frontend Enhancement**: Updated `ThemeGuessModal.tsx` to display stored similarity scores and feedback messages for returning users
+
+**Files Modified**:
+- `supabase/migrations/20250115000001_add_similarity_tracking_to_theme_attempts.sql` - Database schema update
+- `src/game/theme.ts` - Backend logic for storing/retrieving similarity data
+- `client/src/components/ThemeGuessModal.tsx` - Frontend display of persistent similarity scores
+
+**Result**: ✅ **Users now see persistent similarity scores and contextual feedback when returning to theme modal**
+
+---
+
 ### 🔄 NO OUTSTANDING WORK
 **The daily snapshots system is production-ready and fully functional.** All core features are working as designed.
