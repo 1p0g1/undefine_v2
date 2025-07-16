@@ -71,24 +71,24 @@ html {
 }
 
 .define-box {
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.2rem;
+  height: 2.2rem;
   padding: 0.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px solid var(--color-primary);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
   font-family: var(--font-primary);
-  font-size: 1.7rem;
+  font-weight: 600;
+  font-size: 1.1rem;
   color: var(--color-primary);
-  background: #fff;
-  cursor: default;
-  transition: all 0.2s ease;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(26, 35, 126, 0.1);
   box-sizing: border-box;
-  border-radius: 0.4rem;
-  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.04);
+  flex-shrink: 0;
 }
 
 .define-box:hover:not(.incorrect):not(.correct) {
@@ -386,9 +386,9 @@ h6 {
     font-size: 1.1rem;
   }
   .define-box {
-    width: 2.2rem;
-    height: 2.2rem;
-    font-size: 1.1rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 1rem;
     padding: 0.3rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes */
@@ -397,9 +397,9 @@ h6 {
     margin-right: 0.15rem;
   }
   .un-prefix > div {
-    width: 2.2rem !important;
-    height: 2.2rem !important;
-    font-size: 1.05rem !important;
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    font-size: 0.95rem !important;
   }
   .guess-input {
     font-size: 1.1rem;
@@ -452,15 +452,15 @@ h6 {
 /* iPhone 12 Pro and similar */
 @media (max-width: 390px) {
   .define-box {
-    width: 2.1rem;
-    height: 2.1rem;
-    font-size: 1.05rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.95rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes */
   .un-prefix > div {
-    width: 2.1rem !important;
-    height: 2.1rem !important;
-    font-size: 1rem !important;
+    width: 1.8rem !important;
+    height: 1.8rem !important;
+    font-size: 0.9rem !important;
   }
   .define-header {
     gap: 0.12rem;
@@ -477,15 +477,15 @@ h6 {
 /* Even smaller screens */
 @media (max-width: 380px) {
   .define-box {
-    width: 2rem;
-    height: 2rem;
-    font-size: 1rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.9rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes */
   .un-prefix > div {
-    width: 2rem !important;
-    height: 2rem !important;
-    font-size: 0.95rem !important;
+    width: 1.7rem !important;
+    height: 1.7rem !important;
+    font-size: 0.85rem !important;
   }
   .define-header {
     gap: 0.1rem;
@@ -502,15 +502,15 @@ h6 {
 /* Very small screens */
 @media (max-width: 360px) {
   .define-box {
-    width: 1.8rem;
-    height: 1.8rem;
-    font-size: 0.9rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.85rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes */
   .un-prefix > div {
-    width: 1.8rem !important;
-    height: 1.8rem !important;
-    font-size: 0.85rem !important;
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+    font-size: 0.8rem !important;
   }
   .define-header {
     gap: 0.08rem;

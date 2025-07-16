@@ -6,8 +6,8 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
-  // Reduce base size to fit better on mobile - make it smaller overall
-  const baseSize = scaled ? '2.4rem' : '2.8rem';
+  // Significantly reduce size to prevent mobile cropping
+  const baseSize = scaled ? '2.0rem' : '2.2rem';
   
   const containerStyle = {
     width: baseSize,
@@ -22,7 +22,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) =
     fontStyle: 'italic',
     fontWeight: 800,
     color: '#1a237e',
-    fontSize: scaled ? '1.1rem' : '1.3rem',
+    fontSize: scaled ? '0.9rem' : '1.1rem',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
