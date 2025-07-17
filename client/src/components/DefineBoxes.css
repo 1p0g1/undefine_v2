@@ -391,15 +391,15 @@ h6 {
     font-size: 1rem;
     padding: 0.3rem;
   }
-  /* Scale UN diamond proportionally with DEFINE boxes */
+  /* Scale UN diamond proportionally with DEFINE boxes - make it slightly larger */
   .un-prefix {
     flex-shrink: 0;
     margin-right: 0.15rem;
   }
   .un-prefix > div {
-    width: 1.9rem !important;
-    height: 1.9rem !important;
-    font-size: 0.95rem !important;
+    width: 2.0rem !important;
+    height: 2.0rem !important;
+    font-size: 1.0rem !important;
   }
   .guess-input {
     font-size: 1.1rem;
@@ -456,11 +456,11 @@ h6 {
     height: 1.8rem;
     font-size: 0.95rem;
   }
-  /* Scale UN diamond proportionally with DEFINE boxes */
+  /* Scale UN diamond proportionally with DEFINE boxes - make it slightly larger */
   .un-prefix > div {
-    width: 1.8rem !important;
-    height: 1.8rem !important;
-    font-size: 0.9rem !important;
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    font-size: 0.95rem !important;
   }
   .define-header {
     gap: 0.12rem;
@@ -481,11 +481,11 @@ h6 {
     height: 1.7rem;
     font-size: 0.9rem;
   }
-  /* Scale UN diamond proportionally with DEFINE boxes */
+  /* Scale UN diamond proportionally with DEFINE boxes - make it slightly larger */
   .un-prefix > div {
-    width: 1.7rem !important;
-    height: 1.7rem !important;
-    font-size: 0.85rem !important;
+    width: 1.8rem !important;
+    height: 1.8rem !important;
+    font-size: 0.9rem !important;
   }
   .define-header {
     gap: 0.1rem;
@@ -506,11 +506,11 @@ h6 {
     height: 1.6rem;
     font-size: 0.85rem;
   }
-  /* Scale UN diamond proportionally with DEFINE boxes */
+  /* Scale UN diamond proportionally with DEFINE boxes - make it slightly larger */
   .un-prefix > div {
-    width: 1.6rem !important;
-    height: 1.6rem !important;
-    font-size: 0.8rem !important;
+    width: 1.7rem !important;
+    height: 1.7rem !important;
+    font-size: 0.85rem !important;
   }
   .define-header {
     gap: 0.08rem;

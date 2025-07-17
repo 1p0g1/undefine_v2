@@ -6,8 +6,8 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
-  // Significantly reduce size to prevent mobile cropping
-  const baseSize = scaled ? '2.0rem' : '2.2rem';
+  // Make UN diamond slightly larger than DEFINE boxes (2.4rem vs 2.2rem)
+  const baseSize = scaled ? '2.1rem' : '2.4rem';
   
   const containerStyle = {
     width: baseSize,
@@ -22,7 +22,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) =
     fontStyle: 'italic',
     fontWeight: 800,
     color: '#1a237e',
-    fontSize: scaled ? '0.9rem' : '1.1rem',
+    fontSize: scaled ? '1.0rem' : '1.2rem',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
