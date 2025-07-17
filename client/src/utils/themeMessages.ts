@@ -122,10 +122,18 @@ export function getThemeFeedbackMessage(
  * Get similarity bar color based on confidence score
  */
 export function getSimilarityBarColor(confidence: number): string {
-  if (confidence >= 70) return '#059669'; // Green for winning scores
-  if (confidence >= 60) return '#d97706'; // Orange for warm
-  if (confidence >= 40) return '#dc2626'; // Red for cold
-  return '#6b7280'; // Gray for very cold
+  if (confidence >= 70) return '#059669'; // Green for high similarity scores
+  if (confidence >= 50) return '#d97706'; // Orange for moderate similarity (50-70%)
+  return '#dc2626'; // Red for low similarity (≤50%)
+}
+
+/**
+ * Get similarity bar color with override for correct answers
+ * This ensures correct answers are always green regardless of confidence
+ */
+export function getSimilarityBarColorWithCorrect(confidence: number, isCorrect: boolean): string {
+  if (isCorrect) return '#059669'; // Always green for correct answers
+  return getSimilarityBarColor(confidence);
 }
 
 /**
