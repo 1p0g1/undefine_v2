@@ -73,6 +73,13 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   const endIndex = startIndex + ENTRIES_PER_PAGE;
   const currentPageEntries = leaderboard.slice(startIndex, endIndex);
 
+  // Theme data state for UN diamond coloring
+  const [themeGuessData, setThemeGuessData] = useState<{
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  } | undefined>(undefined);
+
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,6 +110,48 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
       }
     }
   }, [open, onOpenThemeModal]);
+
+  // Show nickname prompt after 3 seconds if no nickname is set
+  useEffect(() => {
+    if (!open) return;
+    
+    const hasSkippedNickname = localStorage.getItem('hasSkippedNickname');
+    const hasCustomNickname = localStorage.getItem('hasCustomNickname');
+    
+    if (!hasSkippedNickname && !hasCustomNickname) {
+      const timer = setTimeout(() => {
+        setShowNicknamePrompt(true);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  // Load theme data for UN diamond coloring
+  useEffect(() => {
+    if (!open) return;
+    
+    const loadThemeData = async () => {
+      try {
+        const playerId = getPlayerId();
+        if (!playerId) return;
+        
+        const themeStatus = await apiClient.getThemeStatus(playerId);
+        if (themeStatus && themeStatus.progress) {
+          setThemeGuessData({
+            hasGuessedToday: themeStatus.progress.hasGuessedToday,
+            isCorrectGuess: themeStatus.progress.isCorrectGuess,
+            confidencePercentage: themeStatus.progress.confidencePercentage || null
+          });
+        }
+      } catch (error) {
+        console.log('[GameSummaryModal] Failed to load theme data for UN diamond coloring:', error);
+        // Don't show error for this background load
+      }
+    };
+
+    loadThemeData();
+  }, [open]);
 
   // Pre-load theme data in background for better performance
   const preloadThemeData = async () => {
@@ -275,7 +324,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           }}
         >
           {/* Un· enhanced design with overlap effect */}
-          <UnPrefix scaled={true} onClick={handleOpenThemeModal} />
+          <UnPrefix scaled={true} onClick={handleOpenThemeModal} themeGuessData={themeGuessData} />
           <div style={{ 
             display: 'flex', 
             gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',

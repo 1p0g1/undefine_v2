@@ -1,34 +1,65 @@
 import React from 'react';
+import { getUnDiamondColor } from '../utils/themeMessages';
 
 interface UnPrefixProps {
   scaled?: boolean; // For use in GameSummaryModal with transform scale
   onClick?: () => void;
+  // Theme guess color-coding props
+  themeGuessData?: {
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  };
 }
 
-export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) => {
+export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, themeGuessData }) => {
   // Make UN diamond significantly larger than DEFINE boxes (3.0rem vs 2.2rem)
   const baseSize = scaled ? '2.6rem' : '3.0rem';
+  
+  // Determine diamond color based on theme guess results
+  const getDiamondColors = () => {
+    if (themeGuessData?.hasGuessedToday) {
+      const themeColor = getUnDiamondColor(
+        themeGuessData.confidencePercentage,
+        themeGuessData.isCorrectGuess
+      );
+      return {
+        borderColor: themeColor,
+        backgroundColor: themeColor + '20', // Add 20% opacity
+        textColor: themeColor
+      };
+    }
+    
+    // Default colors when no theme guess made
+    return {
+      borderColor: '#1a237e',
+      backgroundColor: '#f8f9ff',
+      textColor: '#1a237e'
+    };
+  };
+
+  const colors = getDiamondColors();
   
   const containerStyle = {
     width: baseSize,
     height: baseSize,
     borderRadius: '0.5rem',
-    backgroundColor: '#f8f9ff',
-    border: '3px solid #1a237e',
+    backgroundColor: colors.backgroundColor,
+    border: `3px solid ${colors.borderColor}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontFamily: 'var(--font-primary)',
     fontStyle: 'italic',
     fontWeight: 800,
-    color: '#1a237e',
+    color: colors.textColor,
     fontSize: scaled ? '1.2rem' : '1.4rem',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
     // Transform to diamond shape - rotate 45 degrees
     transform: scaled ? 'rotate(45deg) scale(0.9)' : 'rotate(45deg)',
-    boxShadow: '0 4px 12px rgba(26, 35, 126, 0.15), 0 0 0 1px rgba(26, 35, 126, 0.1)',
+    boxShadow: `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
     transition: 'all 0.2s ease-in-out',
     // Add pointer cursor when clickable
     cursor: onClick ? 'pointer' : 'default',
@@ -44,7 +75,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick }) =
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
       e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.93)' : 'rotate(45deg) scale(1.03)';
-      e.currentTarget.style.boxShadow = '0 4px 12px rgba(26, 35, 126, 0.2), 0 0 0 2px rgba(26, 35, 126, 0.12)';
+      e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}33, 0 0 0 2px ${colors.borderColor}1F`;
     }
   };
 

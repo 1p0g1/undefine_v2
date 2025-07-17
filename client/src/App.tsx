@@ -15,6 +15,7 @@ import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
+import { apiClient } from './api/client';
 
 function App() {
   const {
@@ -63,6 +64,13 @@ function App() {
   // Theme modal state
   const [showThemeModal, setShowThemeModal] = useState(false);
 
+  // Theme data state for UN diamond coloring
+  const [themeGuessData, setThemeGuessData] = useState<{
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  } | undefined>(undefined);
+
   // Initialize display name from localStorage or generate default
   useEffect(() => {
     const savedDisplayName = localStorage.getItem('playerDisplayName');
@@ -74,6 +82,30 @@ function App() {
       const defaultName = playerId ? `Player ${playerId.slice(-4)}` : 'Player';
       setCurrentDisplayName(defaultName);
     }
+  }, []);
+
+  // Load theme data for UN diamond coloring
+  useEffect(() => {
+    const loadThemeData = async () => {
+      try {
+        const playerId = getPlayerId();
+        if (!playerId) return;
+        
+        const themeStatus = await apiClient.getThemeStatus(playerId);
+        if (themeStatus && themeStatus.progress) {
+          setThemeGuessData({
+            hasGuessedToday: themeStatus.progress.hasGuessedToday,
+            isCorrectGuess: themeStatus.progress.isCorrectGuess,
+            confidencePercentage: themeStatus.progress.confidencePercentage || null
+          });
+        }
+      } catch (error) {
+        console.log('[App] Failed to load theme data for UN diamond coloring:', error);
+        // Don't show error for this background load
+      }
+    };
+
+    loadThemeData();
   }, []);
 
   useEffect(() => {
@@ -409,7 +441,7 @@ function App() {
         }}
       >
         {/* Un· enhanced design */}
-        <UnPrefix onClick={handleThemeClick} />
+        <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
         <div className="define-boxes" style={{ 
           display: 'flex', 
           gap: 'clamp(0.06rem, 0.25vw, 0.12rem)',

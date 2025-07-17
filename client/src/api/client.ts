@@ -324,6 +324,10 @@ export const apiClient = {
       canGuessTheme: boolean;
       hasGuessedToday: boolean;
       isCorrectGuess: boolean;
+      // Similarity tracking data (available when hasGuessedToday is true)
+      similarityScore?: number | null;
+      confidencePercentage?: number | null;
+      matchingMethod?: string | null;
     };
     weeklyThemedWords: Array<{
       id: string;

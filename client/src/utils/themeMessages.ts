@@ -122,9 +122,22 @@ export function getThemeFeedbackMessage(
  * Get similarity bar color based on confidence score
  */
 export function getSimilarityBarColor(confidence: number): string {
-  if (confidence >= 70) return '#059669'; // Green for high similarity scores
-  if (confidence >= 50) return '#d97706'; // Orange for moderate similarity (50-70%)
-  return '#dc2626'; // Red for low similarity (≤50%)
+  if (confidence >= 70) return '#059669'; // Green for winning scores
+  if (confidence >= 60) return '#d97706'; // Orange for warm
+  if (confidence >= 40) return '#dc2626'; // Red for cold
+  return '#6b7280'; // Gray for very cold
+}
+
+/**
+ * Get UN diamond color based on theme guess result
+ * This is for coloring the UN diamond after theme guesses
+ */
+export function getUnDiamondColor(confidence: number | null, isCorrect: boolean): string {
+  if (isCorrect) return '#059669'; // Green for correct answers
+  if (confidence === null) return '#1a237e'; // Default blue if no guess yet
+  if (confidence <= 50) return '#dc2626'; // Red for ≤50%
+  if (confidence <= 70) return '#d97706'; // Orange for 51-70%
+  return '#059669'; // Green for >70%
 }
 
 /**
