@@ -71,8 +71,8 @@ html {
 }
 
 .define-box {
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.0rem;
+  height: 2.0rem;
   padding: 0.2rem;
   display: flex;
   align-items: center;
@@ -82,7 +82,7 @@ html {
   background: var(--color-bg);
   font-family: var(--font-primary);
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--color-primary);
   text-align: center;
   transition: all 0.2s ease-in-out;
@@ -386,9 +386,9 @@ h6 {
     font-size: 1.1rem;
   }
   .define-box {
-    width: 1.9rem;
-    height: 1.9rem;
-    font-size: 1rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.95rem;
     padding: 0.3rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
@@ -452,9 +452,9 @@ h6 {
 /* iPhone 12 Pro and similar */
 @media (max-width: 390px) {
   .define-box {
-    width: 1.8rem;
-    height: 1.8rem;
-    font-size: 0.95rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.9rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
   .un-prefix > div {
@@ -477,9 +477,9 @@ h6 {
 /* Even smaller screens */
 @media (max-width: 380px) {
   .define-box {
-    width: 1.7rem;
-    height: 1.7rem;
-    font-size: 0.9rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.85rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
   .un-prefix > div {
@@ -502,9 +502,9 @@ h6 {
 /* Very small screens */
 @media (max-width: 360px) {
   .define-box {
-    width: 1.6rem;
-    height: 1.6rem;
-    font-size: 0.85rem;
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 0.8rem;
   }
   /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
   .un-prefix > div {
