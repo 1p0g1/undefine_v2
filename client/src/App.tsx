@@ -929,9 +929,10 @@ function App() {
                 }}>
                   <div className="hint-title" style={{
                     fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     textTransform: 'uppercase',
                     color: 'var(--color-primary)',
+                    opacity: 0.6,
                     marginBottom: '0.25rem',
                     fontFamily: 'var(--font-primary)',
                     letterSpacing: '0.03em'
@@ -939,8 +940,10 @@ function App() {
                     {clueLabel}
                   </div>
                   <div className="hint-text" style={{
-                    fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-                    lineHeight: '1.4'
+                    fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                    lineHeight: '1.5',
+                    fontWeight: 500,
+                    color: 'var(--color-primary)'
                   }}>
                     {clueKey === 'in_a_sentence' ? (
                       <SentenceWithLogo text={clue.value} />

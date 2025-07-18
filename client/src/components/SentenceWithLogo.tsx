@@ -20,7 +20,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
         display: 'inline-flex', 
         alignItems: 'center', 
         gap: '1px',
-        margin: '0 3px', // Reduced margin to prevent spacing issues
+        margin: '0 6px', // Increased margin for more spacing
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px',
@@ -44,7 +44,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
           transform: 'rotate(45deg)',
           boxShadow: '0 1px 2px rgba(26, 35, 126, 0.08)',
           flexShrink: 0,
-          opacity: 0.7
+          opacity: 0.7,
+          marginRight: '3px' // Additional spacing after the diamond
         }}>
           <span style={{ 
             transform: 'rotate(-45deg)',
@@ -73,7 +74,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
               color: '#1a237e',
               boxShadow: '0 1px 2px rgba(26, 35, 126, 0.04)',
               letterSpacing: '0.02em',
-              opacity: 0.7
+              opacity: 0.7,
+              marginRight: index === 5 ? '4px' : '0' // Extra spacing after the last box
             }}
           >
             {letter}
