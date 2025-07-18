@@ -123,22 +123,32 @@ function App() {
       wasCompletedInSession: wasCompletedInSession()
     });
     
+    // Only proceed if we have a valid game state
+    if (!gameState.gameId) {
+      return;
+    }
+    
     if (gameState.isComplete && !gameStarted && !isRestoredGame) {
       // This is a game that was completed in the current session (not restored)
-      console.log('[App] Game completed in current session, showing summary modal');
-      setGameStarted(true); // Mark as started so UI shows properly
-      setShowSummary(true);
-      setCanReopenSummary(false);
-      // Set timer to the final time if available or 0
-      if (gameState.score) {
-        // We don't have the exact timer value, but we can show the modal
-        setTimer(0);
+      // Double-check with wasCompletedInSession to avoid race conditions
+      if (wasCompletedInSession()) {
+        console.log('[App] Game completed in current session, showing summary modal');
+        setGameStarted(true);
+        setShowSummary(true);
+        setCanReopenSummary(false);
+        if (gameState.score) {
+          setTimer(0);
+        }
+      } else {
+        console.log('[App] Game completed but not in current session, treating as restored');
+        setGameStarted(true);
+        setCanReopenSummary(true);
       }
     } else if (gameState.isComplete && !gameStarted && isRestoredGame) {
       // This is a restored game - just mark as started but don't show modal
       console.log('[App] Restored completed game, NOT showing summary modal');
       setGameStarted(true);
-      setCanReopenSummary(true); // Allow user to manually reopen if desired
+      setCanReopenSummary(true);
     }
   }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession]);
 
@@ -352,6 +362,7 @@ function App() {
   // Theme modal handlers
   const handleThemeClick = () => {
     setShowThemeModal(true);
+    setShowSummary(false); // Close summary modal when opening theme modal
   };
 
   const handleCloseThemeModal = () => {
@@ -493,273 +504,283 @@ function App() {
             gap: '1rem',
             marginBottom: '2rem'
           }}>
-            {/* Today's Challenge Box */}
-            <div style={{
-              backgroundColor: '#f8f9ff',
-              border: '2px solid #e0e4ff',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              textAlign: 'left'
+            {/* Desktop and Mobile Responsive Layout */}
+            <div className="game-modes-container" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              width: '100%'
             }}>
-              <div style={{ 
-                fontWeight: '700',
-                fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
-                color: 'var(--color-primary)',
-                marginBottom: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
+              {/* Today's Challenge Box */}
+              <div className="game-mode-box" style={{
+                backgroundColor: '#f8f9ff',
+                border: '2px solid #e0e4ff',
+                borderRadius: '0.75rem',
+                padding: '1.5rem',
+                textAlign: 'left',
+                flex: '1'
               }}>
-                Today:
-                {/* Inline DEFINE boxes */}
-                <div style={{
+                <div style={{ 
+                  fontWeight: '700',
+                  fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
+                  color: 'var(--color-primary)',
+                  marginBottom: '0.75rem',
                   display: 'flex',
-                  gap: '0.15rem',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  gap: '0.75rem'
                 }}>
-                  {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        width: '1.8em',
-                        height: '1.8em',
+                  Today:
+                  {/* Inline DEFINE boxes */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.15rem',
+                    alignItems: 'center'
+                  }}>
+                    {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          width: '1.8em',
+                          height: '1.8em',
+                          border: '2px solid var(--color-primary)',
+                          borderRadius: '0.3rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: 'var(--font-primary)',
+                          fontWeight: 700,
+                          fontSize: '0.9em',
+                          color: 'var(--color-primary)',
+                          backgroundColor: 'white',
+                          flexShrink: 0
+                        }}
+                      >
+                        {letter}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ color: '#374151', fontSize: '0.9em', marginBottom: '0.5rem' }}>
+                  Guess today's word in 6 guesses or less. Clues revealed each round:
+                </div>
+                <ol style={{ 
+                  margin: '0', 
+                  padding: '0 0 0 2.2rem', 
+                  fontSize: '0.75em',
+                  lineHeight: '1.4',
+                  color: '#374151'
+                }}>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
                         border: '2px solid var(--color-primary)',
-                        borderRadius: '0.3rem',
-                        display: 'flex',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontFamily: 'var(--font-primary)',
                         fontWeight: 700,
-                        fontSize: '0.9em',
+                        fontSize: '0.8em',
                         color: 'var(--color-primary)',
                         backgroundColor: 'white',
                         flexShrink: 0
-                      }}
-                    >
-                      {letter}
-                    </div>
-                  ))}
-                </div>
+                      }}>D</div>
+                      <span style={{ color: 'var(--color-primary)' }}>efinition</span>
+                    </span>
+                  </li>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}>E</div>
+                      <span style={{ color: 'var(--color-primary)' }}>quivalents</span>
+                    </span>
+                  </li>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}>F</div>
+                      <span style={{ color: 'var(--color-primary)' }}>irst Letter</span>
+                    </span>
+                  </li>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}>I</div>
+                      <span style={{ color: 'var(--color-primary)' }}>n a Sentence</span>
+                    </span>
+                  </li>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}>N</div>
+                      <span style={{ color: 'var(--color-primary)' }}>umber of Letters</span>
+                    </span>
+                  </li>
+                  <li style={{ marginBottom: '0.15rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
+                      <div style={{
+                        width: '1.6em',
+                        height: '1.6em',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.25rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: '0.8em',
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'white',
+                        flexShrink: 0
+                      }}>E</div>
+                      <span style={{ color: 'var(--color-primary)' }}>tymology</span>
+                    </span>
+                  </li>
+                </ol>
               </div>
-              <div style={{ color: '#374151', fontSize: '0.9em', marginBottom: '0.5rem' }}>
-                Guess today's word in 6 guesses or less. Clues revealed each round:
-              </div>
-              <ol style={{ 
-                margin: '0', 
-                padding: '0 0 0 2.2rem', 
-                fontSize: '0.75em',
-                lineHeight: '1.4',
-                color: '#374151'
-              }}>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>D</div>
-                    <span style={{ color: 'var(--color-primary)' }}>efinition</span>
-                  </span>
-                </li>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>E</div>
-                    <span style={{ color: 'var(--color-primary)' }}>quivalents</span>
-                  </span>
-                </li>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>F</div>
-                    <span style={{ color: 'var(--color-primary)' }}>irst Letter</span>
-                  </span>
-                </li>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>I</div>
-                    <span style={{ color: 'var(--color-primary)' }}>n a Sentence</span>
-                  </span>
-                </li>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>N</div>
-                    <span style={{ color: 'var(--color-primary)' }}>umber of Letters</span>
-                  </span>
-                </li>
-                <li style={{ marginBottom: '0.15rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.15em' }}>
-                    <div style={{
-                      width: '1.6em',
-                      height: '1.6em',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.25rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8em',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>E</div>
-                    <span style={{ color: 'var(--color-primary)' }}>tymology</span>
-                  </span>
-                </li>
-              </ol>
-            </div>
 
-            {/* This Week's Challenge Box */}
-            <div style={{
-              backgroundColor: '#f0fdf4',
-              border: '2px solid #d1fae5',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              textAlign: 'left'
-            }}>
-              <div style={{ 
-                fontWeight: '700',
-                fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
-                color: '#059669',
-                marginBottom: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
+              {/* This Week's Challenge Box */}
+              <div className="game-mode-box" style={{
+                backgroundColor: '#f0fdf4',
+                border: '2px solid #d1fae5',
+                borderRadius: '0.75rem',
+                padding: '1.5rem',
+                textAlign: 'left',
+                flex: '1'
               }}>
-                This week:
-                {/* Inline Un diamond */}
-                <div
-                  style={{
-                    width: '2.1em',
-                    height: '2.1em',
-                    border: '2px solid #059669',
-                    borderRadius: '0.35rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'var(--font-primary)',
-                    fontWeight: 800,
-                    fontSize: '0.9em',
-                    color: '#059669',
-                    backgroundColor: 'white',
-                    transform: 'rotate(45deg)',
-                    flexShrink: 0,
+                <div style={{ 
+                  fontWeight: '700',
+                  fontSize: 'clamp(1rem, 2.8vw, 1.2rem)',
+                  color: '#059669',
+                  marginBottom: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  This week:
+                  {/* Inline Un diamond */}
+                  <div
+                    style={{
+                      width: '2.1em',
+                      height: '2.1em',
+                      border: '2px solid #059669',
+                      borderRadius: '0.35rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 800,
+                      fontSize: '0.9em',
+                      color: '#059669',
+                      backgroundColor: 'white',
+                      transform: 'rotate(45deg)',
+                      flexShrink: 0,
+                      fontStyle: 'italic',
+                      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.1)'
+                    }}
+                  >
+                    <span style={{ 
+                      transform: 'rotate(-45deg) translateX(-0.05em)',
+                      lineHeight: '1',
+                      marginLeft: '0.1em'
+                    }}>
+                      Un·
+                    </span>
+                  </div>
+                  <span style={{
                     fontStyle: 'italic',
-                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.1)'
-                  }}
-                >
-                  <span style={{ 
-                    transform: 'rotate(-45deg) translateX(-0.05em)',
-                    lineHeight: '1',
-                    marginLeft: '0.1em'
+                    fontSize: '0.95em',
+                    color: '#059669',
+                    marginLeft: '-0.25rem'
                   }}>
-                    Un·
+                    lock
                   </span>
                 </div>
-                <span style={{
-                  fontStyle: 'italic',
-                  fontSize: '0.95em',
-                  color: '#059669',
-                  marginLeft: '-0.25rem'
-                }}>
-                  lock
-                </span>
-              </div>
-              <div style={{ color: '#374151', fontSize: '0.9em' }}>
-                Before{' '}
-                <span style={{
-                  fontWeight: '700',
-                  color: '#059669',
-                  fontSize: '1.05em',
-                  background: 'linear-gradient(135deg, #059669 0%, #34d399 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  {(() => {
-                    const now = new Date();
-                    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                    const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
-                    const nextSunday = new Date(now);
-                    nextSunday.setDate(now.getDate() + daysUntilSunday);
-                    
-                    const day = nextSunday.getDate();
-                    const month = nextSunday.toLocaleString('default', { month: 'long' });
-                    const getOrdinal = (n: number) => {
-                      const s = ["th", "st", "nd", "rd"];
-                      const v = n % 100;
-                      return n + (s[(v - 20) % 10] || s[v] || s[0]);
-                    };
-                    
-                    return `Sunday ${getOrdinal(day)} ${month}`;
-                  })()}
-                </span>
-                {' '}23:59, guess this week's theme
+                <div style={{ color: '#374151', fontSize: '0.9em' }}>
+                  Before{' '}
+                  <span style={{
+                    fontWeight: '700',
+                    color: '#059669',
+                    fontSize: '1.05em',
+                    background: 'linear-gradient(135deg, #059669 0%, #34d399 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    {(() => {
+                      const now = new Date();
+                      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                      const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
+                      const nextSunday = new Date(now);
+                      nextSunday.setDate(now.getDate() + daysUntilSunday);
+                      
+                      const day = nextSunday.getDate();
+                      const month = nextSunday.toLocaleString('default', { month: 'long' });
+                      const getOrdinal = (n: number) => {
+                        const s = ["th", "st", "nd", "rd"];
+                        const v = n % 100;
+                        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                      };
+                      
+                      return `Sunday ${getOrdinal(day)} ${month}`;
+                    })()}
+                  </span>
+                  {' '}23:59, guess this week's theme
+                </div>
               </div>
             </div>
           </div>

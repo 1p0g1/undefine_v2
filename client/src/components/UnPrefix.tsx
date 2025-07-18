@@ -13,8 +13,8 @@ interface UnPrefixProps {
 }
 
 export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, themeGuessData }) => {
-  // Make UN diamond significantly larger than DEFINE boxes (3.0rem vs 2.2rem)
-  const baseSize = scaled ? '2.6rem' : '3.0rem';
+  // Make UN diamond significantly larger than DEFINE boxes
+  const baseSize = scaled ? 'clamp(2.4rem, 6.5vw, 2.8rem)' : 'clamp(2.8rem, 8vw, 3.2rem)';
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
@@ -53,7 +53,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
     fontStyle: 'italic',
     fontWeight: 800,
     color: colors.textColor,
-    fontSize: scaled ? '1.2rem' : '1.4rem',
+    fontSize: scaled ? 'clamp(1rem, 3vw, 1.2rem)' : 'clamp(1.2rem, 4vw, 1.4rem)',
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,

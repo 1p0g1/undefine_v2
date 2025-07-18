@@ -15,6 +15,7 @@ class GameService {
 
   private constructor() {
     this.sessionId = crypto.randomUUID(); // Generate unique session ID
+    console.log('[GameService] New session started:', this.sessionId);
     this.loadState();
   }
 
@@ -29,14 +30,29 @@ class GameService {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
+        const parsed: any = JSON.parse(saved);
         if (this.validateGameState(parsed)) {
-          this.currentState = parsed;
+          // Extract only GameSessionState properties
+          this.currentState = {
+            gameId: parsed.gameId,
+            wordId: parsed.wordId,
+            wordText: parsed.wordText,
+            clues: parsed.clues,
+            guesses: parsed.guesses,
+            revealedClues: parsed.revealedClues,
+            clueStatus: parsed.clueStatus,
+            isComplete: parsed.isComplete,
+            isWon: parsed.isWon,
+            score: parsed.score,
+            startTime: parsed.startTime
+          };
           console.log('[GameService] Restored state:', {
             gameId: parsed.gameId,
             wordId: parsed.wordId,
             startTime: parsed.startTime,
-            isComplete: parsed.isComplete
+            isComplete: parsed.isComplete,
+            savedSessionId: parsed.sessionId || 'unknown',
+            currentSessionId: this.sessionId
           });
         } else {
           console.warn('[GameService] Invalid saved state, clearing...');
@@ -67,9 +83,16 @@ class GameService {
         const stateToSave = {
           ...this.currentState,
           sessionId: this.sessionId,
-          completedInSession: this.completedInSession
+          completedInSession: this.completedInSession,
+          savedAt: new Date().toISOString() // Add timestamp for debugging
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+        console.log('[GameService] State saved:', {
+          gameId: this.currentState.gameId,
+          isComplete: this.currentState.isComplete,
+          completedInSession: this.completedInSession,
+          sessionId: this.sessionId
+        });
       }
     } catch (error) {
       console.error('[GameService] Failed to save state:', error);
@@ -106,11 +129,23 @@ class GameService {
           
           // Check if this was completed in a previous session
           const savedData = localStorage.getItem(STORAGE_KEY);
-          const savedSessionId = savedData ? JSON.parse(savedData).sessionId : null;
+          const savedParsed = savedData ? JSON.parse(savedData) : null;
+          const savedSessionId = savedParsed?.sessionId || null;
           const isRestoredGame = savedSessionId !== this.sessionId;
+          
+          console.log('[GameService] Session comparison:', {
+            savedSessionId,
+            currentSessionId: this.sessionId,
+            isRestoredGame
+          });
           
           // Reset completion flag for restored games
           this.completedInSession = false;
+          
+          // For restored games, mark the restoration time
+          if (isRestoredGame) {
+            console.log('[GameService] Game was completed in a previous session - marking as restored');
+          }
           
           return {
             ...this.currentState,
@@ -282,6 +317,7 @@ class GameService {
    * Check if the current game was completed in this session
    */
   public wasCompletedInSession(): boolean {
+    const result = this.completedInSession;
     console.log('[GameService] wasCompletedInSession called:', {
       completedInSession: this.completedInSession,
       sessionId: this.sessionId,
@@ -289,9 +325,10 @@ class GameService {
         isComplete: this.currentState.isComplete,
         isWon: this.currentState.isWon,
         gameId: this.currentState.gameId
-      } : null
+      } : null,
+      result
     });
-    return this.completedInSession;
+    return result;
   }
 
   /**
