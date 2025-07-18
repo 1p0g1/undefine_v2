@@ -535,8 +535,8 @@ function App() {
                     <div
                       key={index}
                       style={{
-                        width: 'clamp(1.4rem, 4vw, 1.6rem)',
-                        height: 'clamp(1.4rem, 4vw, 1.6rem)',
+                        width: 'clamp(1.6rem, 4.5vw, 1.8rem)',
+                        height: 'clamp(1.6rem, 4.5vw, 1.8rem)',
                         border: '2px solid var(--color-primary)',
                         borderRadius: '0.3rem',
                         display: 'flex',
@@ -544,7 +544,7 @@ function App() {
                         justifyContent: 'center',
                         fontFamily: 'var(--font-primary)',
                         fontWeight: 700,
-                        fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+                        fontSize: 'clamp(0.85rem, 2.8vw, 1.0rem)',
                         color: 'var(--color-primary)',
                         backgroundColor: 'white',
                         flexShrink: 0
@@ -709,8 +709,8 @@ function App() {
                 {/* Inline Un diamond */}
                 <div
                   style={{
-                    width: 'clamp(1.6rem, 4.5vw, 1.8rem)',
-                    height: 'clamp(1.6rem, 4.5vw, 1.8rem)',
+                    width: 'clamp(1.8rem, 5vw, 2.1rem)',
+                    height: 'clamp(1.8rem, 5vw, 2.1rem)',
                     border: '2px solid #059669',
                     borderRadius: '0.35rem',
                     display: 'flex',
@@ -718,7 +718,7 @@ function App() {
                     justifyContent: 'center',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: 'clamp(0.7rem, 2.2vw, 0.8rem)',
+                    fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
                     color: '#059669',
                     backgroundColor: 'white',
                     transform: 'rotate(45deg)',

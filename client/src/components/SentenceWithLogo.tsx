@@ -12,8 +12,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
   // Mini logo component that matches the main DEFINE box styling
   const MiniUnDefineLogo = ({ underscoreCount }: { underscoreCount: number }) => {
     // Calculate appropriate size based on underscore count (smaller than main boxes)
-    const boxSize = Math.max(14, Math.min(18, underscoreCount * 0.8));
-    const fontSize = Math.max(8, Math.min(11, boxSize * 0.55));
+    const boxSize = Math.max(16, Math.min(20, underscoreCount * 1.0));
+    const fontSize = Math.max(9, Math.min(12, boxSize * 0.55));
     
     return (
       <span style={{ 
@@ -28,8 +28,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
       }}>
         {/* Un· diamond - matching UnPrefix styling but smaller */}
         <div style={{
-          width: `${boxSize + 2}px`,
-          height: `${boxSize + 2}px`,
+          width: `${boxSize + 3}px`,
+          height: `${boxSize + 3}px`,
           borderRadius: '2px',
           backgroundColor: '#f8f9ff',
           border: '1px solid #1a237e',
@@ -40,7 +40,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
           fontStyle: 'italic',
           fontWeight: '700',
           color: '#1a237e',
-          fontSize: `${fontSize * 0.7}px`,
+          fontSize: `${fontSize * 0.75}px`,
           transform: 'rotate(45deg)',
           boxShadow: '0 1px 2px rgba(26, 35, 126, 0.08)',
           flexShrink: 0,

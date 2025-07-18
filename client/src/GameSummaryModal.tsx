@@ -319,7 +319,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             paddingTop: 10,
             alignItems: 'center',
             gap: 'clamp(0.1rem, 0.5vw, 0.18rem)',
-            transform: 'scale(clamp(0.65, 1.8vw, 0.78))',
+            transform: 'scale(clamp(0.7, 2vw, 0.85))',
             transformOrigin: 'center'
           }}
         >

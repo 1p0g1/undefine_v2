@@ -96,14 +96,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 // Removed click functionality - hover hints are sufficient
               }}
               style={{
-                width: 'clamp(2.2rem, 6vw, 2.5rem)',
-                height: 'clamp(2.2rem, 6vw, 2.5rem)',
+                width: 'clamp(2.4rem, 6.5vw, 2.8rem)',
+                height: 'clamp(2.4rem, 6.5vw, 2.8rem)',
                 border: `2px solid ${borderColor}`,
                 borderRadius: '0.4rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 'clamp(1.2rem, 3.5vw, 1.4rem)',
+                fontSize: 'clamp(1.3rem, 3.8vw, 1.6rem)',
                 fontWeight: 700,
                 color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
                 backgroundColor,
