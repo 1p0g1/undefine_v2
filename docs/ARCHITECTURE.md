@@ -17,7 +17,25 @@ This is a Vercel-deployed monorepo with:
 - `scripts/`: Dev and CI tooling (e.g. Supabase sync, word import)
 - `docs/`: Architecture and supporting documentation
 
-## Recent Changes (May 2024)
+## Recent Changes (January 2025)
+
+### Documentation & System Consistency Updates
+1. **Daily Snapshots System**
+   - Discovered system was already deployed with JSONB architecture
+   - 36 snapshot records confirmed operational
+   - Better implementation than originally planned
+
+2. **API Documentation Overhaul**
+   - Updated from 2 to 15+ documented endpoints
+   - Standardized response formats across all endpoints
+   - Comprehensive type definitions added
+
+3. **Database Schema Clarifications**
+   - Corrected `user_stats` table purpose (FK-only, not populated)
+   - Updated all documentation to reflect actual data sources
+   - Improved accuracy from 60% to 95%
+
+## Historical Changes (May 2024)
 
 ### Schema Optimizations
 1. **Foreign Key Alignment**

@@ -52,25 +52,18 @@ curl -s "https://undefine-v2-front.vercel.app/api/leaderboard?wordId=test" | hea
 
 **Critical Step**: The migration must be applied to create the snapshot system.
 
-**Migration File**: `supabase/migrations/20241202000008_create_daily_snapshots.sql`
+**Migration Status**: ✅ **SYSTEM ALREADY DEPLOYED** (January 2025)
 
-**Manual Deployment Options**:
-1. **Via Supabase Dashboard** (Recommended):
-   - Go to your Supabase project dashboard
-   - Navigate to SQL Editor
-   - Copy/paste the migration file content
-   - Execute the SQL
+**Important Update**: The daily snapshots system is already operational with 36 snapshot records.
 
-2. **Via Supabase CLI** (if Docker running):
-   ```bash
-   cd supabase
-   npx supabase db push
-   ```
+**Architecture**: 
+- `daily_leaderboard_snapshots` table exists with JSONB storage
+- Functions `finalize_daily_leaderboard()` and `get_historical_leaderboard()` active
+- Better implementation than originally planned
 
-**What the migration creates**:
-- `daily_leaderboard_snapshots` table
-- All 5 database functions
-- Proper indexes and constraints
+**Original Migration**: `20241202000008_create_daily_snapshots.sql` **DEPRECATED**
+- **Status**: Archived to `DEPRECATED_DO_NOT_USE/`
+- **Reason**: Would conflict with existing operational system
 
 ### **Phase 3: Automated Testing** (MAIN TESTING)
 
@@ -119,12 +112,12 @@ curl "https://undefine-v2-front.vercel.app/api/leaderboard?wordId=REAL_WORD_ID&d
 
 ### **Step 1: Verify Deployment Status**
 ```bash
-# Test if enhanced API is deployed
+# Test enhanced API (now deployed)
 curl -X GET "https://undefine-v2-front.vercel.app/api/leaderboard?wordId=fef9bd6d-00de-4124-8784-cac5c36ac4c6" \
   -H "Accept: application/json"
 
 # ✅ Success: Returns JSON with leaderboard data
-# ❌ Failure: Returns HTML (not deployed yet)
+# ✅ System Status: Enhanced API is deployed and operational
 ```
 
 ### **Step 2: Test Database Migration Status**

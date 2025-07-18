@@ -56,7 +56,8 @@ This guide helps diagnose and resolve common issues with the leaderboard system.
    ```sql
    -- In /api/guess.ts
    INSERT INTO scores (...) VALUES (...);
-   UPDATE user_stats SET ...;
+   -- ⚠️ NOTE: user_stats is NOT updated with data - it's FK-only
+   -- Stats are calculated from other tables on-demand
    ```
 
 ## Trigger Monitoring

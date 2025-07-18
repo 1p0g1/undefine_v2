@@ -60,22 +60,31 @@ CREATE TABLE game_sessions (
 );
 ```
 
-#### **4. `user_stats`**
+#### **4. `user_stats`** ⚠️ **FK-ONLY TABLE**
 ```sql
+-- ⚠️ IMPORTANT: This table exists for FK constraints only
+-- It is NOT actively populated with data - stats are calculated from other tables
 CREATE TABLE user_stats (
   player_id TEXT PRIMARY KEY REFERENCES players(id),
-  games_played INTEGER DEFAULT 0,
-  current_streak INTEGER DEFAULT 0,      -- ⚠️ NOT in player_streaks!
-  longest_streak INTEGER DEFAULT 0,      -- ⚠️ Called longest_streak, NOT best_streak!
-  best_rank INTEGER,
-  top_10_count INTEGER DEFAULT 0,
-  average_completion_time FLOAT,
-  last_played_word TEXT,
+  games_played INTEGER DEFAULT 0,        -- ⚠️ NOT POPULATED - always 0
+  current_streak INTEGER DEFAULT 0,      -- ⚠️ NOT POPULATED - use player_streaks
+  longest_streak INTEGER DEFAULT 0,      -- ⚠️ NOT POPULATED - use player_streaks
+  best_rank INTEGER,                     -- ⚠️ NOT POPULATED - calculate from leaderboard_summary
+  top_10_count INTEGER DEFAULT 0,        -- ⚠️ NOT POPULATED - calculate from leaderboard_summary
+  average_completion_time FLOAT,         -- ⚠️ NOT POPULATED - calculate from leaderboard_summary
+  last_played_word TEXT,                 -- ⚠️ NOT POPULATED - use game_sessions
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  games_won INTEGER DEFAULT 0  -- Added in migration
+  games_won INTEGER DEFAULT 0            -- ⚠️ NOT POPULATED - calculate from leaderboard_summary
 );
 ```
+
+**Reality Check**: This table is NOT a data source. It only exists because `leaderboard_summary` and `theme_attempts` have FK constraints to `user_stats.player_id`. All actual stats are calculated from `game_sessions`, `leaderboard_summary`, and `player_streaks`.
+
+**Usage**: 
+- ✅ **FK Target**: Required for foreign key constraints
+- ❌ **Data Source**: Do not query this table for stats
+- ✅ **Minimal Inserts**: Only `player_id` is inserted when needed for FK
 
 #### **5. `scores`**
 ```sql

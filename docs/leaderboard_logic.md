@@ -11,7 +11,7 @@ The primary goal is a robust, automated leaderboard system where data flows from
 *   `players`: Stores player metadata.
 *   `words`: Stores word definitions and IDs.
 *   `game_sessions`: Records every game attempt, including start/end times, guesses, and completion status.
-*   `user_stats`: Aggregates player statistics (games played, won, streaks, etc.). **Crucially, `leaderboard_summary` has a foreign key to `user_stats.player_id`.**
+*   `user_stats`: ⚠️ **FK-ONLY TABLE** - Exists for foreign key constraints only. Does NOT contain actual data. **Crucially, `leaderboard_summary` has a foreign key to `user_stats.player_id`.**
 *   `scores`: Stores detailed scoring information for completed games.
 *   `leaderboard_summary`: Stores the actual leaderboard entries, ranked by `best_time` (ascending) and then `guesses_used` (ascending).
 
@@ -19,7 +19,7 @@ The primary goal is a robust, automated leaderboard system where data flows from
 
 1.  **Game End (`/api/guess.ts`):**
     *   When a game ends, the API updates the corresponding row in `game_sessions`, setting `is_complete = true` and `is_won = true/false`, and records `end_time`, `guesses`, etc.
-    *   **Critical Pre-computation:** Before this, the API calls `updateUserStats`. This function ensures a record for the `player_id` exists in `user_stats` (upserting if new) and updates their aggregate stats. This is vital because the `leaderboard_summary` table has a foreign key dependency on `user_stats(player_id)`.
+    *   **Critical Pre-computation:** Before this, the API calls `ensureUserStatsForFK()`. This function ensures a record for the `player_id` exists in `user_stats` (upserting if new) **only for FK constraint purposes**. This is vital because the `leaderboard_summary` table has a foreign key dependency on `user_stats(player_id)`.
 
 2.  **Trigger 1: `update_leaderboard_from_game()` (on `game_sessions` table):**
     *   Defined in `supabase/migrations/20240601000001_fix_leaderboard_data_flow.sql`.

@@ -425,11 +425,38 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
 
     const completedSessions = sessions?.filter(s => s.is_complete) || [];
 
-    // Check today's theme attempt with similarity data
+    // Get all theme attempts for this week, ordered by date (most recent first)
+    const { data: weeklyAttempts, error: attemptsError } = await supabase
+      .from('theme_attempts')
+      .select('guess, is_correct, similarity_score, confidence_percentage, matching_method, attempt_date')
+      .eq('player_id', playerId)
+      .eq('theme', theme)
+      .gte('attempt_date', monday.toISOString().split('T')[0])
+      .lte('attempt_date', sunday.toISOString().split('T')[0])
+      .order('attempt_date', { ascending: false });
+
+    if (attemptsError && attemptsError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('[getThemeProgress] Weekly attempts error:', attemptsError);
+    }
+
+    // Find the most recent attempt, prioritizing correct answers
+    let mostRecentAttempt = null;
+    if (weeklyAttempts && weeklyAttempts.length > 0) {
+      // First check if there's any correct guess this week
+      const correctAttempt = weeklyAttempts.find(attempt => attempt.is_correct);
+      if (correctAttempt) {
+        mostRecentAttempt = correctAttempt;
+      } else {
+        // If no correct guess, use the most recent attempt
+        mostRecentAttempt = weeklyAttempts[0];
+      }
+    }
+
+    // Check today's attempt specifically for canGuessTheme logic
     const today = new Date().toISOString().split('T')[0];
     const { data: todayAttempt, error: attemptError } = await supabase
       .from('theme_attempts')
-      .select('guess, is_correct, similarity_score, confidence_percentage, matching_method')
+      .select('guess')
       .eq('player_id', playerId)
       .eq('theme', theme)
       .eq('attempt_date', today)
@@ -445,14 +472,14 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     return {
       totalWords: themeWords?.length || 0,
       completedWords: completedSessions.length,
-      themeGuess: todayAttempt?.guess || null,
+      themeGuess: mostRecentAttempt?.guess || null,
       canGuessTheme: hasCompletedWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,
-      isCorrectGuess: todayAttempt?.is_correct || false,
+      isCorrectGuess: mostRecentAttempt?.is_correct || false,
       // Include similarity data if available
-      similarityScore: todayAttempt?.similarity_score || null,
-      confidencePercentage: todayAttempt?.confidence_percentage || null,
-      matchingMethod: todayAttempt?.matching_method || null
+      similarityScore: mostRecentAttempt?.similarity_score || null,
+      confidencePercentage: mostRecentAttempt?.confidence_percentage || null,
+      matchingMethod: mostRecentAttempt?.matching_method || null
     };
   } catch (error) {
     console.error('[getThemeProgress] Error:', error);

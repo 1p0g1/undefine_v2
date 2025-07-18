@@ -61,11 +61,11 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       display: 'flex', 
       flexDirection: 'column',
       alignItems: 'center',
-      minHeight: 'clamp(3rem, 8vw, 3.5rem)',
+      minHeight: 'clamp(3.5rem, 10vw, 4rem)',
       padding: '0.15rem 0',
       position: 'relative'
     }}>
-      <div style={{ display: 'flex', gap: 'clamp(0.12rem, 0.4vw, 0.2rem)' }}>
+      <div style={{ display: 'flex', gap: '0.25rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -88,6 +88,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           return (
             <div
               key={`${letter}-${index}`}
+              className="define-box"
               onMouseEnter={() => handleBoxHover(clueKey)}
               onMouseLeave={() => {
                 if (hintTimer) clearTimeout(hintTimer);
@@ -97,21 +98,12 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 // Removed click functionality - hover hints are sufficient
               }}
               style={{
-                width: 'clamp(2.4rem, 7vw, 2.8rem)',
-                height: 'clamp(2.4rem, 7vw, 2.8rem)',
                 border: `2px solid ${borderColor}`,
-                borderRadius: '0.4rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
-                fontWeight: 700,
                 color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
                 backgroundColor,
                 cursor: isRevealed ? 'pointer' : 'default',
                 transition: 'all 0.2s ease',
                 animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
-                fontFamily: 'var(--font-primary)',
                 position: 'relative',
                 zIndex: 1
               }}
@@ -129,7 +121,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
             left: '50%',
             transform: 'translateX(-50%)',
             marginTop: '0.25rem',
-            fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+            fontSize: 'clamp(0.875rem, 2.2vw, 1rem)',
             color: 'var(--color-primary)',
             fontFamily: 'var(--font-primary)',
             opacity: 0.9,

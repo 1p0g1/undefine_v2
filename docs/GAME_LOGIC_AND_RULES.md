@@ -170,7 +170,7 @@ win_rate = (successful_completions / total_attempts) * 100
 - **`game_sessions`**: Primary game state tracking
 - **`leaderboard_summary`**: Winners only (successful completions)
 - **`scores`**: Detailed scoring information  
-- **`user_stats`**: Aggregate player statistics
+- **`user_stats`**: ⚠️ **FK-ONLY** - Not used for statistics (empty table)
 - **`player_streaks`**: Win streak tracking
 
 #### **Critical Logic**

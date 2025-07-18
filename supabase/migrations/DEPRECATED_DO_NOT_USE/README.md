@@ -30,6 +30,11 @@ These migrations tried to fix things that weren't broken or referenced wrong sch
 
 - `20240515000001_update_score_data.sql` - References columns that shouldn't exist
 
+### Tier 4: Superseded by Actual Deployment
+These migrations planned systems that were already deployed with better architecture:
+
+- `20241202000008_create_daily_snapshots_SUPERSEDED_BY_ACTUAL_DEPLOYMENT.sql` - Planned individual player records in snapshots, but actual system uses more efficient JSONB storage for entire leaderboards. System was already deployed and operational with 36 snapshot records. **See: DAILY_SNAPSHOTS_REALITY_CHECK_JANUARY_2025.md**
+
 ## Current Correct State
 
 The correct database schema is documented in:
@@ -53,4 +58,5 @@ Use only the foundational migrations:
 2. **Test end-to-end before applying to remote**
 3. **One migration should fix one specific issue**
 4. **Don't apply multiple migrations for the same problem**
-5. **Document what's actually broken vs what we think is broken** 
+5. **Document what's actually broken vs what we think is broken**
+6. **ALWAYS verify current system state before suggesting migrations** - System may already be deployed with better architecture (January 2025) 

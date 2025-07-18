@@ -6,7 +6,7 @@
 ## 📋 FILES CREATED/MODIFIED
 
 ### **Database (1 file)**
-- ✅ `supabase/migrations/20241202000008_create_daily_snapshots.sql` - **APPLIED**
+- ✅ Daily snapshots system - **ALREADY DEPLOYED** (discovered January 2025 - uses JSONB storage, 36 records collected)
   - Creates `daily_leaderboard_snapshots` table
   - 5 PostgreSQL functions for snapshot management
   - Proper indexing for performance

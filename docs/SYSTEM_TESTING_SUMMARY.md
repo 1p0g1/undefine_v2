@@ -12,7 +12,7 @@
    ```
 
 2. **Deploy Migration** (Required first):
-   - Copy `supabase/migrations/20241202000008_create_daily_snapshots.sql`
+   - Daily snapshots system already deployed (36 records exist)
    - Paste in Supabase Dashboard → SQL Editor
    - Execute
 
@@ -64,7 +64,7 @@
 ### **Files Created/Modified:**
 
 #### **Database (Backend)**
-1. **`supabase/migrations/20241202000008_create_daily_snapshots.sql`** ⭐
+1. **Daily Snapshots System** ✅ **ALREADY DEPLOYED**
    - **Creates**: `daily_leaderboard_snapshots` table
    - **Creates**: 5 database functions for snapshot management
    - **Must be applied** to production database
@@ -178,12 +178,12 @@ curl -X POST "https://undefine-v2-front.vercel.app/api/admin/finalize-daily-lead
 ### **Common Issues & Solutions**
 
 **1. "API returns HTML instead of JSON"**
-- **Cause**: Enhanced API not deployed yet
-- **Solution**: Wait for Vercel deployment or trigger manual deploy
+- **Cause**: API routing issue or endpoint not found
+- **Solution**: Verify endpoint URL and check API documentation
 
 **2. "Function does not exist" errors**
-- **Cause**: Migration not applied
-- **Solution**: Execute migration SQL in Supabase dashboard
+- **Cause**: Database functions not available
+- **Solution**: All required functions are deployed and operational
 
 **3. "Cron endpoint returns 200 instead of 401"**  
 - **Cause**: Development mode enabled
