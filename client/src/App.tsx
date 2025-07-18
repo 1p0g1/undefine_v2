@@ -438,27 +438,24 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.06rem, 0.25vw, 0.12rem)',
+          gap: 'clamp(0.1rem, 0.4vw, 0.2rem)',
           width: '100%',
           maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
-          minHeight: 'clamp(2.5rem, 7vw, 3.5rem)',
-          padding: '0 clamp(0.1rem, 0.5vw, 0.25rem)',
+          minHeight: 'clamp(2.8rem, 7.5vw, 3.5rem)',
+          padding: '0 clamp(0.2rem, 1vw, 0.4rem)',
           boxSizing: 'border-box',
           // Ensure it fits on mobile
-          minWidth: 0,
-          // Scale the entire header on very small screens
-          transform: 'scale(clamp(0.85, 2.5vw, 1.0))',
-          transformOrigin: 'center'
+          minWidth: 0
         }}
       >
         {/* Un· enhanced design */}
         <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
         <div className="define-boxes" style={{ 
           display: 'flex', 
-          gap: 'clamp(0.04rem, 0.2vw, 0.1rem)',
+          gap: 'clamp(0.08rem, 0.3vw, 0.15rem)',
           flex: '0 0 auto',
           flexShrink: 0
         }}>
@@ -528,20 +525,26 @@ function App() {
                 {/* Inline DEFINE boxes */}
                 <div style={{
                   display: 'flex',
-                  gap: 'clamp(0.1rem, 0.5vw, 0.15rem)',
+                  gap: '0.1rem',
                   alignItems: 'center'
                 }}>
                   {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
                     <div
                       key={index}
-                      className="define-box"
                       style={{
+                        width: 'clamp(1.4rem, 4vw, 1.6rem)',
+                        height: 'clamp(1.4rem, 4vw, 1.6rem)',
+                        border: '2px solid var(--color-primary)',
+                        borderRadius: '0.3rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 700,
+                        fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+                        color: 'var(--color-primary)',
                         backgroundColor: 'white',
-                        flexShrink: 0,
-                        // Use smaller size for inline boxes in instructions
-                        width: 'clamp(1.2rem, 3vw, 1.5rem)',
-                        height: 'clamp(1.2rem, 3vw, 1.5rem)',
-                        fontSize: 'clamp(0.7rem, 2vw, 0.8rem)'
+                        flexShrink: 0
                       }}
                     >
                       {letter}
@@ -703,8 +706,8 @@ function App() {
                 {/* Inline Un diamond */}
                 <div
                   style={{
-                    width: '2.1em',
-                    height: '2.1em',
+                    width: 'clamp(1.6rem, 4.5vw, 1.8rem)',
+                    height: 'clamp(1.6rem, 4.5vw, 1.8rem)',
                     border: '2px solid #059669',
                     borderRadius: '0.35rem',
                     display: 'flex',
@@ -712,7 +715,7 @@ function App() {
                     justifyContent: 'center',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: '0.9em',
+                    fontSize: 'clamp(0.7rem, 2.2vw, 0.8rem)',
                     color: '#059669',
                     backgroundColor: 'white',
                     transform: 'rotate(45deg)',

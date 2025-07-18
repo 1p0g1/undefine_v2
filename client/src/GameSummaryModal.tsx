@@ -318,8 +318,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             justifyContent: 'center',
             paddingTop: 10,
             alignItems: 'center',
-            gap: 'clamp(0.1rem, 0.5vw, 0.2rem)',
-            transform: 'scale(clamp(0.6, 1.8vw, 0.8))',
+            gap: 'clamp(0.1rem, 0.5vw, 0.18rem)',
+            transform: 'scale(clamp(0.65, 1.8vw, 0.78))',
             transformOrigin: 'center'
           }}
         >
@@ -327,7 +327,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           <UnPrefix scaled={true} onClick={handleOpenThemeModal} themeGuessData={themeGuessData} />
           <div style={{ 
             display: 'flex', 
-            gap: 'clamp(0.04rem, 0.15vw, 0.08rem)',
+            gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',
             flex: '0 0 auto'
           }}>
             <DefineBoxes

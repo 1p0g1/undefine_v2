@@ -385,21 +385,22 @@ h6 {
   .main-title-row {
     font-size: 1.1rem;
   }
-  .define-box {
-    width: 1.7rem;
-    height: 1.7rem;
-    font-size: 0.95rem;
-    padding: 0.3rem;
+  .define-header {
+    gap: 0.12rem;
+    overflow: visible;
+    padding: 0 0.2rem;
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: 100vw;
+    /* Prevent horizontal scrolling */
+    min-width: 0;
+    box-sizing: border-box;
   }
-  /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
-  .un-prefix {
+  .define-boxes {
+    gap: 0.1rem;
     flex-shrink: 0;
-    margin-right: 0.15rem;
-  }
-  .un-prefix > div {
-    width: 2.4rem !important;
-    height: 2.4rem !important;
-    font-size: 1.15rem !important;
   }
   .guess-input {
     font-size: 1.1rem;
@@ -430,121 +431,38 @@ h6 {
     min-height: 2.1rem;
     font-size: 1rem;
   }
-  .define-header {
-    gap: 0.15rem;
-    overflow: visible;
-    padding: 0 0.25rem;
-    justify-content: center;
-    margin-left: 0;
-    margin-right: 0;
-    width: 100%;
-    max-width: 100vw;
-    /* Prevent horizontal scrolling */
-    min-width: 0;
-    box-sizing: border-box;
-  }
-  .define-boxes {
-    gap: 0.12rem;
-    flex-shrink: 0;
-  }
 }
 
 /* iPhone 12 Pro and similar */
 @media (max-width: 390px) {
-  .define-box {
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.85rem;
-  }
-  /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
-  .un-prefix > div {
-    width: 2.1rem !important;
-    height: 2.1rem !important;
-    font-size: 1.05rem !important;
-  }
   .define-header {
     gap: 0.1rem;
-    padding: 0 0.2rem;
+    padding: 0 0.1rem;
   }
   .define-boxes {
     gap: 0.08rem;
-  }
-  .un-prefix {
-    margin-right: 0.1rem;
   }
 }
 
 /* Even smaller screens */
 @media (max-width: 380px) {
-  .define-box {
-    width: 1.4rem;
-    height: 1.4rem;
-    font-size: 0.8rem;
-  }
-  /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
-  .un-prefix > div {
-    width: 2.0rem !important;
-    height: 2.0rem !important;
-    font-size: 1.0rem !important;
-  }
   .define-header {
     gap: 0.08rem;
-    padding: 0 0.1rem;
+    padding: 0 0.05rem;
   }
   .define-boxes {
     gap: 0.06rem;
-  }
-  .un-prefix {
-    margin-right: 0.1rem;
   }
 }
 
 /* Very small screens */
 @media (max-width: 360px) {
-  .define-box {
-    width: 1.3rem;
-    height: 1.3rem;
-    font-size: 0.75rem;
-  }
-  /* Scale UN diamond proportionally with DEFINE boxes - make it significantly larger */
-  .un-prefix > div {
-    width: 1.9rem !important;
-    height: 1.9rem !important;
-    font-size: 0.95rem !important;
-  }
   .define-header {
     gap: 0.06rem;
     padding: 0;
   }
   .define-boxes {
-    gap: 0.05rem;
-  }
-  .un-prefix {
-    margin-right: 0.08rem;
-  }
-}
-
-/* Extra small screens - iPhone SE, etc. */
-@media (max-width: 320px) {
-  .define-box {
-    width: 1.2rem;
-    height: 1.2rem;
-    font-size: 0.7rem;
-  }
-  .un-prefix > div {
-    width: 1.8rem !important;
-    height: 1.8rem !important;
-    font-size: 0.9rem !important;
-  }
-  .define-header {
-    gap: 0.05rem;
-    padding: 0;
-  }
-  .define-boxes {
     gap: 0.04rem;
-  }
-  .un-prefix {
-    margin-right: 0.06rem;
   }
 }
 
@@ -702,12 +620,11 @@ h6 {
   align-items: center;
 }
 
-/* Fix the problematic CSS rule - remove the 3rem override */
 @media (max-width: 360px) {
   .define-box {
-    width: 1.3rem;
-    height: 1.3rem;
-    font-size: 0.75rem;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
   }
 }
 

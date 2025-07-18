@@ -88,7 +88,6 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           return (
             <div
               key={`${letter}-${index}`}
-              className="define-box"
               onMouseEnter={() => handleBoxHover(clueKey)}
               onMouseLeave={() => {
                 if (hintTimer) clearTimeout(hintTimer);
@@ -98,12 +97,21 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 // Removed click functionality - hover hints are sufficient
               }}
               style={{
+                width: 'clamp(2.2rem, 6vw, 2.5rem)',
+                height: 'clamp(2.2rem, 6vw, 2.5rem)',
                 border: `2px solid ${borderColor}`,
+                borderRadius: '0.4rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'clamp(1.2rem, 3.5vw, 1.4rem)',
+                fontWeight: 700,
                 color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
                 backgroundColor,
                 cursor: isRevealed ? 'pointer' : 'default',
                 transition: 'all 0.2s ease',
                 animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
+                fontFamily: 'var(--font-primary)',
                 position: 'relative',
                 zIndex: 1
               }}

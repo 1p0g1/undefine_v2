@@ -12,15 +12,15 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
   // Mini logo component that matches the main DEFINE box styling
   const MiniUnDefineLogo = ({ underscoreCount }: { underscoreCount: number }) => {
     // Calculate appropriate size based on underscore count (smaller than main boxes)
-    const boxSize = Math.max(18, Math.min(24, underscoreCount * 1.2));
-    const fontSize = Math.max(10, Math.min(13, boxSize * 0.55));
+    const boxSize = Math.max(14, Math.min(18, underscoreCount * 0.8));
+    const fontSize = Math.max(8, Math.min(11, boxSize * 0.55));
     
     return (
       <span style={{ 
         display: 'inline-flex', 
         alignItems: 'center', 
-        gap: '2px',
-        margin: '0 4px', // Reduced margin to prevent spacing issues
+        gap: '1px',
+        margin: '0 3px', // Reduced margin to prevent spacing issues
         verticalAlign: 'middle',
         position: 'relative',
         top: '-1px',
@@ -28,11 +28,11 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
       }}>
         {/* Un· diamond - matching UnPrefix styling but smaller */}
         <div style={{
-          width: `${boxSize}px`,
-          height: `${boxSize}px`,
-          borderRadius: '3px',
+          width: `${boxSize + 2}px`,
+          height: `${boxSize + 2}px`,
+          borderRadius: '2px',
           backgroundColor: '#f8f9ff',
-          border: '2px solid #1a237e',
+          border: '1px solid #1a237e',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -40,9 +40,9 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
           fontStyle: 'italic',
           fontWeight: '700',
           color: '#1a237e',
-          fontSize: `${fontSize * 0.8}px`,
+          fontSize: `${fontSize * 0.7}px`,
           transform: 'rotate(45deg)',
-          boxShadow: '0 1px 3px rgba(26, 35, 126, 0.1)',
+          boxShadow: '0 1px 2px rgba(26, 35, 126, 0.08)',
           flexShrink: 0,
           opacity: 0.7
         }}>
@@ -61,8 +61,8 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
             style={{
               width: `${boxSize}px`,
               height: `${boxSize}px`,
-              border: '2px solid #1a237e',
-              borderRadius: '3px',
+              border: '1px solid #1a237e',
+              borderRadius: '2px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -71,7 +71,7 @@ export const SentenceWithLogo: React.FC<SentenceWithLogoProps> = ({ text }) => {
               fontSize: `${fontSize}px`,
               fontWeight: '700',
               color: '#1a237e',
-              boxShadow: '0 1px 3px rgba(26, 35, 126, 0.04)',
+              boxShadow: '0 1px 2px rgba(26, 35, 126, 0.04)',
               letterSpacing: '0.02em',
               opacity: 0.7
             }}
