@@ -444,7 +444,6 @@ function App() {
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
           marginBottom: '0.3rem',
           position: 'relative',
-          minHeight: 'clamp(2.8rem, 7.5vw, 3.5rem)',
           padding: '0 clamp(0.2rem, 1vw, 0.4rem)',
           boxSizing: 'border-box',
           // Ensure it fits on mobile
@@ -452,12 +451,16 @@ function App() {
         }}
       >
         {/* Un· enhanced design */}
-        <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
+        </div>
         <div className="define-boxes" style={{ 
           display: 'flex', 
           gap: 'clamp(0.08rem, 0.3vw, 0.15rem)',
           flex: '0 0 auto',
-          flexShrink: 0
+          flexShrink: 0,
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
           <DefineBoxes
             gameState={gameState}

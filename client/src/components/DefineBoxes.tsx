@@ -61,8 +61,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       display: 'flex', 
       flexDirection: 'column',
       alignItems: 'center',
-      minHeight: 'clamp(3.5rem, 10vw, 4rem)',
-      padding: '0.15rem 0',
+      justifyContent: 'center',
       position: 'relative'
     }}>
       <div style={{ display: 'flex', gap: '0.25rem' }}>
