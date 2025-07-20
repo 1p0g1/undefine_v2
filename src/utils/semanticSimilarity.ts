@@ -13,7 +13,7 @@ const HF_MODEL = 'sentence-transformers/all-mpnet-base-v2';
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
-const THEME_SIMILARITY_THRESHOLD = 0.70; // 70% based on test results
+const THEME_SIMILARITY_THRESHOLD = 0.85; // Optimal threshold based on testing: fixes basketball/baseball while preserving valid matches
 const WORD_SIMILARITY_THRESHOLD = 0.75;  // 75% for future word matching
 
 export interface SemanticSimilarityResult {
