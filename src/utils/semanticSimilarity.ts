@@ -13,63 +13,8 @@ const HF_MODEL = 'sentence-transformers/all-mpnet-base-v2';
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
-const THEME_SIMILARITY_THRESHOLD = 0.80; // Raised from 70% to 80% for stricter matching
+const THEME_SIMILARITY_THRESHOLD = 0.70; // 70% based on test results
 const WORD_SIMILARITY_THRESHOLD = 0.75;  // 75% for future word matching
-
-// Domain exclusion rules to prevent inappropriate cross-domain matches
-const DOMAIN_EXCLUSIONS: Record<string, string[]> = {
-  // Sports - prevent different sports from matching each other
-  'sports': ['basketball', 'baseball', 'football', 'soccer', 'tennis', 'golf', 'hockey', 'volleyball', 'cricket', 'rugby'],
-  
-  // Food categories - prevent different food types from cross-matching  
-  'fruits': ['apple', 'orange', 'banana', 'grape', 'strawberry', 'cherry', 'lemon', 'lime'],
-  'vegetables': ['carrot', 'broccoli', 'spinach', 'tomato', 'onion', 'potato', 'cucumber', 'pepper'],
-  'meats': ['chicken', 'beef', 'pork', 'fish', 'lamb', 'turkey', 'duck', 'salmon'],
-  
-  // Colors - prevent color confusion
-  'colors': ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'white'],
-  
-  // Animals - prevent different animal categories from matching
-  'mammals': ['dog', 'cat', 'elephant', 'lion', 'tiger', 'bear', 'horse', 'cow', 'pig'],
-  'birds': ['eagle', 'sparrow', 'robin', 'crow', 'pigeon', 'parrot', 'owl', 'hawk'],
-  'fish': ['salmon', 'tuna', 'cod', 'bass', 'trout', 'shark', 'goldfish', 'catfish'],
-  
-  // Musical instruments
-  'instruments': ['piano', 'guitar', 'violin', 'drums', 'flute', 'trumpet', 'saxophone', 'clarinet']
-};
-
-/**
- * Check if two terms should be excluded from matching due to domain conflicts
- */
-function shouldExcludeMatch(guess: string, theme: string): boolean {
-  const normalizedGuess = guess.toLowerCase().trim();
-  const normalizedTheme = theme.toLowerCase().trim();
-  
-  // Check each domain for conflicts
-  for (const [domain, terms] of Object.entries(DOMAIN_EXCLUSIONS)) {
-    const guessInDomain = terms.includes(normalizedGuess);
-    const themeInDomain = terms.includes(normalizedTheme);
-    
-    // If both terms are in the same domain, that's OK (e.g., apple vs fruit)
-    if (guessInDomain && themeInDomain) {
-      continue;
-    }
-    
-    // If one is in the domain but they're different specific items, exclude
-    if (guessInDomain || themeInDomain) {
-      // Exception: Allow general category matches (e.g., "sports" theme with "basketball" guess)
-      const isGeneralCategory = normalizedTheme === domain || normalizedGuess === domain ||
-                               normalizedTheme.includes(domain) || normalizedGuess.includes(domain);
-      
-      if (!isGeneralCategory && normalizedGuess !== normalizedTheme) {
-        console.log(`[shouldExcludeMatch] Excluding cross-domain match: "${normalizedGuess}" vs "${normalizedTheme}" (${domain} domain)`);
-        return true;
-      }
-    }
-  }
-  
-  return false;
-}
 
 export interface SemanticSimilarityResult {
   similarity: number;
@@ -153,17 +98,6 @@ export async function matchThemeWithFuzzy(
     };
   }
   
-  // Tier 1.5: Domain exclusion check (prevent inappropriate cross-domain matches)
-  if (shouldExcludeMatch(normalizedGuess, normalizedTheme)) {
-    return {
-      similarity: 0,
-      isMatch: false,
-      method: 'semantic',
-      confidence: 0,
-      error: `Domain exclusion: "${normalizedGuess}" and "${normalizedTheme}" are from different conceptual domains`
-    };
-  }
-  
   // Tier 2: Synonym database (free, curated)
   const synonymMatch = await checkSynonymDatabase(normalizedGuess, normalizedTheme);
   if (synonymMatch) {
@@ -179,18 +113,6 @@ export async function matchThemeWithFuzzy(
   try {
     const similarity = await computeSemanticSimilarity(normalizedGuess, normalizedTheme);
     const isMatch = similarity >= THEME_SIMILARITY_THRESHOLD;
-    
-    // Additional validation: Even if AI says it's similar, double-check domain exclusions
-    if (isMatch && shouldExcludeMatch(normalizedGuess, normalizedTheme)) {
-      console.log(`[matchThemeWithFuzzy] AI match overruled by domain exclusion: ${normalizedGuess} vs ${normalizedTheme} (${Math.round(similarity * 100)}%)`);
-      return {
-        similarity,
-        isMatch: false,
-        method: 'semantic',
-        confidence: Math.round(similarity * 100),
-        error: `Domain exclusion overrule: Different conceptual domains despite ${Math.round(similarity * 100)}% similarity`
-      };
-    }
     
     // Log usage for cost monitoring
     await logSemanticUsage('theme');
@@ -228,21 +150,7 @@ async function checkSynonymDatabase(guess: string, theme: string): Promise<boole
     'food': ['eating', 'cuisine', 'cooking', 'culinary', 'nutrition'],
     'music': ['songs', 'musical', 'sound', 'audio', 'melody'],
     'nature': ['natural', 'outdoors', 'environment', 'wildlife', 'earth'],
-    'technology': ['tech', 'digital', 'computers', 'electronic', 'innovation'],
-    
-    // Added: Sports and games (allows general category matches)
-    'sports': ['athletics', 'games', 'competition', 'physical', 'exercise', 'fitness', 'recreation'],
-    'baseball': ['america\'s pastime', 'diamond sport', 'ballpark', 'innings'],
-    'basketball': ['hoops', 'court sport', 'dribbling', 'shooting'],
-    
-    // Added: Animals and nature
-    'animals': ['creatures', 'wildlife', 'beasts', 'fauna', 'pets', 'mammals', 'birds', 'fish'],
-    
-    // Added: Colors  
-    'colors': ['colours', 'hues', 'shades', 'tints', 'pigments'],
-    
-    // Added: Body parts
-    'body parts': ['anatomy', 'human body', 'physiology', 'organs', 'limbs']
+    'technology': ['tech', 'digital', 'computers', 'electronic', 'innovation']
   };
   
   // Check if guess matches any synonym for the theme
