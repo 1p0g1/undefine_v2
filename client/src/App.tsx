@@ -470,54 +470,60 @@ function App() {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 'clamp(8rem, 20vw, 12rem)',
-            height: 'clamp(4rem, 10vw, 6rem)',
-            zIndex: -1, // Behind everything
+            width: 'clamp(10rem, 25vw, 15rem)',
+            height: 'clamp(5rem, 12vw, 8rem)',
+            zIndex: 0, // Changed from -1 to 0 to test visibility
             pointerEvents: 'none',
-            overflow: 'visible'
+            overflow: 'visible',
+            // Debug border to see container
+            border: '2px solid red',
+            background: 'rgba(255, 0, 0, 0.1)'
           }}
         >
-          {/* Main Fire Flames */}
+          {/* Main Fire Flames - Made larger and more visible */}
           <div 
             className="flame flame-1"
             style={{
               position: 'absolute',
-              bottom: '0%',
-              left: '20%',
-              width: 'clamp(1.5rem, 4vw, 2.5rem)',
-              height: 'clamp(2rem, 5vw, 3.5rem)',
-              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 30%, #ff8c00 60%, #ffaa00 90%, transparent 100%)',
+              bottom: '10%',
+              left: '15%',
+              width: 'clamp(2rem, 6vw, 3.5rem)',
+              height: 'clamp(3rem, 8vw, 5rem)',
+              background: 'linear-gradient(to top, #ff0000 0%, #ff4500 30%, #ff6b00 60%, #ff8c00 80%, #ffaa00 95%)',
               borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'flicker-1 2s ease-in-out infinite alternate',
-              opacity: 0.9
+              opacity: 1, // Full opacity for testing
+              border: '1px solid blue' // Debug border
             }}
           />
           <div 
             className="flame flame-2"
             style={{
               position: 'absolute',
-              bottom: '0%',
-              left: '40%',
-              width: 'clamp(2rem, 5vw, 3rem)',
-              height: 'clamp(2.5rem, 6vw, 4rem)',
-              background: 'linear-gradient(to top, #dc2626 0%, #ff4500 25%, #ff6b00 50%, #ff8c00 75%, #ffaa00 90%, transparent 100%)',
+              bottom: '10%',
+              left: '35%',
+              width: 'clamp(2.5rem, 7vw, 4rem)',
+              height: 'clamp(3.5rem, 9vw, 5.5rem)',
+              background: 'linear-gradient(to top, #dc2626 0%, #ff4500 25%, #ff6b00 50%, #ff8c00 75%, #ffaa00 90%)',
               borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'flicker-2 2.3s ease-in-out infinite alternate',
-              opacity: 0.95
+              opacity: 1, // Full opacity for testing
+              border: '1px solid green' // Debug border
             }}
           />
           <div 
             className="flame flame-3"
             style={{
               position: 'absolute',
-              bottom: '0%',
-              left: '60%',
-              width: 'clamp(1.8rem, 4.5vw, 2.8rem)',
-              height: 'clamp(2.2rem, 5.5vw, 3.8rem)',
-              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 35%, #ff8c00 65%, #ffaa00 85%, transparent 100%)',
+              bottom: '10%',
+              left: '55%',
+              width: 'clamp(2.2rem, 6.5vw, 3.8rem)',
+              height: 'clamp(3.2rem, 8.5vw, 5.2rem)',
+              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 35%, #ff8c00 65%, #ffaa00 85%)',
               borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'flicker-3 1.8s ease-in-out infinite alternate',
-              opacity: 0.85
+              opacity: 1, // Full opacity for testing
+              border: '1px solid yellow' // Debug border
             }}
           />
           
@@ -526,28 +532,30 @@ function App() {
             className="flame flame-4"
             style={{
               position: 'absolute',
-              bottom: '10%',
-              left: '10%',
-              width: 'clamp(1rem, 2.5vw, 1.5rem)',
-              height: 'clamp(1.5rem, 3.5vw, 2.5rem)',
-              background: 'linear-gradient(to top, #ff6b00 0%, #ff8c00 50%, #ffaa00 80%, transparent 100%)',
+              bottom: '20%',
+              left: '5%',
+              width: 'clamp(1.5rem, 4vw, 2.5rem)',
+              height: 'clamp(2.5rem, 6vw, 3.5rem)',
+              background: 'linear-gradient(to top, #ff6b00 0%, #ff8c00 50%, #ffaa00 80%)',
               borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'flicker-4 1.5s ease-in-out infinite alternate',
-              opacity: 0.7
+              opacity: 1, // Full opacity for testing
+              border: '1px solid purple' // Debug border
             }}
           />
           <div 
             className="flame flame-5"
             style={{
               position: 'absolute',
-              bottom: '15%',
+              bottom: '25%',
               left: '75%',
-              width: 'clamp(1.2rem, 3vw, 1.8rem)',
-              height: 'clamp(1.8rem, 4vw, 2.8rem)',
-              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 40%, #ff8c00 70%, #ffaa00 90%, transparent 100%)',
+              width: 'clamp(1.8rem, 5vw, 2.8rem)',
+              height: 'clamp(2.8rem, 7vw, 4rem)',
+              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 40%, #ff8c00 70%, #ffaa00 90%)',
               borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'flicker-5 2.1s ease-in-out infinite alternate',
-              opacity: 0.8
+              opacity: 1, // Full opacity for testing
+              border: '1px solid orange' // Debug border
             }}
           />
         </div>
