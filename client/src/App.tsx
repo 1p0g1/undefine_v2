@@ -462,100 +462,109 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Fire Animation Container - ONLY around Un diamond */}
+        {/* SVG Flame Animation Container - Behind Un diamond */}
         <div 
-          className="fire-container"
+          className="svg-flame-container"
           style={{
             position: 'absolute',
             top: '50%',
-            left: '0%', // Position over just the Un diamond
+            left: '-10%', // Position behind Un diamond
             transform: 'translateY(-50%)',
-            width: 'clamp(4rem, 10vw, 6rem)', // Larger for debugging
-            height: 'clamp(3rem, 8vw, 5rem)',
-            zIndex: 10, // Above everything for debugging
+            width: 'clamp(3rem, 8vw, 4.5rem)',
+            height: 'clamp(3rem, 8vw, 4.5rem)',
+            zIndex: 0, // Behind the Un diamond
             pointerEvents: 'none',
-            overflow: 'visible',
-            border: '3px solid lime', // Debug border
-            background: 'rgba(0, 255, 0, 0.2)' // Debug background
+            overflow: 'visible'
           }}
         >
-          {/* Debug text to see container */}
-          <div style={{
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            background: 'red',
-            color: 'white',
-            padding: '2px',
-            fontSize: '10px',
-            zIndex: 20
-          }}>
-            FIRE HERE
-          </div>
-          
-          {/* Cartoon Fire Flames - Larger and more visible for debugging */}
-          <div 
-            className="cartoon-flame flame-1"
+          {/* Flame SVG 1 - Main flame with sparks */}
+          <svg 
+            className="flame-svg flame-1"
+            viewBox="0 0 100 100" 
             style={{
               position: 'absolute',
-              bottom: '20%',
-              left: '60%', // Coming from right side of Un diamond
-              width: 'clamp(1.5rem, 4vw, 2.5rem)', // Much larger
-              height: 'clamp(2.5rem, 6vw, 4rem)',
-              background: '#ff0000', // Bright red for visibility
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', // Simple shape instead of clipPath
-              animation: 'cartoon-flicker-1 1.2s steps(3, end) infinite',
-              transformOrigin: 'bottom center',
-              border: '2px solid blue' // Debug border
+              width: '100%',
+              height: '100%',
+              animation: 'flame-cycle 2.4s steps(3, end) infinite'
             }}
-          />
-          <div 
-            className="cartoon-flame flame-2"
+          >
+            {/* Main flame body */}
+            <path 
+              d="M50 85 C35 85, 25 70, 25 55 C25 45, 30 35, 35 30 C32 25, 35 15, 45 20 C50 10, 60 15, 65 25 C70 20, 75 30, 70 40 C75 45, 75 55, 70 65 C75 75, 65 85, 50 85 Z" 
+              fill="#FF4500"
+              stroke="#1e3a8a"
+              strokeWidth="2"
+            />
+            {/* Inner flame */}
+            <path 
+              d="M50 75 C40 75, 35 65, 35 55 C35 45, 40 35, 45 32 C42 28, 45 22, 50 25 C55 20, 60 25, 62 35 C65 32, 67 42, 65 50 C67 60, 60 75, 50 75 Z" 
+              fill="#FFAA00"
+            />
+            {/* Sparks */}
+            <circle cx="20" cy="40" r="2" fill="#FF6B00" opacity="0.8"/>
+            <circle cx="80" cy="35" r="1.5" fill="#FF6B00" opacity="0.8"/>
+            <circle cx="25" cy="60" r="1" fill="#FFAA00" opacity="0.8"/>
+            <circle cx="75" cy="55" r="1" fill="#FFAA00" opacity="0.8"/>
+          </svg>
+
+          {/* Flame SVG 2 - Contained flame */}
+          <svg 
+            className="flame-svg flame-2"
+            viewBox="0 0 100 100" 
             style={{
               position: 'absolute',
-              bottom: '15%',
-              left: '75%', // Slightly to the right
-              width: 'clamp(1.2rem, 3vw, 2rem)',
-              height: 'clamp(2rem, 5vw, 3.5rem)',
-              background: '#ff4500', // Orange
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'cartoon-flicker-2 1.5s steps(4, end) infinite',
-              transformOrigin: 'bottom center',
-              border: '2px solid green' // Debug border
+              width: '100%',
+              height: '100%',
+              animation: 'flame-cycle 2.4s steps(3, end) infinite',
+              animationDelay: '0.8s'
             }}
-          />
-          <div 
-            className="cartoon-flame flame-3"
+          >
+            {/* Main flame body */}
+            <path 
+              d="M50 80 C38 80, 30 68, 30 55 C30 42, 35 30, 40 25 C37 20, 42 15, 48 18 C52 12, 58 18, 60 25 C65 22, 70 32, 68 42 C72 50, 70 65, 62 75 C58 78, 54 80, 50 80 Z" 
+              fill="#FF4500"
+              stroke="#1e3a8a"
+              strokeWidth="2"
+            />
+            {/* Inner flame */}
+            <path 
+              d="M50 68 C42 68, 38 58, 38 50 C38 42, 42 32, 46 30 C44 26, 47 22, 50 24 C53 20, 57 24, 58 32 C60 30, 62 38, 60 45 C62 55, 57 68, 50 68 Z" 
+              fill="#FFAA00"
+            />
+            {/* Small spark */}
+            <circle cx="75" cy="45" r="1.5" fill="#FF6B00" opacity="0.8"/>
+          </svg>
+
+          {/* Flame SVG 3 - Flame with different spark pattern */}
+          <svg 
+            className="flame-svg flame-3"
+            viewBox="0 0 100 100" 
             style={{
               position: 'absolute',
-              bottom: '25%',
-              left: '45%', // Coming from left side
-              width: 'clamp(1.3rem, 3.5vw, 2.2rem)',
-              height: 'clamp(2.2rem, 5.5vw, 3.8rem)',
-              background: '#ff8c00', // Yellow-orange
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'cartoon-flicker-3 1.8s steps(3, end) infinite',
-              transformOrigin: 'bottom center',
-              border: '2px solid yellow' // Debug border
+              width: '100%',
+              height: '100%',
+              animation: 'flame-cycle 2.4s steps(3, end) infinite',
+              animationDelay: '1.6s'
             }}
-          />
-          
-          {/* Small accent flames */}
-          <div 
-            className="cartoon-flame flame-4"
-            style={{
-              position: 'absolute',
-              bottom: '30%',
-              left: '85%',
-              width: 'clamp(0.8rem, 2vw, 1.5rem)',
-              height: 'clamp(1.5rem, 4vw, 2.5rem)',
-              background: '#ffaa00', // Yellow
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'cartoon-flicker-4 1s steps(2, end) infinite',
-              transformOrigin: 'bottom center',
-              border: '2px solid purple' // Debug border
-            }}
-          />
+          >
+            {/* Main flame body */}
+            <path 
+              d="M50 85 C36 85, 28 72, 28 58 C28 45, 33 32, 38 28 C35 23, 40 18, 46 21 C50 15, 56 21, 58 28 C63 25, 68 35, 66 45 C70 48, 72 58, 68 68 C70 78, 60 85, 50 85 Z" 
+              fill="#FF4500"
+              stroke="#1e3a8a"
+              strokeWidth="2"
+            />
+            {/* Inner flame */}
+            <path 
+              d="M50 73 C41 73, 37 63, 37 53 C37 43, 41 33, 45 30 C43 26, 46 22, 50 25 C54 20, 58 25, 59 33 C61 30, 63 40, 61 48 C63 58, 58 73, 50 73 Z" 
+              fill="#FFAA00"
+            />
+            {/* Different spark pattern */}
+            <circle cx="22" cy="50" r="1.5" fill="#FF6B00" opacity="0.8"/>
+            <circle cx="78" cy="42" r="2" fill="#FF6B00" opacity="0.8"/>
+            <circle cx="30" cy="35" r="1" fill="#FFAA00" opacity="0.8"/>
+            <circle cx="72" cy="60" r="1.5" fill="#FFAA00" opacity="0.8"/>
+          </svg>
         </div>
 
         {/* Un· enhanced design */}
@@ -1179,61 +1188,11 @@ function App() {
           50% { opacity: 0; }
         }
         
-        @keyframes cartoon-flicker-1 {
-          0% { 
-            transform: scale(1) rotate(0deg);
-          }
-          33% { 
-            transform: scale(1.1) rotate(-3deg);
-          }
-          66% { 
-            transform: scale(0.9) rotate(2deg);
-          }
-          100% { 
-            transform: scale(1) rotate(0deg);
-          }
-        }
-        
-        @keyframes cartoon-flicker-2 {
-          0% { 
-            transform: scale(1) rotate(1deg);
-          }
-          25% { 
-            transform: scale(1.2) rotate(-2deg);
-          }
-          50% { 
-            transform: scale(0.8) rotate(3deg);
-          }
-          75% { 
-            transform: scale(1.1) rotate(-1deg);
-          }
-          100% { 
-            transform: scale(1) rotate(1deg);
-          }
-        }
-        
-        @keyframes cartoon-flicker-3 {
-          0% { 
-            transform: scale(1.05) rotate(-1deg);
-          }
-          50% { 
-            transform: scale(0.95) rotate(2deg);
-          }
-          100% { 
-            transform: scale(1.05) rotate(-1deg);
-          }
-        }
-        
-        @keyframes cartoon-flicker-4 {
-          0% { 
-            transform: scale(0.9) rotate(2deg);
-          }
-          50% { 
-            transform: scale(1.3) rotate(-2deg);
-          }
-          100% { 
-            transform: scale(0.9) rotate(2deg);
-          }
+        @keyframes flame-cycle {
+          0% { opacity: 1; }
+          33% { opacity: 0; }
+          66% { opacity: 0; }
+          100% { opacity: 0; }
         }
       `}</style>
     </div>
