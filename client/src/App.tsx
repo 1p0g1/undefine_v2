@@ -462,9 +462,9 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* SVG Flame Animation Container - Behind Un diamond */}
+        {/* PNG Flame Animation Container - Behind Un diamond */}
         <div 
-          className="svg-flame-container"
+          className="png-flame-container"
           style={{
             position: 'absolute',
             top: '50%',
@@ -477,94 +477,49 @@ function App() {
             overflow: 'visible'
           }}
         >
-          {/* Flame SVG 1 - Main flame with sparks */}
-          <svg 
-            className="flame-svg flame-1"
-            viewBox="0 0 100 100" 
+          {/* Flame PNG 1 - Complex flame with sparks */}
+          <img 
+            src="/flame1.png"
+            alt=""
+            className="flame-png flame-1"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
+              objectFit: 'contain',
               animation: 'flame-cycle 2.4s steps(3, end) infinite'
             }}
-          >
-            {/* Main flame body */}
-            <path 
-              d="M50 85 C35 85, 25 70, 25 55 C25 45, 30 35, 35 30 C32 25, 35 15, 45 20 C50 10, 60 15, 65 25 C70 20, 75 30, 70 40 C75 45, 75 55, 70 65 C75 75, 65 85, 50 85 Z" 
-              fill="#FF4500"
-              stroke="#1e3a8a"
-              strokeWidth="2"
-            />
-            {/* Inner flame */}
-            <path 
-              d="M50 75 C40 75, 35 65, 35 55 C35 45, 40 35, 45 32 C42 28, 45 22, 50 25 C55 20, 60 25, 62 35 C65 32, 67 42, 65 50 C67 60, 60 75, 50 75 Z" 
-              fill="#FFAA00"
-            />
-            {/* Sparks */}
-            <circle cx="20" cy="40" r="2" fill="#FF6B00" opacity="0.8"/>
-            <circle cx="80" cy="35" r="1.5" fill="#FF6B00" opacity="0.8"/>
-            <circle cx="25" cy="60" r="1" fill="#FFAA00" opacity="0.8"/>
-            <circle cx="75" cy="55" r="1" fill="#FFAA00" opacity="0.8"/>
-          </svg>
+          />
 
-          {/* Flame SVG 2 - Contained flame */}
-          <svg 
-            className="flame-svg flame-2"
-            viewBox="0 0 100 100" 
+          {/* Flame PNG 2 - Contained flame */}
+          <img 
+            src="/flame2.png"
+            alt=""
+            className="flame-png flame-2"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
+              objectFit: 'contain',
               animation: 'flame-cycle 2.4s steps(3, end) infinite',
               animationDelay: '0.8s'
             }}
-          >
-            {/* Main flame body */}
-            <path 
-              d="M50 80 C38 80, 30 68, 30 55 C30 42, 35 30, 40 25 C37 20, 42 15, 48 18 C52 12, 58 18, 60 25 C65 22, 70 32, 68 42 C72 50, 70 65, 62 75 C58 78, 54 80, 50 80 Z" 
-              fill="#FF4500"
-              stroke="#1e3a8a"
-              strokeWidth="2"
-            />
-            {/* Inner flame */}
-            <path 
-              d="M50 68 C42 68, 38 58, 38 50 C38 42, 42 32, 46 30 C44 26, 47 22, 50 24 C53 20, 57 24, 58 32 C60 30, 62 38, 60 45 C62 55, 57 68, 50 68 Z" 
-              fill="#FFAA00"
-            />
-            {/* Small spark */}
-            <circle cx="75" cy="45" r="1.5" fill="#FF6B00" opacity="0.8"/>
-          </svg>
+          />
 
-          {/* Flame SVG 3 - Flame with different spark pattern */}
-          <svg 
-            className="flame-svg flame-3"
-            viewBox="0 0 100 100" 
+          {/* Flame PNG 3 - Alternative flame pattern */}
+          <img 
+            src="/flame3.png"
+            alt=""
+            className="flame-png flame-3"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
+              objectFit: 'contain',
               animation: 'flame-cycle 2.4s steps(3, end) infinite',
               animationDelay: '1.6s'
             }}
-          >
-            {/* Main flame body */}
-            <path 
-              d="M50 85 C36 85, 28 72, 28 58 C28 45, 33 32, 38 28 C35 23, 40 18, 46 21 C50 15, 56 21, 58 28 C63 25, 68 35, 66 45 C70 48, 72 58, 68 68 C70 78, 60 85, 50 85 Z" 
-              fill="#FF4500"
-              stroke="#1e3a8a"
-              strokeWidth="2"
-            />
-            {/* Inner flame */}
-            <path 
-              d="M50 73 C41 73, 37 63, 37 53 C37 43, 41 33, 45 30 C43 26, 46 22, 50 25 C54 20, 58 25, 59 33 C61 30, 63 40, 61 48 C63 58, 58 73, 50 73 Z" 
-              fill="#FFAA00"
-            />
-            {/* Different spark pattern */}
-            <circle cx="22" cy="50" r="1.5" fill="#FF6B00" opacity="0.8"/>
-            <circle cx="78" cy="42" r="2" fill="#FF6B00" opacity="0.8"/>
-            <circle cx="30" cy="35" r="1" fill="#FFAA00" opacity="0.8"/>
-            <circle cx="72" cy="60" r="1.5" fill="#FFAA00" opacity="0.8"/>
-          </svg>
+          />
         </div>
 
         {/* Un· enhanced design */}
