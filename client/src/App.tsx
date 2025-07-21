@@ -468,7 +468,7 @@ function App() {
           style={{
             position: 'absolute',
             top: '28%', // Move up from 35%
-            left: '5%', // Move left from 8%
+            left: '3%', // Nudge left from 5%
             transform: 'translateY(-50%)',
             width: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
             height: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
@@ -487,7 +487,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-instant 2.4s infinite'
+              animation: 'flame-instant 1.2s infinite'
             }}
           />
 
@@ -501,8 +501,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-instant 2.4s infinite',
-              animationDelay: '0.8s'
+              animation: 'flame-instant 1.2s infinite',
+              animationDelay: '0.4s'
             }}
           />
 
@@ -516,8 +516,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-instant 2.4s infinite',
-              animationDelay: '1.6s'
+              animation: 'flame-instant 1.2s infinite',
+              animationDelay: '0.8s'
             }}
           />
         </div>
