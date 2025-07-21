@@ -470,26 +470,43 @@ function App() {
             top: '50%',
             left: '0%', // Position over just the Un diamond
             transform: 'translateY(-50%)',
-            width: 'clamp(3rem, 8vw, 4rem)', // Much smaller - just around Un
-            height: 'clamp(2.5rem, 6vw, 3.5rem)',
-            zIndex: -1, // Behind the Un and D letters
+            width: 'clamp(4rem, 10vw, 6rem)', // Larger for debugging
+            height: 'clamp(3rem, 8vw, 5rem)',
+            zIndex: 10, // Above everything for debugging
             pointerEvents: 'none',
-            overflow: 'visible'
+            overflow: 'visible',
+            border: '3px solid lime', // Debug border
+            background: 'rgba(0, 255, 0, 0.2)' // Debug background
           }}
         >
-          {/* Cartoon Fire Flames - Stop Motion Style */}
+          {/* Debug text to see container */}
+          <div style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            background: 'red',
+            color: 'white',
+            padding: '2px',
+            fontSize: '10px',
+            zIndex: 20
+          }}>
+            FIRE HERE
+          </div>
+          
+          {/* Cartoon Fire Flames - Larger and more visible for debugging */}
           <div 
             className="cartoon-flame flame-1"
             style={{
               position: 'absolute',
               bottom: '20%',
               left: '60%', // Coming from right side of Un diamond
-              width: 'clamp(0.8rem, 2vw, 1.2rem)',
-              height: 'clamp(1.5rem, 4vw, 2.5rem)',
-              background: '#ff4500', // Solid orange, no gradients
-              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', // Triangle flame shape
+              width: 'clamp(1.5rem, 4vw, 2.5rem)', // Much larger
+              height: 'clamp(2.5rem, 6vw, 4rem)',
+              background: '#ff0000', // Bright red for visibility
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', // Simple shape instead of clipPath
               animation: 'cartoon-flicker-1 1.2s steps(3, end) infinite',
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              border: '2px solid blue' // Debug border
             }}
           />
           <div 
@@ -498,12 +515,13 @@ function App() {
               position: 'absolute',
               bottom: '15%',
               left: '75%', // Slightly to the right
-              width: 'clamp(0.6rem, 1.5vw, 1rem)',
-              height: 'clamp(1.2rem, 3vw, 2rem)',
-              background: '#ff6b00', // Lighter orange
-              clipPath: 'polygon(50% 0%, 20% 100%, 80% 100%)', // Narrower triangle
+              width: 'clamp(1.2rem, 3vw, 2rem)',
+              height: 'clamp(2rem, 5vw, 3.5rem)',
+              background: '#ff4500', // Orange
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'cartoon-flicker-2 1.5s steps(4, end) infinite',
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              border: '2px solid green' // Debug border
             }}
           />
           <div 
@@ -512,12 +530,13 @@ function App() {
               position: 'absolute',
               bottom: '25%',
               left: '45%', // Coming from left side
-              width: 'clamp(0.7rem, 1.8vw, 1.1rem)',
-              height: 'clamp(1.3rem, 3.5vw, 2.2rem)',
+              width: 'clamp(1.3rem, 3.5vw, 2.2rem)',
+              height: 'clamp(2.2rem, 5.5vw, 3.8rem)',
               background: '#ff8c00', // Yellow-orange
-              clipPath: 'polygon(50% 0%, 10% 100%, 90% 100%)', // Wide triangle
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'cartoon-flicker-3 1.8s steps(3, end) infinite',
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              border: '2px solid yellow' // Debug border
             }}
           />
           
@@ -528,12 +547,13 @@ function App() {
               position: 'absolute',
               bottom: '30%',
               left: '85%',
-              width: 'clamp(0.4rem, 1vw, 0.7rem)',
-              height: 'clamp(0.8rem, 2vw, 1.3rem)',
+              width: 'clamp(0.8rem, 2vw, 1.5rem)',
+              height: 'clamp(1.5rem, 4vw, 2.5rem)',
               background: '#ffaa00', // Yellow
-              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
               animation: 'cartoon-flicker-4 1s steps(2, end) infinite',
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              border: '2px solid purple' // Debug border
             }}
           />
         </div>
