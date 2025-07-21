@@ -462,8 +462,98 @@ function App() {
           minWidth: 0
         }}
       >
+        {/* Fire Animation Container - positioned behind Un and D */}
+        <div 
+          className="fire-container"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 'clamp(8rem, 20vw, 12rem)',
+            height: 'clamp(4rem, 10vw, 6rem)',
+            zIndex: -1, // Behind everything
+            pointerEvents: 'none',
+            overflow: 'visible'
+          }}
+        >
+          {/* Main Fire Flames */}
+          <div 
+            className="flame flame-1"
+            style={{
+              position: 'absolute',
+              bottom: '0%',
+              left: '20%',
+              width: 'clamp(1.5rem, 4vw, 2.5rem)',
+              height: 'clamp(2rem, 5vw, 3.5rem)',
+              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 30%, #ff8c00 60%, #ffaa00 90%, transparent 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: 'flicker-1 2s ease-in-out infinite alternate',
+              opacity: 0.9
+            }}
+          />
+          <div 
+            className="flame flame-2"
+            style={{
+              position: 'absolute',
+              bottom: '0%',
+              left: '40%',
+              width: 'clamp(2rem, 5vw, 3rem)',
+              height: 'clamp(2.5rem, 6vw, 4rem)',
+              background: 'linear-gradient(to top, #dc2626 0%, #ff4500 25%, #ff6b00 50%, #ff8c00 75%, #ffaa00 90%, transparent 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: 'flicker-2 2.3s ease-in-out infinite alternate',
+              opacity: 0.95
+            }}
+          />
+          <div 
+            className="flame flame-3"
+            style={{
+              position: 'absolute',
+              bottom: '0%',
+              left: '60%',
+              width: 'clamp(1.8rem, 4.5vw, 2.8rem)',
+              height: 'clamp(2.2rem, 5.5vw, 3.8rem)',
+              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 35%, #ff8c00 65%, #ffaa00 85%, transparent 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: 'flicker-3 1.8s ease-in-out infinite alternate',
+              opacity: 0.85
+            }}
+          />
+          
+          {/* Smaller accent flames */}
+          <div 
+            className="flame flame-4"
+            style={{
+              position: 'absolute',
+              bottom: '10%',
+              left: '10%',
+              width: 'clamp(1rem, 2.5vw, 1.5rem)',
+              height: 'clamp(1.5rem, 3.5vw, 2.5rem)',
+              background: 'linear-gradient(to top, #ff6b00 0%, #ff8c00 50%, #ffaa00 80%, transparent 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: 'flicker-4 1.5s ease-in-out infinite alternate',
+              opacity: 0.7
+            }}
+          />
+          <div 
+            className="flame flame-5"
+            style={{
+              position: 'absolute',
+              bottom: '15%',
+              left: '75%',
+              width: 'clamp(1.2rem, 3vw, 1.8rem)',
+              height: 'clamp(1.8rem, 4vw, 2.8rem)',
+              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 40%, #ff8c00 70%, #ffaa00 90%, transparent 100%)',
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: 'flicker-5 2.1s ease-in-out infinite alternate',
+              opacity: 0.8
+            }}
+          />
+        </div>
+
         {/* Un· enhanced design */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
           <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
         </div>
         <div className="define-boxes" style={{ 
@@ -472,7 +562,8 @@ function App() {
           flex: '0 0 auto',
           flexShrink: 0,
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          zIndex: 1
         }}>
           <DefineBoxes
             gameState={gameState}
@@ -1080,6 +1171,101 @@ function App() {
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
+        }
+        
+        @keyframes flicker-1 {
+          0% { 
+            transform: scale(1) rotate(-1deg);
+            opacity: 0.9;
+          }
+          25% { 
+            transform: scale(1.05) rotate(1deg);
+            opacity: 0.95;
+          }
+          50% { 
+            transform: scale(0.98) rotate(-0.5deg);
+            opacity: 0.85;
+          }
+          75% { 
+            transform: scale(1.02) rotate(0.8deg);
+            opacity: 0.92;
+          }
+          100% { 
+            transform: scale(1.01) rotate(-0.3deg);
+            opacity: 0.88;
+          }
+        }
+        
+        @keyframes flicker-2 {
+          0% { 
+            transform: scale(1) rotate(0.5deg);
+            opacity: 0.95;
+          }
+          30% { 
+            transform: scale(1.08) rotate(-1.2deg);
+            opacity: 1;
+          }
+          60% { 
+            transform: scale(0.95) rotate(0.8deg);
+            opacity: 0.9;
+          }
+          100% { 
+            transform: scale(1.03) rotate(-0.6deg);
+            opacity: 0.93;
+          }
+        }
+        
+        @keyframes flicker-3 {
+          0% { 
+            transform: scale(1.02) rotate(-0.8deg);
+            opacity: 0.85;
+          }
+          40% { 
+            transform: scale(0.96) rotate(1deg);
+            opacity: 0.8;
+          }
+          80% { 
+            transform: scale(1.06) rotate(-0.4deg);
+            opacity: 0.9;
+          }
+          100% { 
+            transform: scale(1) rotate(0.2deg);
+            opacity: 0.87;
+          }
+        }
+        
+        @keyframes flicker-4 {
+          0% { 
+            transform: scale(0.9) rotate(1.2deg);
+            opacity: 0.7;
+          }
+          50% { 
+            transform: scale(1.1) rotate(-0.8deg);
+            opacity: 0.8;
+          }
+          100% { 
+            transform: scale(0.95) rotate(0.5deg);
+            opacity: 0.65;
+          }
+        }
+        
+        @keyframes flicker-5 {
+          0% { 
+            transform: scale(1.04) rotate(-0.3deg);
+            opacity: 0.8;
+          }
+          35% { 
+            transform: scale(0.92) rotate(0.9deg);
+            opacity: 0.75;
+          }
+          70% { 
+            transform: scale(1.07) rotate(-0.6deg);
+            opacity: 0.85;
+          }
+          100% { 
+            transform: scale(0.98) rotate(0.4deg);
+            opacity: 0.78;
+          }
         }
       `}</style>
     </div>
