@@ -9,7 +9,7 @@ interface StreakBadgeProps {
 export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak, lastWinDate }) => {
   // Calculate if streak is active (won within last 3 days)
   const isActiveStreak = () => {
-    if (!lastWinDate || streak <= 1) return false;
+    if (!lastWinDate || streak === 0) return false;
     
     const lastWin = new Date(lastWinDate);
     const today = new Date();
@@ -19,39 +19,57 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
   };
 
   const activeStreak = isActiveStreak() ? streak : 0;
+  const displayStreak = Math.max(activeStreak, 0); // Always show something
   
-  // Don't show badge if no active streak
-  if (activeStreak <= 1) return null;
+  // ALWAYS show badge to encourage streak building
+  // Don't return null - always visible for engagement
 
-  // Color progression based on active streak length
+  // Color progression based on streak length
   const getStreakColor = (s: number) => {
+    if (s === 0) return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray for no streak
     if (s >= 20) return { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%)', border: '#8b5cf6', shadow: 'rgba(139, 92, 246, 0.4)' }; // Purple/Pink (Diamond)
     if (s >= 10) return { bg: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', border: '#d97706', shadow: 'rgba(217, 119, 6, 0.4)' }; // Gold
     if (s >= 6) return { bg: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)', border: '#a16207', shadow: 'rgba(161, 98, 7, 0.3)' }; // Yellow
     if (s >= 3) return { bg: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', border: '#c2410c', shadow: 'rgba(194, 65, 12, 0.3)' }; // Orange
-    return { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', border: '#b91c1c', shadow: 'rgba(185, 28, 28, 0.3)' }; // Red
+    if (s >= 1) return { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', border: '#b91c1c', shadow: 'rgba(185, 28, 28, 0.3)' }; // Red
+    return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray fallback
   };
 
-  // Emoji for active streaks
+  // Emoji for streaks
   const getStreakEmoji = (s: number) => {
+    if (s === 0) return '💤'; // Sleeping/inactive
     if (s >= 20) return '💎'; // Diamond
     if (s >= 10) return '⭐'; // Gold star  
     if (s >= 6) return '🟡'; // Yellow
     if (s >= 3) return '🟠'; // Orange
-    return '🔥'; // Fire
+    if (s >= 1) return '🔥'; // Fire
+    return '💤'; // Sleeping fallback
   };
 
-  const colors = getStreakColor(activeStreak);
-  const emoji = getStreakEmoji(activeStreak);
+  // Message for different streak states
+  const getStreakMessage = (s: number) => {
+    if (s === 0) return "Start your streak!";
+    if (s >= 20) return "LEGEND!";
+    if (s >= 15) return "AMAZING!";
+    if (s >= 10) return "ON FIRE!";
+    if (s >= 5) return "Great streak!";
+    if (s >= 3) return "Building up!";
+    if (s === 1) return "First win!";
+    return "Keep going!";
+  };
+
+  const colors = getStreakColor(displayStreak);
+  const emoji = getStreakEmoji(displayStreak);
+  const message = getStreakMessage(displayStreak);
 
   // Special milestone display for 10+
-  const isMilestone = activeStreak >= 10;
+  const isMilestone = displayStreak >= 10;
   
   return (
     <div 
       className="streak-badge"
-      aria-label={`Active winning streak: ${activeStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`}
-      title={`${activeStreak}-game active winning streak!${highestStreak && activeStreak < highestStreak ? ` (Personal best: ${highestStreak})` : ''}`}
+      aria-label={displayStreak === 0 ? "No active streak - start building!" : `Active winning streak: ${displayStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`}
+      title={displayStreak === 0 ? "Win games to start your streak!" : `${displayStreak}-game active winning streak!${highestStreak && displayStreak < highestStreak ? ` (Personal best: ${highestStreak})` : ''}`}
       style={{
         background: colors.bg,
         border: `2px solid ${colors.border}`,
@@ -77,11 +95,13 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
         cursor: 'default',
         userSelect: 'none',
         // Subtle pulse for active streaks
-        animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined
+        animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
+        // Slightly reduced opacity for inactive streaks
+        opacity: displayStreak === 0 ? 0.8 : 1
       }}
     >
       {/* Background sparkle effect for high streaks */}
-      {activeStreak >= 15 && (
+      {displayStreak >= 15 && (
         <div
           style={{
             position: 'absolute',
@@ -110,36 +130,51 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
           fontWeight: 800,
           letterSpacing: '0.02em'
         }}>
-          {activeStreak}
+          {displayStreak}
         </span>
       </div>
 
-      {/* Highest streak display (smaller text) */}
-      {highestStreak && highestStreak > activeStreak && (
+      {/* Highest streak display (smaller text) OR motivational message for 0 streak */}
+      {displayStreak === 0 ? (
         <div style={{
-          fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
+          fontSize: 'clamp(0.6rem, 1.6vw, 0.7rem)',
           fontWeight: 500,
-          color: 'rgba(255, 255, 255, 0.8)',
+          color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 1px 2px rgba(0,0,0,0.3)',
           letterSpacing: '0.01em',
           lineHeight: '1'
         }}>
-          Best: {highestStreak}
+          Start now!
         </div>
+      ) : (
+        highestStreak && highestStreak > displayStreak && (
+          <div style={{
+            fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
+            fontWeight: 500,
+            color: 'rgba(255, 255, 255, 0.8)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            letterSpacing: '0.01em',
+            lineHeight: '1'
+          }}>
+            Best: {highestStreak}
+          </div>
+        )
       )}
 
-      {/* Active streak indicator dot */}
-      <div style={{
-        position: 'absolute',
-        top: '0.3rem',
-        right: '0.3rem',
-        width: '6px',
-        height: '6px',
-        borderRadius: '50%',
-        background: '#22c55e',
-        boxShadow: '0 0 4px rgba(34, 197, 94, 0.8)',
-        animation: 'active-pulse 1.5s ease-in-out infinite'
-      }} />
+      {/* Active streak indicator dot (only for active streaks) */}
+      {displayStreak > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '0.3rem',
+          right: '0.3rem',
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          background: '#22c55e',
+          boxShadow: '0 0 4px rgba(34, 197, 94, 0.8)',
+          animation: 'active-pulse 1.5s ease-in-out infinite'
+        }} />
+      )}
 
       <style>{`
         @keyframes subtle-pulse {

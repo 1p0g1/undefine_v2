@@ -401,13 +401,11 @@ function App() {
         paddingTop: '0.5rem'
       }}>
         <TimerBadge seconds={timer} />
-        {playerStats?.currentStreak && playerStats.currentStreak > 1 && (
-          <StreakBadge 
-            streak={playerStats.currentStreak} 
-            highestStreak={playerStats.longestStreak}
-            lastWinDate={playerStats.lastWinDate}
-          />
-        )}
+        <StreakBadge 
+          streak={playerStats?.currentStreak || 0} 
+          highestStreak={playerStats?.longestStreak || 0}
+          lastWinDate={playerStats?.lastWinDate || null}
+        />
       </div>
       
       {/* Hamburger Menu - Top left positioning with mobile-safe positioning */}

@@ -441,10 +441,10 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           )}
           
           {/* Streak Celebration - show when on a winning streak */}
-          {playerStats?.currentStreak && playerStats.currentStreak > 2 && playerRank && (
+          {playerStats?.currentStreak && playerStats.currentStreak >= 1 && playerRank && (
             <div style={{ 
-              backgroundColor: '#fef3c7', 
-              border: '2px solid #fbbf24',
+              backgroundColor: playerStats.currentStreak === 1 ? '#f3f4f6' : '#fef3c7', 
+              border: `2px solid ${playerStats.currentStreak === 1 ? '#d1d5db' : '#fbbf24'}`,
               padding: '0.75rem', 
               borderRadius: '0.75rem',
               margin: '0.75rem 0',
@@ -453,20 +453,52 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               <div style={{ 
                 fontSize: '1.1rem',
                 fontWeight: 700,
-                color: '#d97706',
+                color: playerStats.currentStreak === 1 ? '#374151' : '#d97706',
                 marginBottom: '0.25rem'
               }}>
-                🔥 {playerStats.currentStreak}-Game Winning Streak! 🔥
+                {playerStats.currentStreak === 1 
+                  ? "🎉 First Win - Your Streak Begins! 🎉"
+                  : `🔥 ${playerStats.currentStreak}-Game Winning Streak! 🔥`
+                }
               </div>
               <div style={{ 
                 fontSize: '0.9rem',
-                color: '#92400e',
+                color: playerStats.currentStreak === 1 ? '#6b7280' : '#92400e',
                 fontStyle: 'italic'
               }}>
-                {playerStats.currentStreak >= 20 ? "You're a legend! 💎" :
+                {playerStats.currentStreak === 1 ? "Win again tomorrow to build your streak!" :
+                 playerStats.currentStreak >= 20 ? "You're a legend! 💎" :
                  playerStats.currentStreak >= 15 ? "Absolutely amazing! 🚀" :
                  playerStats.currentStreak >= 10 ? "You're on fire! ⭐" :
                  playerStats.currentStreak >= 5 ? "Keep it up! 🟡" : "Nice streak! 🟠"}
+              </div>
+            </div>
+          )}
+          
+          {/* Streak encouragement for non-winners */}
+          {(!playerRank || (playerStats?.currentStreak === 0)) && (
+            <div style={{ 
+              backgroundColor: '#f9fafb', 
+              border: '2px solid #e5e7eb',
+              padding: '0.75rem', 
+              borderRadius: '0.75rem',
+              margin: '0.75rem 0',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#6b7280',
+                marginBottom: '0.25rem'
+              }}>
+                💤 Start Your Winning Streak!
+              </div>
+              <div style={{ 
+                fontSize: '0.85rem',
+                color: '#9ca3af',
+                fontStyle: 'italic'
+              }}>
+                Come back tomorrow and aim for the leaderboard
               </div>
             </div>
           )}
