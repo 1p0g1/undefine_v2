@@ -462,9 +462,9 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* PNG Flame Animation Container - Behind Un diamond */}
+        {/* SVG Flame Animation Container - Behind Un diamond */}
         <div 
-          className="png-flame-container"
+          className="svg-flame-container"
           style={{
             position: 'absolute',
             top: '50%',
@@ -477,11 +477,11 @@ function App() {
             overflow: 'visible'
           }}
         >
-          {/* Flame PNG 1 - Complex flame with sparks */}
+          {/* Flame SVG 1 - Complex flame with sparks */}
           <img 
-            src="/flame1.png"
+            src="/flame1.svg"
             alt=""
-            className="flame-png flame-1"
+            className="flame-svg flame-1"
             style={{
               position: 'absolute',
               width: '100%',
@@ -491,11 +491,11 @@ function App() {
             }}
           />
 
-          {/* Flame PNG 2 - Contained flame */}
+          {/* Flame SVG 2 - Contained flame */}
           <img 
-            src="/flame2.png"
+            src="/flame2.svg"
             alt=""
-            className="flame-png flame-2"
+            className="flame-svg flame-2"
             style={{
               position: 'absolute',
               width: '100%',
@@ -506,11 +506,11 @@ function App() {
             }}
           />
 
-          {/* Flame PNG 3 - Alternative flame pattern */}
+          {/* Flame SVG 3 - Alternative flame pattern */}
           <img 
-            src="/flame3.png"
+            src="/flame3.svg"
             alt=""
-            className="flame-png flame-3"
+            className="flame-svg flame-3"
             style={{
               position: 'absolute',
               width: '100%',
