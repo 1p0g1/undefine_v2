@@ -468,10 +468,10 @@ function App() {
           style={{
             position: 'absolute',
             top: '35%', // Move up
-            left: '8%', // Move right to center behind Un diamond
+            left: '8%', // Keep current position
             transform: 'translateY(-50%)',
-            width: 'clamp(3.2rem, 8vw, 3.8rem)', // Match Un diamond size more closely
-            height: 'clamp(3.2rem, 8vw, 3.8rem)', // Match Un diamond size more closely
+            width: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
+            height: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
             zIndex: 0, // Behind the Un diamond
             pointerEvents: 'none',
             overflow: 'visible'
