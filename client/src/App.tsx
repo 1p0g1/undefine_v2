@@ -467,8 +467,8 @@ function App() {
           className="svg-flame-container"
           style={{
             position: 'absolute',
-            top: '35%', // Move up
-            left: '8%', // Keep current position
+            top: '28%', // Move up from 35%
+            left: '5%', // Move left from 8%
             transform: 'translateY(-50%)',
             width: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
             height: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
