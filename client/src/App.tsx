@@ -467,8 +467,8 @@ function App() {
           className="svg-flame-container"
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '0%', // Position directly behind Un diamond
+            top: '35%', // Move up
+            left: '15%', // Move to the right
             transform: 'translateY(-50%)',
             width: 'clamp(3.5rem, 9vw, 5rem)', // Slightly larger
             height: 'clamp(3.5rem, 9vw, 5rem)', // Slightly larger
@@ -487,7 +487,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-cycle 2.4s steps(3, end) infinite'
+              animation: 'flame-instant 2.4s infinite'
             }}
           />
 
@@ -501,7 +501,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-cycle 2.4s steps(3, end) infinite',
+              animation: 'flame-instant 2.4s infinite',
               animationDelay: '0.8s'
             }}
           />
@@ -516,7 +516,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-cycle 2.4s steps(3, end) infinite',
+              animation: 'flame-instant 2.4s infinite',
               animationDelay: '1.6s'
             }}
           />
@@ -1143,11 +1143,10 @@ function App() {
           50% { opacity: 0; }
         }
         
-        @keyframes flame-cycle {
-          0% { opacity: 1; }
-          33% { opacity: 0; }
-          66% { opacity: 0; }
-          100% { opacity: 0; }
+        /* Instant Flame Animation - No Fading */
+        @keyframes flame-instant {
+          0%, 33.32% { opacity: 1; }
+          33.33%, 100% { opacity: 0; }
         }
       `}</style>
     </div>
