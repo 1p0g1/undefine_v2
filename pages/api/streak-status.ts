@@ -52,7 +52,7 @@ async function handler(
     // CLEANUP PHASE 1: Use player_streaks instead of abandoned user_stats table
     const { data, error } = await supabase
       .from('player_streaks')
-      .select('current_streak,highest_streak')
+      .select('current_streak,highest_streak,last_win_date')
       .eq('player_id', player_id)
       .maybeSingle();
 
@@ -62,7 +62,8 @@ async function handler(
 
     return res.status(200).json({
       currentStreak: data.current_streak ?? 0,
-      longestStreak: data.highest_streak ?? 0  // Note: player_streaks uses 'highest_streak' not 'longest_streak'
+      longestStreak: data.highest_streak ?? 0,  // Note: player_streaks uses 'highest_streak' not 'longest_streak'
+      lastWinDate: data.last_win_date ?? null
     });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });

@@ -64,7 +64,7 @@ export function getThemeFeedbackMessage(
     };
   }
   
-  if (confidence >= 80) {
+  if (confidence >= 85) {
     return {
       message: `Nice, I've got you, it was "${actualTheme}"`,
       isCorrect: true,
@@ -75,10 +75,10 @@ export function getThemeFeedbackMessage(
   
   if (confidence >= 70) {
     return {
-      message: `Yeah, sure I'll give you that, it was "${actualTheme}"`,
-      isCorrect: true,
-      showActualTheme: true,
-      emoji: '👍'
+      message: "Very, very close...",
+      isCorrect: false,
+      showActualTheme: false,
+      emoji: '🎯'
     };
   }
   

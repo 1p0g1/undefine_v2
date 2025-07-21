@@ -9,6 +9,7 @@ import { normalizeText } from '../../src/utils/text';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
+import { StreakBadge } from './components/StreakBadge';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
@@ -16,13 +17,14 @@ import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
 import { apiClient } from './api/client';
+import { usePlayer } from './hooks/usePlayer';
 
 function App() {
-  const {
-    gameState,
-    startNewGame,
-    forceNewGame,
-    submitGuess,
+  const { 
+    gameState, 
+    startNewGame, 
+    forceNewGame, 
+    submitGuess, 
     guessStatus,
     fuzzyMatchCount,
     showLeaderboard,
@@ -35,6 +37,9 @@ function App() {
     isRestoredGame,
     wasCompletedInSession
   } = useGame();
+  
+  // Get player stats including streak data
+  const { stats: playerStats } = usePlayer();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -390,10 +395,19 @@ function App() {
         width: '100%', 
         display: 'flex', 
         justifyContent: 'center', 
+        alignItems: 'center',
+        gap: '0.75rem',
         marginBottom: '1rem',
         paddingTop: '0.5rem'
       }}>
         <TimerBadge seconds={timer} />
+        {playerStats?.currentStreak && playerStats.currentStreak > 1 && (
+          <StreakBadge 
+            streak={playerStats.currentStreak} 
+            highestStreak={playerStats.longestStreak}
+            lastWinDate={playerStats.lastWinDate}
+          />
+        )}
       </div>
       
       {/* Hamburger Menu - Top left positioning with mobile-safe positioning */}

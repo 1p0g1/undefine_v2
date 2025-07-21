@@ -7,6 +7,7 @@ import { FirstGamePrompt } from './components/FirstGamePrompt';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
+import { usePlayer } from './hooks/usePlayer';
 import { FuzzyTooltip } from './components/FuzzyTooltip';
 
 interface GameSummaryModalProps {
@@ -59,6 +60,9 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Get player stats including streak data
+  const { stats: playerStats } = usePlayer();
   
   // State for managing nickname prompt dismissal
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(true);
@@ -435,6 +439,38 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               Better luck tomorrow!
             </div>
           )}
+          
+          {/* Streak Celebration - show when on a winning streak */}
+          {playerStats?.currentStreak && playerStats.currentStreak > 2 && playerRank && (
+            <div style={{ 
+              backgroundColor: '#fef3c7', 
+              border: '2px solid #fbbf24',
+              padding: '0.75rem', 
+              borderRadius: '0.75rem',
+              margin: '0.75rem 0',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                color: '#d97706',
+                marginBottom: '0.25rem'
+              }}>
+                🔥 {playerStats.currentStreak}-Game Winning Streak! 🔥
+              </div>
+              <div style={{ 
+                fontSize: '0.9rem',
+                color: '#92400e',
+                fontStyle: 'italic'
+              }}>
+                {playerStats.currentStreak >= 20 ? "You're a legend! 💎" :
+                 playerStats.currentStreak >= 15 ? "Absolutely amazing! 🚀" :
+                 playerStats.currentStreak >= 10 ? "You're on fire! ⭐" :
+                 playerStats.currentStreak >= 5 ? "Keep it up! 🟡" : "Nice streak! 🟠"}
+              </div>
+            </div>
+          )}
+          
           {score && (
             <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '0.5rem' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#1a237e' }}>Score Breakdown (NEW System)</div>

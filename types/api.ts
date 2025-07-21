@@ -72,6 +72,7 @@ export interface GuessResponse {
 export interface StreakResponse {
   currentStreak: number;
   longestStreak: number;
+  lastWinDate: string | null;
 }
 
 // Reset session types (dev only)

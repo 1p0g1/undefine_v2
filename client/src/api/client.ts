@@ -353,4 +353,42 @@ export const apiClient = {
   }> {
     return fetchFromApi(`/api/theme-stats?player_id=${playerId}`);
   },
+
+  /**
+   * Get player streak statistics
+   * @param playerId The player ID
+   * @returns Promise with the player streak statistics response
+   */
+  async getPlayerStats(playerId: string): Promise<{
+    current_streak: number;
+    longest_streak: number;
+    last_win_date: string | null;
+    games_played: number;
+    games_won: number;
+    total_guesses: number;
+    average_guesses_per_game: number;
+    total_play_time_seconds: number;
+  }> {
+    // First get streak data
+    const streakResponse = await fetchFromApi<{
+      currentStreak: number;
+      longestStreak: number;
+      lastWinDate: string | null;
+    }>('/api/streak-status', {
+      method: 'POST',
+      body: JSON.stringify({ player_id: playerId }),
+    });
+
+    // Mock other stats for now (these would come from a separate endpoint)
+    return {
+      current_streak: streakResponse.currentStreak,
+      longest_streak: streakResponse.longestStreak,
+      last_win_date: streakResponse.lastWinDate,
+      games_played: 0, // TODO: Add to API
+      games_won: 0, // TODO: Add to API
+      total_guesses: 0, // TODO: Add to API
+      average_guesses_per_game: 0, // TODO: Add to API
+      total_play_time_seconds: 0, // TODO: Add to API
+    };
+  },
 };

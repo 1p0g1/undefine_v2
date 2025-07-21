@@ -7,6 +7,7 @@ interface PlayerStats {
   gamesWon: number;
   currentStreak: number;
   longestStreak: number;
+  lastWinDate: string | null;
   totalGuesses: number;
   averageGuessesPerGame: number;
   totalPlayTimeSeconds: number;
@@ -45,6 +46,7 @@ export function usePlayer(): UsePlayerReturn {
         gamesWon: response.games_won,
         currentStreak: response.current_streak,
         longestStreak: response.longest_streak,
+        lastWinDate: response.last_win_date,
         totalGuesses: response.total_guesses,
         averageGuessesPerGame: response.average_guesses_per_game,
         totalPlayTimeSeconds: response.total_play_time_seconds
