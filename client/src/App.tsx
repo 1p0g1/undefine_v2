@@ -468,7 +468,7 @@ function App() {
           style={{
             position: 'absolute',
             top: '35%', // Move up
-            left: '15%', // Move to the right
+            left: '2%', // Move further left to get behind Un diamond
             transform: 'translateY(-50%)',
             width: 'clamp(3.5rem, 9vw, 5rem)', // Slightly larger
             height: 'clamp(3.5rem, 9vw, 5rem)', // Slightly larger
