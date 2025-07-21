@@ -462,100 +462,78 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Fire Animation Container - positioned behind Un and D */}
+        {/* Fire Animation Container - ONLY around Un diamond */}
         <div 
           className="fire-container"
           style={{
             position: 'absolute',
             top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 'clamp(10rem, 25vw, 15rem)',
-            height: 'clamp(5rem, 12vw, 8rem)',
-            zIndex: 0, // Changed from -1 to 0 to test visibility
+            left: '0%', // Position over just the Un diamond
+            transform: 'translateY(-50%)',
+            width: 'clamp(3rem, 8vw, 4rem)', // Much smaller - just around Un
+            height: 'clamp(2.5rem, 6vw, 3.5rem)',
+            zIndex: -1, // Behind the Un and D letters
             pointerEvents: 'none',
-            overflow: 'visible',
-            // Debug border to see container
-            border: '2px solid red',
-            background: 'rgba(255, 0, 0, 0.1)'
+            overflow: 'visible'
           }}
         >
-          {/* Main Fire Flames - Made larger and more visible */}
+          {/* Cartoon Fire Flames - Stop Motion Style */}
           <div 
-            className="flame flame-1"
-            style={{
-              position: 'absolute',
-              bottom: '10%',
-              left: '15%',
-              width: 'clamp(2rem, 6vw, 3.5rem)',
-              height: 'clamp(3rem, 8vw, 5rem)',
-              background: 'linear-gradient(to top, #ff0000 0%, #ff4500 30%, #ff6b00 60%, #ff8c00 80%, #ffaa00 95%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'flicker-1 2s ease-in-out infinite alternate',
-              opacity: 1, // Full opacity for testing
-              border: '1px solid blue' // Debug border
-            }}
-          />
-          <div 
-            className="flame flame-2"
-            style={{
-              position: 'absolute',
-              bottom: '10%',
-              left: '35%',
-              width: 'clamp(2.5rem, 7vw, 4rem)',
-              height: 'clamp(3.5rem, 9vw, 5.5rem)',
-              background: 'linear-gradient(to top, #dc2626 0%, #ff4500 25%, #ff6b00 50%, #ff8c00 75%, #ffaa00 90%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'flicker-2 2.3s ease-in-out infinite alternate',
-              opacity: 1, // Full opacity for testing
-              border: '1px solid green' // Debug border
-            }}
-          />
-          <div 
-            className="flame flame-3"
-            style={{
-              position: 'absolute',
-              bottom: '10%',
-              left: '55%',
-              width: 'clamp(2.2rem, 6.5vw, 3.8rem)',
-              height: 'clamp(3.2rem, 8.5vw, 5.2rem)',
-              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 35%, #ff8c00 65%, #ffaa00 85%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'flicker-3 1.8s ease-in-out infinite alternate',
-              opacity: 1, // Full opacity for testing
-              border: '1px solid yellow' // Debug border
-            }}
-          />
-          
-          {/* Smaller accent flames */}
-          <div 
-            className="flame flame-4"
+            className="cartoon-flame flame-1"
             style={{
               position: 'absolute',
               bottom: '20%',
-              left: '5%',
-              width: 'clamp(1.5rem, 4vw, 2.5rem)',
-              height: 'clamp(2.5rem, 6vw, 3.5rem)',
-              background: 'linear-gradient(to top, #ff6b00 0%, #ff8c00 50%, #ffaa00 80%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'flicker-4 1.5s ease-in-out infinite alternate',
-              opacity: 1, // Full opacity for testing
-              border: '1px solid purple' // Debug border
+              left: '60%', // Coming from right side of Un diamond
+              width: 'clamp(0.8rem, 2vw, 1.2rem)',
+              height: 'clamp(1.5rem, 4vw, 2.5rem)',
+              background: '#ff4500', // Solid orange, no gradients
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', // Triangle flame shape
+              animation: 'cartoon-flicker-1 1.2s steps(3, end) infinite',
+              transformOrigin: 'bottom center'
             }}
           />
           <div 
-            className="flame flame-5"
+            className="cartoon-flame flame-2"
+            style={{
+              position: 'absolute',
+              bottom: '15%',
+              left: '75%', // Slightly to the right
+              width: 'clamp(0.6rem, 1.5vw, 1rem)',
+              height: 'clamp(1.2rem, 3vw, 2rem)',
+              background: '#ff6b00', // Lighter orange
+              clipPath: 'polygon(50% 0%, 20% 100%, 80% 100%)', // Narrower triangle
+              animation: 'cartoon-flicker-2 1.5s steps(4, end) infinite',
+              transformOrigin: 'bottom center'
+            }}
+          />
+          <div 
+            className="cartoon-flame flame-3"
             style={{
               position: 'absolute',
               bottom: '25%',
-              left: '75%',
-              width: 'clamp(1.8rem, 5vw, 2.8rem)',
-              height: 'clamp(2.8rem, 7vw, 4rem)',
-              background: 'linear-gradient(to top, #ff4500 0%, #ff6b00 40%, #ff8c00 70%, #ffaa00 90%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: 'flicker-5 2.1s ease-in-out infinite alternate',
-              opacity: 1, // Full opacity for testing
-              border: '1px solid orange' // Debug border
+              left: '45%', // Coming from left side
+              width: 'clamp(0.7rem, 1.8vw, 1.1rem)',
+              height: 'clamp(1.3rem, 3.5vw, 2.2rem)',
+              background: '#ff8c00', // Yellow-orange
+              clipPath: 'polygon(50% 0%, 10% 100%, 90% 100%)', // Wide triangle
+              animation: 'cartoon-flicker-3 1.8s steps(3, end) infinite',
+              transformOrigin: 'bottom center'
+            }}
+          />
+          
+          {/* Small accent flames */}
+          <div 
+            className="cartoon-flame flame-4"
+            style={{
+              position: 'absolute',
+              bottom: '30%',
+              left: '85%',
+              width: 'clamp(0.4rem, 1vw, 0.7rem)',
+              height: 'clamp(0.8rem, 2vw, 1.3rem)',
+              background: '#ffaa00', // Yellow
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+              animation: 'cartoon-flicker-4 1s steps(2, end) infinite',
+              transformOrigin: 'bottom center'
             }}
           />
         </div>
@@ -1181,98 +1159,60 @@ function App() {
           50% { opacity: 0; }
         }
         
-        @keyframes flicker-1 {
+        @keyframes cartoon-flicker-1 {
           0% { 
-            transform: scale(1) rotate(-1deg);
-            opacity: 0.9;
+            transform: scale(1) rotate(0deg);
+          }
+          33% { 
+            transform: scale(1.1) rotate(-3deg);
+          }
+          66% { 
+            transform: scale(0.9) rotate(2deg);
+          }
+          100% { 
+            transform: scale(1) rotate(0deg);
+          }
+        }
+        
+        @keyframes cartoon-flicker-2 {
+          0% { 
+            transform: scale(1) rotate(1deg);
           }
           25% { 
-            transform: scale(1.05) rotate(1deg);
-            opacity: 0.95;
+            transform: scale(1.2) rotate(-2deg);
           }
           50% { 
-            transform: scale(0.98) rotate(-0.5deg);
-            opacity: 0.85;
+            transform: scale(0.8) rotate(3deg);
           }
           75% { 
-            transform: scale(1.02) rotate(0.8deg);
-            opacity: 0.92;
+            transform: scale(1.1) rotate(-1deg);
           }
           100% { 
-            transform: scale(1.01) rotate(-0.3deg);
-            opacity: 0.88;
+            transform: scale(1) rotate(1deg);
           }
         }
         
-        @keyframes flicker-2 {
+        @keyframes cartoon-flicker-3 {
           0% { 
-            transform: scale(1) rotate(0.5deg);
-            opacity: 0.95;
-          }
-          30% { 
-            transform: scale(1.08) rotate(-1.2deg);
-            opacity: 1;
-          }
-          60% { 
-            transform: scale(0.95) rotate(0.8deg);
-            opacity: 0.9;
-          }
-          100% { 
-            transform: scale(1.03) rotate(-0.6deg);
-            opacity: 0.93;
-          }
-        }
-        
-        @keyframes flicker-3 {
-          0% { 
-            transform: scale(1.02) rotate(-0.8deg);
-            opacity: 0.85;
-          }
-          40% { 
-            transform: scale(0.96) rotate(1deg);
-            opacity: 0.8;
-          }
-          80% { 
-            transform: scale(1.06) rotate(-0.4deg);
-            opacity: 0.9;
-          }
-          100% { 
-            transform: scale(1) rotate(0.2deg);
-            opacity: 0.87;
-          }
-        }
-        
-        @keyframes flicker-4 {
-          0% { 
-            transform: scale(0.9) rotate(1.2deg);
-            opacity: 0.7;
+            transform: scale(1.05) rotate(-1deg);
           }
           50% { 
-            transform: scale(1.1) rotate(-0.8deg);
-            opacity: 0.8;
+            transform: scale(0.95) rotate(2deg);
           }
           100% { 
-            transform: scale(0.95) rotate(0.5deg);
-            opacity: 0.65;
+            transform: scale(1.05) rotate(-1deg);
           }
         }
         
-        @keyframes flicker-5 {
+        @keyframes cartoon-flicker-4 {
           0% { 
-            transform: scale(1.04) rotate(-0.3deg);
-            opacity: 0.8;
+            transform: scale(0.9) rotate(2deg);
           }
-          35% { 
-            transform: scale(0.92) rotate(0.9deg);
-            opacity: 0.75;
-          }
-          70% { 
-            transform: scale(1.07) rotate(-0.6deg);
-            opacity: 0.85;
+          50% { 
+            transform: scale(1.3) rotate(-2deg);
           }
           100% { 
-            transform: scale(0.98) rotate(0.4deg);
-            opacity: 0.78;
+            transform: scale(0.9) rotate(2deg);
           }
         }
       `}</style>
