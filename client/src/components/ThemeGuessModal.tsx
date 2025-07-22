@@ -285,10 +285,35 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         fontSize: '1rem',
         boxSizing: 'border-box'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {/* Modal Header with improved styling */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '1rem',
+          paddingTop: '0.5rem' // Add more spacing from top
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem' // Increased gap for better spacing
+          }}>
             <UnPrefix themeGuessData={themeGuessData} />
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
+            <span style={{
+              fontStyle: 'italic',
+              fontSize: '1.4rem', // Large italics like main page
+              fontWeight: '600',
+              color: '#059669',
+              marginLeft: '-0.1rem' // Fine-tune spacing
+            }}>
+              lock
+            </span>
+            <h2 style={{ 
+              margin: 0, 
+              fontSize: '1.1rem', // Reduced from 1.5rem
+              fontWeight: 'bold',
+              color: '#1a237e'
+            }}>
               Theme of the Week
             </h2>
           </div>
@@ -299,7 +324,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               border: 'none',
               fontSize: '1.5rem',
               cursor: 'pointer',
-              padding: '0.25rem'
+              padding: '0.25rem',
+              color: '#9ca3af'
             }}
           >
             ×
