@@ -477,7 +477,7 @@ function App() {
             overflow: 'visible'
           }}
         >
-          {/* Sequential 6-Flame Cycle: 1, 2, 3, 4, 5, 6 */}
+          {/* Sequential 7-Flame Cycle: 1, 2, 3, 4, 5, 6, 7 */}
           
           {/* Flame 1 */}
           <img 
@@ -489,7 +489,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
+              animation: 'flame-sequence 2.1s infinite',
               animationDelay: '0s'
             }}
           />
@@ -504,8 +504,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
-              animationDelay: '0.4s'
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '0.3s'
             }}
           />
           
@@ -519,8 +519,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
-              animationDelay: '0.8s'
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '0.6s'
             }}
           />
           
@@ -534,8 +534,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
-              animationDelay: '1.2s'
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '0.9s'
             }}
           />
           
@@ -549,8 +549,8 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
-              animationDelay: '1.6s'
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '1.2s'
             }}
           />
           
@@ -564,8 +564,23 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-sequence 2.4s infinite',
-              animationDelay: '2.0s'
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '1.5s'
+            }}
+          />
+          
+          {/* Flame 7 */}
+          <img 
+            src="/flame7.svg"
+            alt=""
+            className="flame-svg flame-7"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: 'flame-sequence 2.1s infinite',
+              animationDelay: '1.8s'
             }}
           />
         </div>
@@ -1191,10 +1206,10 @@ function App() {
           50% { opacity: 0; }
         }
         
-        /* Sequential 6-Flame Animation */
+        /* Sequential 7-Flame Animation */
         @keyframes flame-sequence {
-          0%, 16.66% { opacity: 1; }
-          16.67%, 100% { opacity: 0; }
+          0%, 14.29% { opacity: 1; }
+          14.30%, 100% { opacity: 0; }
         }
       `}</style>
     </div>
