@@ -467,57 +467,105 @@ function App() {
           className="svg-flame-container"
           style={{
             position: 'absolute',
-            top: '28%', // Move up from 35%
-            left: '3%', // Nudge left from 5%
+            top: '28%', // PERFECT POSITION
+            left: '3%', // PERFECT POSITION  
             transform: 'translateY(-50%)',
-            width: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
-            height: 'clamp(4.5rem, 12vw, 6rem)', // Much larger to show around Un diamond
+            width: 'clamp(4.5rem, 12vw, 6rem)', // PERFECT SIZE
+            height: 'clamp(4.5rem, 12vw, 6rem)', // PERFECT SIZE
             zIndex: 0, // Behind the Un diamond
             pointerEvents: 'none',
             overflow: 'visible'
           }}
         >
-          {/* Flame SVG 1 - Complex flame with sparks */}
+          {/* Dynamic 6-Step Cycle: 1, 3, 2, 3, 1, 2 */}
+          
+          {/* Step 1: Flame 1 (0.0-0.4s) */}
           <img 
             src="/flame1.svg"
             alt=""
-            className="flame-svg flame-1"
+            className="flame-svg flame-step1"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-instant 1.2s infinite'
+              animation: 'flame-dynamic 2.4s infinite',
+              animationDelay: '0s'
             }}
           />
-
-          {/* Flame SVG 2 - Contained flame */}
-          <img 
-            src="/flame2.svg"
-            alt=""
-            className="flame-svg flame-2"
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              animation: 'flame-instant 1.2s infinite',
-              animationDelay: '0.4s'
-            }}
-          />
-
-          {/* Flame SVG 3 - Alternative flame pattern */}
+          
+          {/* Step 2: Flame 3 (0.4-0.8s) */}
           <img 
             src="/flame3.svg"
             alt=""
-            className="flame-svg flame-3"
+            className="flame-svg flame-step2"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-instant 1.2s infinite',
+              animation: 'flame-dynamic 2.4s infinite',
+              animationDelay: '0.4s'
+            }}
+          />
+          
+          {/* Step 3: Flame 2 (0.8-1.2s) */}
+          <img 
+            src="/flame2.svg"
+            alt=""
+            className="flame-svg flame-step3"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: 'flame-dynamic 2.4s infinite',
               animationDelay: '0.8s'
+            }}
+          />
+          
+          {/* Step 4: Flame 3 (1.2-1.6s) */}
+          <img 
+            src="/flame3.svg"
+            alt=""
+            className="flame-svg flame-step4"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: 'flame-dynamic 2.4s infinite',
+              animationDelay: '1.2s'
+            }}
+          />
+          
+          {/* Step 5: Flame 1 (1.6-2.0s) */}
+          <img 
+            src="/flame1.svg"
+            alt=""
+            className="flame-svg flame-step5"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: 'flame-dynamic 2.4s infinite',
+              animationDelay: '1.6s'
+            }}
+          />
+          
+          {/* Step 6: Flame 2 (2.0-2.4s) */}
+          <img 
+            src="/flame2.svg"
+            alt=""
+            className="flame-svg flame-step6"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              animation: 'flame-dynamic 2.4s infinite',
+              animationDelay: '2.0s'
             }}
           />
         </div>
@@ -1147,6 +1195,12 @@ function App() {
         @keyframes flame-instant {
           0%, 33.32% { opacity: 1; }
           33.33%, 100% { opacity: 0; }
+        }
+
+        /* Dynamic Flame Animation - 6-step cycle */
+        @keyframes flame-dynamic {
+          0%, 16.66% { opacity: 1; }
+          16.67%, 100% { opacity: 0; }
         }
       `}</style>
     </div>
