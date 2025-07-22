@@ -571,7 +571,7 @@ function App() {
           
           {/* Flame 7 */}
           <img 
-            src="/flame7.svg"
+            src="/flame7.png"
             alt=""
             className="flame-svg flame-7"
             style={{
