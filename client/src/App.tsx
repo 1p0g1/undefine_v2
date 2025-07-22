@@ -477,94 +477,94 @@ function App() {
             overflow: 'visible'
           }}
         >
-          {/* Dynamic 6-Step Cycle: 1, 3, 2, 3, 1, 2 */}
+          {/* Sequential 6-Flame Cycle: 1, 2, 3, 4, 5, 6 */}
           
-          {/* Step 1: Flame 1 (0.0-0.4s) */}
+          {/* Flame 1 */}
           <img 
             src="/flame1.svg"
             alt=""
-            className="flame-svg flame-step1"
+            className="flame-svg flame-1"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '0s'
             }}
           />
           
-          {/* Step 2: Flame 3 (0.4-0.8s) */}
+          {/* Flame 2 */}
           <img 
-            src="/flame3.svg"
+            src="/flame2.svg"
             alt=""
-            className="flame-svg flame-step2"
+            className="flame-svg flame-2"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '0.4s'
             }}
           />
           
-          {/* Step 3: Flame 2 (0.8-1.2s) */}
+          {/* Flame 3 */}
           <img 
-            src="/flame2.svg"
+            src="/flame3.svg"
             alt=""
-            className="flame-svg flame-step3"
+            className="flame-svg flame-3"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '0.8s'
             }}
           />
           
-          {/* Step 4: Flame 3 (1.2-1.6s) */}
+          {/* Flame 4 */}
           <img 
-            src="/flame3.svg"
+            src="/flame4.svg"
             alt=""
-            className="flame-svg flame-step4"
+            className="flame-svg flame-4"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '1.2s'
             }}
           />
           
-          {/* Step 5: Flame 1 (1.6-2.0s) */}
+          {/* Flame 5 */}
           <img 
-            src="/flame1.svg"
+            src="/flame5.svg"
             alt=""
-            className="flame-svg flame-step5"
+            className="flame-svg flame-5"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '1.6s'
             }}
           />
           
-          {/* Step 6: Flame 2 (2.0-2.4s) */}
+          {/* Flame 6 */}
           <img 
-            src="/flame2.svg"
+            src="/flame6.svg"
             alt=""
-            className="flame-svg flame-step6"
+            className="flame-svg flame-6"
             style={{
               position: 'absolute',
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              animation: 'flame-dynamic 2.4s infinite',
+              animation: 'flame-sequence 2.4s infinite',
               animationDelay: '2.0s'
             }}
           />
@@ -1191,14 +1191,8 @@ function App() {
           50% { opacity: 0; }
         }
         
-        /* Instant Flame Animation - No Fading */
-        @keyframes flame-instant {
-          0%, 33.32% { opacity: 1; }
-          33.33%, 100% { opacity: 0; }
-        }
-
-        /* Dynamic Flame Animation - 6-step cycle */
-        @keyframes flame-dynamic {
+        /* Sequential 6-Flame Animation */
+        @keyframes flame-sequence {
           0%, 16.66% { opacity: 1; }
           16.67%, 100% { opacity: 0; }
         }
