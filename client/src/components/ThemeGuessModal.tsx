@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth } from '../utils/themeMessages';
+import { UnPrefix } from './UnPrefix';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -67,6 +68,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     timestamp: number;
   } | null>(null);
 
+  // Theme data state for UN diamond coloring
+  const [themeGuessData, setThemeGuessData] = useState<{
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  } | undefined>(undefined);
+
   const playerId = getPlayerId();
 
   // Load theme data when modal opens
@@ -84,6 +92,16 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         console.log('[ThemeGuessModal] Using pre-loaded theme data');
         setThemeStatus(preloadedData.themeStatus);
         setThemeStats(preloadedData.themeStats);
+        
+        // Update theme guess data for Un diamond coloring
+        if (preloadedData.themeStatus?.progress) {
+          setThemeGuessData({
+            hasGuessedToday: preloadedData.themeStatus.progress.hasGuessedToday,
+            isCorrectGuess: preloadedData.themeStatus.progress.isCorrectGuess,
+            confidencePercentage: preloadedData.themeStatus.progress.confidencePercentage || null
+          });
+        }
+        
         setIsLoading(false);
         setError(null);
         
@@ -99,6 +117,16 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         console.log('[ThemeGuessModal] Using cached theme data');
         setThemeStatus(dataCache.themeStatus);
         setThemeStats(dataCache.themeStats);
+        
+        // Update theme guess data for Un diamond coloring
+        if (dataCache.themeStatus?.progress) {
+          setThemeGuessData({
+            hasGuessedToday: dataCache.themeStatus.progress.hasGuessedToday,
+            isCorrectGuess: dataCache.themeStatus.progress.isCorrectGuess,
+            confidencePercentage: dataCache.themeStatus.progress.confidencePercentage || null
+          });
+        }
+        
         setIsLoading(false);
         setError(null);
       } else {
@@ -137,6 +165,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       } else {
         setThemeStatus(status);
         setThemeStats(statsResult as ThemeStats);
+        
+        // Update theme guess data for Un diamond coloring
+        if (status.progress) {
+          setThemeGuessData({
+            hasGuessedToday: status.progress.hasGuessedToday,
+            isCorrectGuess: status.progress.isCorrectGuess,
+            confidencePercentage: status.progress.confidencePercentage || null
+          });
+        }
         
         // Cache the data for 2 minutes
         setDataCache({
@@ -179,14 +216,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
       // Update theme status based on response
       if (themeStatus) {
-        setThemeStatus({
+        const updatedThemeStatus = {
           ...themeStatus,
           progress: {
             ...themeStatus.progress,
             hasGuessedToday: true,
             themeGuess: guess.trim(),
-            isCorrectGuess: response.isCorrect
+            isCorrectGuess: response.isCorrect,
+            confidencePercentage: response.fuzzyMatch?.confidence || null,
+            matchingMethod: response.fuzzyMatch?.method || null
           }
+        };
+        setThemeStatus(updatedThemeStatus);
+        
+        // Update theme guess data for Un diamond coloring
+        setThemeGuessData({
+          hasGuessedToday: true,
+          isCorrectGuess: response.isCorrect,
+          confidencePercentage: response.fuzzyMatch?.confidence || null
         });
       }
 
@@ -239,9 +286,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         boxSizing: 'border-box'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
-            🎯 Theme of the Week
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <UnPrefix themeGuessData={themeGuessData} />
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
+              Theme of the Week
+            </h2>
+          </div>
           <button
             onClick={handleClose}
             style={{
