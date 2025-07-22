@@ -23,9 +23,26 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
         themeGuessData.confidencePercentage,
         themeGuessData.isCorrectGuess
       );
+      
+      // Get proper background color based on theme result
+      let backgroundColor: string;
+      if (themeGuessData.isCorrectGuess) {
+        backgroundColor = '#f0fdf4'; // Light green background for correct
+      } else if (themeGuessData.confidencePercentage !== null) {
+        if (themeGuessData.confidencePercentage <= 50) {
+          backgroundColor = '#fef2f2'; // Light red background for low similarity
+        } else if (themeGuessData.confidencePercentage <= 70) {
+          backgroundColor = '#fefbeb'; // Light orange/yellow background for medium similarity
+        } else {
+          backgroundColor = '#f0fdf4'; // Light green background for high similarity
+        }
+      } else {
+        backgroundColor = '#f8f9ff'; // Default light blue
+      }
+      
       return {
         borderColor: themeColor,
-        backgroundColor: themeColor + '20', // Add 20% opacity
+        backgroundColor: backgroundColor,
         textColor: themeColor
       };
     }
