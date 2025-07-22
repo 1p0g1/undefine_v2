@@ -39,12 +39,18 @@ interface ThemeGuessModalProps {
   open: boolean;
   onClose: () => void;
   gameId: string;
+  onThemeDataUpdate?: (themeData: {
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  }) => void;
 }
 
 export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({ 
   open, 
   onClose, 
-  gameId 
+  gameId,
+  onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,7 +136,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setIsLoading(false);
         setError(null);
       } else {
-        loadThemeData();
+      loadThemeData();
       }
     }
   }, [open, playerId]);
@@ -252,6 +258,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     setGuess('');
     setError(null);
     setLastGuessResult(null);
+    
+    // Pass back current theme data to parent for immediate Un diamond update
+    if (onThemeDataUpdate && themeGuessData) {
+      onThemeDataUpdate(themeGuessData);
+    }
+    
     onClose();
   };
 
@@ -259,29 +271,29 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={handleClose} style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
       width: '100%',
       height: '100%',
       background: 'rgba(10, 10, 10, 0.4)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
       padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
       boxSizing: 'border-box'
     }}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{
         background: '#fdfbf6',
-        borderRadius: '1rem',
+          borderRadius: '1rem',
         padding: 'clamp(1rem, 4vw, 2rem)',
-        width: '100%',
+          width: '100%',
         maxWidth: 'min(480px, 90vw)',
         maxHeight: 'min(90vh, calc(100vh - 2rem))',
-        overflowY: 'auto',
+          overflowY: 'auto',
         boxShadow: '0 0 20px rgba(0, 0, 0, 0.1)',
-        color: '#1a237e',
+          color: '#1a237e',
         fontSize: '1rem',
         boxSizing: 'border-box'
       }}>
@@ -296,7 +308,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.75rem' // Increased gap for better spacing
+            gap: '0.5rem',
+            flex: '1'
           }}>
             <UnPrefix themeGuessData={themeGuessData} />
             <span style={{
@@ -306,16 +319,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               color: '#059669',
               marginLeft: '-0.1rem' // Fine-tune spacing
             }}>
-              lock
+              lock the theme of the week
             </span>
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: '1.1rem', // Reduced from 1.5rem
-              fontWeight: 'bold',
-              color: '#1a237e'
-            }}>
-              Theme of the Week
-            </h2>
           </div>
           <button
             onClick={handleClose}
@@ -330,7 +335,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           >
             ×
           </button>
-        </div>
+            </div>
 
         {/* Loading State */}
         {isLoading && (
@@ -362,7 +367,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem' 
               }}>
                 <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>
                   Progress this week:
@@ -535,13 +540,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                             marginBottom: '0.5rem'
                           }}>
                             Similarity: {themeStatus.progress.confidencePercentage}%
-                          </div>
+              </div>
                         </>
                       )}
                       
                       {/* Fallback when no similarity data available */}
                       {(themeStatus.progress.confidencePercentage === null || themeStatus.progress.confidencePercentage === undefined) && (
-                        <div style={{
+              <div style={{
                           fontSize: '0.9rem',
                           color: '#6b7280',
                           marginBottom: '0.5rem',
@@ -609,7 +614,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       color: themeStatus.progress.isCorrectGuess ? '#059669' : '#dc2626'
                     }}>
                       {themeStatus.progress.isCorrectGuess ? '🎯 Correct!' : '❌ Try again tomorrow'}
-                    </div>
+                </div>
                   );
                 })()}
               </div>
@@ -626,39 +631,39 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   }}>
                     What connects this week's words?
                   </label>
-                  <input
-                    type="text"
-                    value={guess}
-                    onChange={(e) => setGuess(e.target.value)}
-                    placeholder="Enter your theme guess..."
-                    style={{
+                    <input
+                      type="text"
+                      value={guess}
+                      onChange={(e) => setGuess(e.target.value)}
+                      placeholder="Enter your theme guess..."
+                      style={{
                       width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        borderRadius: '0.5rem',
                       border: '2px solid #e5e7eb',
-                      fontSize: '1rem',
+                        fontSize: '1rem',
                       boxSizing: 'border-box'
                     }}
                     disabled={isSubmitting}
                   />
                 </div>
-                <button
+                    <button
                   type="submit"
-                  disabled={!guess.trim() || isSubmitting}
-                  style={{
+                      disabled={!guess.trim() || isSubmitting}
+                      style={{
                     width: '100%',
                     padding: '0.75rem',
                     backgroundColor: guess.trim() && !isSubmitting ? '#1a237e' : '#9ca3af',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
                     fontSize: '1rem',
                     fontWeight: 'bold',
                     cursor: guess.trim() && !isSubmitting ? 'pointer' : 'not-allowed'
                   }}
                 >
                   {isSubmitting ? '🤔 Thinking...' : '🎯 Submit Guess'}
-                </button>
+                    </button>
               </form>
             ) : (
               <div style={{

@@ -386,10 +386,20 @@ function App() {
     setShowSummary(false); // Close summary modal when opening theme modal
   };
 
-  const handleCloseThemeModal = () => {
+  const handleCloseThemeModal = (updatedThemeData?: {
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  }) => {
     setShowThemeModal(false);
-    // Reload theme data after closing modal to update Un diamond colors
-    loadThemeData();
+    
+    // Update theme data immediately if provided from modal
+    if (updatedThemeData) {
+      setThemeGuessData(updatedThemeData);
+    } else {
+      // Fallback: reload theme data if no data provided
+      loadThemeData();
+    }
   };
 
   return (
@@ -1090,8 +1100,9 @@ function App() {
       {/* Theme Guess Modal */}
       <ThemeGuessModal
         open={showThemeModal}
-        onClose={handleCloseThemeModal}
+        onClose={() => handleCloseThemeModal()}
         gameId={gameState.gameId}
+        onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />
 
       <style>{`
