@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth } from '../utils/themeMessages';
+import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
 import { UnPrefix } from './UnPrefix';
 
 interface ThemeStatus {
@@ -301,26 +301,48 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
-          alignItems: 'center', 
+          alignItems: 'flex-start', 
           marginBottom: '1rem',
           paddingTop: '0.5rem' // Add more spacing from top
         }}>
           <div style={{ 
             display: 'flex', 
+            flexDirection: 'column',
             alignItems: 'center', 
-            gap: '0.5rem',
-            flex: '1'
+            gap: '0.25rem',
+            flex: '1',
+            textAlign: 'center'
           }}>
-            <UnPrefix themeGuessData={themeGuessData} />
-            <span style={{
-              fontStyle: 'italic',
-              fontSize: '1.4rem', // Large italics like main page
-              fontWeight: '600',
-              color: '#059669',
-              marginLeft: '-0.1rem' // Fine-tune spacing
+            {/* Un diamond + lock line */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}>
-              lock the theme of the week
-            </span>
+              <UnPrefix themeGuessData={themeGuessData} />
+              <span style={{
+                fontStyle: 'italic',
+                fontSize: '1.4rem',
+                fontWeight: '600',
+                color: themeGuessData?.hasGuessedToday 
+                  ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
+                  : '#1a237e',
+                marginLeft: '-0.1rem'
+              }}>
+                lock
+              </span>
+            </div>
+            
+            {/* Theme of the Week line */}
+            <div style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              color: themeGuessData?.hasGuessedToday 
+                ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
+                : '#1a237e'
+            }}>
+              Theme of the Week
+            </div>
           </div>
           <button
             onClick={handleClose}
@@ -335,7 +357,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           >
             ×
           </button>
-            </div>
+        </div>
 
         {/* Loading State */}
         {isLoading && (
