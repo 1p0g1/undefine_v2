@@ -44,6 +44,7 @@ function App() {
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [canReopenSummary, setCanReopenSummary] = useState(false);
+  const [summaryShownForGame, setSummaryShownForGame] = useState<string | null>(null); // Track which game ID has shown modal
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showRules, setShowRules] = useState(false);
@@ -90,26 +91,26 @@ function App() {
   }, []);
 
   // Load theme data for UN diamond coloring
-  useEffect(() => {
-    const loadThemeData = async () => {
-      try {
-        const playerId = getPlayerId();
-        if (!playerId) return;
-        
-        const themeStatus = await apiClient.getThemeStatus(playerId);
-        if (themeStatus && themeStatus.progress) {
-          setThemeGuessData({
-            hasGuessedToday: themeStatus.progress.hasGuessedToday,
-            isCorrectGuess: themeStatus.progress.isCorrectGuess,
-            confidencePercentage: themeStatus.progress.confidencePercentage || null
-          });
-        }
-      } catch (error) {
-        console.log('[App] Failed to load theme data for UN diamond coloring:', error);
-        // Don't show error for this background load
+  const loadThemeData = async () => {
+    try {
+      const playerId = getPlayerId();
+      if (!playerId) return;
+      
+      const themeStatus = await apiClient.getThemeStatus(playerId);
+      if (themeStatus && themeStatus.progress) {
+        setThemeGuessData({
+          hasGuessedToday: themeStatus.progress.hasGuessedToday,
+          isCorrectGuess: themeStatus.progress.isCorrectGuess,
+          confidencePercentage: themeStatus.progress.confidencePercentage || null
+        });
       }
-    };
+    } catch (error) {
+      console.log('[App] Failed to load theme data for UN diamond coloring:', error);
+      // Don't show error for this background load
+    }
+  };
 
+  useEffect(() => {
     loadThemeData();
   }, []);
 
@@ -125,11 +126,18 @@ function App() {
       isRestoredGame,
       gameId: gameState.gameId,
       wordText: gameState.wordText,
-      wasCompletedInSession: wasCompletedInSession()
+      wasCompletedInSession: wasCompletedInSession(),
+      summaryShownForGame
     });
     
     // Only proceed if we have a valid game state
     if (!gameState.gameId) {
+      return;
+    }
+    
+    // Don't show modal if we've already shown it for this game
+    if (summaryShownForGame === gameState.gameId) {
+      console.log('[App] Summary already shown for this game, skipping');
       return;
     }
     
@@ -141,6 +149,7 @@ function App() {
         setGameStarted(true);
         setShowSummary(true);
         setCanReopenSummary(false);
+        setSummaryShownForGame(gameState.gameId); // Mark as shown
         if (gameState.score) {
           setTimer(0);
         }
@@ -155,15 +164,21 @@ function App() {
       setGameStarted(true);
       setCanReopenSummary(true);
     }
-  }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession]);
+  }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession, summaryShownForGame]);
 
   useEffect(() => {
+    // Don't show modal with delay if we've already shown it for this game
+    if (summaryShownForGame === gameState.gameId) {
+      return;
+    }
+    
     if (gameState.isComplete && gameStarted && wasCompletedInSession()) {
       // Only show modal with delay if game was completed in this session
       if (timerRef.current) clearInterval(timerRef.current);
       summaryTimeoutRef.current = setTimeout(() => {
         setShowSummary(true);
         setCanReopenSummary(false);
+        setSummaryShownForGame(gameState.gameId); // Mark as shown
       }, 5000);
       return;
     }
@@ -174,7 +189,7 @@ function App() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameState.isComplete, gameStarted, wasCompletedInSession]);
+  }, [gameState.isComplete, gameStarted, wasCompletedInSession, gameState.gameId, summaryShownForGame]);
 
   useEffect(() => {
     return () => {
@@ -280,6 +295,7 @@ function App() {
   const handlePlayAgain = () => {
     setGameStarted(false);
     setTimer(0);
+    setSummaryShownForGame(null); // Reset summary tracking for new game
     forceNewGame();
   };
 
@@ -372,6 +388,8 @@ function App() {
 
   const handleCloseThemeModal = () => {
     setShowThemeModal(false);
+    // Reload theme data after closing modal to update Un diamond colors
+    loadThemeData();
   };
 
   return (
