@@ -309,7 +309,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
-            gap: '0.25rem',
+            gap: '0.6rem',
             flex: '1',
             textAlign: 'center'
           }}>
