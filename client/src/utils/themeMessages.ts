@@ -120,24 +120,35 @@ export function getThemeFeedbackMessage(
 
 /**
  * Get similarity bar color based on confidence score
+ * 
+ * THEME GUESS COLOR SYSTEM (Updated July 2025):
+ * - 0-69%: Red (#dc2626) - Incorrect/far from correct
+ * - 70-85%: Orange (#d97706) - Very close but not quite correct  
+ * - 85%+: Green (#059669) - Effectively correct (high confidence)
  */
 export function getSimilarityBarColor(confidence: number): string {
-  if (confidence >= 70) return '#059669'; // Green for winning scores
-  if (confidence >= 60) return '#d97706'; // Orange for warm
-  if (confidence >= 40) return '#dc2626'; // Red for cold
-  return '#6b7280'; // Gray for very cold
+  if (confidence >= 85) return '#059669'; // Green for 85%+ (effectively correct)
+  if (confidence >= 70) return '#d97706'; // Orange for 70-85% (very close)
+  if (confidence >= 40) return '#dc2626'; // Red for 40-69% (cold)
+  return '#6b7280'; // Gray for <40% (very cold)
 }
 
 /**
  * Get UN diamond color based on theme guess result
  * This is for coloring the UN diamond after theme guesses
+ * 
+ * THEME GUESS COLOR SYSTEM (Updated July 2025):
+ * - Correct guess: Always green regardless of confidence
+ * - 0-69%: Red (#dc2626) - Incorrect/far from correct
+ * - 70-85%: Orange (#d97706) - Very close but not quite correct
+ * - 85%+: Green (#059669) - Effectively correct (high confidence)
  */
 export function getUnDiamondColor(confidence: number | null, isCorrect: boolean): string {
   if (isCorrect) return '#059669'; // Green for correct answers
   if (confidence === null) return '#1a237e'; // Default blue if no guess yet
-  if (confidence <= 50) return '#dc2626'; // Red for ≤50%
-  if (confidence <= 70) return '#d97706'; // Orange for 51-70%
-  return '#059669'; // Green for >70%
+  if (confidence < 70) return '#dc2626'; // Red for <70%
+  if (confidence < 85) return '#d97706'; // Orange for 70-85%
+  return '#059669'; // Green for 85%+
 }
 
 /**
