@@ -8,7 +8,12 @@ import { ScoreResult } from '../../../shared-types/src/scoring';
 import { gameService } from '../services/GameService';
 import type { LeaderboardResponse } from '../api/types';
 
-const useGame = () => {
+// Add callback interface for refreshing player stats
+interface UseGameOptions {
+  onPlayerStatsUpdate?: () => Promise<void> | void;
+}
+
+const useGame = (options?: UseGameOptions) => {
   const [gameState, setGameState] = useState<GameSessionState>(() => {
     const currentState = gameService.getCurrentState();
     return currentState || {
@@ -77,39 +82,44 @@ const useGame = () => {
     }
   }, [gameState.wordId]);
 
-  const startNewGame = useCallback(async () => {
-    try {
-      const result = await gameService.initializeGame();
-      const { isRestoredGame: restored, ...newState } = result;
-      
-      setGameState(newState);
-      setIsRestoredGame(restored);
-      
-      // Reconstruct guess status if this is a restored completed game
-      if (newState.isComplete && newState.guesses.length > 0) {
-        const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
-          ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
+  // Initialize game on mount
+  useEffect(() => {
+    const initGame = async () => {
+      try {
+        const initialState = await gameService.initializeGame();
+        setGameState(initialState);
+        setIsRestoredGame(initialState.isRestoredGame);
         
-        newState.guesses.forEach((guess, index) => {
-          if (index < 6) {
-            // For restored games, check if the guess was the winning guess
-            if (newState.isWon && index === newState.guesses.length - 1) {
+        // Initialize guess status based on current game state
+        if (initialState.guesses && initialState.guesses.length > 0) {
+          const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
+            ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
+          initialState.guesses.forEach((guess, index) => {
+            // For restored games, we need to determine the status
+            if (initialState.isWon && index === initialState.guesses.length - 1) {
+              newGuessStatus[index] = 'correct';
+            } else if (normalizedEquals(guess, initialState.wordText)) {
               newGuessStatus[index] = 'correct';
             } else {
-              // We can't easily determine if it was fuzzy from stored state
-              // so we'll mark non-winning guesses as incorrect
               newGuessStatus[index] = 'incorrect';
             }
-          }
-        });
-        
-        setGuessStatus(newGuessStatus);
-        console.log('[Game] Reconstructed guess status for restored game:', newGuessStatus);
-      } else {
-        // New game - reset to empty
-        setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+          });
+          setGuessStatus(newGuessStatus);
+        }
+      } catch (error) {
+        console.error('[Game] Failed to initialize game:', error);
       }
-      
+    };
+    
+    initGame();
+  }, []);
+
+  const startNewGame = useCallback(async () => {
+    try {
+      const newState = await gameService.startNewGame();
+      setGameState(newState);
+      setIsRestoredGame(false); // New games are never restored
+      setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
       setFuzzyMatchCount(0);
       setShowLeaderboard(false);
       setScoreDetails(null);
@@ -166,11 +176,21 @@ const useGame = () => {
         
         setGuessStatus(newGuessStatus);
 
-        // Fetch leaderboard if game is complete (with small delay for database triggers)
+        // Fetch leaderboard and refresh player stats if game is complete
         if (data.gameOver) {
           // Small delay to ensure database triggers complete
           setTimeout(async () => {
             await fetchLeaderboard();
+            
+            // Refresh player stats immediately after game completion
+            if (options?.onPlayerStatsUpdate) {
+              try {
+                await options.onPlayerStatsUpdate();
+                console.log('[Game] Player stats refreshed after game completion');
+              } catch (error) {
+                console.error('[Game] Failed to refresh player stats:', error);
+              }
+            }
           }, 500);
         }
 
@@ -180,8 +200,12 @@ const useGame = () => {
         throw error;
       }
     },
-    [gameState, guessStatus, fuzzyMatchCount, fetchLeaderboard]
+    [gameState, guessStatus, fuzzyMatchCount, fetchLeaderboard, options]
   );
+
+  const wasCompletedInSession = useCallback(() => {
+    return gameService.wasCompletedInSession();
+  }, []);
 
   return {
     gameState,
@@ -197,8 +221,8 @@ const useGame = () => {
     leaderboardError,
     scoreDetails,
     fetchLeaderboard,
-    isRestoredGame, // Add this to the return value
-    wasCompletedInSession: () => gameService.wasCompletedInSession()
+    isRestoredGame,
+    wasCompletedInSession
   };
 };
 

@@ -20,6 +20,9 @@ import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
 function App() {
+  // Get player stats including streak data and refresh function
+  const { stats: playerStats, refreshStats } = usePlayer();
+  
   const { 
     gameState, 
     startNewGame, 
@@ -36,10 +39,11 @@ function App() {
     fetchLeaderboard,
     isRestoredGame,
     wasCompletedInSession
-  } = useGame();
+  } = useGame({
+    // Pass callback to refresh player stats immediately after game completion
+    onPlayerStatsUpdate: refreshStats
+  });
   
-  // Get player stats including streak data
-  const { stats: playerStats } = usePlayer();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
