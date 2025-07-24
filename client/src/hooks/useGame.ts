@@ -90,6 +90,17 @@ const useGame = (options?: UseGameOptions) => {
         setGameState(initialState);
         setIsRestoredGame(initialState.isRestoredGame);
         
+        // If this is a restored completed game, refresh player stats to show current streak
+        if (initialState.isRestoredGame && initialState.isComplete && options?.onPlayerStatsUpdate) {
+          console.log('[Game] Restored completed game detected, refreshing player stats for current streak display');
+          try {
+            await options.onPlayerStatsUpdate();
+            console.log('[Game] Player stats refreshed for restored game');
+          } catch (error) {
+            console.error('[Game] Failed to refresh player stats for restored game:', error);
+          }
+        }
+        
         // Initialize guess status based on current game state
         if (initialState.guesses && initialState.guesses.length > 0) {
           const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
@@ -112,7 +123,7 @@ const useGame = (options?: UseGameOptions) => {
     };
     
     initGame();
-  }, []);
+  }, [options]);
 
   const startNewGame = useCallback(async () => {
     try {
