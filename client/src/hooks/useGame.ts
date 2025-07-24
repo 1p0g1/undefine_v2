@@ -178,6 +178,12 @@ const useGame = (options?: UseGameOptions) => {
 
         // Fetch leaderboard and refresh player stats if game is complete
         if (data.gameOver) {
+          console.log('[Game] Game completed, starting refresh process:', {
+            gameOver: data.gameOver,
+            hasStatsCallback: !!options?.onPlayerStatsUpdate,
+            callbackType: typeof options?.onPlayerStatsUpdate
+          });
+          
           // Small delay to ensure database triggers complete
           setTimeout(async () => {
             await fetchLeaderboard();
@@ -185,11 +191,14 @@ const useGame = (options?: UseGameOptions) => {
             // Refresh player stats immediately after game completion
             if (options?.onPlayerStatsUpdate) {
               try {
+                console.log('[Game] Calling player stats refresh callback...');
                 await options.onPlayerStatsUpdate();
                 console.log('[Game] Player stats refreshed after game completion');
               } catch (error) {
                 console.error('[Game] Failed to refresh player stats:', error);
               }
+            } else {
+              console.warn('[Game] No player stats update callback provided');
             }
           }, 500);
         }
