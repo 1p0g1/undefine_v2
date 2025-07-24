@@ -7,55 +7,37 @@ interface StreakBadgeProps {
 }
 
 export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak, lastWinDate }) => {
-  // Calculate streak status - active, dormant, or none
-  const getStreakStatus = () => {
-    if (streak === 0) return 'none';
-    if (!lastWinDate) return 'none';
+  // Calculate if streak is active (won today or yesterday) - STRICT consecutive system
+  const isActiveStreak = () => {
+    if (!lastWinDate || streak === 0) return false;
     
     const lastWin = new Date(lastWinDate);
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - lastWin.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (daysDiff <= 3) return 'active';    // Recent play - show as fully active
-    if (daysDiff <= 7) return 'dormant';   // Within tolerance - show as dormant
-    return 'none';                         // Too old - streak likely broken in database
+    return daysDiff <= 1; // Active only if won today or yesterday (strict consecutive)
   };
 
-  const streakStatus = getStreakStatus();
-  const displayStreak = streakStatus === 'none' ? 0 : streak;
+  const activeStreak = isActiveStreak();
+  const displayStreak = activeStreak ? streak : 0;
   
   // ALWAYS show badge to encourage streak building
   // Don't return null - always visible for engagement
 
-  // Color progression based on streak length and status
-  const getStreakColor = (s: number, status: string) => {
+  // Color progression based on streak length
+  const getStreakColor = (s: number) => {
     if (s === 0) return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray for no streak
-    
-    // Base colors for active streaks
-    let baseColors;
-    if (s >= 20) baseColors = { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%)', border: '#8b5cf6', shadow: 'rgba(139, 92, 246, 0.4)' }; // Purple/Pink (Diamond)
-    else if (s >= 10) baseColors = { bg: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', border: '#d97706', shadow: 'rgba(217, 119, 6, 0.4)' }; // Gold
-    else if (s >= 6) baseColors = { bg: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)', border: '#a16207', shadow: 'rgba(161, 98, 7, 0.3)' }; // Yellow
-    else if (s >= 3) baseColors = { bg: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', border: '#c2410c', shadow: 'rgba(194, 65, 12, 0.3)' }; // Orange
-    else if (s >= 1) baseColors = { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', border: '#b91c1c', shadow: 'rgba(185, 28, 28, 0.3)' }; // Red
-    else baseColors = { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray fallback
-    
-    // Adjust for dormant state (muted colors)
-    if (status === 'dormant') {
-      return {
-        bg: baseColors.bg.replace(/0%/g, '0%, rgba(0,0,0,0.2) 20%'), // Add overlay for muted effect
-        border: baseColors.border + '80', // Add transparency
-        shadow: baseColors.shadow.replace(/0\.\d+/g, '0.2') // Reduce shadow intensity
-      };
-    }
-    
-    return baseColors;
+    if (s >= 20) return { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%)', border: '#8b5cf6', shadow: 'rgba(139, 92, 246, 0.4)' }; // Purple/Pink (Diamond)
+    if (s >= 10) return { bg: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', border: '#d97706', shadow: 'rgba(217, 119, 6, 0.4)' }; // Gold
+    if (s >= 6) return { bg: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)', border: '#a16207', shadow: 'rgba(161, 98, 7, 0.3)' }; // Yellow
+    if (s >= 3) return { bg: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', border: '#c2410c', shadow: 'rgba(194, 65, 12, 0.3)' }; // Orange
+    if (s >= 1) return { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', border: '#b91c1c', shadow: 'rgba(185, 28, 28, 0.3)' }; // Red
+    return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray fallback
   };
 
-  // Emoji for streaks with status awareness
-  const getStreakEmoji = (s: number, status: string) => {
+  // Emoji for streaks
+  const getStreakEmoji = (s: number) => {
     if (s === 0) return '💤'; // Sleeping/inactive
-    if (status === 'dormant') return '⏸️'; // Paused/dormant
     if (s >= 20) return '💎'; // Diamond
     if (s >= 10) return '⭐'; // Gold star  
     if (s >= 6) return '🟡'; // Yellow
@@ -65,14 +47,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
   };
 
   // Message for different streak states
-  const getStreakMessage = (s: number, status: string) => {
+  const getStreakMessage = (s: number) => {
     if (s === 0) return "Start your streak!";
-    if (status === 'dormant') {
-      if (s >= 15) return `${s}-game streak waiting!`;
-      if (s >= 10) return "Streak on pause!";
-      if (s >= 5) return "Come back soon!";
-      return "Keep it alive!";
-    }
     if (s >= 20) return "LEGEND!";
     if (s >= 15) return "AMAZING!";
     if (s >= 10) return "ON FIRE!";
@@ -82,28 +58,24 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
     return "Keep going!";
   };
 
-  const colors = getStreakColor(displayStreak, streakStatus);
-  const emoji = getStreakEmoji(displayStreak, streakStatus);
-  const message = getStreakMessage(displayStreak, streakStatus);
+  const colors = getStreakColor(displayStreak);
+  const emoji = getStreakEmoji(displayStreak);
+  const message = getStreakMessage(displayStreak);
 
   // Special milestone display for 10+ (only for active streaks)
-  const isMilestone = displayStreak >= 10 && streakStatus === 'active';
+  const isMilestone = displayStreak >= 10 && activeStreak;
   
   return (
     <div 
       className="streak-badge"
       aria-label={
-        streakStatus === 'none' 
+        displayStreak === 0 
           ? "No active streak - start building!" 
-          : streakStatus === 'dormant'
-          ? `Dormant winning streak: ${displayStreak} games (play soon to keep it alive)${highestStreak ? `, personal best: ${highestStreak}` : ''}`
           : `Active winning streak: ${displayStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`
       }
       title={
-        streakStatus === 'none' 
+        displayStreak === 0 
           ? "Win games to start your streak!" 
-          : streakStatus === 'dormant'
-          ? `${displayStreak}-game streak waiting! Play within 7 days of last win to maintain it.${highestStreak && displayStreak < highestStreak ? ` (Personal best: ${highestStreak})` : ''}`
           : `${displayStreak}-game active winning streak!${highestStreak && displayStreak < highestStreak ? ` (Personal best: ${highestStreak})` : ''}`
       }
       style={{
@@ -133,7 +105,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
         // Subtle pulse for active streaks
         animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
         // Opacity based on streak status
-        opacity: streakStatus === 'none' ? 0.8 : streakStatus === 'dormant' ? 0.9 : 1
+        opacity: displayStreak === 0 ? 0.8 : 1
       }}
     >
       {/* Background sparkle effect for high streaks */}
@@ -198,7 +170,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
       )}
 
       {/* Active streak indicator dot (only for active streaks) */}
-      {streakStatus === 'active' && (
+      {activeStreak && (
         <div style={{
           position: 'absolute',
           top: '0.3rem',
