@@ -118,12 +118,6 @@ function App() {
     loadThemeData();
   }, []);
 
-  // Refresh player stats on app load to ensure streak counter shows current data
-  useEffect(() => {
-    console.log('[App] Refreshing player stats on app load for current streak display');
-    refreshStats();
-  }, [refreshStats]);
-
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
