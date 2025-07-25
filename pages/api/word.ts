@@ -81,6 +81,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(500).json({ error: 'Failed to get valid word' });
     }
 
+    // Check if player already has an active session for this word (prevent duplicates on refresh)
+    const { data: existingSession, error: existingError } = await supabase
+      .from('game_sessions')
+      .select('id, start_time, is_complete')
+      .eq('player_id', playerId)
+      .eq('word_id', word.word.id)
+      .eq('is_complete', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('[/api/word] Error checking existing session:', existingError);
+      // Continue to create new session if check fails
+    }
+
+    if (existingSession) {
+      console.log('[/api/word] Found existing active session, returning it:', existingSession.id);
+      return res.status(200).json({
+        gameId: existingSession.id,
+        word: word.word,
+        start_time: existingSession.start_time,
+        isFallback: word.isFallback
+      });
+    }
+
     // Create a new game session
     console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
     const start_time = new Date().toISOString();
