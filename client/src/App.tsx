@@ -42,6 +42,7 @@ function App() {
   } = useGame({
     // Pass callback to refresh player stats immediately after game completion
     onPlayerStatsUpdate: async (calculatedStreakData) => {
+      console.log('[STREAK DEBUG] Callback called with:', calculatedStreakData);
       if (calculatedStreakData) {
         // Update streak immediately with calculated data (like theme diamond)
         if (playerStats) {
@@ -53,6 +54,7 @@ function App() {
           };
           // Set stats directly (like theme diamond pattern)
           setStats(updatedStats);
+          console.log('[STREAK DEBUG] Updated to streak:', calculatedStreakData.currentStreak);
         }
       } else {
         // Fallback: refresh stats from API if no calculated data provided
