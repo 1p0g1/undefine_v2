@@ -204,12 +204,6 @@ const useGame = (options?: UseGameOptions) => {
             const currentStats = options.currentPlayerStats;
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
             
-            console.log('[Game] Starting streak calculation:', {
-              gameWon: data.isCorrect,
-              currentStats,
-              today
-            });
-            
             if (data.isCorrect) {
               // WIN: Calculate new streak using strict consecutive logic
               let newCurrentStreak = 1;
@@ -220,29 +214,15 @@ const useGame = (options?: UseGameOptions) => {
                 yesterday.setDate(yesterday.getDate() - 1);
                 const yesterdayStr = yesterday.toISOString().split('T')[0];
                 
-                console.log('[Game] Checking streak continuation:', {
-                  lastWinDate: currentStats.lastWinDate,
-                  yesterdayStr,
-                  today,
-                  currentStreak: currentStats.currentStreak
-                });
-                
                 // Check if last win was exactly yesterday (strict consecutive)
                 if (currentStats.lastWinDate === yesterdayStr) {
                   newCurrentStreak = currentStats.currentStreak + 1;
-                  console.log('[Game] Continuing streak from yesterday:', newCurrentStreak);
                 }
                 // If last win was today, keep current streak (don't increment)
                 else if (currentStats.lastWinDate === today) {
                   newCurrentStreak = currentStats.currentStreak;
-                  console.log('[Game] Already won today, keeping streak:', newCurrentStreak);
                 }
                 // Any other gap breaks the streak, start new streak at 1
-                else {
-                  console.log('[Game] Gap detected, starting new streak at 1');
-                }
-              } else {
-                console.log('[Game] First ever win, starting streak at 1');
               }
               
               calculatedStreakData = {
@@ -258,12 +238,6 @@ const useGame = (options?: UseGameOptions) => {
                 lastWinDate: currentStats.lastWinDate // Don't update last win date on loss
               };
             }
-            
-            console.log('[Game] Calculated new streak data:', {
-              wasWin: data.isCorrect,
-              oldStats: currentStats,
-              newStats: calculatedStreakData
-            });
           }
           
           // Small delay to ensure database triggers complete

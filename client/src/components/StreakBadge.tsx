@@ -7,31 +7,13 @@ interface StreakBadgeProps {
 }
 
 export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak, lastWinDate }) => {
-  // DEBUG: Log all props and calculations
-  console.log('[StreakBadge] Rendered with props:', {
-    streak,
-    highestStreak,
-    lastWinDate,
-    timestamp: new Date().toISOString()
-  });
-  
   // Calculate if streak is active (won today or yesterday) - STRICT consecutive system
   const isActiveStreak = () => {
-    if (!lastWinDate || streak === 0) {
-      console.log('[StreakBadge] Not active - no lastWinDate or streak is 0:', { lastWinDate, streak });
-      return false;
-    }
+    if (!lastWinDate || streak === 0) return false;
     
     const lastWin = new Date(lastWinDate);
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - lastWin.getTime()) / (1000 * 60 * 60 * 24));
-    
-    console.log('[StreakBadge] Calculating active streak:', {
-      lastWinDate,
-      today: today.toISOString().split('T')[0],
-      daysDiff,
-      isActive: daysDiff <= 1
-    });
     
     return daysDiff <= 1; // Active only if won today or yesterday (strict consecutive)
   };
@@ -39,15 +21,6 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
   const activeStreak = isActiveStreak();
   const displayStreak = activeStreak ? streak : 0;
   
-  console.log('[StreakBadge] Final display values:', {
-    activeStreak,
-    displayStreak,
-    willShowEmoji: displayStreak === 0 ? '💤' : '🔥'
-  });
-  
-  // ALWAYS show badge to encourage streak building
-  // Don't return null - always visible for engagement
-
   // Color progression based on streak length
   const getStreakColor = (s: number) => {
     if (s === 0) return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray for no streak

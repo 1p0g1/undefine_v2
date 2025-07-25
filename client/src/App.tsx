@@ -42,15 +42,8 @@ function App() {
   } = useGame({
     // Pass callback to refresh player stats immediately after game completion
     onPlayerStatsUpdate: async (calculatedStreakData) => {
-      console.log('[App] onPlayerStatsUpdate called with:', {
-        calculatedStreakData,
-        currentPlayerStats: playerStats,
-        hasSetStats: typeof setStats === 'function'
-      });
-      
       if (calculatedStreakData) {
         // Update streak immediately with calculated data (like theme diamond)
-        console.log('[App] Updating player stats with calculated streak data:', calculatedStreakData);
         if (playerStats) {
           const updatedStats = {
             ...playerStats,
@@ -60,17 +53,8 @@ function App() {
           };
           // Set stats directly (like theme diamond pattern)
           setStats(updatedStats);
-          console.log('[App] Stats updated immediately:', updatedStats);
-          console.log('[App] StreakBadge should now show:', {
-            streak: updatedStats.currentStreak,
-            highestStreak: updatedStats.longestStreak,
-            lastWinDate: updatedStats.lastWinDate
-          });
-        } else {
-          console.warn('[App] No playerStats available for immediate update');
         }
       } else {
-        console.log('[App] No calculated streak data, falling back to API refresh');
         // Fallback: refresh stats from API if no calculated data provided
         await refreshStats();
       }
