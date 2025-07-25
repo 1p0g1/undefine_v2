@@ -40,6 +40,19 @@ function App() {
   
   // Get player stats including streak data
   const { stats: playerStats, refreshStats } = usePlayer();
+  
+  // Local override for immediate streak updates (like theme system)
+  const [immediateStreakData, setImmediateStreakData] = useState<{
+    currentStreak: number;
+    longestStreak: number;
+    lastWinDate: string | null;
+    gamesWon: number;
+  } | null>(null);
+  
+  // Use immediate streak data if available, otherwise fall back to playerStats
+  const effectivePlayerStats = immediateStreakData 
+    ? { ...playerStats, ...immediateStreakData }
+    : playerStats;
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -231,28 +244,32 @@ function App() {
       console.log('[App] Guess result received:', {
         gameOver: guessResult.gameOver,
         isCorrect: guessResult.isCorrect,
-        condition: guessResult.gameOver && guessResult.isCorrect
+        condition: guessResult.gameOver && guessResult.isCorrect,
+        stats: guessResult.stats
       });
       
-      // If game just completed and was won, refresh streak data immediately
-      if (guessResult.gameOver && guessResult.isCorrect) {
-        console.log('[App] Game won! Refreshing streak data immediately');
-        console.log('[App] Current player stats before refresh:', playerStats);
+      // If game just completed and was won, update streak data IMMEDIATELY from response
+      if (guessResult.gameOver && guessResult.isCorrect && guessResult.stats) {
+        console.log('[App] Game won! Updating streak data immediately from response');
+        console.log('[App] New stats from API:', guessResult.stats);
         
-        // Small delay to ensure database triggers complete, then refresh streak
-        setTimeout(async () => {
-          console.log('[App] Calling refreshStats...');
-          try {
-            await refreshStats();
-            console.log('[App] refreshStats completed successfully');
-          } catch (error) {
-            console.error('[App] refreshStats failed:', error);
-          }
-        }, 500);
+        // Update streak data immediately with the response data (like theme system)
+        setImmediateStreakData({
+          currentStreak: guessResult.stats.current_streak,
+          longestStreak: guessResult.stats.longest_streak,
+          lastWinDate: guessResult.stats.updated_at,
+          gamesWon: guessResult.stats.games_won
+        });
+        
+        console.log('[App] Streak counter should update immediately with:', {
+          currentStreak: guessResult.stats.current_streak,
+          longestStreak: guessResult.stats.longest_streak
+        });
       } else {
         console.log('[App] Game not won or not over:', {
           gameOver: guessResult.gameOver,
-          isCorrect: guessResult.isCorrect
+          isCorrect: guessResult.isCorrect,
+          hasStats: !!guessResult.stats
         });
       }
     } finally {
@@ -323,6 +340,7 @@ function App() {
     setGameStarted(false);
     setTimer(0);
     setSummaryShownForGame(null); // Reset summary tracking for new game
+    setImmediateStreakData(null); // Clear immediate streak override for new game
     forceNewGame();
   };
 
@@ -405,6 +423,7 @@ function App() {
   // Handle game start
   const handleStartGame = () => {
     setGameStarted(true);
+    setImmediateStreakData(null); // Clear any previous immediate streak data
   };
 
   // Theme modal handlers
@@ -457,9 +476,9 @@ function App() {
       }}>
         <TimerBadge seconds={timer} />
         <StreakBadge 
-          streak={playerStats?.currentStreak || 0} 
-          highestStreak={playerStats?.longestStreak || 0}
-          lastWinDate={playerStats?.lastWinDate || null}
+          streak={effectivePlayerStats?.currentStreak || 0} 
+          highestStreak={effectivePlayerStats?.longestStreak || 0}
+          lastWinDate={effectivePlayerStats?.lastWinDate || null}
         />
       </div>
       
