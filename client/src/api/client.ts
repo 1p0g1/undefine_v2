@@ -77,6 +77,15 @@ export const fetchFromThemeApi = async <T>(path: string, options: RequestInit = 
   
   const requestId = Math.random().toString(36).substring(7);
   
+  // DEBUG: Log the exact URL construction
+  console.log(`[Theme API ${requestId}] URL Construction Debug:`, {
+    originalPath: path,
+    normalizedPath: normalizedPath,
+    finalUrl: url,
+    hasQueryParams: path.includes('?'),
+    queryParamsPart: path.split('?')[1] || 'none'
+  });
+  
   try {
     console.log(`[Theme API ${requestId}] Request:`, {
       url,
