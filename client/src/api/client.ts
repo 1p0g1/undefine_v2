@@ -312,7 +312,7 @@ export const apiClient = {
       similarity?: number;
     };
   }> {
-    return fetchFromThemeApi('/api/theme-guess', {
+    return fetchFromApi('/api/theme-guess', {
       method: 'POST',
       body: JSON.stringify(request),
     });
@@ -345,7 +345,7 @@ export const apiClient = {
       completedOn: string;
     }>;
   }> {
-    return fetchFromThemeApi(`/api/theme-status?player_id=${playerId}`);
+    return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
   },
 
   /**
@@ -360,7 +360,7 @@ export const apiClient = {
     averageWordsCompletedWhenGuessing: number;
     themesGuessed: string[];
   }> {
-    return fetchFromThemeApi(`/api/theme-stats?player_id=${playerId}`);
+    return fetchFromApi(`/api/theme-stats?player_id=${playerId}`);
   },
 
   /**
