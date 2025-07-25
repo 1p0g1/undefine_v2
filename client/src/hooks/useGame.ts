@@ -8,21 +8,7 @@ import { ScoreResult } from '../../../shared-types/src/scoring';
 import { gameService } from '../services/GameService';
 import type { LeaderboardResponse } from '../api/types';
 
-// Add callback interface for refreshing player stats
-interface UseGameOptions {
-  onPlayerStatsUpdate?: (calculatedStreakData?: {
-    currentStreak: number;
-    longestStreak: number;
-    lastWinDate: string | null;
-  }) => Promise<void> | void;
-  currentPlayerStats?: {
-    currentStreak: number;
-    longestStreak: number;
-    lastWinDate: string | null;
-  } | null;
-}
-
-const useGame = (options?: UseGameOptions) => {
+const useGame = () => {
   const [gameState, setGameState] = useState<GameSessionState>(() => {
     const currentState = gameService.getCurrentState();
     return currentState || {
@@ -91,44 +77,39 @@ const useGame = (options?: UseGameOptions) => {
     }
   }, [gameState.wordId]);
 
-  // Initialize game on mount
-  useEffect(() => {
-    const initGame = async () => {
-      try {
-        const initialState = await gameService.initializeGame();
-        setGameState(initialState);
-        setIsRestoredGame(initialState.isRestoredGame);
-        
-        // Initialize guess status based on current game state
-        if (initialState.guesses && initialState.guesses.length > 0) {
-          const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
-            ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
-          initialState.guesses.forEach((guess, index) => {
-            // For restored games, we need to determine the status
-            if (initialState.isWon && index === initialState.guesses.length - 1) {
-              newGuessStatus[index] = 'correct';
-            } else if (normalizedEquals(guess, initialState.wordText)) {
-              newGuessStatus[index] = 'correct';
-            } else {
-              newGuessStatus[index] = 'incorrect';
-            }
-          });
-          setGuessStatus(newGuessStatus);
-        }
-      } catch (error) {
-        console.error('[Game] Failed to initialize game:', error);
-      }
-    };
-    
-    initGame();
-  }, []); // FIXED: Back to empty dependency array to prevent infinite re-renders
-
   const startNewGame = useCallback(async () => {
     try {
-      const newState = await gameService.startNewGame();
+      const result = await gameService.initializeGame();
+      const { isRestoredGame: restored, ...newState } = result;
+      
       setGameState(newState);
-      setIsRestoredGame(false); // New games are never restored
-      setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      setIsRestoredGame(restored);
+      
+      // Reconstruct guess status if this is a restored completed game
+      if (newState.isComplete && newState.guesses.length > 0) {
+        const newGuessStatus: ('correct' | 'incorrect' | 'fuzzy' | 'empty' | 'active')[] = 
+          ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
+        
+        newState.guesses.forEach((guess, index) => {
+          if (index < 6) {
+            // For restored games, check if the guess was the winning guess
+            if (newState.isWon && index === newState.guesses.length - 1) {
+              newGuessStatus[index] = 'correct';
+            } else {
+              // We can't easily determine if it was fuzzy from stored state
+              // so we'll mark non-winning guesses as incorrect
+              newGuessStatus[index] = 'incorrect';
+            }
+          }
+        });
+        
+        setGuessStatus(newGuessStatus);
+        console.log('[Game] Reconstructed guess status for restored game:', newGuessStatus);
+      } else {
+        // New game - reset to empty
+        setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      }
+      
       setFuzzyMatchCount(0);
       setShowLeaderboard(false);
       setScoreDetails(null);
@@ -185,77 +166,11 @@ const useGame = (options?: UseGameOptions) => {
         
         setGuessStatus(newGuessStatus);
 
-        // Fetch leaderboard and refresh player stats if game is complete
+        // Fetch leaderboard if game is complete (with small delay for database triggers)
         if (data.gameOver) {
-          console.log('[Game] Game completed, starting refresh process:', {
-            gameOver: data.gameOver,
-            hasStatsCallback: !!options?.onPlayerStatsUpdate,
-            callbackType: typeof options?.onPlayerStatsUpdate
-          });
-          
-          // Calculate new streak data immediately (like theme diamond pattern)
-          let calculatedStreakData: {
-            currentStreak: number;
-            longestStreak: number;
-            lastWinDate: string | null;
-          } | undefined;
-
-          if (options?.currentPlayerStats && options?.onPlayerStatsUpdate) {
-            const currentStats = options.currentPlayerStats;
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-            
-            if (data.isCorrect) {
-              // WIN: Calculate new streak using strict consecutive logic
-              let newCurrentStreak = 1;
-              
-              if (currentStats.lastWinDate) {
-                const lastWin = new Date(currentStats.lastWinDate);
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                
-                // Check if last win was exactly yesterday (strict consecutive)
-                if (currentStats.lastWinDate === yesterdayStr) {
-                  newCurrentStreak = currentStats.currentStreak + 1;
-                }
-                // If last win was today, keep current streak (don't increment)
-                else if (currentStats.lastWinDate === today) {
-                  newCurrentStreak = currentStats.currentStreak;
-                }
-                // Any other gap breaks the streak, start new streak at 1
-              }
-              
-              calculatedStreakData = {
-                currentStreak: newCurrentStreak,
-                longestStreak: Math.max(currentStats.longestStreak, newCurrentStreak),
-                lastWinDate: today
-              };
-            } else {
-              // LOSS: Streak breaks to 0 (strict consecutive system)
-              calculatedStreakData = {
-                currentStreak: 0,
-                longestStreak: currentStats.longestStreak, // Keep personal best
-                lastWinDate: currentStats.lastWinDate // Don't update last win date on loss
-              };
-            }
-          }
-          
           // Small delay to ensure database triggers complete
           setTimeout(async () => {
             await fetchLeaderboard();
-            
-            // Refresh player stats with calculated data (like theme diamond)
-            if (options?.onPlayerStatsUpdate) {
-              try {
-                console.log('[Game] Calling player stats refresh callback with calculated data...');
-                await options.onPlayerStatsUpdate(calculatedStreakData);
-                console.log('[Game] Player stats refreshed after game completion');
-              } catch (error) {
-                console.error('[Game] Failed to refresh player stats:', error);
-              }
-            } else {
-              console.warn('[Game] No player stats update callback provided');
-            }
           }, 500);
         }
 
@@ -265,12 +180,8 @@ const useGame = (options?: UseGameOptions) => {
         throw error;
       }
     },
-    [gameState, guessStatus, fuzzyMatchCount, fetchLeaderboard, options]
+    [gameState, guessStatus, fuzzyMatchCount, fetchLeaderboard]
   );
-
-  const wasCompletedInSession = useCallback(() => {
-    return gameService.wasCompletedInSession();
-  }, []);
 
   return {
     gameState,
@@ -286,8 +197,8 @@ const useGame = (options?: UseGameOptions) => {
     leaderboardError,
     scoreDetails,
     fetchLeaderboard,
-    isRestoredGame,
-    wasCompletedInSession
+    isRestoredGame, // Add this to the return value
+    wasCompletedInSession: () => gameService.wasCompletedInSession()
   };
 };
 

@@ -19,7 +19,6 @@ interface UsePlayerReturn {
   isLoading: boolean;
   error: string | null;
   refreshStats: () => Promise<void>;
-  setStats: (stats: PlayerStats | null) => void;
 }
 
 export function usePlayer(): UsePlayerReturn {
@@ -37,15 +36,12 @@ export function usePlayer(): UsePlayerReturn {
   // Fetch player stats
   const fetchStats = useCallback(async () => {
     if (!playerId) return;
-    console.log('[usePlayer] Starting stats refresh for player:', playerId);
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await apiClient.getPlayerStats(playerId);
-      console.log('[usePlayer] Received stats response:', response);
-      
-      const newStats = {
+      setStats({
         gamesPlayed: response.games_played,
         gamesWon: response.games_won,
         currentStreak: response.current_streak,
@@ -54,10 +50,7 @@ export function usePlayer(): UsePlayerReturn {
         totalGuesses: response.total_guesses,
         averageGuessesPerGame: response.average_guesses_per_game,
         totalPlayTimeSeconds: response.total_play_time_seconds
-      };
-      
-      console.log('[usePlayer] Setting new stats:', newStats);
-      setStats(newStats);
+      });
     } catch (err) {
       console.error('[usePlayer] Failed to fetch stats:', err);
       setError('Failed to load player stats');
@@ -78,7 +71,6 @@ export function usePlayer(): UsePlayerReturn {
     stats,
     isLoading,
     error,
-    refreshStats: fetchStats,
-    setStats // Add ability to set stats directly (like theme diamond pattern)
+    refreshStats: fetchStats
   };
 } 

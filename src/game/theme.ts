@@ -425,10 +425,6 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
 
     const completedSessions = sessions?.filter(s => s.is_complete) || [];
 
-    // Count unique completed words (not total sessions) - fixes multiple refresh bug
-    const uniqueCompletedWordIds = new Set(completedSessions.map(s => s.word_id));
-    const completedWordsCount = uniqueCompletedWordIds.size;
-
     // Get all theme attempts for this week, ordered by date (most recent first)
     const { data: weeklyAttempts, error: attemptsError } = await supabase
       .from('theme_attempts')
@@ -471,11 +467,11 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     }
 
     // Can guess theme if completed at least one word this week and haven't guessed today
-    const hasCompletedWordThisWeek = completedWordsCount > 0;
+    const hasCompletedWordThisWeek = completedSessions.length > 0;
 
     return {
       totalWords: themeWords?.length || 0,
-      completedWords: completedWordsCount,
+      completedWords: completedSessions.length,
       themeGuess: mostRecentAttempt?.guess || null,
       canGuessTheme: hasCompletedWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,

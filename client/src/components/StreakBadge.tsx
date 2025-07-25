@@ -21,6 +21,9 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({ streak, highestStreak,
   const activeStreak = isActiveStreak();
   const displayStreak = activeStreak ? streak : 0;
   
+  // ALWAYS show badge to encourage streak building
+  // Don't return null - always visible for engagement
+
   // Color progression based on streak length
   const getStreakColor = (s: number) => {
     if (s === 0) return { bg: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', border: '#374151', shadow: 'rgba(55, 65, 81, 0.3)' }; // Gray for no streak

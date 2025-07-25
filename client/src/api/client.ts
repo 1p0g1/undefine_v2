@@ -77,15 +77,6 @@ export const fetchFromThemeApi = async <T>(path: string, options: RequestInit = 
   
   const requestId = Math.random().toString(36).substring(7);
   
-  // DEBUG: Log the exact URL construction
-  console.log(`[Theme API ${requestId}] URL Construction Debug:`, {
-    originalPath: path,
-    normalizedPath: normalizedPath,
-    finalUrl: url,
-    hasQueryParams: path.includes('?'),
-    queryParamsPart: path.split('?')[1] || 'none'
-  });
-  
   try {
     console.log(`[Theme API ${requestId}] Request:`, {
       url,
@@ -312,7 +303,7 @@ export const apiClient = {
       similarity?: number;
     };
   }> {
-    return fetchFromThemeApi('/api/theme-guess', {
+    return fetchFromApi('/api/theme-guess', {
       method: 'POST',
       body: JSON.stringify(request),
     });
@@ -345,7 +336,7 @@ export const apiClient = {
       completedOn: string;
     }>;
   }> {
-    return fetchFromThemeApi(`/api/theme-status?player_id=${playerId}`);
+    return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
   },
 
   /**
@@ -360,7 +351,7 @@ export const apiClient = {
     averageWordsCompletedWhenGuessing: number;
     themesGuessed: string[];
   }> {
-    return fetchFromThemeApi(`/api/theme-stats?player_id=${playerId}`);
+    return fetchFromApi(`/api/theme-stats?player_id=${playerId}`);
   },
 
   /**

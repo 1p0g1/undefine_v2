@@ -20,9 +20,6 @@ import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
 function App() {
-  // Get player stats including streak data and refresh function
-  const { stats: playerStats, refreshStats, setStats } = usePlayer();
-  
   const { 
     gameState, 
     startNewGame, 
@@ -39,36 +36,10 @@ function App() {
     fetchLeaderboard,
     isRestoredGame,
     wasCompletedInSession
-  } = useGame({
-    // Pass callback to refresh player stats immediately after game completion
-    onPlayerStatsUpdate: async (calculatedStreakData) => {
-      console.log('[STREAK DEBUG] Callback called with:', calculatedStreakData);
-      if (calculatedStreakData) {
-        // Update streak immediately with calculated data (like theme diamond)
-        if (playerStats) {
-          const updatedStats = {
-            ...playerStats,
-            currentStreak: calculatedStreakData.currentStreak,
-            longestStreak: calculatedStreakData.longestStreak,
-            lastWinDate: calculatedStreakData.lastWinDate
-          };
-          // Set stats directly (like theme diamond pattern)
-          setStats(updatedStats);
-          console.log('[STREAK DEBUG] Updated to streak:', calculatedStreakData.currentStreak);
-        }
-      } else {
-        // Fallback: refresh stats from API if no calculated data provided
-        await refreshStats();
-      }
-    },
-    // Pass current player stats so useGame can calculate new values
-    currentPlayerStats: playerStats ? {
-      currentStreak: playerStats.currentStreak,
-      longestStreak: playerStats.longestStreak,
-      lastWinDate: playerStats.lastWinDate
-    } : null
-  });
+  } = useGame();
   
+  // Get player stats including streak data
+  const { stats: playerStats, refreshStats } = usePlayer();
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -256,7 +227,16 @@ function App() {
     console.log('Submitting guess:', normalizedGuess);
     setIsSubmitting(true);
     try {
-      await submitGuess(normalizedGuess);
+      const guessResult = await submitGuess(normalizedGuess);
+      
+      // If game just completed and was won, refresh streak data immediately
+      if (guessResult.gameOver && guessResult.isCorrect) {
+        console.log('[App] Game won! Refreshing streak data immediately');
+        // Small delay to ensure database triggers complete, then refresh streak
+        setTimeout(async () => {
+          await refreshStats();
+        }, 500);
+      }
     } finally {
       setIsSubmitting(false);
     }
