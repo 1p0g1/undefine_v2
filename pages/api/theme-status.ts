@@ -53,6 +53,15 @@ export default withCors(async function handler(
   }
 
   try {
+    // DEBUG: Check environment variables
+    console.log('[/api/theme-status] Environment check:', {
+      hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasAnonKey: !!process.env.SUPABASE_ANON_KEY,
+      hasDbProvider: !!process.env.DB_PROVIDER,
+      dbProvider: process.env.DB_PROVIDER
+    });
+
     const playerId = (req.headers['player-id'] as string) ?? req.query.player_id as string;
     
     if (!playerId) {
