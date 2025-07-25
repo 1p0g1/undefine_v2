@@ -21,7 +21,7 @@ import { usePlayer } from './hooks/usePlayer';
 
 function App() {
   // Get player stats including streak data and refresh function
-  const { stats: playerStats, refreshStats } = usePlayer();
+  const { stats: playerStats, refreshStats, setStats } = usePlayer();
   
   const { 
     gameState, 
@@ -41,7 +41,32 @@ function App() {
     wasCompletedInSession
   } = useGame({
     // Pass callback to refresh player stats immediately after game completion
-    onPlayerStatsUpdate: refreshStats
+    onPlayerStatsUpdate: async (calculatedStreakData) => {
+      if (calculatedStreakData) {
+        // Update streak immediately with calculated data (like theme diamond)
+        console.log('[App] Updating player stats with calculated streak data:', calculatedStreakData);
+        if (playerStats) {
+          const updatedStats = {
+            ...playerStats,
+            currentStreak: calculatedStreakData.currentStreak,
+            longestStreak: calculatedStreakData.longestStreak,
+            lastWinDate: calculatedStreakData.lastWinDate
+          };
+          // Set stats directly (like theme diamond pattern)
+          setStats(updatedStats);
+          console.log('[App] Stats updated immediately:', updatedStats);
+        }
+      } else {
+        // Fallback: refresh stats from API if no calculated data provided
+        await refreshStats();
+      }
+    },
+    // Pass current player stats so useGame can calculate new values
+    currentPlayerStats: playerStats ? {
+      currentStreak: playerStats.currentStreak,
+      longestStreak: playerStats.longestStreak,
+      lastWinDate: playerStats.lastWinDate
+    } : null
   });
   
   const [guess, setGuess] = useState('');

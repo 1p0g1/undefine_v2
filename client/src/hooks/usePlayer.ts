@@ -19,6 +19,7 @@ interface UsePlayerReturn {
   isLoading: boolean;
   error: string | null;
   refreshStats: () => Promise<void>;
+  setStats: (stats: PlayerStats | null) => void;
 }
 
 export function usePlayer(): UsePlayerReturn {
@@ -77,6 +78,7 @@ export function usePlayer(): UsePlayerReturn {
     stats,
     isLoading,
     error,
-    refreshStats: fetchStats
+    refreshStats: fetchStats,
+    setStats // Add ability to set stats directly (like theme diamond pattern)
   };
 } 

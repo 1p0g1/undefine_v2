@@ -10,7 +10,16 @@ import type { LeaderboardResponse } from '../api/types';
 
 // Add callback interface for refreshing player stats
 interface UseGameOptions {
-  onPlayerStatsUpdate?: () => Promise<void> | void;
+  onPlayerStatsUpdate?: (calculatedStreakData?: {
+    currentStreak: number;
+    longestStreak: number;
+    lastWinDate: string | null;
+  }) => Promise<void> | void;
+  currentPlayerStats?: {
+    currentStreak: number;
+    longestStreak: number;
+    lastWinDate: string | null;
+  } | null;
 }
 
 const useGame = (options?: UseGameOptions) => {
@@ -184,15 +193,68 @@ const useGame = (options?: UseGameOptions) => {
             callbackType: typeof options?.onPlayerStatsUpdate
           });
           
+          // Calculate new streak data immediately (like theme diamond pattern)
+          let calculatedStreakData: {
+            currentStreak: number;
+            longestStreak: number;
+            lastWinDate: string | null;
+          } | undefined;
+
+          if (options?.currentPlayerStats && options?.onPlayerStatsUpdate) {
+            const currentStats = options.currentPlayerStats;
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+            
+            if (data.isCorrect) {
+              // WIN: Calculate new streak using strict consecutive logic
+              let newCurrentStreak = 1;
+              
+              if (currentStats.lastWinDate) {
+                const lastWin = new Date(currentStats.lastWinDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                
+                // Check if last win was exactly yesterday (strict consecutive)
+                if (currentStats.lastWinDate === yesterdayStr) {
+                  newCurrentStreak = currentStats.currentStreak + 1;
+                }
+                // If last win was today, keep current streak (don't increment)
+                else if (currentStats.lastWinDate === today) {
+                  newCurrentStreak = currentStats.currentStreak;
+                }
+                // Any other gap breaks the streak, start new streak at 1
+              }
+              
+              calculatedStreakData = {
+                currentStreak: newCurrentStreak,
+                longestStreak: Math.max(currentStats.longestStreak, newCurrentStreak),
+                lastWinDate: today
+              };
+            } else {
+              // LOSS: Streak breaks to 0 (strict consecutive system)
+              calculatedStreakData = {
+                currentStreak: 0,
+                longestStreak: currentStats.longestStreak, // Keep personal best
+                lastWinDate: currentStats.lastWinDate // Don't update last win date on loss
+              };
+            }
+            
+            console.log('[Game] Calculated new streak data:', {
+              wasWin: data.isCorrect,
+              oldStats: currentStats,
+              newStats: calculatedStreakData
+            });
+          }
+          
           // Small delay to ensure database triggers complete
           setTimeout(async () => {
             await fetchLeaderboard();
             
-            // Refresh player stats immediately after game completion
+            // Refresh player stats with calculated data (like theme diamond)
             if (options?.onPlayerStatsUpdate) {
               try {
-                console.log('[Game] Calling player stats refresh callback...');
-                await options.onPlayerStatsUpdate();
+                console.log('[Game] Calling player stats refresh callback with calculated data...');
+                await options.onPlayerStatsUpdate(calculatedStreakData);
                 console.log('[Game] Player stats refreshed after game completion');
               } catch (error) {
                 console.error('[Game] Failed to refresh player stats:', error);
