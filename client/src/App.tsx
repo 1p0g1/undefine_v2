@@ -46,7 +46,6 @@ function App() {
     currentStreak: number;
     longestStreak: number;
     lastWinDate: string | null;
-    gamesWon: number;
   } | null>(null);
   
   // Use immediate streak data if available, otherwise fall back to playerStats
@@ -258,7 +257,6 @@ function App() {
           currentStreak: guessResult.stats.current_streak,
           longestStreak: guessResult.stats.longest_streak,
           lastWinDate: guessResult.stats.updated_at,
-          gamesWon: guessResult.stats.games_won
         });
         
         console.log('[App] Streak counter should update immediately with:', {

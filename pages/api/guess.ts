@@ -746,6 +746,37 @@ export default withCors(async function handler(
               throw leaderboardError;
             }
 
+            // Step 5: Fetch updated player stats (including streaks) after leaderboard triggers
+            console.log('[/api/guess] Step 5: Fetching updated player stats');
+            try {
+              const { data: playerStats, error: statsError } = await supabase
+                .from('player_streaks')
+                .select('current_streak, highest_streak, last_win_date')
+                .eq('player_id', playerId)
+                .single();
+
+              if (statsError) {
+                console.error('[/api/guess] ❌ Step 5 failed: Stats query error:', statsError);
+                // Don't throw - just log and continue without stats
+              } else {
+                console.log('[/api/guess] ✅ Step 5 completed: Player stats fetched:', playerStats);
+                stats = {
+                  games_played: 0, // Not fetched in this query
+                  games_won: 0,    // Not fetched in this query  
+                  current_streak: playerStats?.current_streak || 0,
+                  longest_streak: playerStats?.highest_streak || 0,
+                  total_guesses: 0, // Not fetched in this query
+                  average_guesses_per_game: 0, // Not fetched in this query
+                  total_play_time_seconds: 0, // Not fetched in this query
+                  total_score: 0, // Not fetched in this query
+                  updated_at: new Date().toISOString()
+                };
+              }
+            } catch (statsFetchError) {
+              console.error('[/api/guess] ❌ Step 5 failed: Exception fetching stats:', statsFetchError);
+              // Continue without stats
+            }
+
             console.log('[/api/guess] 🎉 All completion steps successful! Game stats and leaderboard updated.');
 
             return res.status(200).json({
@@ -995,6 +1026,37 @@ export default withCors(async function handler(
             scoreResult
           });
           throw leaderboardError;
+        }
+
+        // Step 5: Fetch updated player stats (including streaks) after leaderboard triggers
+        console.log('[/api/guess] Step 5: Fetching updated player stats');
+        try {
+          const { data: playerStats, error: statsError } = await supabase
+            .from('player_streaks')
+            .select('current_streak, highest_streak, last_win_date')
+            .eq('player_id', playerId)
+            .single();
+
+          if (statsError) {
+            console.error('[/api/guess] ❌ Step 5 failed: Stats query error:', statsError);
+            // Don't throw - just log and continue without stats
+          } else {
+            console.log('[/api/guess] ✅ Step 5 completed: Player stats fetched:', playerStats);
+            stats = {
+              games_played: 0, // Not fetched in this query
+              games_won: 0,    // Not fetched in this query  
+              current_streak: playerStats?.current_streak || 0,
+              longest_streak: playerStats?.highest_streak || 0,
+              total_guesses: 0, // Not fetched in this query
+              average_guesses_per_game: 0, // Not fetched in this query
+              total_play_time_seconds: 0, // Not fetched in this query
+              total_score: 0, // Not fetched in this query
+              updated_at: new Date().toISOString()
+            };
+          }
+        } catch (statsFetchError) {
+          console.error('[/api/guess] ❌ Step 5 failed: Exception fetching stats:', statsFetchError);
+          // Continue without stats
         }
 
         console.log('[/api/guess] 🎉 All completion steps successful! Game stats and leaderboard updated.');
