@@ -36,12 +36,16 @@ export function usePlayer(): UsePlayerReturn {
   // Fetch player stats
   const fetchStats = useCallback(async () => {
     if (!playerId) return;
+    console.log('[usePlayer] Starting fetchStats for playerId:', playerId);
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('[usePlayer] Calling apiClient.getPlayerStats...');
       const response = await apiClient.getPlayerStats(playerId);
-      setStats({
+      console.log('[usePlayer] API response received:', response);
+      
+      const newStats = {
         gamesPlayed: response.games_played,
         gamesWon: response.games_won,
         currentStreak: response.current_streak,
@@ -50,7 +54,10 @@ export function usePlayer(): UsePlayerReturn {
         totalGuesses: response.total_guesses,
         averageGuessesPerGame: response.average_guesses_per_game,
         totalPlayTimeSeconds: response.total_play_time_seconds
-      });
+      };
+      
+      console.log('[usePlayer] Setting new stats:', newStats);
+      setStats(newStats);
     } catch (err) {
       console.error('[usePlayer] Failed to fetch stats:', err);
       setError('Failed to load player stats');

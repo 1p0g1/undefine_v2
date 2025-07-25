@@ -228,14 +228,32 @@ function App() {
     setIsSubmitting(true);
     try {
       const guessResult = await submitGuess(normalizedGuess);
+      console.log('[App] Guess result received:', {
+        gameOver: guessResult.gameOver,
+        isCorrect: guessResult.isCorrect,
+        condition: guessResult.gameOver && guessResult.isCorrect
+      });
       
       // If game just completed and was won, refresh streak data immediately
       if (guessResult.gameOver && guessResult.isCorrect) {
         console.log('[App] Game won! Refreshing streak data immediately');
+        console.log('[App] Current player stats before refresh:', playerStats);
+        
         // Small delay to ensure database triggers complete, then refresh streak
         setTimeout(async () => {
-          await refreshStats();
+          console.log('[App] Calling refreshStats...');
+          try {
+            await refreshStats();
+            console.log('[App] refreshStats completed successfully');
+          } catch (error) {
+            console.error('[App] refreshStats failed:', error);
+          }
         }, 500);
+      } else {
+        console.log('[App] Game not won or not over:', {
+          gameOver: guessResult.gameOver,
+          isCorrect: guessResult.isCorrect
+        });
       }
     } finally {
       setIsSubmitting(false);
