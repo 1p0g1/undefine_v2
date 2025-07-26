@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { safeFetch, ApiError, isVercelPreview, getApiBaseUrl } from '../utils/apiHelpers';
 
 interface DayHistory {
   date: string;
   played: boolean;
   won: boolean;
   rank?: number;
+}
+
+interface HistoryResponse {
+  history: DayHistory[];
+  dateRange: {
+    start: string;
+    end: string;
+  };
 }
 
 interface StreakCalendarModalProps {
@@ -28,14 +36,41 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, 
   const loadPlayHistory = async () => {
     try {
       setLoading(true);
-      // We'll need to create this API endpoint
-      const response = await fetch(`/api/player/history?player_id=${playerId}&months=2`);
-      if (response.ok) {
-        const data = await response.json();
-        setHistory(data.history || []);
-      }
+      
+      console.log('[StreakCalendarModal] Environment check:', {
+        playerId,
+        baseUrl: getApiBaseUrl(),
+        isPreview: isVercelPreview(),
+        hostname: window.location.hostname
+      });
+      
+      // 🔧 SYSTEMATIC FIX: Use safeFetch with proper URL construction
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}/api/player/history?player_id=${playerId}&months=2`;
+      console.log('[StreakCalendarModal] Request URL:', url);
+      
+      const data = await safeFetch<HistoryResponse>(url);
+      setHistory(data.history || []);
+      
+      console.log(`[StreakCalendarModal] Loaded ${data.history?.length || 0} history records`);
     } catch (error) {
-      console.error('Failed to load play history:', error);
+      console.error('[StreakCalendarModal] Failed to load play history:', error);
+      
+      // Provide specific error messages based on error type
+      if (error instanceof ApiError) {
+        console.error('[StreakCalendarModal] API Error details:', {
+          message: error.message,
+          status: error.status,
+          url: error.url,
+          responseText: error.responseText?.substring(0, 200)
+        });
+        
+        if (error.status === 404) {
+          console.warn('[StreakCalendarModal] History API not available - this may be expected in preview environments');
+        }
+      }
+      
+      // Set empty history instead of throwing - calendar should still show
       setHistory([]);
     } finally {
       setLoading(false);
@@ -304,6 +339,20 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, 
             padding: '2rem'
           }}>
             Loading your play history...
+          </div>
+        )}
+
+        {/* Show helpful message if no data and not loading */}
+        {!loading && history.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            color: '#6b7280',
+            padding: '1rem',
+            fontStyle: 'italic'
+          }}>
+            {isVercelPreview() 
+              ? 'Play history not available in preview environment' 
+              : 'No play history available yet. Start playing to see your progress!'}
           </div>
         )}
       </div>

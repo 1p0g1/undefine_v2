@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { safeFetch, ApiError, isVercelPreview } from '../utils/apiHelpers';
 
-// 🔧 FIX: Use relative URLs directly - works in both dev and production
-// No need for complex BASE_URL configuration in a Next.js app
+// 🔧 REVERT: Restore BASE_URL for production compatibility
+// Production may use separate backend domain via VITE_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 interface AllTimeStats {
   player_id: string;
@@ -21,6 +23,13 @@ interface AllTimeLeaderboardData {
   topByGames: AllTimeStats[];
   totalPlayers: number;
   totalGames: number;
+}
+
+interface AllTimeLeaderboardResponse {
+  success: boolean;
+  data?: AllTimeLeaderboardData;
+  error?: string;
+  debug?: any;
 }
 
 interface AllTimeLeaderboardProps {
@@ -47,29 +56,50 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     setError(null);
     
     try {
-      console.log('[AllTimeLeaderboard] Fetching all-time stats...');
+      console.log('[AllTimeLeaderboard] Environment check:', {
+        baseUrl: BASE_URL,
+        isPreview: isVercelPreview(),
+        hostname: window.location.hostname
+      });
       
-      // 🔧 FIX: Use relative URL directly - no BASE_URL needed
-      const response = await fetch('/api/leaderboard/all-time');
+      // 🔧 SYSTEMATIC FIX: Use safeFetch to prevent JSON parsing errors
+      const url = `${BASE_URL}/api/leaderboard/all-time`;
+      console.log('[AllTimeLeaderboard] Request URL:', url);
       
-      console.log('[AllTimeLeaderboard] Response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      console.log('[AllTimeLeaderboard] API result:', result);
+      const result = await safeFetch<AllTimeLeaderboardResponse>(url);
       
       if (result.success) {
-        setData(result.data);
+        setData(result.data || null);
         console.log('[AllTimeLeaderboard] Data loaded successfully');
       } else {
         setError(result.error || 'Failed to load all-time statistics');
         console.error('[AllTimeLeaderboard] API returned error:', result.error);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Network error loading all-time stats';
+      let errorMessage = 'Network error loading all-time stats';
+      
+      if (err instanceof ApiError) {
+        console.error('[AllTimeLeaderboard] API Error details:', {
+          message: err.message,
+          status: err.status,
+          url: err.url,
+          responseText: err.responseText?.substring(0, 200)
+        });
+        
+        // Provide more specific error messages
+        if (err.status === 404) {
+          errorMessage = isVercelPreview() 
+            ? 'Leaderboard API not available in preview environment'
+            : 'Leaderboard API endpoint not found';
+        } else if (err.status === 500) {
+          errorMessage = 'Server error loading leaderboard data';
+        } else if (err.responseText?.includes('<!doctype')) {
+          errorMessage = 'Server returned webpage instead of data - check API configuration';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setError(errorMessage);
       console.error('[AllTimeLeaderboard] Error:', err);
     } finally {
