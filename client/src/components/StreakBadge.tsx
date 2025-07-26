@@ -17,6 +17,14 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // 🔧 TEMPORARY DEBUG: Log all props to see what we're getting
+  console.log('[StreakBadge] Props received:', {
+    streak,
+    highestStreak,
+    lastWinDate,
+    playerId
+  });
+
   // Calculate if streak is active (won today or yesterday) - STRICT consecutive system
   const isActiveStreak = () => {
     if (!lastWinDate || streak === 0) return false;
@@ -25,11 +33,28 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - lastWin.getTime()) / (1000 * 60 * 60 * 24));
     
+    console.log('[StreakBadge] Streak analysis:', {
+      lastWinDate,
+      daysDiff,
+      streak,
+      wouldBeActive: daysDiff <= 1
+    });
+    
     return daysDiff <= 1; // Active only if won today or yesterday (strict consecutive)
   };
 
   const activeStreak = isActiveStreak();
-  const displayStreak = activeStreak ? streak : 0;
+  
+  // 🚨 CRITICAL FIX: Always show database streak value, don't hide based on UI rules
+  // The database triggers handle the strict consecutive logic correctly
+  const displayStreak = streak; // Show actual database value
+  
+  console.log('[StreakBadge] Display decision:', {
+    activeStreak,
+    databaseStreak: streak,
+    displayStreak,
+    reasoning: 'Showing database value directly'
+  });
   
   // Updated color system with glow effects like Un diamond
   const getStreakColors = (s: number, isActive: boolean) => {
@@ -77,7 +102,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
       };
     }
     
-    // Inactive/dormant - muted colors
+    // Inactive/dormant - muted colors but still show the number
     return {
       backgroundColor: '#f8f9ff',
       borderColor: '#9ca3af',
@@ -113,7 +138,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         aria-label={
           displayStreak === 0 
             ? "No active streak - start building!" 
-            : `Active winning streak: ${displayStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`
+            : `Current streak: ${displayStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`
         }
         style={{
           backgroundColor: colors.backgroundColor,
