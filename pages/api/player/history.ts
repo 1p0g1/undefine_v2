@@ -6,6 +6,20 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Define proper types for the Supabase response
+interface LeaderboardWithWord {
+  date: string;
+  rank: number;
+  was_top_10: boolean;
+  best_time: number;
+  guesses_used: number;
+  word_id: string;
+  words: {
+    word: string;
+    date: string;
+  } | null;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -43,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('player_id', player_id)
       .gte('date', startDate.toISOString().split('T')[0])
       .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
+      .order('date', { ascending: true }) as { data: LeaderboardWithWord[] | null, error: any };
 
     if (leaderboardError) {
       console.error('[/api/player/history] Error fetching leaderboard data:', leaderboardError);
@@ -58,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       rank: entry.rank,
       guesses: entry.guesses_used,
       time: entry.best_time,
-      word: entry.words?.word
+      word: entry.words?.word || 'Unknown'
     })) || [];
 
     console.log(`[/api/player/history] Found ${history.length} play records for player ${player_id}`);
