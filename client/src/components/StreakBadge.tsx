@@ -118,7 +118,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
     if (s >= 10) return '⭐'; // Gold star  
     if (s >= 6) return '🔥'; // Fire
     if (s >= 3) return '⚡'; // Lightning
-    if (s >= 1) return '🟣'; // Purple circle for active streaks
+    if (s >= 1) return '🔥'; // Fire for all active streaks
     return '💤'; // Sleeping fallback
   };
 

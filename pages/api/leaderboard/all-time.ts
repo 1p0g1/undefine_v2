@@ -1,6 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../../../src/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { withCors } from '../../../lib/withCors';
+
+// 🔧 FIX: Create supabase client directly (consistent with other working APIs)
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface AllTimeStats {
   player_id: string;
@@ -49,6 +55,8 @@ async function handler(
   }
 
   try {
+    console.log('[All-Time API] Starting all-time leaderboard request');
+
     // Query leaderboard_summary without player join (since no FK relationship exists)
     const { data: rawData, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
@@ -70,11 +78,15 @@ async function handler(
       });
     }
 
+    console.log(`[All-Time API] Found ${rawData?.length || 0} leaderboard records`);
+
     // Get unique player IDs to fetch names separately
     const uniquePlayerIds = Array.from(new Set((rawData || [])
       .map(row => row.player_id)
       .filter(id => id && id !== 'null' && id !== 'undefined') // Filter out invalid IDs
     ));
+    
+    console.log(`[All-Time API] Found ${uniquePlayerIds.length} unique players`);
     
     // Query players table separately
     const { data: playersData, error: playersError } = await supabase
@@ -86,6 +98,8 @@ async function handler(
       console.error('[All-Time API] Players query error:', playersError);
       // Continue without player names rather than failing
     }
+
+    console.log(`[All-Time API] Found ${playersData?.length || 0} player records`);
 
     // Create player name lookup map
     const playerNameMap = (playersData || []).reduce((map, player) => {
@@ -106,6 +120,8 @@ async function handler(
       // Continue without streak data rather than failing
     }
 
+    console.log(`[All-Time API] Found ${streakData?.length || 0} streak records`);
+
     // Create streak lookup map
     const streakMap = (streakData || []).reduce((map, streak) => {
       map[streak.player_id] = streak;
@@ -114,6 +130,8 @@ async function handler(
 
     // Calculate statistics from raw data
     const playerStats = await calculateAllTimeStatsFromSessions(streakMap, playerNameMap);
+    
+    console.log(`[All-Time API] Calculated stats for ${playerStats.length} players`);
     
     // Sort into the 2 leaderboard categories we're keeping
     const topByGames = [...playerStats]
@@ -128,6 +146,8 @@ async function handler(
 
     const totalPlayers = playerStats.length;
     const totalGames = playerStats.reduce((sum, p) => sum + p.total_games, 0);
+
+    console.log(`[All-Time API] Returning data: ${topByGames.length} top games, ${topByStreaks.length} top streaks`);
 
     return res.status(200).json({
       success: true,
@@ -220,56 +240,5 @@ async function calculateAllTimeStatsFromSessions(streakMap: Record<string, Strea
   });
 }
 
-function calculateAllTimeStats(rawData: GameRow[], streakMap: Record<string, StreakRow>, playerNameMap: Record<string, string>): AllTimeStats[] {
-  // 🚨 DEPRECATED: This function uses leaderboard_summary which only contains wins
-  // The new calculateAllTimeStatsFromSessions function should be used instead for accurate win rates
-  // Keeping this for backwards compatibility but it's no longer the primary method
-  console.warn('[calculateAllTimeStats] Deprecated function called - should use session-based version for accurate win rates');
-  
-  const playerGroups = rawData.reduce((groups, row) => {
-    const playerId = row.player_id;
-    if (!groups[playerId]) {
-      groups[playerId] = [];
-    }
-    groups[playerId].push(row);
-    return groups;
-  }, {} as Record<string, GameRow[]>);
-
-  return Object.entries(playerGroups).map(([playerId, games]) => {
-    const totalGames = games.length;
-    // UPDATED WIN LOGIC: Any entry in leaderboard_summary = completed the word = WIN
-    const wins = games; // All games are wins (since they completed the word to be ranked)
-    const totalWins = wins.length;
-    const winPercentage = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-    
-    // Calculate average guesses for all games (since all are wins)
-    const averageGuesses = totalWins > 0 
-      ? wins.reduce((sum, g) => sum + (g.guesses_used || 0), 0) / totalWins
-      : 0;
-    
-    const lastPlayed = games.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    )[0]?.date || '';
-
-    const playerName = playerNameMap[playerId] || `Player ${playerId.slice(-4)}`;
-    
-    // Get streak data from lookup map
-    const streakData = streakMap[playerId];
-    const highestStreak = streakData?.highest_streak || 0;
-    const currentStreak = streakData?.current_streak || 0;
-
-    return {
-      player_id: playerId,
-      player_name: playerName,
-      win_percentage: Math.round(winPercentage * 100) / 100,
-      average_guesses: Math.round(averageGuesses * 100) / 100,
-      highest_streak: highestStreak,
-      current_streak: currentStreak,
-      total_games: totalGames,
-      total_wins: totalWins,
-      last_played: lastPlayed
-    };
-  });
-}
-
+// Export the handler wrapped with CORS middleware
 export default withCors(handler); 

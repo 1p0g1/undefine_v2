@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-// Import API base URL configuration - use relative URLs for same-domain deployments
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// 🔧 FIX: Use relative URLs directly - works in both dev and production
+// No need for complex BASE_URL configuration in a Next.js app
 
 interface AllTimeStats {
   player_id: string;
@@ -47,16 +47,30 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     setError(null);
     
     try {
-      const response = await fetch(`${BASE_URL}/api/leaderboard/all-time`);
+      console.log('[AllTimeLeaderboard] Fetching all-time stats...');
+      
+      // 🔧 FIX: Use relative URL directly - no BASE_URL needed
+      const response = await fetch('/api/leaderboard/all-time');
+      
+      console.log('[AllTimeLeaderboard] Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
+      console.log('[AllTimeLeaderboard] API result:', result);
       
       if (result.success) {
         setData(result.data);
+        console.log('[AllTimeLeaderboard] Data loaded successfully');
       } else {
         setError(result.error || 'Failed to load all-time statistics');
+        console.error('[AllTimeLeaderboard] API returned error:', result.error);
       }
     } catch (err) {
-      setError('Network error loading all-time stats');
+      const errorMessage = err instanceof Error ? err.message : 'Network error loading all-time stats';
+      setError(errorMessage);
       console.error('[AllTimeLeaderboard] Error:', err);
     } finally {
       setLoading(false);

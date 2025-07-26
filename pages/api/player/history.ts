@@ -21,10 +21,12 @@ interface LeaderboardWithWord {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // 🔧 FIX: Accept GET requests (not POST) since calendar modal uses GET
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // 🔧 FIX: Get parameters from query string (not request body)
   const { player_id, months = 2 } = req.query;
 
   if (!player_id) {
