@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { safeFetch, ApiError, isVercelPreview } from '../utils/apiHelpers';
-
-// 🔧 REVERT: Restore BASE_URL for production compatibility
-// Production may use separate backend domain via VITE_API_BASE_URL
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+import { safeFetch, ApiError, isVercelPreview, getApiBaseUrl } from '../utils/apiHelpers';
 
 interface AllTimeStats {
   player_id: string;
@@ -57,13 +53,14 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
     
     try {
       console.log('[AllTimeLeaderboard] Environment check:', {
-        baseUrl: BASE_URL,
+        baseUrl: getApiBaseUrl(),
         isPreview: isVercelPreview(),
         hostname: window.location.hostname
       });
       
-      // 🔧 SYSTEMATIC FIX: Use safeFetch to prevent JSON parsing errors
-      const url = `${BASE_URL}/api/leaderboard/all-time`;
+      // 🔧 PRODUCTION FIX: Use getApiBaseUrl helper for proper domain selection
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}/api/leaderboard/all-time`;
       console.log('[AllTimeLeaderboard] Request URL:', url);
       
       const result = await safeFetch<AllTimeLeaderboardResponse>(url);

@@ -122,9 +122,27 @@ export function isVercelPreview(): boolean {
 
 /**
  * Gets appropriate API base URL for current environment
- * Handles production vs preview environment differences
+ * 🔧 PRODUCTION FIX: Use same-domain APIs instead of separate backend
  */
 export function getApiBaseUrl(): string {
+  // 🚨 CRITICAL FIX: For production, try same-domain APIs first
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Production domain - use same-domain APIs
+    if (hostname === 'undefine-v2-front.vercel.app') {
+      console.log('[getApiBaseUrl] Using same-domain APIs for production');
+      return ''; // Relative URLs for same domain
+    }
+    
+    // Preview domains - also use same-domain 
+    if (hostname.includes('vercel.app')) {
+      console.log('[getApiBaseUrl] Using same-domain APIs for preview');
+      return ''; // Relative URLs for same domain
+    }
+  }
+  
+  // Fallback to environment variable or separate backend
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
   
   console.log('[getApiBaseUrl] Environment info:', {
@@ -135,4 +153,48 @@ export function getApiBaseUrl(): string {
   });
   
   return baseUrl;
+}
+
+/**
+ * 🔧 STREAK API FIX: Handle the specific streak status API call properly
+ */
+export async function fetchStreakStatus(playerId: string): Promise<{
+  currentStreak: number;
+  longestStreak: number;
+  lastWinDate: string | null;
+}> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/streak-status`;
+  
+  console.log(`[fetchStreakStatus] Calling streak API for player: ${playerId}`);
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST', // 🔧 FIX: Use POST method as expected by API
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ player_id: playerId })
+    });
+    
+    const result = await safeJsonParse<{
+      currentStreak: number;
+      longestStreak: number;
+      lastWinDate: string | null;
+    }>(response);
+    
+    console.log(`[fetchStreakStatus] Success:`, result);
+    return result;
+    
+  } catch (error) {
+    console.error(`[fetchStreakStatus] Failed for player ${playerId}:`, error);
+    
+    // Return default values instead of throwing
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastWinDate: null
+    };
+  }
 } 

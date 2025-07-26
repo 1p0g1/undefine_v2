@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getPlayerId } from '../utils/player';
-import { apiClient } from '../api/client';
+import { fetchStreakStatus } from '../utils/apiHelpers';
 
 interface PlayerStats {
   gamesPlayed: number;
@@ -41,19 +41,21 @@ export function usePlayer(): UsePlayerReturn {
     setError(null);
 
     try {
-      console.log('[usePlayer] Calling apiClient.getPlayerStats...');
-      const response = await apiClient.getPlayerStats(playerId);
-      console.log('[usePlayer] API response received:', response);
+      console.log('[usePlayer] Calling fetchStreakStatus...');
+      
+      // 🔧 FIX: Use the new fetchStreakStatus function
+      const streakResponse = await fetchStreakStatus(playerId);
+      console.log('[usePlayer] Streak API response received:', streakResponse);
       
       const newStats = {
-        gamesPlayed: response.games_played,
-        gamesWon: response.games_won,
-        currentStreak: response.current_streak,
-        longestStreak: response.longest_streak,
-        lastWinDate: response.last_win_date,
-        totalGuesses: response.total_guesses,
-        averageGuessesPerGame: response.average_guesses_per_game,
-        totalPlayTimeSeconds: response.total_play_time_seconds
+        gamesPlayed: 0, // TODO: Add to API
+        gamesWon: 0, // TODO: Add to API
+        currentStreak: streakResponse.currentStreak,
+        longestStreak: streakResponse.longestStreak,
+        lastWinDate: streakResponse.lastWinDate,
+        totalGuesses: 0, // TODO: Add to API
+        averageGuessesPerGame: 0, // TODO: Add to API
+        totalPlayTimeSeconds: 0 // TODO: Add to API
       };
       
       console.log('[usePlayer] Setting new stats:', newStats);
@@ -61,6 +63,18 @@ export function usePlayer(): UsePlayerReturn {
     } catch (err) {
       console.error('[usePlayer] Failed to fetch stats:', err);
       setError('Failed to load player stats');
+      
+      // Set default stats instead of leaving null
+      setStats({
+        gamesPlayed: 0,
+        gamesWon: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastWinDate: null,
+        totalGuesses: 0,
+        averageGuessesPerGame: 0,
+        totalPlayTimeSeconds: 0
+      });
     } finally {
       setIsLoading(false);
     }
