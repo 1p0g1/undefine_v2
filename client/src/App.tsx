@@ -477,6 +477,7 @@ function App() {
           streak={effectivePlayerStats?.currentStreak || 0} 
           highestStreak={effectivePlayerStats?.longestStreak || 0}
           lastWinDate={effectivePlayerStats?.lastWinDate || null}
+          playerId={getPlayerId()}
         />
       </div>
       
