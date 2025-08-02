@@ -135,9 +135,16 @@ export function getApiBaseUrl(): string {
       return ''; // Relative URLs for same domain
     }
     
-    // Preview domains - also use same-domain 
+    // 🔧 FIX: Preview domains - detect ALL Vercel frontend deployments
+    // Pattern: undefine-v2-front-[hash]-paddys-projects-82cb6057.vercel.app
+    if (hostname.includes('undefine-v2-front') && hostname.includes('vercel.app')) {
+      console.log('[getApiBaseUrl] Using same-domain APIs for frontend deployment (preview/production)');
+      return ''; // Relative URLs for same domain
+    }
+    
+    // Generic Vercel preview domains  
     if (hostname.includes('vercel.app')) {
-      console.log('[getApiBaseUrl] Using same-domain APIs for preview');
+      console.log('[getApiBaseUrl] Using same-domain APIs for Vercel preview');
       return ''; // Relative URLs for same domain
     }
   }
