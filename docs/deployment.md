@@ -1,6 +1,15 @@
-# Un-Define v2 Production Deployment Checklist
+# Un-Define v2 Production Deployment Guide
 
-## ✅ Completed Tasks
+## 🏗️ **CURRENT ARCHITECTURE (Updated January 2025)**
+
+**Single Deployment Model**: Frontend with co-located APIs
+- **Frontend + APIs**: `undefine-v2-front.vercel.app` 
+- **Database**: Supabase
+- **No separate backend deployment needed**
+
+---
+
+## ✅ **Completed Tasks**
 
 ### Database Migrations
 - [x] Applied all database migrations successfully
@@ -22,63 +31,125 @@
 - [x] Updated game session creation
 - [x] Fixed leaderboard ranking
 
-## 🔄 Remaining Tasks
+---
 
-### Environment Setup
-✅ Backend (undefine-v2-back.vercel.app):
-```env
-SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=[Already set in Vercel]
-SUPABASE_ANON_KEY=[Already set in Vercel]
-JWT_SECRET=[Already set in Vercel]
-DB_PROVIDER=supabase
-NODE_ENV=production
-```
+## 🔄 **Environment Setup**
 
-✅ Frontend (undefine-v2-front.vercel.app):
+### 🎯 **Frontend Deployment (undefine-v2-front.vercel.app)**
+
+**Required Environment Variables:**
 ```env
-VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
+# Supabase Client (Frontend)
 VITE_SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
-VITE_SUPABASE_ANON_KEY=[Already set in Vercel]
+VITE_SUPABASE_ANON_KEY=[Supabase Anonymous Key]
+
+# Supabase Server (API Routes)  
+SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[Supabase Service Role Key]
+SUPABASE_ANON_KEY=[Supabase Anonymous Key]
+
+# Database Configuration
+DB_PROVIDER=supabase
+
+# Theme Matching (Optional)
+HF_API_KEY=[Hugging Face API Key for semantic similarity]
 ```
 
-### Build and Deploy
-- [ ] Run production build for both projects:
-  ```bash
-  # Backend
-  cd /
-  npm run build
+**⚠️ IMPORTANT: DO NOT SET THESE:**
+```env
+# ❌ DO NOT SET - Causes API routing issues
+# VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
 
-  # Frontend
-  cd client/
-  npm run build
-  ```
-- [ ] Deploy both projects to Vercel:
-  - Backend: `vercel --prod` in root directory
-  - Frontend: `vercel --prod` in client directory
-- [ ] Verify all API endpoints using production URLs
-- [ ] Test game functionality in production
-- [ ] Monitor error logs in Vercel dashboard
+# ❌ DEPRECATED - No longer needed
+# JWT_SECRET=[Not needed for single deployment]
+# NODE_ENV=[Handled automatically by Vercel]
+```
 
-### Post-Deployment
-- [ ] Verify database migrations in production
-- [ ] Test user authentication
-- [ ] Validate scoring system
-- [ ] Check leaderboard functionality
-- [ ] Monitor performance metrics
+---
 
-## Rollback Plan
-In case of deployment issues:
-1. Revert to previous stable version using Vercel dashboard
-2. Roll back database migrations if necessary using Supabase dashboard
-3. Switch back to previous environment configuration
-4. Contact team for immediate support
+## 🚀 **Deployment Process**
 
-## Contact Information
-- Technical Lead: [Add contact]
-- Database Admin: [Add contact]
-- DevOps Support: [Add contact]
+### **Single Deployment Build:**
+```bash
+# Build frontend with APIs
+cd client/
+npm run build
 
-## Production URLs
-- Frontend: https://undefine-v2-front.vercel.app
-- Backend: https://undefine-v2-back.vercel.app 
+# Deploy to Vercel (frontend project)
+vercel --prod
+```
+
+### **API Endpoints Location:**
+All APIs are co-located with frontend:
+```
+/pages/api/word.ts              # Daily word
+/pages/api/guess.ts             # Game submissions  
+/pages/api/streak-status.ts     # Player streaks
+/pages/api/theme-status.ts      # Theme of the week
+/pages/api/leaderboard.ts       # Daily leaderboard
+/pages/api/leaderboard/all-time.ts  # All-time stats
+/pages/api/player/history.ts    # Calendar data
+```
+
+---
+
+## 🧪 **Testing Checklist**
+
+### **After Deployment, Verify:**
+1. **🔥 Streak Counter**: Shows actual values (not 0)
+2. **📅 Calendar Modal**: Loads play history when clicked
+3. **📊 All-Time Leaderboards**: Both ranking & streak tabs work
+4. **📋 Daily Leaderboard**: Accessible via burger menu
+5. **🎨 Theme Features**: Theme guessing and 'Un' diamond colors
+6. **🎮 Core Game**: Word loading, guessing, scoring
+
+### **Console Verification:**
+**✅ GOOD - Should see:**
+```
+[getApiBaseUrl] Using same-domain APIs for production
+[API xxx] Request: /api/streak-status
+[API xxx] Request: /api/theme-status
+```
+
+**❌ BAD - Should NOT see:**
+```
+https://undefine-v2-back.vercel.app/api/*
+net::ERR_INTERNET_DISCONNECTED
+SyntaxError: Unexpected token '<'
+```
+
+---
+
+## 🏆 **Architecture Benefits**
+
+### **Previous (Complex):**
+- Frontend deployment + Separate backend deployment
+- CORS configuration + Environment variables sync
+- Multiple points of failure + API routing confusion
+
+### **Current (Simple):**
+- **Single Next.js deployment** with co-located APIs
+- **Same-domain requests** (faster, more reliable)  
+- **Automatic scaling** and **simplified maintenance**
+
+---
+
+## 🛠️ **Troubleshooting**
+
+### **Issue: APIs not working**
+**Check**: `VITE_API_BASE_URL` is not set (should be empty/missing)
+
+### **Issue: Supabase connection failed**  
+**Check**: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set
+
+### **Issue: Database operations fail**
+**Check**: `SUPABASE_SERVICE_ROLE_KEY` is set for API routes
+
+---
+
+## 📈 **Monitoring**
+
+- **Vercel Dashboard**: Monitor deployment status and logs
+- **Supabase Dashboard**: Monitor database performance  
+- **Browser Console**: Check for API routing issues
+- **Network Tab**: Verify same-domain API calls 
