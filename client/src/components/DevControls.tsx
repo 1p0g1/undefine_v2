@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { env } from '../env.client';
 import { getPlayerId, resetPlayerId, getPlayerIdInfo } from '../utils/player';
+import { getApiBaseUrl } from '../utils/apiHelpers';
 
 const getDefaultPlayerId = () => localStorage.getItem('nickname') || 'dev_player_001';
 
@@ -25,7 +26,9 @@ export const DevControls: React.FC = () => {
   const handleReset = async () => {
     setStatus('Resetting...');
     try {
-      const url = `${env.VITE_API_BASE_URL}/api/dev/reset-session`;
+      // 🔧 PRODUCTION FIX: Use getApiBaseUrl helper for proper domain detection
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}/api/dev/reset-session`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

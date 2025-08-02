@@ -1,14 +1,15 @@
 import { WordResponse, GuessRequest, GuessResponse, LeaderboardResponse } from './types';
 import { getPlayerId } from '../utils/player';
+import { getApiBaseUrl } from '../utils/apiHelpers';
 
-// Use environment variable for backend URL with fallback to relative URLs for same-domain deployments
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// 🔧 PRODUCTION FIX: Use the new getApiBaseUrl helper for proper domain detection
+// This replaces the direct VITE_API_BASE_URL usage that was causing separate backend calls
 
 // Log initial configuration
 console.log('[API Client] Initialized with:', {
-  baseUrl: BASE_URL || 'relative URLs',
+  baseUrl: 'will use getApiBaseUrl() dynamically',
   env: import.meta.env.MODE,
-  preview: window.location.hostname.includes('vercel.app') ? 'vercel-preview' : 'other'
+  preview: typeof window !== 'undefined' && window.location.hostname.includes('vercel.app') ? 'vercel-preview' : 'other'
 });
 
 /**
@@ -157,7 +158,7 @@ export const fetchFromApi = async <T>(path: string, options: RequestInit = {}): 
   }
 
   const normalizedPath = normalizePath(path);
-  const url = `${BASE_URL}${normalizedPath}`;
+  const url = `${getApiBaseUrl()}${normalizedPath}`;
   
   const requestId = Math.random().toString(36).substring(7);
   
