@@ -5,6 +5,7 @@ interface UnPrefixProps {
   scaled?: boolean; // For use in GameSummaryModal with transform scale
   onClick?: () => void;
   gameComplete?: boolean; // NEW: To detect when game is finished
+  showCallToAction?: boolean; // NEW: Control whether to show '?' call-to-action
   // Theme guess color-coding props
   themeGuessData?: {
     hasGuessedToday: boolean;
@@ -17,6 +18,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   scaled = false, 
   onClick, 
   gameComplete = false, // NEW: Default to false
+  showCallToAction = true, // NEW: Default to true for backwards compatibility
   themeGuessData 
 }) => {
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
@@ -24,12 +26,33 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   
   // 🎯 NEW: Determine what text to show - '?' for call-to-action or 'Un·'
   const getDisplayText = () => {
-    // Show '?' when game is complete but theme hasn't been guessed today
-    if (gameComplete && (!themeGuessData?.hasGuessedToday)) {
+    // Show '?' when game is complete, theme hasn't been guessed today, AND call-to-action is allowed
+    if (showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday)) {
       return '?';
     }
     // Default to 'Un·' in all other cases
     return 'Un·';
+  };
+
+  // 🎯 NEW: Determine styling based on text content
+  const getTextStyling = () => {
+    const displayText = getDisplayText();
+    
+    if (displayText === '?') {
+      // Special styling for '?' - no italics, slightly larger
+      return {
+        fontStyle: 'normal' as const, // Remove italics for '?'
+        fontSize: scaled ? 'clamp(1.3rem, 3.8vw, 1.6rem)' : 'clamp(1.4rem, 4.0vw, 1.7rem)', // Slightly larger
+        fontWeight: 700 // Slightly less bold
+      };
+    } else {
+      // Original styling for 'Un·'
+      return {
+        fontStyle: 'italic' as const,
+        fontSize: scaled ? 'clamp(1.1rem, 3.2vw, 1.4rem)' : 'clamp(1.2rem, 3.5vw, 1.5rem)',
+        fontWeight: 800
+      };
+    }
   };
   
   // Determine diamond color based on theme guess results
@@ -82,6 +105,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 
   const colors = getDiamondColors();
   const displayText = getDisplayText();
+  const textStyling = getTextStyling();
   
   const containerStyle = {
     width: baseSize,
@@ -136,7 +160,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* 🎯 NEW: Dynamic text - '?' for call-to-action or 'Un·' normally */}
+      {/* 🎯 NEW: Dynamic text with appropriate styling */}
       <span style={{ 
         position: 'relative', 
         zIndex: 2,
@@ -145,7 +169,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
         lineHeight: '0.9',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        ...textStyling // Apply dynamic text styling here
       }}>
         {displayText}
       </span>

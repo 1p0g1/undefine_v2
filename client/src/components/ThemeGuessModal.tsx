@@ -321,7 +321,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <UnPrefix themeGuessData={themeGuessData} gameComplete={gameComplete} />
+              <UnPrefix 
+                themeGuessData={themeGuessData} 
+                gameComplete={gameComplete}
+                showCallToAction={false}
+              />
               <span style={{
                 fontStyle: 'italic',
                 fontSize: '1.4rem',

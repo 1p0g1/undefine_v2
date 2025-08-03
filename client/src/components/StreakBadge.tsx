@@ -56,7 +56,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
     reasoning: 'Showing database value directly'
   });
   
-  // Updated color system with glow effects like Un diamond
+  // Updated color system with firey glow effects
   const getStreakColors = (s: number, isActive: boolean) => {
     if (s === 0) {
       return { 
@@ -67,38 +67,38 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
       };
     }
     
-    // Use purple glow for active streaks (instead of red)
+    // Use firey red-orange/yellow glow for active streaks (distinct from fuzzy orange #d97706)
     if (isActive) {
       if (s >= 20) {
         return {
-          backgroundColor: '#faf5ff', // Light purple background
-          borderColor: '#8b5cf6',
-          textColor: '#8b5cf6',
-          glowColor: '#8b5cf6'
+          backgroundColor: '#fef7ec', // Light orange background
+          borderColor: '#dc2626', // Deep red for diamond-level streaks
+          textColor: '#dc2626',
+          glowColor: '#dc2626'
         };
       }
       if (s >= 10) {
         return {
-          backgroundColor: '#fef7e6', // Light gold background
-          borderColor: '#f59e0b',
+          backgroundColor: '#fef7e6', // Light gold background (keep this one)
+          borderColor: '#f59e0b', // Amber/gold (keep this one)
           textColor: '#f59e0b',
           glowColor: '#f59e0b'
         };
       }
       if (s >= 3) {
         return {
-          backgroundColor: '#faf5ff', // Light purple background
-          borderColor: '#a855f7',
-          textColor: '#a855f7',
-          glowColor: '#a855f7'
+          backgroundColor: '#fef2f2', // Light red background
+          borderColor: '#ef4444', // Red-orange for solid streaks
+          textColor: '#ef4444',
+          glowColor: '#ef4444'
         };
       }
-      // Starting active streak - softer purple
+      // Starting active streak - softer red-orange
       return {
-        backgroundColor: '#faf5ff',
-        borderColor: '#c084fc',
-        textColor: '#c084fc',
-        glowColor: '#c084fc'
+        backgroundColor: '#fff7ed',
+        borderColor: '#fb923c', // Soft orange (distinct from fuzzy #d97706)
+        textColor: '#fb923c',
+        glowColor: '#fb923c'
       };
     }
     
