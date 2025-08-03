@@ -60,50 +60,56 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
-    if (themeGuessData?.hasGuessedToday) {
-      const themeColor = getUnDiamondColor(
-        themeGuessData.confidencePercentage,
-        themeGuessData.isCorrectGuess
-      );
-      
-      // Get proper background color based on theme result
-      let backgroundColor: string;
-      if (themeGuessData.isCorrectGuess) {
-        backgroundColor = '#f0fdf4'; // Light green background for correct
-      } else if (themeGuessData.confidencePercentage !== null) {
-        if (themeGuessData.confidencePercentage <= 50) {
-          backgroundColor = '#fef2f2'; // Light red background for low similarity
-        } else if (themeGuessData.confidencePercentage <= 70) {
-          backgroundColor = '#fefbeb'; // Light orange/yellow background for medium similarity
-        } else {
-          backgroundColor = '#f0fdf4'; // Light green background for high similarity
-        }
-      } else {
-        backgroundColor = '#f8f9ff'; // Default light blue
-      }
-      
+    const displayText = getDisplayText();
+    
+    // 🎯 NEW: Purple styling for '?' call-to-action (reversed colors like letter boxes)
+    if (displayText === '?') {
       return {
-        borderColor: themeColor,
-        backgroundColor: backgroundColor,
-        textColor: themeColor
+        backgroundColor: '#e0e7ff', // Light purple background
+        borderColor: '#8b5cf6', // Purple border
+        textColor: '#ffffff', // WHITE text
+        glowColor: '#8b5cf6' // Purple glow
       };
     }
     
-    // 🎯 NEW: Special styling for call-to-action '?' when game is complete
-    if (gameComplete && (!themeGuessData?.hasGuessedToday)) {
+    // Theme-based coloring for 'Un·' (existing logic)
+    if (!themeGuessData?.hasGuessedToday) {
+      // Default neutral state
       return {
-        borderColor: '#8b5cf6', // Purple border for call-to-action
-        backgroundColor: '#faf5ff', // Light purple background
-        textColor: '#8b5cf6' // Purple text
+        backgroundColor: '#f8fafc',
+        borderColor: '#64748b', 
+        textColor: '#1e293b',
+        glowColor: '#64748b'
       };
     }
+
+    const { isCorrectGuess, confidencePercentage } = themeGuessData;
     
-    // Default colors when no theme guess made
-    return {
-      borderColor: '#1a237e',
-      backgroundColor: '#f8f9ff',
-      textColor: '#1a237e'
-    };
+    if (isCorrectGuess && confidencePercentage !== null && confidencePercentage >= 85) {
+      // Green for correct/high confidence - SOLID background
+      return {
+        backgroundColor: '#f0fdf4', // Light green background (solid)
+        borderColor: '#22c55e',
+        textColor: '#15803d',
+        glowColor: '#22c55e'
+      };
+    } else if (confidencePercentage !== null && confidencePercentage >= 70) {
+      // Orange for medium confidence - SOLID background  
+      return {
+        backgroundColor: '#fff7ed', // Light orange background (solid)
+        borderColor: '#f97316',
+        textColor: '#ea580c',
+        glowColor: '#f97316'
+      };
+    } else {
+      // Red for low confidence/incorrect - SOLID background
+      return {
+        backgroundColor: '#fef2f2', // Light red background (solid)
+        borderColor: '#ef4444',
+        textColor: '#dc2626',
+        glowColor: '#ef4444'
+      };
+    }
   };
 
   const colors = getDiamondColors();
