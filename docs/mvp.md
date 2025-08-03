@@ -9,19 +9,19 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
 - All code changes should target production URLs and configurations
 - Do not waste time on development environment setup
 - Use production Supabase instance only
-- Frontend uses co-located APIs (/pages/api/*) on same domain
+- Frontend connects to separate backend at undefine-v2-back.vercel.app
 - All testing should be done in production environment
 
 🏗️ Deployment Configuration
 
-1. Frontend (React + Vite) with Co-located APIs:
+1. Frontend (React + Vite):
    ```typescript
-   // API Client Configuration - Single Deployment
-   const BASE_URL = getApiBaseUrl(); // Returns '' for same-domain APIs
+   // API Client Configuration - Dual Deployment
+   const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://undefine-v2-back.vercel.app';
    const FRONTEND_URL = 'https://undefine-v2-front.vercel.app';
    ```
 
-2. API Routes (Next.js in /pages/api/):
+2. Backend (Next.js API):
    ```typescript
    // CORS Implementation (lib/withCors.ts)
    export function withCors(handler: Handler): Handler {
@@ -122,14 +122,15 @@ Important Context:
   4. Add proper validation middleware
 
 ### Environment Variable Handling
-- **Current Status**: Single deployment with co-located APIs
-- **Production URL**: https://undefine-v2-front.vercel.app (frontend + APIs)
-- **API Endpoints**: Same-domain (/api/*) for optimal performance
+- **Current Status**: Dual deployment with separate frontend and backend
+- **Frontend URL**: https://undefine-v2-front.vercel.app
+- **Backend URL**: https://undefine-v2-back.vercel.app
+- **API Routing**: VITE_API_BASE_URL points frontend to separate backend
 - **Implementation**:
-  1. Production uses single Vercel deployment
-  2. No VITE_API_BASE_URL needed (causes routing conflicts)
-  3. APIs co-located with frontend for simplicity
-  4. Environment variables: VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+  1. Frontend deployment: Vite + React application
+  2. Backend deployment: Next.js API routes with CORS
+  3. Cross-domain API calls via VITE_API_BASE_URL
+  4. Environment variables: Frontend and backend have separate configs
 
 ## MVP Testing Priorities
 1. Verify API routes are working
@@ -230,12 +231,19 @@ const supabaseUrl = env.SUPABASE_URL;
 
 ### Vercel Deployment
 
-**Single Deployment Model** (`undefine-v2-front`)
-- **Frontend Variables**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- **API Variables**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
-- **Database Config**: `DB_PROVIDER=supabase`
-- **⚠️ DO NOT SET**: `VITE_API_BASE_URL` (causes API routing conflicts)
-- **Co-located APIs**: Frontend and APIs deployed together for optimal performance
+**Dual Deployment Model**
+
+1. **Frontend Project** (`undefine-v2-front`)
+   - **API Routing**: `VITE_API_BASE_URL=https://undefine-v2-back.vercel.app`
+   - **Client Variables**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - **Server Variables**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
+   - **Database Config**: `DB_PROVIDER=supabase`
+
+2. **Backend Project** (`undefine-v2-back`)
+   - **Supabase Config**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
+   - **Security**: `JWT_SECRET`, `NODE_ENV=production`
+   - **Database Config**: `DB_PROVIDER=supabase`
+   - **Optional**: `HF_API_KEY` for theme matching
 
 ## Environment Stability & Refactor Status
 

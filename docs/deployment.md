@@ -2,10 +2,11 @@
 
 ## 🏗️ **CURRENT ARCHITECTURE (Updated January 2025)**
 
-**Single Deployment Model**: Frontend with co-located APIs
-- **Frontend + APIs**: `undefine-v2-front.vercel.app` 
+**Dual Deployment Model**: Frontend + Separate Backend
+- **Frontend**: `undefine-v2-front.vercel.app` (Vite + React)
+- **Backend**: `undefine-v2-back.vercel.app` (Next.js APIs)
 - **Database**: Supabase
-- **No separate backend deployment needed**
+- **API Routing**: Frontend calls separate backend for all API operations
 
 ---
 
@@ -39,11 +40,27 @@
 
 **Required Environment Variables:**
 ```env
+# API Routing (Points to separate backend)
+VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
+
 # Supabase Client (Frontend)
 VITE_SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
 VITE_SUPABASE_ANON_KEY=[Supabase Anonymous Key]
 
-# Supabase Server (API Routes)  
+# Supabase Server (For any local API routes)
+SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[Supabase Service Role Key]
+SUPABASE_ANON_KEY=[Supabase Anonymous Key]
+
+# Database Configuration
+DB_PROVIDER=supabase
+```
+
+### 🎯 **Backend Deployment (undefine-v2-back.vercel.app)**
+
+**Required Environment Variables:**
+```env
+# Supabase Server (API Routes)
 SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=[Supabase Service Role Key]
 SUPABASE_ANON_KEY=[Supabase Anonymous Key]
@@ -51,44 +68,41 @@ SUPABASE_ANON_KEY=[Supabase Anonymous Key]
 # Database Configuration
 DB_PROVIDER=supabase
 
+# Security
+JWT_SECRET=[JWT Secret for API authentication]
+NODE_ENV=production
+
 # Theme Matching (Optional)
 HF_API_KEY=[Hugging Face API Key for semantic similarity]
-```
-
-**⚠️ IMPORTANT: DO NOT SET THESE:**
-```env
-# ❌ DO NOT SET - Causes API routing issues
-# VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
-
-# ❌ DEPRECATED - No longer needed
-# JWT_SECRET=[Not needed for single deployment]
-# NODE_ENV=[Handled automatically by Vercel]
 ```
 
 ---
 
 ## 🚀 **Deployment Process**
 
-### **Single Deployment Build:**
+### **Dual Deployment Build:**
 ```bash
-# Build frontend with APIs
+# Build frontend
 cd client/
 npm run build
+vercel --prod
 
-# Deploy to Vercel (frontend project)
+# Build backend
+cd ../
+npm run build
 vercel --prod
 ```
 
 ### **API Endpoints Location:**
-All APIs are co-located with frontend:
+Backend APIs are hosted separately:
 ```
-/pages/api/word.ts              # Daily word
-/pages/api/guess.ts             # Game submissions  
-/pages/api/streak-status.ts     # Player streaks
-/pages/api/theme-status.ts      # Theme of the week
-/pages/api/leaderboard.ts       # Daily leaderboard
-/pages/api/leaderboard/all-time.ts  # All-time stats
-/pages/api/player/history.ts    # Calendar data
+https://undefine-v2-back.vercel.app/api/word              # Daily word
+https://undefine-v2-back.vercel.app/api/guess            # Game submissions  
+https://undefine-v2-back.vercel.app/api/streak-status    # Player streaks
+https://undefine-v2-back.vercel.app/api/theme-status     # Theme of the week
+https://undefine-v2-back.vercel.app/api/leaderboard      # Daily leaderboard
+https://undefine-v2-back.vercel.app/api/leaderboard/all-time # All-time stats
+https://undefine-v2-back.vercel.app/api/player/history   # Calendar data
 ```
 
 ---
@@ -106,50 +120,55 @@ All APIs are co-located with frontend:
 ### **Console Verification:**
 **✅ GOOD - Should see:**
 ```
-[getApiBaseUrl] Using same-domain APIs for production
-[API xxx] Request: /api/streak-status
-[API xxx] Request: /api/theme-status
+[API Client] Initialized with: baseUrl: "https://undefine-v2-back.vercel.app"
+[API xxx] Request: https://undefine-v2-back.vercel.app/api/streak-status
+[API xxx] Request: https://undefine-v2-back.vercel.app/api/theme-status
 ```
 
 **❌ BAD - Should NOT see:**
 ```
-https://undefine-v2-back.vercel.app/api/*
 net::ERR_INTERNET_DISCONNECTED
 SyntaxError: Unexpected token '<'
+Failed to fetch
 ```
 
 ---
 
 ## 🏆 **Architecture Benefits**
 
-### **Previous (Complex):**
-- Frontend deployment + Separate backend deployment
-- CORS configuration + Environment variables sync
-- Multiple points of failure + API routing confusion
+### **Dual Deployment Model:**
+- **Separation of concerns** - Frontend and backend deployed independently
+- **Scalability** - Each service can scale independently
+- **CORS configured** - Proper cross-origin request handling
+- **Security** - Backend secrets isolated from frontend
 
-### **Current (Simple):**
-- **Single Next.js deployment** with co-located APIs
-- **Same-domain requests** (faster, more reliable)  
-- **Automatic scaling** and **simplified maintenance**
+### **Trade-offs:**
+- **More complex deployment** - Two projects to maintain
+- **CORS setup required** - Additional configuration overhead
+- **Network latency** - Cross-domain API calls
 
 ---
 
 ## 🛠️ **Troubleshooting**
 
 ### **Issue: APIs not working**
-**Check**: `VITE_API_BASE_URL` is not set (should be empty/missing)
+**Check**: `VITE_API_BASE_URL` points to correct backend URL
+
+### **Issue: CORS errors**
+**Check**: Backend has proper CORS configuration and `withCors` wrapper
 
 ### **Issue: Supabase connection failed**  
-**Check**: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set
+**Check**: Both frontend and backend have correct Supabase credentials
 
-### **Issue: Database operations fail**
-**Check**: `SUPABASE_SERVICE_ROLE_KEY` is set for API routes
+### **Issue: Authentication errors**
+**Check**: Backend has `JWT_SECRET` and proper environment variables
 
 ---
 
 ## 📈 **Monitoring**
 
-- **Vercel Dashboard**: Monitor deployment status and logs
+- **Frontend Vercel Dashboard**: Monitor frontend deployment and logs
+- **Backend Vercel Dashboard**: Monitor API performance and errors
 - **Supabase Dashboard**: Monitor database performance  
-- **Browser Console**: Check for API routing issues
-- **Network Tab**: Verify same-domain API calls 
+- **Browser Console**: Check for API routing and CORS issues
+- **Network Tab**: Verify cross-domain API calls are successful 

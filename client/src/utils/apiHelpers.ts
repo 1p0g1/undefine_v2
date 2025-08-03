@@ -122,38 +122,14 @@ export function isVercelPreview(): boolean {
 
 /**
  * Gets appropriate API base URL for current environment
- * 🔧 PRODUCTION FIX: Use same-domain APIs instead of separate backend
+ * 🔧 DUAL DEPLOYMENT: Use VITE_API_BASE_URL to point to separate backend
  */
 export function getApiBaseUrl(): string {
-  // 🚨 CRITICAL FIX: For production, try same-domain APIs first
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    
-    // Production domain - use same-domain APIs
-    if (hostname === 'undefine-v2-front.vercel.app') {
-      console.log('[getApiBaseUrl] Using same-domain APIs for production');
-      return ''; // Relative URLs for same domain
-    }
-    
-    // 🔧 FIX: Preview domains - detect ALL Vercel frontend deployments
-    // Pattern: undefine-v2-front-[hash]-paddys-projects-82cb6057.vercel.app
-    if (hostname.includes('undefine-v2-front') && hostname.includes('vercel.app')) {
-      console.log('[getApiBaseUrl] Using same-domain APIs for frontend deployment (preview/production)');
-      return ''; // Relative URLs for same domain
-    }
-    
-    // Generic Vercel preview domains  
-    if (hostname.includes('vercel.app')) {
-      console.log('[getApiBaseUrl] Using same-domain APIs for Vercel preview');
-      return ''; // Relative URLs for same domain
-    }
-  }
-  
-  // Fallback to environment variable or separate backend
+  // Use environment variable for separate backend deployment
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
   
   console.log('[getApiBaseUrl] Environment info:', {
-    baseUrl: baseUrl || 'relative URLs',
+    baseUrl: baseUrl || 'relative URLs (fallback)',
     hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
     isPreview: isVercelPreview(),
     env: import.meta.env.MODE

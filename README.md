@@ -3,27 +3,26 @@
 ## 🎯 **Current Production Status (January 2025)**
 
 **✅ LIVE & WORKING:**
-- **Production URL**: https://undefine-v2-front.vercel.app
-- **Architecture**: Single deployment with co-located APIs
+- **Frontend**: https://undefine-v2-front.vercel.app
+- **Backend**: https://undefine-v2-back.vercel.app  
+- **Architecture**: Dual deployment with separate frontend and backend
 - **Database**: Supabase (fully migrated and operational)
-- **APIs**: Same-domain routing for optimal performance
+- **APIs**: Cross-domain calls to dedicated backend service
 
 ---
 
 ## 🏗️ **Architecture Overview**
 
-### **Single Deployment Model**
+### **Dual Deployment Model**
 ```
-Frontend (Vite + React) + APIs (Next.js) → Single Vercel Deployment
-                    ↓
-                Supabase Database
+Frontend (Vite + React) → CORS → Backend (Next.js APIs) → Supabase Database
 ```
 
 **Benefits:**
-- **Simplified deployment** - One deployment instead of two
-- **Faster API calls** - Same-domain requests (no CORS issues)
-- **Easier maintenance** - Co-located frontend and backend code
-- **Better performance** - Reduced network latency
+- **Separation of concerns** - Frontend and backend scale independently
+- **Security isolation** - Backend secrets separated from frontend
+- **Independent deployments** - Frontend and backend can be updated separately
+- **Scalability** - Each service optimized for its specific role
 
 ---
 
@@ -50,24 +49,40 @@ Frontend (Vite + React) + APIs (Next.js) → Single Vercel Deployment
 
 ## 🚀 **Deployment Status**
 
-### **✅ Production Deployment:**
-- **Frontend + APIs**: `undefine-v2-front.vercel.app` 
-- **Environment**: All variables properly configured
+### **✅ Production Deployments:**
+- **Frontend**: `undefine-v2-front.vercel.app` (Vite + React)
+- **Backend**: `undefine-v2-back.vercel.app` (Next.js APIs)
 - **Database**: Supabase with all migrations applied
-- **Performance**: Optimized with same-domain API calls
+- **CORS**: Properly configured for cross-domain requests
 
 ### **🔧 Environment Configuration:**
+
+#### **Frontend (`undefine-v2-front`):**
 ```env
-# Frontend (Client-side)
+# API Routing
+VITE_API_BASE_URL=https://undefine-v2-back.vercel.app
+
+# Supabase Client
 VITE_SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
 VITE_SUPABASE_ANON_KEY=[Supabase Anonymous Key]
 
-# API Routes (Server-side)
+# Server variables (for any local API routes)
 SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=[Supabase Service Role Key]
 SUPABASE_ANON_KEY=[Supabase Anonymous Key]
 DB_PROVIDER=supabase
+```
 
-# ⚠️ DO NOT SET (causes API routing issues):
-# VITE_API_BASE_URL=[removed for optimal performance]
+#### **Backend (`undefine-v2-back`):**
+```env
+# Supabase Server
+SUPABASE_URL=https://eaclljwvsicezmkjnlbm.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[Supabase Service Role Key]
+SUPABASE_ANON_KEY=[Supabase Anonymous Key]
+
+# Configuration
+DB_PROVIDER=supabase
+JWT_SECRET=[JWT Secret]
+NODE_ENV=production
+HF_API_KEY=[Hugging Face API Key]
 ```
