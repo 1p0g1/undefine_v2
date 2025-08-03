@@ -39,6 +39,7 @@ interface ThemeGuessModalProps {
   open: boolean;
   onClose: () => void;
   gameId: string;
+  gameComplete?: boolean; // NEW: To detect when game is finished for call-to-action
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
@@ -50,6 +51,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   open, 
   onClose, 
   gameId,
+  gameComplete = false, // NEW: Default to false
   onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');
@@ -319,7 +321,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <UnPrefix themeGuessData={themeGuessData} />
+              <UnPrefix themeGuessData={themeGuessData} gameComplete={gameComplete} />
               <span style={{
                 fontStyle: 'italic',
                 fontSize: '1.4rem',

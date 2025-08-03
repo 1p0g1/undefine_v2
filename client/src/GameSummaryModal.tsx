@@ -328,7 +328,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           }}
         >
           {/* Un· enhanced design with overlap effect */}
-          <UnPrefix scaled={true} onClick={handleOpenThemeModal} themeGuessData={themeGuessData} />
+          <UnPrefix 
+            scaled={true} 
+            onClick={handleOpenThemeModal} 
+            themeGuessData={themeGuessData}
+            gameComplete={true}
+          />
           <div style={{ 
             display: 'flex', 
             gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',

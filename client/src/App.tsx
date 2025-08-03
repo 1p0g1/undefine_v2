@@ -537,7 +537,11 @@ function App() {
       >
         {/* Un· enhanced design */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <UnPrefix onClick={handleThemeClick} themeGuessData={themeGuessData} />
+          <UnPrefix 
+            onClick={handleThemeClick} 
+            themeGuessData={themeGuessData}
+            gameComplete={gameState.isComplete}
+          />
         </div>
         <div className="define-boxes" style={{ 
           display: 'flex', 
@@ -1147,6 +1151,7 @@ function App() {
         open={showThemeModal}
         onClose={() => handleCloseThemeModal()}
         gameId={gameState.gameId}
+        gameComplete={gameState.isComplete}
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />
 

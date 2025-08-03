@@ -4,6 +4,7 @@ import { getUnDiamondColor } from '../utils/themeMessages';
 interface UnPrefixProps {
   scaled?: boolean; // For use in GameSummaryModal with transform scale
   onClick?: () => void;
+  gameComplete?: boolean; // NEW: To detect when game is finished
   // Theme guess color-coding props
   themeGuessData?: {
     hasGuessedToday: boolean;
@@ -12,9 +13,24 @@ interface UnPrefixProps {
   };
 }
 
-export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, themeGuessData }) => {
+export const UnPrefix: React.FC<UnPrefixProps> = ({ 
+  scaled = false, 
+  onClick, 
+  gameComplete = false, // NEW: Default to false
+  themeGuessData 
+}) => {
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
+  
+  // 🎯 NEW: Determine what text to show - '?' for call-to-action or 'Un·'
+  const getDisplayText = () => {
+    // Show '?' when game is complete but theme hasn't been guessed today
+    if (gameComplete && (!themeGuessData?.hasGuessedToday)) {
+      return '?';
+    }
+    // Default to 'Un·' in all other cases
+    return 'Un·';
+  };
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
@@ -47,6 +63,15 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
       };
     }
     
+    // 🎯 NEW: Special styling for call-to-action '?' when game is complete
+    if (gameComplete && (!themeGuessData?.hasGuessedToday)) {
+      return {
+        borderColor: '#8b5cf6', // Purple border for call-to-action
+        backgroundColor: '#faf5ff', // Light purple background
+        textColor: '#8b5cf6' // Purple text
+      };
+    }
+    
     // Default colors when no theme guess made
     return {
       borderColor: '#1a237e',
@@ -56,6 +81,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
   };
 
   const colors = getDiamondColors();
+  const displayText = getDisplayText();
   
   const containerStyle = {
     width: baseSize,
@@ -99,7 +125,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
       e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.9)' : 'rotate(45deg)';
-      e.currentTarget.style.boxShadow = '0 2px 8px rgba(26, 35, 126, 0.12), 0 0 0 1px rgba(26, 35, 126, 0.08)';
+      e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`;
     }
   };
 
@@ -110,7 +136,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* "Un·" text - counter-rotate to keep text upright and include interpunct */}
+      {/* 🎯 NEW: Dynamic text - '?' for call-to-action or 'Un·' normally */}
       <span style={{ 
         position: 'relative', 
         zIndex: 2,
@@ -121,7 +147,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({ scaled = false, onClick, the
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        Un·
+        {displayText}
       </span>
     </div>
   );
