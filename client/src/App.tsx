@@ -11,6 +11,7 @@ import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
 import { StreakBadge } from './components/StreakBadge';
 import { FlameAnimation } from './components/FlameAnimation';
+import { StreakDiamond } from './components/StreakDiamond';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
@@ -477,18 +478,32 @@ function App() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        // Removed gap: '0.75rem' to recenter timer
+        gap: '1rem',
         marginBottom: '1rem',
-        paddingTop: '0.5rem'
+        paddingTop: '0.5rem',
+        position: 'relative', // For flame positioning
       }}>
         <TimerBadge seconds={timer} />
-        <FlameAnimation 
-          streak={effectivePlayerStats?.currentStreak || 0} 
-          highestStreak={effectivePlayerStats?.longestStreak || 0}
-          lastWinDate={effectivePlayerStats?.lastWinDate || null}
-          size="small"
-          position="inline"
-        />
+        
+        {/* Streak Diamond with Enveloping Flames */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <StreakDiamond 
+            currentStreak={effectivePlayerStats?.currentStreak || 0}
+            bestStreak={effectivePlayerStats?.longestStreak || 0}
+          />
+          <FlameAnimation 
+            streak={effectivePlayerStats?.currentStreak || 0} 
+            highestStreak={effectivePlayerStats?.longestStreak || 0}
+            lastWinDate={effectivePlayerStats?.lastWinDate || null}
+            size="large"
+            position="absolute"
+          />
+        </div>
       </div>
       
       {/* Hamburger Menu - Top left positioning with mobile-safe positioning */}
