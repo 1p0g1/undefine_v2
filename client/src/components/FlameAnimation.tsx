@@ -36,14 +36,6 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
 
   const showFlames = shouldShowFlames();
   
-  // 🔥 DEBUG: Log flame animation decision
-  console.log('[FlameAnimation] 🔥 Flame decision:', {
-    streak,
-    lastWinDate,
-    showFlames,
-    daysDiff: lastWinDate ? Math.floor((new Date().getTime() - new Date(lastWinDate).getTime()) / (1000 * 60 * 60 * 24)) : 'no date'
-  });
-
   // Hover handlers
   const handleMouseEnter = () => {
     setShowTooltip(true);

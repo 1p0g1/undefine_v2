@@ -55,14 +55,6 @@ function App() {
     ? { ...playerStats, ...immediateStreakData }
     : playerStats;
 
-  // 🔥 DEBUG: Log streak data for debugging
-  console.log('[App] 🔥 Current streak data:', {
-    playerStats,
-    immediateStreakData,
-    effectivePlayerStats,
-    currentStreak: effectivePlayerStats?.currentStreak,
-    lastWinDate: effectivePlayerStats?.lastWinDate
-  });
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -490,12 +482,6 @@ function App() {
         paddingTop: '0.5rem'
       }}>
         <TimerBadge seconds={timer} />
-        <StreakBadge 
-          streak={effectivePlayerStats?.currentStreak || 0} 
-          highestStreak={effectivePlayerStats?.longestStreak || 0}
-          lastWinDate={effectivePlayerStats?.lastWinDate || null}
-          playerId={getPlayerId()}
-        />
         <FlameAnimation 
           streak={effectivePlayerStats?.currentStreak || 0} 
           highestStreak={effectivePlayerStats?.longestStreak || 0}
