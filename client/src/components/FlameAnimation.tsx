@@ -76,8 +76,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
 
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,
-    top: '50%', // Back to center now that container is properly sized
-    left: '50%', // Back to center now that container is properly sized
+    top: '50%', // Keep vertical center
+    left: '55%', // Shift right to compensate for SVG offset
     transform: 'translate(-50%, -50%)', // Center around diamond
     ...sizeConfig,
     zIndex: 0, // Behind diamond but visible  
