@@ -10,12 +10,14 @@ import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
 import { StreakBadge } from './components/StreakBadge';
+import { FlameAnimation } from './components/FlameAnimation';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
+import { StreakCalendarModal } from './components/StreakCalendarModal';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
@@ -68,6 +70,9 @@ function App() {
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
   const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
+  
+  // Streak calendar modal state  
+  const [showStreakCalendar, setShowStreakCalendar] = useState(false);
 
   // Toast state
   const [toastMessage, setToastMessage] = useState('');
@@ -473,11 +478,12 @@ function App() {
         paddingTop: '0.5rem'
       }}>
         <TimerBadge seconds={timer} />
-        <StreakBadge 
+        <FlameAnimation 
           streak={effectivePlayerStats?.currentStreak || 0} 
           highestStreak={effectivePlayerStats?.longestStreak || 0}
           lastWinDate={effectivePlayerStats?.lastWinDate || null}
-          playerId={getPlayerId()}
+          size="small"
+          position="inline"
         />
       </div>
       
@@ -1131,6 +1137,7 @@ function App() {
         onShowRules={() => setShowRules(true)}
         onShowLeaderboard={showLeaderboardModal}
         onShowAllTimeLeaderboard={handleShowAllTimeLeaderboard}
+        onShowGameHistory={() => setShowStreakCalendar(true)}
       />
       {/* Toast Notification */}
       <Toast
@@ -1155,10 +1162,23 @@ function App() {
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />
 
+      {/* Streak Calendar Modal */}
+      <StreakCalendarModal
+        open={showStreakCalendar}
+        onClose={() => setShowStreakCalendar(false)}
+        playerId={getPlayerId()}
+      />
+
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
+        }
+        
+        /* Sequential 7-Flame Animation */
+        @keyframes flame-sequence {
+          0%, 14.29% { opacity: 1; }
+          14.30%, 100% { opacity: 0; }
         }
       `}</style>
     </div>
