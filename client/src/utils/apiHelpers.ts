@@ -117,7 +117,24 @@ export async function safeFetch<T>(url: string, options: RequestInit = {}): Prom
  * Vercel previews can have different API configurations
  */
 export function isVercelPreview(): boolean {
-  return typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+  if (typeof window === 'undefined') return false;
+  
+  const hostname = window.location.hostname;
+  
+  // Production sites: undefine-v2-front.vercel.app (clean, short)
+  // Preview sites: undefine-v2-front-git-feature-branch-paddy.vercel.app (long with hashes/branches)
+  
+  // If it's not on vercel.app at all, it's local/other
+  if (!hostname.includes('vercel.app')) return false;
+  
+  // If it contains 'git-' it's definitely a preview branch deployment
+  if (hostname.includes('git-')) return true;
+  
+  // If it's the exact production hostname, it's not preview
+  if (hostname === 'undefine-v2-front.vercel.app') return false;
+  
+  // If hostname is very long or has random hashes, likely preview
+  return hostname.length > 35 || /[a-f0-9]{8,}/.test(hostname);
 }
 
 /**
