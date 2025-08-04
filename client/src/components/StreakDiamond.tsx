@@ -11,7 +11,10 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
 }) => {
   return (
     <div style={{
-      position: 'relative',
+      position: 'absolute', // Changed from 'relative' to 'absolute'
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%) rotate(45deg)', // Combined transforms
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -20,7 +23,6 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
       backgroundColor: '#f8fafc',
       border: '2px solid #e2e8f0',
       borderRadius: '0.5rem',
-      transform: 'rotate(45deg)',
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       zIndex: 10, // Above flames
     }}>

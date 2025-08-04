@@ -488,11 +488,8 @@ function App() {
         {/* Streak Diamond with Enveloping Flames */}
         <div style={{
           position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '5.5rem', // Match flame size, not diamond
-          height: '5.5rem', // Match flame size, not diamond
+          width: '5.5rem', // Container for both absolute elements
+          height: '5.5rem', // Container for both absolute elements
         }}>
           <StreakDiamond 
             currentStreak={effectivePlayerStats?.currentStreak || 0}
