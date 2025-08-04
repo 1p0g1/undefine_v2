@@ -478,7 +478,7 @@ function App() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: '1rem',
+        gap: '1.5rem',
         marginBottom: '1rem',
         paddingTop: '0.5rem',
         position: 'relative', // For flame positioning
@@ -491,6 +491,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          width: '3.5rem', // Match diamond width
+          height: '3.5rem', // Match diamond height
         }}>
           <StreakDiamond 
             currentStreak={effectivePlayerStats?.currentStreak || 0}

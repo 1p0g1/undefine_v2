@@ -50,8 +50,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
     switch (size) {
       case 'large':
         return {
-          width: 'clamp(6rem, 15vw, 8rem)', // Much larger to envelop diamond
-          height: 'clamp(6rem, 15vw, 8rem)'
+          width: '5.5rem', // Slightly larger than 3.5rem diamond to envelop
+          height: '5.5rem' 
         };
       case 'medium':
         return {
@@ -80,10 +80,13 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
     left: '50%',
     transform: 'translate(-50%, -50%)', // Center around diamond
     ...sizeConfig,
-    zIndex: 0, // Behind diamond but visible
+    zIndex: 0, // Behind diamond but visible  
     pointerEvents: 'auto' as const, // Enable hover
     overflow: 'visible' as const,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   } : {
     ...sizeConfig,
     position: 'relative' as const,
