@@ -491,8 +491,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '3.5rem', // Match diamond width
-          height: '3.5rem', // Match diamond height
+          width: '5.5rem', // Match flame size, not diamond
+          height: '5.5rem', // Match flame size, not diamond
         }}>
           <StreakDiamond 
             currentStreak={effectivePlayerStats?.currentStreak || 0}
