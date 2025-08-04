@@ -261,13 +261,16 @@ function App() {
         setImmediateStreakData({
           currentStreak: guessResult.stats.current_streak,
           longestStreak: guessResult.stats.longest_streak,
-          lastWinDate: guessResult.stats.updated_at,
+          lastWinDate: new Date().toISOString(), // Set to current time since we just won
         });
         
         console.log('[App] Streak counter should update immediately with:', {
           currentStreak: guessResult.stats.current_streak,
           longestStreak: guessResult.stats.longest_streak
         });
+        
+        // Debug flame animation
+        console.log('[App] 🔥 Flame animation should now appear with streak:', guessResult.stats.current_streak);
       } else {
         console.log('[App] Game not won or not over:', {
           gameOver: guessResult.gameOver,
@@ -468,12 +471,12 @@ function App() {
       }}
     >
       {/* Timer Badge - Centered at top */}
-      <div style={{ 
-        width: '100%', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
         alignItems: 'center',
-        gap: '0.75rem',
+        // Removed gap: '0.75rem' to recenter timer
         marginBottom: '1rem',
         paddingTop: '0.5rem'
       }}>
@@ -1166,7 +1169,7 @@ function App() {
       <StreakCalendarModal
         open={showStreakCalendar}
         onClose={() => setShowStreakCalendar(false)}
-        playerId={getPlayerId()}
+        playerId={getPlayerId() || ''}
       />
 
       <style>{`
