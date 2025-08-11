@@ -40,40 +40,55 @@ export const ThemeLeaderboardPanel: React.FC = () => {
   const [entries, setEntries] = useState<ThemeLBEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'weekly'|'allTime'>('weekly');
 
   const load = async () => {
     try {
       setLoading(true); setError(null);
-      const now = new Date();
-      const weekParam = now.toISOString().slice(0,10); // server derives ISO week
-      const res = await fetch(`${env.VITE_API_BASE_URL}/api/leaderboard/theme?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
-      setEntries(data.entries || []);
+      const base = `${env.VITE_API_BASE_URL}/api/leaderboard/theme`;
+      if (mode === 'weekly') {
+        const weekParam = new Date().toISOString().slice(0,10);
+        const res = await fetch(`${base}?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
+        setEntries(data.entries || []);
+      } else {
+        const res = await fetch(`${base}?view=all_time&min_attempts=1`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
+        setEntries(data.entries || []);
+      }
     } catch (e:any) { setError(e.message); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
-
-  if (loading) return <div style={{padding:'0.5rem 0'}}>Loading theme leaderboard…</div>;
-  if (error) return <div style={{color:'#dc2626', padding:'0.5rem 0'}}>Error: {error}</div>;
+  useEffect(() => { load(); }, [mode]);
 
   return (
     <div style={{marginTop:'0.75rem'}}>
-      <div style={{fontWeight:700, marginBottom:'0.5rem'}}>Theme Leaderboard (Weekly Avg %)</div>
-      {entries.length === 0 ? (
-        <div style={{opacity:0.7}}>No entries yet this week.</div>
-      ) : (
-        <ol style={{margin:0, paddingLeft:'1rem'}}>
-          {entries.map((e, i) => (
-            <li key={e.player_id} style={{margin:'0.25rem 0'}}>
-              <span style={{fontWeight:600}}>{i+1}. {e.display_name || 'Player'}</span>
-              <span style={{marginLeft:'0.5rem'}}>— {e.avg_similarity.toFixed(2)}%</span>
-              <span style={{marginLeft:'0.25rem', opacity:0.7}}>({e.attempts})</span>
-            </li>
-          ))}
-        </ol>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{fontWeight:700}}>Theme Leaderboard ({mode === 'weekly' ? 'Weekly Avg %' : 'All-Time Avg %'})</div>
+        <div>
+          <button onClick={() => setMode('weekly')} disabled={mode==='weekly'} style={{marginRight:'0.5rem'}}>Weekly</button>
+          <button onClick={() => setMode('allTime')} disabled={mode==='allTime'}>All-Time</button>
+        </div>
+      </div>
+      {loading && <div style={{padding:'0.5rem 0'}}>Loading…</div>}
+      {error && <div style={{color:'#dc2626', padding:'0.5rem 0'}}>Error: {error}</div>}
+      {!loading && !error && (
+        entries.length === 0 ? (
+          <div style={{opacity:0.7}}>No entries.</div>
+        ) : (
+          <ol style={{margin:0, paddingLeft:'1rem'}}>
+            {entries.map((e, i) => (
+              <li key={e.player_id} style={{margin:'0.25rem 0'}}>
+                <span style={{fontWeight:600}}>{i+1}. {e.display_name || 'Player'}</span>
+                <span style={{marginLeft:'0.5rem'}}>— {e.avg_similarity.toFixed(2)}%</span>
+                <span style={{marginLeft:'0.25rem', opacity:0.7}}>({e.attempts})</span>
+              </li>
+            ))}
+          </ol>
+        )
       )}
     </div>
   );

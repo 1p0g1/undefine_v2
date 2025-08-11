@@ -279,31 +279,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             onClick={() => {
               onShowAllTimeLeaderboard?.();
-              onClose();
-            }}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              marginBottom: '0.5rem',
-              borderRadius: '0.5rem',
-              border: '1px solid #e5e7eb',
-              backgroundColor: 'white',
-              color: 'var(--color-primary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              fontFamily: 'var(--font-primary)',
-              textAlign: 'left',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-          >
-            📊 All-Time Stats
-          </button>
-
-          <button
-            onClick={() => {
+              // tell the AllTimeLeaderboard modal to show the Theme panel
               window.dispatchEvent(new CustomEvent('show-theme-leaderboard'));
               onClose();
             }}

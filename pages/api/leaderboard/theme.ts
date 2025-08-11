@@ -19,6 +19,7 @@ export default withCors(async function handler(
   try {
     const week_key = (req.query.week_key as string) || new Date().toISOString().slice(0,10);
     const min_attempts = Number(req.query.min_attempts || 1);
+    const view = (req.query.view as string) || 'weekly';
 
     // Derive ISO week_key if a date was passed instead of explicit week key
     const derivedWeek = week_key.includes('W')
@@ -33,6 +34,27 @@ export default withCors(async function handler(
           const weekNo = 1 + Math.round(((target.getTime() - firstThursday.getTime()) / 86400000 - 3 + ((firstThursday.getDay()+6)%7)) / 7);
           return `${target.getFullYear()}-W${String(weekNo).padStart(2,'0')}`;
         })();
+
+    if (view === 'all_time') {
+      const { data: rows, error: qErr } = await supabase
+        .from('theme_attempts')
+        .select('player_id, similarity_percent, user_stats:player_id(display_name)');
+      if (qErr) return res.status(500).json({ error: qErr.message });
+      type Row = { player_id: string; similarity_percent: number; user_stats?: { display_name: string | null } | null };
+      const agg = new Map<string, { total: number; count: number; name: string | null }>();
+      for (const r of (rows as unknown as Row[]) || []) {
+        const cur = agg.get(r.player_id) || { total: 0, count: 0, name: r.user_stats?.display_name || null };
+        cur.total += Number(r.similarity_percent || 0);
+        cur.count += 1;
+        cur.name = r.user_stats?.display_name ?? cur.name;
+        agg.set(r.player_id, cur);
+      }
+      const entries: ThemeLeaderboardEntry[] = Array.from(agg.entries())
+        .map(([player_id, v]) => ({ player_id, display_name: v.name, avg_similarity: v.count ? +(v.total / v.count).toFixed(2) : 0, attempts: v.count }))
+        .filter(e => e.attempts >= min_attempts)
+        .sort((a, b) => b.avg_similarity - a.avg_similarity);
+      return res.status(200).json({ entries });
+    }
 
     const { data, error } = await supabase.rpc('get_theme_leaderboard', {
       p_week_key: derivedWeek,
