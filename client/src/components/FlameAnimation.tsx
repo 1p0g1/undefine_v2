@@ -77,7 +77,7 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,
     top: '50%', // Keep vertical center
-    left: '120%', // Move significantly more RIGHT (80% of flame asset width from current position)
+    left: '105%', // Systematic adjustment: halfway between 90% (too left) and 120% (too right)
     transform: 'translate(-50%, -50%)', // Center around diamond
     ...sizeConfig,
     zIndex: 0, // Behind diamond but visible  
