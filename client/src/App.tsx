@@ -56,6 +56,17 @@ function App() {
     ? { ...playerStats, ...immediateStreakData }
     : playerStats;
 
+  // Show streak indicators only when active (won today or yesterday and streak > 0)
+  const isActiveStreak = (() => {
+    const current = effectivePlayerStats?.currentStreak ?? 0;
+    const lastWin = effectivePlayerStats?.lastWinDate;
+    if (!lastWin || current === 0) return false;
+    const last = new Date(lastWin);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 1;
+  })();
+
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -491,17 +502,21 @@ function App() {
           width: '5.5rem', // Container for both absolute elements
           height: '5.5rem', // Container for both absolute elements
         }}>
-          <StreakDiamond 
-            currentStreak={effectivePlayerStats?.currentStreak || 0}
-            bestStreak={effectivePlayerStats?.longestStreak || 0}
-          />
-          <FlameAnimation 
-            streak={effectivePlayerStats?.currentStreak || 0} 
-            highestStreak={effectivePlayerStats?.longestStreak || 0}
-            lastWinDate={effectivePlayerStats?.lastWinDate || null}
-            size="large"
-            position="absolute"
-          />
+          {isActiveStreak && (
+            <>
+              <StreakDiamond 
+                currentStreak={effectivePlayerStats?.currentStreak || 0}
+                bestStreak={effectivePlayerStats?.longestStreak || 0}
+              />
+              <FlameAnimation 
+                streak={effectivePlayerStats?.currentStreak || 0} 
+                highestStreak={effectivePlayerStats?.longestStreak || 0}
+                lastWinDate={effectivePlayerStats?.lastWinDate || null}
+                size="large"
+                position="absolute"
+              />
+            </>
+          )}
         </div>
       </div>
       

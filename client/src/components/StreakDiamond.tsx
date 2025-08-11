@@ -11,30 +11,27 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
 }) => {
   return (
     <div style={{
-      position: 'absolute', // Changed from 'relative' to 'absolute'
+      position: 'absolute',
       top: '50%',
       left: '50%',
-      transform: 'translate(-50%, -50%) rotate(45deg)', // Combined transforms
+      transform: 'translate(-50%, -50%) rotate(45deg)',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
       width: '3.5rem',
       height: '3.5rem',
-      backgroundColor: '#ffffff',
-      backgroundImage: 'radial-gradient(ellipse at center, rgba(255,140,0,0.28) 0%, rgba(255,140,0,0.15) 55%, rgba(255,140,0,0) 75%)', // soft inner orange glow that respects diamond shape
-      border: '2px solid #0f2740', // deep blue similar to flame outline
+      background: 'linear-gradient(145deg, #fff7ed 20%, #ffe6c4 60%, #ffd6a6 100%)', // warm diamond fill
+      border: '2px solid #0f2740',
       borderRadius: '0.5rem',
-      boxShadow: '0 6px 14px rgba(16, 24, 40, 0.12), 0 0 16px rgba(255,140,0,0.20)', // subtle depth + outer warmth
-      zIndex: 10, // Above flames
+      boxShadow: '0 6px 14px rgba(16, 24, 40, 0.10)',
+      zIndex: 10,
     }}>
-      {/* Content container - counter-rotate to keep text straight */}
       <div style={{
         transform: 'rotate(-45deg)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
         width: '100%',
         height: '100%'
       }}>
