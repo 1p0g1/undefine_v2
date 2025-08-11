@@ -75,8 +75,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
   }
 
   // Tunable horizontal offset (as % of container width) to compensate for SVG visual center
-  const flameXOffsetPercent = 48; // positive moves flames to the right after centering
-  const flameYOffsetPercent = -6; // negative moves flames up slightly after centering
+  const flameXOffsetPercent = 46; // was 48 → nudge slightly left
+  const flameYOffsetPercent = -4; // was -6 → slightly less up (down toward center)
 
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,

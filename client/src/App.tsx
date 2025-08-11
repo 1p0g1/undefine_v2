@@ -494,7 +494,7 @@ function App() {
           <StreakDiamond 
             currentStreak={effectivePlayerStats?.currentStreak || 0}
             bestStreak={effectivePlayerStats?.longestStreak || 0}
-            glowActive={Boolean(effectivePlayerStats?.currentStreak && effectivePlayerStats?.lastWinDate)}
+            lastWinDate={effectivePlayerStats?.lastWinDate || null}
           />
           <FlameAnimation 
             streak={effectivePlayerStats?.currentStreak || 0} 

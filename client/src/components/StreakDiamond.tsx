@@ -3,14 +3,22 @@ import React from 'react';
 interface StreakDiamondProps {
   currentStreak: number;
   bestStreak: number;
-  glowActive?: boolean;
+  lastWinDate?: string | null;
 }
 
 export const StreakDiamond: React.FC<StreakDiamondProps> = ({ 
   currentStreak, 
   bestStreak,
-  glowActive = false
+  lastWinDate
 }) => {
+  const isActive = (() => {
+    if (!lastWinDate || currentStreak <= 0) return false;
+    const last = new Date(lastWinDate);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 1;
+  })();
+
   return (
     <div style={{
       position: 'absolute', // Changed from 'relative' to 'absolute'
@@ -22,11 +30,11 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
       justifyContent: 'center',
       width: '3.5rem',
       height: '3.5rem',
-      backgroundColor: glowActive ? '#fff7ed' : '#ffffff',
+      backgroundColor: isActive ? '#fff7ed' : '#ffffff',
       border: '2px solid #0f2740', // deep blue similar to flame outline
       borderRadius: '0.5rem',
       // Use drop-shadow so the glow respects the diamond alpha (no square boxes)
-      filter: glowActive ? 'drop-shadow(0 0 16px rgba(255,140,0,0.35)) drop-shadow(0 3px 10px rgba(16,24,40,0.12))' : 'drop-shadow(0 3px 10px rgba(16,24,40,0.12))',
+      filter: isActive ? 'drop-shadow(0 0 16px rgba(255,140,0,0.35)) drop-shadow(0 3px 10px rgba(16,24,40,0.12))' : 'drop-shadow(0 3px 10px rgba(16,24,40,0.12))',
       zIndex: 10, // Above flames
     }}>
       {/* Content container - counter-rotate to keep text straight */}
