@@ -269,7 +269,9 @@ export async function submitThemeAttempt(
         // Add similarity tracking data
         similarity_score: guessResult.similarity || null,
         confidence_percentage: guessResult.confidence,
-        matching_method: guessResult.method
+        matching_method: guessResult.method,
+        similarity_percent: Math.round(((guessResult.similarity || 0) * 100 + Number.EPSILON) * 100) / 100,
+        week_key: new Date(today).toISOString().slice(0,10) // will be normalized by backfill
       });
 
     if (insertError) {
