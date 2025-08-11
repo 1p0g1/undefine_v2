@@ -45,16 +45,28 @@ export const ThemeLeaderboardPanel: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true); setError(null);
-      const base = `${getApiBaseUrl()}/api/leaderboard/theme`;
-      if (mode === 'weekly') {
-        const weekParam = new Date().toISOString().slice(0,10);
-        const url = `${base}?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`;
-        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(url);
+      const makeUrl = (base: string) => {
+        if (mode === 'weekly') {
+          const weekParam = new Date().toISOString().slice(0,10);
+          return `${base}/api/leaderboard/theme?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`;
+        }
+        return `${base}/api/leaderboard/theme?view=all_time&min_attempts=1`;
+      };
+
+      const primaryBase = getApiBaseUrl();
+      const primaryUrl = makeUrl(primaryBase);
+      try {
+        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(primaryUrl);
         setEntries(resp.entries || []);
-      } else {
-        const url = `${base}?view=all_time&min_attempts=1`;
-        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(url);
-        setEntries(resp.entries || []);
+      } catch (e: any) {
+        if (e instanceof ApiError && e.status === 404 && typeof window !== 'undefined') {
+          // Fallback to current origin (frontend) if backend doesn't have the route on this branch
+          const fallbackUrl = makeUrl(window.location.origin);
+          const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(fallbackUrl);
+          setEntries(resp.entries || []);
+        } else {
+          throw e;
+        }
       }
     } catch (e:any) {
       setError(e.message || 'Failed to load theme leaderboard');
@@ -262,159 +274,161 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
 
   if (!open) return null;
 
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
-        boxSizing: 'border-box'
-      }}
-      onClick={onClose}
-    >
+  return (
+    createPortal(
       <div
         style={{
-          backgroundColor: '#fff',
-          borderRadius: '0.75rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-          width: '100%',
-          maxWidth: 'min(28rem, 90vw)',
-          maxHeight: 'min(80vh, calc(100vh - 2rem))',
-          overflow: 'hidden',
-          fontFamily: 'var(--font-primary)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
           boxSizing: 'border-box'
         }}
-        onClick={e => e.stopPropagation()}
+        onClick={onClose}
       >
-        {/* Header */}
-        <div style={{ 
-          padding: '1.5rem 1.5rem 1rem 1.5rem',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
+        <div
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: '0.75rem',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            width: '100%',
+            maxWidth: 'min(28rem, 90vw)',
+            maxHeight: 'min(80vh, calc(100vh - 2rem))',
+            overflow: 'hidden',
+            fontFamily: 'var(--font-primary)',
+            boxSizing: 'border-box'
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Header */}
           <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            marginBottom: '1rem'
+            padding: '1.5rem 1.5rem 1rem 1.5rem',
+            borderBottom: '1px solid #e5e7eb'
           }}>
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: '1.5rem', 
-              fontWeight: 'bold',
-              color: '#1f2937'
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '1rem'
             }}>
-              🏆 All-Time Leaderboards
-            </h2>
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: '#9ca3af',
-                padding: '0.25rem'
-              }}
-            >
-              ×
-            </button>
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold',
+                color: '#1f2937'
+              }}>
+                🏆 All-Time Leaderboards
+              </h2>
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#9ca3af',
+                  padding: '0.25rem'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {data && (
+              <div style={{ 
+                fontSize: '0.875rem', 
+                color: '#6b7280',
+                textAlign: 'center'
+              }}>
+                {data.totalPlayers} players • {data.totalGames} total games
+              </div>
+            )}
           </div>
 
-          {data && (
-            <div style={{ 
-              fontSize: '0.875rem', 
-              color: '#6b7280',
-              textAlign: 'center'
-            }}>
-              {data.totalPlayers} players • {data.totalGames} total games
-            </div>
-          )}
+          {/* Tab Navigation */}
+          <div style={{ 
+            display: 'flex',
+            borderBottom: '1px solid #e5e7eb',
+            backgroundColor: '#f9fafb'
+          }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 0.25rem',
+                  border: 'none',
+                  backgroundColor: activeTab === tab.id ? '#fff' : 'transparent',
+                  color: activeTab === tab.id ? '#1f2937' : '#6b7280',
+                  fontSize: '0.75rem',
+                  fontWeight: activeTab === tab.id ? '600' : '400',
+                  cursor: 'pointer',
+                  borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
+                  transition: 'all 0.2s ease'
+                }}
+                title={tab.description}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div style={{ 
+            maxHeight: '24rem', 
+            overflowY: 'auto'
+          }}>
+            {loading && (
+              <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center', 
+                color: '#6b7280'
+              }}>
+                Loading all-time statistics...
+              </div>
+            )}
+
+            {error && (
+              <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center', 
+                color: '#dc2626'
+              }}>
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && (
+              <div>
+                {getCurrentData().map((player, index) => 
+                  renderLeaderboardEntry(player, index + 1)
+                )}
+                
+                {getCurrentData().length === 0 && (
+                  <div style={{ 
+                    padding: '2rem', 
+                    textAlign: 'center', 
+                    color: '#6b7280'
+                  }}>
+                    No data available for this category
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Always show Theme Leaderboard section under header (independent of tabs) */}
+          <ThemeLeaderboardPanel />
         </div>
-
-        {/* Tab Navigation */}
-        <div style={{ 
-          display: 'flex',
-          borderBottom: '1px solid #e5e7eb',
-          backgroundColor: '#f9fafb'
-        }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: '0.75rem 0.25rem',
-                border: 'none',
-                backgroundColor: activeTab === tab.id ? '#fff' : 'transparent',
-                color: activeTab === tab.id ? '#1f2937' : '#6b7280',
-                fontSize: '0.75rem',
-                fontWeight: activeTab === tab.id ? '600' : '400',
-                cursor: 'pointer',
-                borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                transition: 'all 0.2s ease'
-              }}
-              title={tab.description}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div style={{ 
-          maxHeight: '24rem', 
-          overflowY: 'auto'
-        }}>
-          {loading && (
-            <div style={{ 
-              padding: '2rem', 
-              textAlign: 'center', 
-              color: '#6b7280'
-            }}>
-              Loading all-time statistics...
-            </div>
-          )}
-
-          {error && (
-            <div style={{ 
-              padding: '2rem', 
-              textAlign: 'center', 
-              color: '#dc2626'
-            }}>
-              {error}
-            </div>
-          )}
-
-          {!loading && !error && (
-            <div>
-              {getCurrentData().map((player, index) => 
-                renderLeaderboardEntry(player, index + 1)
-              )}
-              
-              {getCurrentData().length === 0 && (
-                <div style={{ 
-                  padding: '2rem', 
-                  textAlign: 'center', 
-                  color: '#6b7280'
-                }}>
-                  No data available for this category
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {/* Theme leaderboard section toggled from settings */}
-        {showThemeLB && <ThemeLeaderboardPanel />}
-      </div>
-    </div>,
-    document.body
+      </div>,
+      document.body
+    )
   );
 }; 
