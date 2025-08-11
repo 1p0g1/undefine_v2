@@ -74,14 +74,17 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
     return null;
   }
 
+  // Tunable horizontal offset (as % of container width) to compensate for SVG visual center
+  const flameXOffsetPercent = 40; // positive moves flames to the right after centering
+
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,
-    top: '50%', // Keep vertical center
-    left: '85%', // Move LEFT from 105% to center behind diamond
-    transform: 'translate(-50%, -50%)', // Center around diamond
+    top: '50%',
+    left: '50%',
+    transform: `translate(calc(-50% + ${flameXOffsetPercent}%), -50%)`,
     ...sizeConfig,
-    zIndex: 0, // Behind diamond but visible  
-    pointerEvents: 'auto' as const, // Enable hover
+    zIndex: 0,
+    pointerEvents: 'auto' as const,
     overflow: 'visible' as const,
     cursor: 'pointer',
     display: 'flex',
