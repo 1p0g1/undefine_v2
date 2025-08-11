@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { safeFetch, ApiError, isVercelPreview, getApiBaseUrl } from '../utils/apiHelpers';
+import { env } from '../env.client';
 
 interface AllTimeStats {
   player_id: string;
@@ -33,6 +34,51 @@ interface AllTimeLeaderboardProps {
   onClose: () => void;
 }
 
+interface ThemeLBEntry { player_id: string; display_name: string | null; avg_similarity: number; attempts: number; }
+
+export const ThemeLeaderboardPanel: React.FC = () => {
+  const [entries, setEntries] = useState<ThemeLBEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    try {
+      setLoading(true); setError(null);
+      const now = new Date();
+      const weekParam = now.toISOString().slice(0,10); // server derives ISO week
+      const res = await fetch(`${env.VITE_API_BASE_URL}/api/leaderboard/theme?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
+      setEntries(data.entries || []);
+    } catch (e:any) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (loading) return <div style={{padding:'0.5rem 0'}}>Loading theme leaderboard…</div>;
+  if (error) return <div style={{color:'#dc2626', padding:'0.5rem 0'}}>Error: {error}</div>;
+
+  return (
+    <div style={{marginTop:'0.75rem'}}>
+      <div style={{fontWeight:700, marginBottom:'0.5rem'}}>Theme Leaderboard (Weekly Avg %)</div>
+      {entries.length === 0 ? (
+        <div style={{opacity:0.7}}>No entries yet this week.</div>
+      ) : (
+        <ol style={{margin:0, paddingLeft:'1rem'}}>
+          {entries.map((e, i) => (
+            <li key={e.player_id} style={{margin:'0.25rem 0'}}>
+              <span style={{fontWeight:600}}>{i+1}. {e.display_name || 'Player'}</span>
+              <span style={{marginLeft:'0.5rem'}}>— {e.avg_similarity.toFixed(2)}%</span>
+              <span style={{marginLeft:'0.25rem', opacity:0.7}}>({e.attempts})</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+};
+
 type LeaderboardTab = 'totalGames' | 'streaks';
 
 export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, onClose }) => {
@@ -40,12 +86,19 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('totalGames');
+  const [showThemeLB, setShowThemeLB] = useState(false);
 
   useEffect(() => {
     if (open) {
       fetchAllTimeStats();
     }
   }, [open]);
+
+  useEffect(() => {
+    const handler = () => setShowThemeLB(true);
+    window.addEventListener('show-theme-leaderboard' as any, handler);
+    return () => window.removeEventListener('show-theme-leaderboard' as any, handler);
+  }, []);
 
   const fetchAllTimeStats = async () => {
     setLoading(true);
@@ -343,6 +396,8 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
             </div>
           )}
         </div>
+        {/* Theme leaderboard section toggled from settings */}
+        {showThemeLB && <ThemeLeaderboardPanel />}
       </div>
     </div>,
     document.body
