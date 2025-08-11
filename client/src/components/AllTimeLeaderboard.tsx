@@ -45,20 +45,20 @@ export const ThemeLeaderboardPanel: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true); setError(null);
-      const base = `${env.VITE_API_BASE_URL}/api/leaderboard/theme`;
+      const base = `${getApiBaseUrl()}/api/leaderboard/theme`;
       if (mode === 'weekly') {
         const weekParam = new Date().toISOString().slice(0,10);
-        const res = await fetch(`${base}?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
-        setEntries(data.entries || []);
+        const url = `${base}?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`;
+        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(url);
+        setEntries(resp.entries || []);
       } else {
-        const res = await fetch(`${base}?view=all_time&min_attempts=1`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load theme leaderboard');
-        setEntries(data.entries || []);
+        const url = `${base}?view=all_time&min_attempts=1`;
+        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(url);
+        setEntries(resp.entries || []);
       }
-    } catch (e:any) { setError(e.message); }
+    } catch (e:any) {
+      setError(e.message || 'Failed to load theme leaderboard');
+    }
     finally { setLoading(false); }
   };
 
