@@ -20,10 +20,11 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
       justifyContent: 'center',
       width: '3.5rem',
       height: '3.5rem',
-      backgroundColor: '#fff7ed', // warm background to blend with orange glow
+      backgroundColor: '#ffffff',
+      backgroundImage: 'radial-gradient(ellipse at center, rgba(255,140,0,0.28) 0%, rgba(255,140,0,0.15) 55%, rgba(255,140,0,0) 75%)', // soft inner orange glow that respects diamond shape
       border: '2px solid #0f2740', // deep blue similar to flame outline
       borderRadius: '0.5rem',
-      boxShadow: '0 0 0 2px rgba(255, 138, 76, 0.25), 0 6px 14px rgba(255, 98, 0, 0.18)', // subtle outer ring + drop shadow
+      boxShadow: '0 6px 14px rgba(16, 24, 40, 0.12), 0 0 16px rgba(255,140,0,0.20)', // subtle depth + outer warmth
       zIndex: 10, // Above flames
     }}>
       {/* Content container - counter-rotate to keep text straight */}
@@ -35,8 +36,7 @@ export const StreakDiamond: React.FC<StreakDiamondProps> = ({
         justifyContent: 'center',
         position: 'relative',
         width: '100%',
-        height: '100%',
-        boxShadow: 'inset 0 0 22px rgba(255, 140, 0, 0.35)', // inner orange glow
+        height: '100%'
       }}>
         {/* Current Streak (larger) */}
         <div style={{
