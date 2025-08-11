@@ -3,35 +3,40 @@ import React from 'react';
 interface StreakDiamondProps {
   currentStreak: number;
   bestStreak: number;
+  glowActive?: boolean;
 }
 
 export const StreakDiamond: React.FC<StreakDiamondProps> = ({ 
   currentStreak, 
-  bestStreak 
+  bestStreak,
+  glowActive = false
 }) => {
   return (
     <div style={{
-      position: 'absolute',
+      position: 'absolute', // Changed from 'relative' to 'absolute'
       top: '50%',
       left: '50%',
-      transform: 'translate(-50%, -50%) rotate(45deg)',
+      transform: 'translate(-50%, -50%) rotate(45deg)', // Combined transforms
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
       width: '3.5rem',
       height: '3.5rem',
-      background: 'linear-gradient(145deg, #fff7ed 20%, #ffe6c4 60%, #ffd6a6 100%)', // warm diamond fill
-      border: '2px solid #0f2740',
+      backgroundColor: glowActive ? '#fff7ed' : '#ffffff',
+      border: '2px solid #0f2740', // deep blue similar to flame outline
       borderRadius: '0.5rem',
-      boxShadow: '0 6px 14px rgba(16, 24, 40, 0.10)',
-      zIndex: 10,
+      // Use drop-shadow so the glow respects the diamond alpha (no square boxes)
+      filter: glowActive ? 'drop-shadow(0 0 16px rgba(255,140,0,0.35)) drop-shadow(0 3px 10px rgba(16,24,40,0.12))' : 'drop-shadow(0 3px 10px rgba(16,24,40,0.12))',
+      zIndex: 10, // Above flames
     }}>
+      {/* Content container - counter-rotate to keep text straight */}
       <div style={{
         transform: 'rotate(-45deg)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
         width: '100%',
         height: '100%'
       }}>
