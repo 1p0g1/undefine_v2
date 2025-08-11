@@ -75,13 +75,14 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
   }
 
   // Tunable horizontal offset (as % of container width) to compensate for SVG visual center
-  const flameXOffsetPercent = 40; // positive moves flames to the right after centering
+  const flameXOffsetPercent = 48; // positive moves flames to the right after centering
+  const flameYOffsetPercent = -6; // negative moves flames up slightly after centering
 
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,
     top: '50%',
     left: '50%',
-    transform: `translate(calc(-50% + ${flameXOffsetPercent}%), -50%)`,
+    transform: `translate(calc(-50% + ${flameXOffsetPercent}%), calc(-50% + ${flameYOffsetPercent}%))`,
     ...sizeConfig,
     zIndex: 0,
     pointerEvents: 'auto' as const,
