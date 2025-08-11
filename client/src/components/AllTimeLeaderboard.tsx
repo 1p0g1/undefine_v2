@@ -138,19 +138,30 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
         hostname: window.location.hostname
       });
       
-      // 🔧 PRODUCTION FIX: Use getApiBaseUrl helper for proper domain selection
-      const baseUrl = getApiBaseUrl();
-      const url = `${baseUrl}/api/leaderboard/all-time`;
-      console.log('[AllTimeLeaderboard] Request URL:', url);
+      const tryFetch = async (base: string) => {
+        const url = `${base}/api/leaderboard/all-time`;
+        console.log('[AllTimeLeaderboard] Request URL:', url);
+        return await safeFetch<AllTimeLeaderboardResponse>(url);
+      };
+
+      let result: AllTimeLeaderboardResponse | null = null;
+      try {
+        result = await tryFetch(getApiBaseUrl());
+      } catch (e: any) {
+        if (e instanceof ApiError && (e.status === 404 || e.message.includes('Failed to fetch'))) {
+          // Fallback to current origin (useful in preview when backend domain is blocked)
+          result = await tryFetch(window.location.origin);
+        } else {
+          throw e;
+        }
+      }
       
-      const result = await safeFetch<AllTimeLeaderboardResponse>(url);
-      
-      if (result.success) {
+      if (result && result.success) {
         setData(result.data || null);
         console.log('[AllTimeLeaderboard] Data loaded successfully');
       } else {
-        setError(result.error || 'Failed to load all-time statistics');
-        console.error('[AllTimeLeaderboard] API returned error:', result.error);
+        setError(result?.error || 'Failed to load all-time statistics');
+        console.error('[AllTimeLeaderboard] API returned error:', result?.error);
       }
     } catch (err) {
       let errorMessage = 'Network error loading all-time stats';
@@ -163,10 +174,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
           responseText: err.responseText?.substring(0, 200)
         });
         
-        // Provide more specific error messages
         if (err.status === 404) {
           errorMessage = isVercelPreview() 
-            ? 'Leaderboard API not available in preview environment'
+            ? 'Leaderboard API not available in this preview deployment'
             : 'Leaderboard API endpoint not found';
         } else if (err.status === 500) {
           errorMessage = 'Server error loading leaderboard data';
