@@ -50,8 +50,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
     switch (size) {
       case 'large':
         return {
-          width: '5.5rem', // Slightly larger than 3.5rem diamond to envelop
-          height: '5.5rem' 
+          width: '6.25rem', // slightly larger to enhance enveloping effect
+          height: '6.25rem'
         };
       case 'medium':
         return {
