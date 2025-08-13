@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { safeFetch, ApiError, isVercelPreview, getApiBaseUrl } from '../utils/apiHelpers';
+import { safeFetch, ApiError, isVercelPreview, getApiBaseUrl, fetchWithPreviewFallback } from '../utils/apiHelpers';
 import { env } from '../env.client';
 
 interface AllTimeStats {
@@ -45,29 +45,16 @@ export const ThemeLeaderboardPanel: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true); setError(null);
-      const makeUrl = (base: string) => {
+      const buildPath = () => {
         if (mode === 'weekly') {
           const weekParam = new Date().toISOString().slice(0,10);
-          return `${base}/api/leaderboard/theme?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`;
+          return `/api/leaderboard/theme?week_key=${encodeURIComponent(weekParam)}&min_attempts=1`;
         }
-        return `${base}/api/leaderboard/theme?view=all_time&min_attempts=1`;
+        return `/api/leaderboard/theme?view=all_time&min_attempts=1`;
       };
 
-      const primaryBase = getApiBaseUrl();
-      const primaryUrl = makeUrl(primaryBase);
-      try {
-        const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(primaryUrl);
-        setEntries(resp.entries || []);
-      } catch (e: any) {
-        if (e instanceof ApiError && e.status === 404 && typeof window !== 'undefined') {
-          // Fallback to current origin (frontend) if backend doesn't have the route on this branch
-          const fallbackUrl = makeUrl(window.location.origin);
-          const resp = await safeFetch<{ entries: ThemeLBEntry[] }>(fallbackUrl);
-          setEntries(resp.entries || []);
-        } else {
-          throw e;
-        }
-      }
+      const resp = await fetchWithPreviewFallback<{ entries: ThemeLBEntry[] }>(buildPath());
+      setEntries(resp.entries || []);
     } catch (e:any) {
       setError(e.message || 'Failed to load theme leaderboard');
     }
@@ -146,14 +133,9 @@ export const AllTimeLeaderboard: React.FC<AllTimeLeaderboardProps> = ({ open, on
 
       let result: AllTimeLeaderboardResponse | null = null;
       try {
-        result = await tryFetch(getApiBaseUrl());
+        result = await fetchWithPreviewFallback<AllTimeLeaderboardResponse>('/api/leaderboard/all-time');
       } catch (e: any) {
-        if (e instanceof ApiError && (e.status === 404 || e.message.includes('Failed to fetch'))) {
-          // Fallback to current origin (useful in preview when backend domain is blocked)
-          result = await tryFetch(window.location.origin);
-        } else {
-          throw e;
-        }
+        throw e;
       }
       
       if (result && result.success) {

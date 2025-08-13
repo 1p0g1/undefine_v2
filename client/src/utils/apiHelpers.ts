@@ -198,3 +198,21 @@ export async function fetchStreakStatus(playerId: string): Promise<{
     };
   }
 } 
+
+export async function fetchWithPreviewFallback<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const primaryBase = getApiBaseUrl();
+  const makeUrl = (base: string) => `${base}${path.startsWith('/') ? path : `/${path}`}`;
+
+  // 1) Try primary backend
+  try {
+    return await safeFetch<T>(makeUrl(primaryBase), options);
+  } catch (e: any) {
+    const isNetwork = e instanceof ApiError ? false : true;
+    const is404 = e instanceof ApiError && e.status === 404;
+    if ((isNetwork || is404) && typeof window !== 'undefined') {
+      // 2) Fallback to current origin (preview-friendly)
+      return await safeFetch<T>(makeUrl(window.location.origin), options);
+    }
+    throw e;
+  }
+} 
