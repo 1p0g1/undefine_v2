@@ -55,8 +55,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           width: dimension,
           height: dimension,
           userSelect: 'none',
-          transform: 'translateY(-0.5rem)',
-          marginRight: 'calc(-1.3rem - 1vw)',
+          transform: 'translateY(-0.68rem)',
+          marginRight: locked ? 'calc(-1.25rem - 1vw)' : 'calc(-1.55rem - 1vw)',
           zIndex: 0
         }}
       >
@@ -79,8 +79,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           style={{
             position: 'absolute',
             top: '50%',
-            left: locked ? '54%' : '60%',
-            transform: 'translate(-50%, -52%)',
+            left: locked ? '51%' : '57%',
+            transform: 'translate(-50%, -46%)',
             fontFamily: 'var(--font-primary)',
             fontStyle: 'italic',
             fontWeight: 800,
