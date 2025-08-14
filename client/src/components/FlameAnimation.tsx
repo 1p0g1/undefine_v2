@@ -50,8 +50,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
     switch (size) {
       case 'large':
         return {
-          width: '6.25rem', // slightly larger to enhance enveloping effect
-          height: '6.25rem'
+          width: '6.75rem',
+          height: '6.75rem'
         };
       case 'medium':
         return {
@@ -75,8 +75,8 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
   }
 
   // Tunable horizontal offset (as % of container width) to compensate for SVG visual center
-  const flameXOffsetPercent = 46; // was 48 → nudge slightly left
-  const flameYOffsetPercent = -4; // was -6 → slightly less up (down toward center)
+  const flameXOffsetPercent = 46; // keep visual alignment
+  const flameYOffsetPercent = -5; // tiny upward nudge for larger size
 
   const containerStyle = position === 'absolute' ? {
     position: 'absolute' as const,
@@ -108,104 +108,14 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Sequential 7-Flame Cycle */}
-        <img 
-          src="/flame1.svg"
-          alt=""
-          className="flame-svg flame-1"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '0s'
-          }}
-        />
-        
-        <img 
-          src="/flame2.svg"
-          alt=""
-          className="flame-svg flame-2"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '0.3s'
-          }}
-        />
-        
-        <img 
-          src="/flame3.svg"
-          alt=""  
-          className="flame-svg flame-3"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '0.6s'
-          }}
-        />
-        
-        <img 
-          src="/flame4.svg"
-          alt=""
-          className="flame-svg flame-4"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '0.9s'
-          }}
-        />
-        
-        <img 
-          src="/flame5.svg"
-          alt=""
-          className="flame-svg flame-5"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '1.2s'
-          }}
-        />
-        
-        <img 
-          src="/flame6.svg"
-          alt=""
-          className="flame-svg flame-6"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '1.5s'
-          }}
-        />
-        
-        <img 
-          src="/flame7.png"
-          alt=""
-          className="flame-svg flame-7"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            animation: 'flame-sequence 2.1s infinite',
-            animationDelay: '1.8s'
-          }}
-        />
+        {/* Re-ordered cycle for smoother top motion: 4 → 5 → 6 → 3 → 2 → 1 → 7 */}
+        <img src="/flame4.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0s' }} />
+        <img src="/flame5.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.3s' }} />
+        <img src="/flame6.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.6s' }} />
+        <img src="/flame3.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.9s' }} />
+        <img src="/flame2.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.2s' }} />
+        <img src="/flame1.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.5s' }} />
+        <img src="/flame7.png" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.8s' }} />
       </div>
 
       {/* 🔥 Fire-Styled Streak Tooltip */}
@@ -239,16 +149,25 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
           @keyframes fire-flicker {
             0% { 
               box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3), 0 0 20px rgba(239, 68, 68, 0.4);
-              transform: translateX(-50%) scale(1);
+              transform: translateX(-50%) translateY(0) scale(1);
             }
             50% { 
               box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4), 0 0 25px rgba(239, 68, 68, 0.5);
-              transform: translateX(-50%) scale(1.02);
+              transform: translateX(-50%) translateY(-2%) scale(1.02);
             }
             100% { 
               box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3), 0 0 30px rgba(239, 68, 68, 0.6);
-              transform: translateX(-50%) scale(1.01);
+              transform: translateX(-50%) translateY(-1%) scale(1.01);
             }
+          }
+
+          /* Slight crossfade + easing to reduce jank */
+          .flame-svg { opacity: 0; }
+          @keyframes flame-sequence {
+            0%, 14.29% { opacity: 1; }
+            20% { opacity: 0.85; }
+            35% { opacity: 0.6; }
+            100% { opacity: 0; }
           }
         `}
       </style>
