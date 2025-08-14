@@ -558,8 +558,8 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Padlock CTA as inline element with zero side margins to allow tight approach to D */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginRight: '-0.35rem' }}>
+        {/* Padlock CTA underlaps the first D box via lower z-index */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginRight: '-0.35rem', position: 'relative', zIndex: 1 }}>
           <PadlockCTA
             locked={!themeGuessData?.isCorrectGuess}
             onClick={handleThemeClick}

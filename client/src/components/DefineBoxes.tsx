@@ -64,7 +64,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      <div style={{ display: 'flex', gap: '0.25rem' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', position: 'relative', zIndex: 10 }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
