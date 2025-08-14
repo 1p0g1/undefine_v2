@@ -940,6 +940,31 @@ function App() {
             <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
               New hints are revealed after each incorrect guess. Try to guess the word within 6 attempts!
             </p>
+            
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
+              🏆 How Rankings Work
+            </h3>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Your daily ranking is determined by three factors in order of importance:
+            </p>
+            <div style={{ 
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
+              lineHeight: '1.5'
+            }}>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>1. Fewer Guesses</strong> - Solve the word in fewer attempts to rank higher
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>2. Faster Time</strong> - If tied on guesses, faster completion time wins
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>3. More "Fuzzy" Matches</strong> - If still tied, more partial matches (orange highlights) wins
+              </div>
+            </div>
+            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.9rem', fontStyle: 'italic', color: '#666' }}>
+              💡 A "fuzzy" match occurs when your guess is similar to the target word - look for orange highlights in your guesses!
+            </p>
             <button 
               onClick={() => setShowRules(false)}
               style={{
