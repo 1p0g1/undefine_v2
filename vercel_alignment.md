@@ -157,8 +157,9 @@ Append all future related debugging to this file. This is the master record of a
 
 ### Ranking Algorithm ✅ UPDATED MAY 2025
 1. Scores are ranked by:
-   - Primary: `best_time` (ASC) - faster times rank better
-   - Secondary: `guesses_used` (ASC) - fewer guesses break ties
+   - Primary: `guesses_used` (ASC) — fewer guesses rank better
+   - Secondary: `best_time` (ASC) — faster time breaks ties
+   - Tertiary: `fuzzy_matches` (DESC) — more fuzzy is better; only used when guesses and time are equal
 2. Only top 10 scores per word per day are included
 3. Uses `RANK()` window function to assign positions
 
