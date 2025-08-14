@@ -546,7 +546,7 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.06rem, 0.25vw, 0.12rem)',
+          gap: 'clamp(0.02rem, 0.18vw, 0.08rem)',
           width: '100%',
           maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',

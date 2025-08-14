@@ -77,8 +77,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           style={{
             position: 'absolute',
             top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            left: locked ? '50%' : '54%',
+            transform: 'translate(-50%, -52%)',
             fontFamily: 'var(--font-primary)',
             fontStyle: 'italic',
             fontWeight: 800,
