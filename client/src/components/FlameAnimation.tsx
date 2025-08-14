@@ -108,14 +108,20 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Re-ordered cycle for smoother top motion: 4 → 5 → 6 → 3 → 2 → 1 → 7 */}
-        <img src="/flame4.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0s' }} />
-        <img src="/flame5.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.3s' }} />
-        <img src="/flame6.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.6s' }} />
-        <img src="/flame3.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'0.9s' }} />
-        <img src="/flame2.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.2s' }} />
-        <img src="/flame1.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.5s' }} />
-        <img src="/flame7.png" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 2.1s infinite', animationDelay:'1.8s' }} />
+        {/* Custom cycle: 4→5→6→3→2→1→7→1→2→3→6→5→4 then loop */}
+        <img src="/flame4.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'0s' }} />
+        <img src="/flame5.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'0.35s' }} />
+        <img src="/flame6.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'0.7s' }} />
+        <img src="/flame3.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'1.05s' }} />
+        <img src="/flame2.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'1.4s' }} />
+        <img src="/flame1.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'1.75s' }} />
+        <img src="/flame7.png" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'2.1s' }} />
+        <img src="/flame1.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'2.45s' }} />
+        <img src="/flame2.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'2.8s' }} />
+        <img src="/flame3.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'3.15s' }} />
+        <img src="/flame6.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'3.5s' }} />
+        <img src="/flame5.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'3.85s' }} />
+        <img src="/flame4.svg" alt="" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', animation:'flame-sequence 4.2s infinite', animationDelay:'4.2s' }} />
       </div>
 
       {/* 🔥 Fire-Styled Streak Tooltip */}
@@ -163,11 +169,12 @@ export const FlameAnimation: React.FC<FlameAnimationProps> = ({
 
           /* Slight crossfade + easing to reduce jank */
           .flame-svg { opacity: 0; }
+          /* 12-frame loop with soft crossfade */
           @keyframes flame-sequence {
-            0%, 14.29% { opacity: 1; }
-            20% { opacity: 0.85; }
-            35% { opacity: 0.6; }
-            100% { opacity: 0; }
+            0%, 6% { opacity: 1; }
+            10% { opacity: 0.9; }
+            18% { opacity: 0.6; }
+            25%, 100% { opacity: 0; }
           }
         `}
       </style>

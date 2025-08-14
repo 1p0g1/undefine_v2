@@ -21,10 +21,10 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
 
   // Match historical Un diamond footprint using clamp
   const dimension = size === 'lg'
-    ? 'clamp(5.0rem, 11vw, 6.2rem)'
+    ? 'clamp(6.0rem, 12vw, 7.0rem)'
     : size === 'sm'
     ? 'clamp(2.8rem, 6.8vw, 3.2rem)'
-    : 'clamp(4.2rem, 9.5vw, 5.0rem)';
+    : 'clamp(5.0rem, 10.5vw, 6.0rem)';
 
   // Use provided PNGs placed at project root public folder
   // If later moved to /padlocks/, only the paths here need changing
@@ -54,7 +54,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           placeItems: 'center',
           width: dimension,
           height: dimension,
-          userSelect: 'none'
+          userSelect: 'none',
+          transform: 'translateY(-0.2rem)'
         }}
       >
         <img
@@ -81,8 +82,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
             fontFamily: 'var(--font-primary)',
             fontStyle: 'italic',
             fontWeight: 800,
-            // Scale the text relative to the container so it stays centered and encapsulated
-            fontSize: 'clamp(1.6rem, 4.8vw, 2.2rem)',
+            // Revert to original Un· text sizing
+            fontSize: 'clamp(1.2rem, 3.5vw, 1.5rem)',
             color: '#1a237e',
             lineHeight: 1,
             pointerEvents: 'none'
