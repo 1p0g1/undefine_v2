@@ -546,7 +546,7 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.02rem, 0.18vw, 0.08rem)',
+            gap: '0',
           width: '100%',
           maxWidth: '100vw',
           marginTop: 'clamp(0.5rem, 2vw, 1rem)',
@@ -558,8 +558,8 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Padlock CTA replaces homepage Un diamond; UnPrefix remains in modal */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Padlock CTA as inline element with zero side margins to allow tight approach to D */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginRight: '-0.35rem' }}>
           <PadlockCTA
             locked={!themeGuessData?.isCorrectGuess}
             onClick={handleThemeClick}
