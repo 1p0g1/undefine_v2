@@ -563,7 +563,7 @@ function App() {
           <PadlockCTA
             locked={!themeGuessData?.isCorrectGuess}
             onClick={handleThemeClick}
-            size="md"
+            size="lg"
             disabled={false}
           />
         </div>
