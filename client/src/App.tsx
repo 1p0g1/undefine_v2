@@ -9,10 +9,9 @@ import { normalizeText } from '../../src/utils/text';
 import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
-import { StreakBadge } from './components/StreakBadge';
 import { FlameAnimation } from './components/FlameAnimation';
 import { StreakDiamond } from './components/StreakDiamond';
-import { UnPrefix } from './components/UnPrefix';
+import PadlockCTA from './components/PadlockCTA';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
@@ -30,19 +29,19 @@ function App() {
     submitGuess, 
     guessStatus,
     fuzzyMatchCount,
-    showLeaderboard,
+    // showLeaderboard, // unused
     leaderboardData,
     playerRank,
     isLeaderboardLoading,
     leaderboardError,
-    scoreDetails,
+    // scoreDetails, // unused
     fetchLeaderboard,
     isRestoredGame,
     wasCompletedInSession
   } = useGame();
   
   // Get player stats including streak data
-  const { stats: playerStats, refreshStats } = usePlayer();
+  const { stats: playerStats } = usePlayer();
   
   // Local override for immediate streak updates (like theme system)
   const [immediateStreakData, setImmediateStreakData] = useState<{
@@ -59,7 +58,7 @@ function App() {
   const [guess, setGuess] = useState('');
   const [timer, setTimer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-  const [canReopenSummary, setCanReopenSummary] = useState(false);
+  // const [canReopenSummary, setCanReopenSummary] = useState(false);
   const [summaryShownForGame, setSummaryShownForGame] = useState<string | null>(null); // Track which game ID has shown modal
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -167,7 +166,7 @@ function App() {
         console.log('[App] Game completed in current session, showing summary modal');
         setGameStarted(true);
         setShowSummary(true);
-        setCanReopenSummary(false);
+        // setCanReopenSummary(false);
         setSummaryShownForGame(gameState.gameId); // Mark as shown
         if (gameState.score) {
           setTimer(0);
@@ -175,13 +174,13 @@ function App() {
       } else {
         console.log('[App] Game completed but not in current session, treating as restored');
         setGameStarted(true);
-        setCanReopenSummary(true);
+         // setCanReopenSummary(true);
       }
     } else if (gameState.isComplete && !gameStarted && isRestoredGame) {
       // This is a restored game - just mark as started but don't show modal
       console.log('[App] Restored completed game, NOT showing summary modal');
       setGameStarted(true);
-      setCanReopenSummary(true);
+       // setCanReopenSummary(true);
     }
   }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession, summaryShownForGame]);
 
@@ -196,7 +195,7 @@ function App() {
       if (timerRef.current) clearInterval(timerRef.current);
       summaryTimeoutRef.current = setTimeout(() => {
         setShowSummary(true);
-        setCanReopenSummary(false);
+        // setCanReopenSummary(false);
         setSummaryShownForGame(gameState.gameId); // Mark as shown
       }, 5000);
       return;
@@ -301,13 +300,13 @@ function App() {
 
   const handleCloseSummary = () => {
     setShowSummary(false);
-    setCanReopenSummary(true);
+    // setCanReopenSummary(true);
   };
 
-  const handleReopenSummary = () => {
-    setShowSummary(true);
-    setCanReopenSummary(false);
-  };
+  // const handleReopenSummary = () => {
+  //   setShowSummary(true);
+  //   setCanReopenSummary(false);
+  // };
 
   // Handler to show leaderboard modal (View Results)
   const showLeaderboardModal = useCallback(async () => {
@@ -332,7 +331,6 @@ function App() {
     
     console.log('[App] Showing leaderboard modal for completed game');
     setShowSummary(true);
-    setCanReopenSummary(false);
     
     // Always fetch leaderboard data when modal is opened
     await fetchLeaderboard();
@@ -560,12 +558,13 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Un· enhanced design */}
+        {/* Padlock CTA replaces homepage Un diamond; UnPrefix remains in modal */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <UnPrefix 
-            onClick={handleThemeClick} 
-            themeGuessData={themeGuessData}
-            gameComplete={gameState.isComplete}
+          <PadlockCTA
+            locked={!themeGuessData?.isCorrectGuess}
+            onClick={handleThemeClick}
+            size="md"
+            disabled={false}
           />
         </div>
         <div className="define-boxes" style={{ 
@@ -1016,7 +1015,7 @@ function App() {
             </div>
           )}
           
-          {visibleClues.map((clue, idx) => {
+          {visibleClues.map((clue) => {
             // Get the full label for the clue heading
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
             const clueLabel = CLUE_LABELS[clueKey];
