@@ -19,12 +19,12 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
 }) => {
   const [hover, setHover] = useState(false);
 
-  // Match historical Un diamond footprint using clamp
+  // Match historical Un diamond footprint using clamp, reduced by 20%
   const dimension = size === 'lg'
-    ? 'clamp(9.6rem, 16.8vw, 11.1rem)'
+    ? 'clamp(7.68rem, 13.44vw, 8.88rem)' // 20% smaller than 9.6rem, 16.8vw, 11.1rem
     : size === 'sm'
-    ? 'clamp(2.8rem, 6.8vw, 3.2rem)'
-    : 'clamp(8.4rem, 15vw, 9.6rem)';
+    ? 'clamp(2.24rem, 5.44vw, 2.56rem)' // 20% smaller than 2.8rem, 6.8vw, 3.2rem
+    : 'clamp(6.72rem, 12vw, 7.68rem)'; // 20% smaller than 8.4rem, 15vw, 9.6rem
 
   // Use new padlock images with #faf7f2 background color
   const src = locked ? '/NewLock.png' : '/NewUnlock.png';
@@ -70,18 +70,19 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
             display: 'block',
             backgroundColor: '#faf7f2', // Apply our background color
             borderRadius: '0.5rem', // Match our UI style
+            transform: 'rotate(-45deg)', // Rotate 45 degrees anticlockwise
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none'
           }}
         />
 
-        {/* Centered brand text overlay */}
+        {/* Centered brand text overlay - counter-rotated to stay upright */}
         <span
           aria-hidden="true"
           style={{
             position: 'absolute',
             top: '50%',
             left: locked ? 'calc(51% - 1px)' : 'calc(57% - 1px)',
-            transform: 'translate(-50%, calc(-46% + 8px))',
+            transform: 'translate(-50%, calc(-46% + 8px)) rotate(45deg)', // Counter-rotate to keep text upright
             fontFamily: 'var(--font-primary)',
             fontStyle: 'italic',
             fontWeight: 800,
