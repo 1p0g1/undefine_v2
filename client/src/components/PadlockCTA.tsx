@@ -26,9 +26,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
     ? 'clamp(2.8rem, 6.8vw, 3.2rem)'
     : 'clamp(8.4rem, 15vw, 9.6rem)';
 
-  // Use provided PNGs placed at project root public folder
-  // If later moved to /padlocks/, only the paths here need changing
-  const src = locked ? '/padlock_locked_256.png' : '/padlock_unlocked_256.png';
+  // Use new padlock images with #faf7f2 background color
+  const src = locked ? '/NewLock.png' : '/NewUnlock.png';
 
   const handleEnter = () => setHover(true);
   const handleLeave = () => setHover(false);
@@ -69,6 +68,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
             height: '100%',
             objectFit: 'contain',
             display: 'block',
+            backgroundColor: '#faf7f2', // Apply our background color
+            borderRadius: '0.5rem', // Match our UI style
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none'
           }}
         />
