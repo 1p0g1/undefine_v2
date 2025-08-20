@@ -3,6 +3,8 @@ import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
 import { UnPrefix } from './UnPrefix';
+import { ThemeHistoryPanel } from './ThemeHistoryPanel';
+import { ThemeRevelationPanel } from './ThemeRevelationPanel';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -25,6 +27,9 @@ interface ThemeStatus {
     date: string;
     completedOn: string;
   }>;
+  // NEW: Sunday revelation data
+  shouldRevealTheme?: boolean;
+  revelationReason?: 'week_ended' | 'missed_sunday' | null;
 }
 
 interface ThemeStats {
@@ -83,7 +88,45 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     confidencePercentage: number | null;
   } | undefined>(undefined);
 
+  // NEW: Theme history data for best guess tracking
+  const [themeHistory, setThemeHistory] = useState<{
+    history: Array<{
+      guess: string;
+      confidencePercentage: number | null;
+      isCorrect: boolean;
+    }>;
+  } | null>(null);
+
   const playerId = getPlayerId();
+
+  // Helper functions for theme revelation panel
+  const getBestGuessFromHistory = (): string | undefined => {
+    if (!themeHistory?.history || themeHistory.history.length === 0) {
+      return undefined;
+    }
+
+    // Find the guess with the highest similarity score
+    const bestGuess = themeHistory.history.reduce((best, current) => {
+      const currentScore = current.confidencePercentage || 0;
+      const bestScore = best.confidencePercentage || 0;
+      return currentScore > bestScore ? current : best;
+    });
+
+    return bestGuess.guess;
+  };
+
+  const getBestSimilarityFromHistory = (): number | undefined => {
+    if (!themeHistory?.history || themeHistory.history.length === 0) {
+      return undefined;
+    }
+
+    // Find the highest similarity percentage
+    const maxSimilarity = Math.max(
+      ...themeHistory.history.map(entry => entry.confidencePercentage || 0)
+    );
+
+    return maxSimilarity > 0 ? maxSimilarity : undefined;
+  };
 
   // Load theme data when modal opens
   useEffect(() => {
@@ -182,6 +225,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             confidencePercentage: status.progress.confidencePercentage || null
           });
         }
+
+        // NEW: Load theme history for revelation panel (don't block on this)
+        if (status.currentTheme) {
+          loadThemeHistory(status.currentTheme);
+        }
         
         // Cache the data for 2 minutes
         setDataCache({
@@ -195,6 +243,28 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       setError(error instanceof Error ? error.message : 'Failed to load theme data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // NEW: Load theme history for best guess tracking
+  const loadThemeHistory = async (theme: string) => {
+    if (!playerId || !theme) return;
+
+    try {
+      console.log('[ThemeGuessModal] Loading theme history for:', { theme, playerId });
+      
+      const response = await fetch(`/api/theme-history?player_id=${playerId}&theme=${encodeURIComponent(theme)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setThemeHistory(data);
+        console.log('[ThemeGuessModal] Theme history loaded:', data);
+      } else {
+        console.warn('[ThemeGuessModal] Failed to load theme history:', response.status);
+      }
+    } catch (err) {
+      console.error('[ThemeGuessModal] Error loading theme history:', err);
+      // Don't show error to user - this is optional data
     }
   };
 
@@ -445,7 +515,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
                   gap: '0.5rem'
                 }}>
-                  {themeStatus.weeklyThemedWords.map((wordInfo, index) => (
+                  {themeStatus.weeklyThemedWords.map((wordInfo) => (
                     <div 
                       key={wordInfo.id}
                       style={{
@@ -487,6 +557,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   These are the themed words you've completed this week
                 </div>
               </div>
+            )}
+
+            {/* NEW: Theme Revelation Panel - Sunday reveal */}
+            <ThemeRevelationPanel
+              actualTheme={themeStatus.currentTheme || 'Unknown Theme'}
+              shouldReveal={themeStatus.shouldRevealTheme || false}
+              revelationReason={themeStatus.revelationReason || null}
+              playerBestGuess={getBestGuessFromHistory()}
+              playerBestSimilarity={getBestSimilarityFromHistory()}
+              hasCorrectGuess={themeStatus.progress.isCorrectGuess}
+            />
+
+            {/* NEW: Theme History Panel - Previous guesses */}
+            {themeStatus.currentTheme && (
+              <ThemeHistoryPanel
+                theme={themeStatus.currentTheme}
+                isVisible={true}
+              />
             )}
 
             {/* Fuzzy Match Result Display - Show for fresh guess OR when user has already guessed today */}

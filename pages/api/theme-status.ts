@@ -25,6 +25,38 @@ import {
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
+/**
+ * Check if we should reveal the theme based on current day and time
+ * Reveals on Sunday evening (after 6 PM) or Monday (missed Sunday)
+ */
+function checkShouldRevealTheme(hasCorrectGuess: boolean): boolean {
+  // If player already guessed correctly, no need for revelation
+  if (hasCorrectGuess) {
+    return false;
+  }
+
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const hour = now.getHours();
+
+  // Reveal on Sunday evening (after 6 PM) or Monday (missed Sunday guessing)
+  return (dayOfWeek === 0 && hour >= 18) || dayOfWeek === 1;
+}
+
+/**
+ * Get the reason for theme revelation
+ */
+function getRevelationReason(): 'week_ended' | 'missed_sunday' {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  
+  if (dayOfWeek === 0) {
+    return 'week_ended'; // Sunday evening
+  } else {
+    return 'missed_sunday'; // Monday (missed Sunday)
+  }
+}
+
 interface ThemeStatusResponse {
   currentTheme?: string | null;
   hasActiveTheme: boolean;
@@ -42,6 +74,9 @@ interface ThemeStatusResponse {
     date: string;
     completedOn: string;
   }>;
+  // NEW: Sunday revelation data
+  shouldRevealTheme?: boolean;
+  revelationReason?: 'week_ended' | 'missed_sunday' | null;
 }
 
 export default withCors(async function handler(
@@ -94,17 +129,23 @@ export default withCors(async function handler(
       isCorrectGuess = guessResult.isCorrect;
     }
 
+    // NEW: Check if we should reveal the theme due to Sunday/week end
+    const shouldRevealTheme = checkShouldRevealTheme(isCorrectGuess);
+    const revelationReason = shouldRevealTheme && !isCorrectGuess ? getRevelationReason() : null;
+
     const response: ThemeStatusResponse = {
       hasActiveTheme: true,
       progress: {
         ...progress,
         isCorrectGuess
       },
-      weeklyThemedWords
+      weeklyThemedWords,
+      shouldRevealTheme,
+      revelationReason
     };
 
-    // Only reveal the actual theme if player guessed correctly
-    if (isCorrectGuess) {
+    // Reveal the actual theme if player guessed correctly OR if it's time for Sunday revelation
+    if (isCorrectGuess || shouldRevealTheme) {
       response.currentTheme = currentTheme;
     }
 
