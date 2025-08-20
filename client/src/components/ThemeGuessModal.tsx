@@ -83,6 +83,18 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     confidencePercentage: number | null;
   } | undefined>(undefined);
 
+  // NEW: Simple theme history state
+  const [simpleHistory, setSimpleHistory] = useState<Array<{
+    guess: string;
+    confidencePercentage: number | null;
+  }>>([]);
+
+  // NEW: Sunday failure revelation state
+  const [sundayRevelation, setSundayRevelation] = useState<{
+    shouldReveal: boolean;
+    actualTheme: string;
+  } | null>(null);
+
   const playerId = getPlayerId();
 
   // Load theme data when modal opens
@@ -182,6 +194,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             confidencePercentage: status.progress.confidencePercentage || null
           });
         }
+
+        // NEW: Load simple theme history (don't block on this)
+        if (status.currentTheme) {
+          loadSimpleHistory(status.currentTheme);
+        }
         
         // Cache the data for 2 minutes
         setDataCache({
@@ -195,6 +212,28 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       setError(error instanceof Error ? error.message : 'Failed to load theme data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // NEW: Load simple theme history for display
+  const loadSimpleHistory = async (theme: string) => {
+    if (!playerId || !theme) return;
+
+    try {
+      console.log('[ThemeGuessModal] Loading simple theme history for:', { theme, playerId });
+      
+      const response = await fetch(`/api/theme-history-simple?player_id=${playerId}&theme=${encodeURIComponent(theme)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSimpleHistory(data.guesses || []);
+        console.log('[ThemeGuessModal] Simple theme history loaded:', data);
+      } else {
+        console.warn('[ThemeGuessModal] Failed to load simple theme history:', response.status);
+      }
+    } catch (err) {
+      console.error('[ThemeGuessModal] Error loading simple theme history:', err);
+      // Don't show error to user - this is optional data
     }
   };
 
@@ -222,6 +261,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         fuzzyMatch: response.fuzzyMatch
       });
 
+      // NEW: Check for Sunday failure revelation
+      if (response.shouldRevealTheme && response.revelationReason === 'sunday_failure') {
+        setSundayRevelation({
+          shouldReveal: true,
+          actualTheme: response.actualTheme || 'Unknown Theme'
+        });
+      }
+
       // Update theme status based on response
       if (themeStatus) {
         const updatedThemeStatus = {
@@ -244,6 +291,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           confidencePercentage: response.fuzzyMatch?.confidence || null
         });
       }
+
+      // NEW: Add guess to simple history
+      setSimpleHistory(prev => [...prev, {
+        guess: guess.trim(),
+        confidencePercentage: response.fuzzyMatch?.confidence || null
+      }]);
 
       // Clear the guess input
       setGuess('');
@@ -648,6 +701,36 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </div>
             ) : null}
 
+            {/* NEW: Sunday Failure Revelation Panel */}
+            {sundayRevelation?.shouldReveal && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '2px solid #dc2626',
+                borderRadius: '0.75rem',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  color: '#dc2626',
+                  marginBottom: '0.5rem',
+                  fontFamily: 'var(--font-primary)'
+                }}>
+                  Unlucky this week's theme was:
+                </div>
+                <div style={{
+                  fontSize: '1.3rem',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  fontFamily: 'var(--font-primary)'
+                }}>
+                  "{sundayRevelation.actualTheme}"
+                </div>
+              </div>
+            )}
+
             {/* Theme Guess Form or Status */}
             {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme ? (
               <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
@@ -659,6 +742,27 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   }}>
                     What connects this week's words?
                   </label>
+                  
+                  {/* NEW: Simple theme history display */}
+                  {simpleHistory.length > 0 && (
+                    <div style={{
+                      fontSize: '0.85rem',
+                      color: '#6b7280',
+                      marginBottom: '0.5rem',
+                      fontStyle: 'italic'
+                    }}>
+                      Past guesses: {simpleHistory.map((entry, idx) => (
+                        <span key={idx}>
+                          {entry.guess}
+                          {entry.confidencePercentage !== null && (
+                            <span> ({entry.confidencePercentage}%)</span>
+                          )}
+                          {idx < simpleHistory.length - 1 && ', '}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
                     <input
                       type="text"
                       value={guess}

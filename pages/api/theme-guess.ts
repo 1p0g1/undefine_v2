@@ -50,6 +50,9 @@ interface ThemeGuessResponse {
     confidence: number;
     similarity?: number;
   };
+  // NEW: Sunday failure revelation
+  shouldRevealTheme?: boolean;
+  revelationReason?: 'sunday_failure';
 }
 
 export default withCors(async function handler(
@@ -162,6 +165,23 @@ export default withCors(async function handler(
     // Only reveal actual theme if guess was correct
     if (attemptResult.isCorrect) {
       response.actualTheme = currentTheme;
+    }
+
+    // NEW: Check if this is a Sunday failure (incorrect guess on Sunday)
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    const isSunday = dayOfWeek === 0;
+    
+    if (!attemptResult.isCorrect && isSunday) {
+      response.shouldRevealTheme = true;
+      response.revelationReason = 'sunday_failure';
+      response.actualTheme = currentTheme; // Reveal theme on Sunday failure
+      
+      console.log('[/api/theme-guess] Sunday failure revelation triggered:', {
+        guess,
+        actualTheme: currentTheme,
+        dayOfWeek
+      });
     }
 
     return res.status(200).json(response);

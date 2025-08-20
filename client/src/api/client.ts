@@ -303,6 +303,9 @@ export const apiClient = {
       confidence: number;
       similarity?: number;
     };
+    // NEW: Sunday failure revelation
+    shouldRevealTheme?: boolean;
+    revelationReason?: 'sunday_failure';
   }> {
     return fetchFromApi('/api/theme-guess', {
       method: 'POST',
