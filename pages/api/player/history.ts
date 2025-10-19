@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { withCors } from '../../lib/withCors';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -20,7 +21,7 @@ interface LeaderboardWithWord {
   } | null;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse) {
   // 🔧 FIX: Accept GET requests (not POST) since calendar modal uses GET
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -70,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const history = leaderboardData?.map(entry => ({
       date: entry.date,
       played: true,
-      won: entry.rank === 1, // Won if rank is 1
+      won: true, // FIXED: All leaderboard_summary entries are wins (completed games)
       rank: entry.rank,
       guesses: entry.guesses_used,
       time: entry.best_time,
@@ -91,4 +92,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[/api/player/history] Unexpected error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
-} 
+}); 
