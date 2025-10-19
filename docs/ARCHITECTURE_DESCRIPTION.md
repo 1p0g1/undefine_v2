@@ -109,10 +109,20 @@ Create a modern, clean architectural diagram showing a **two-tier web applicatio
 - **Player Privacy**: UUID-based identification
 - **Data Validation**: Input sanitization and type checking
 
+## **🛡️ Security Architecture** (Show with security shield icons)
+- **Row Level Security (RLS)**: All database tables protected with comprehensive policies
+- **Service Role Protection**: APIs use privileged access while maintaining security
+- **Write Restrictions**: Only authenticated services can modify data
+- **Admin Access Preserved**: Dashboard editing capabilities maintained
+- **Layered Security**: 
+  - **System Tables**: Admin-only access (trigger_log, schema_migrations)
+  - **Game Content**: Public read, service write (words, leaderboards)
+  - **Player Data**: Public read, service write (sessions, streaks, scores)
+
 ## **📱 Responsive Design**
 - **Mobile-First**: Compact UI with space-saving features
 - **Hamburger Menu**: Consolidated settings and navigation
 - **Touch-Friendly**: Large tap targets and gesture support
 - **Adaptive Text**: Clamp-based responsive typography
 
-**Note for AI**: Please arrange these components in a logical flow showing the separation between frontend/backend deployments, the central database, and the various data flows between them. Use modern UI design principles with clear visual hierarchy and professional color schemes. 
+**Note for AI**: Please arrange these components in a logical flow showing the separation between frontend/backend deployments, the central database with security shields, and the various data flows between them. Use modern UI design principles with clear visual hierarchy and professional color schemes. Emphasize the security layer with shield icons and lock symbols on protected components. 
