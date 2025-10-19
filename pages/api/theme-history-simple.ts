@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { withCors } from '../../lib/withCors';
+import { withCors } from '@/lib/withCors';
 import { supabase } from '../../src/lib/supabase';
 
 interface SimpleThemeHistoryEntry {

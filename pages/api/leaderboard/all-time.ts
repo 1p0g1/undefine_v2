@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { withCors } from '../../../lib/withCors';
+import { withCors } from '@/lib/withCors';
 
 // 🔧 FIX: Create supabase client directly (consistent with other working APIs)
 const supabase = createClient(
