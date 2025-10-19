@@ -11,6 +11,7 @@ interface SettingsModalProps {
   onShowRules?: () => void;
   onShowLeaderboard?: () => void;
   onShowAllTimeLeaderboard?: () => void;
+  onShowGameHistory?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -20,7 +21,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onNicknameUpdate,
   onShowRules,
   onShowLeaderboard,
-  onShowAllTimeLeaderboard
+  onShowAllTimeLeaderboard,
+  onShowGameHistory
 }) => {
   const [nickname, setNickname] = useState(currentDisplayName || '');
   const [isLoading, setIsLoading] = useState(false);

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { withCors } from '../../lib/withCors';
+import { withCors } from '../../../lib/withCors';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
