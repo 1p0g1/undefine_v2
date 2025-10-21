@@ -9,8 +9,8 @@
  */
 
 // Model selection based on test results
-// Paraphrase model performs best for technical term matching (75% for 'autological')
-const HF_MODEL = 'sentence-transformers/paraphrase-MiniLM-L6-v2';
+// Testing the gold standard MiniLM model for technical term matching
+const HF_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
