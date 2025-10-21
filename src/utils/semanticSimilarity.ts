@@ -151,7 +151,8 @@ async function checkSynonymDatabase(guess: string, theme: string): Promise<boole
     'food': ['eating', 'cuisine', 'cooking', 'culinary', 'nutrition'],
     'music': ['songs', 'musical', 'sound', 'audio', 'melody'],
     'nature': ['natural', 'outdoors', 'environment', 'wildlife', 'earth'],
-    'technology': ['tech', 'digital', 'computers', 'electronic', 'innovation']
+    'technology': ['tech', 'digital', 'computers', 'electronic', 'innovation'],
+    'words that describe themselves (autological)': ['autological', 'self-describing', 'self-referential', 'words that describe themselves']
   };
   
   // Check if guess matches any synonym for the theme
