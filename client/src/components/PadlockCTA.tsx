@@ -54,7 +54,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           placeItems: 'center',
           width: dimension,
           height: dimension,
-          userSelect: 'none'
+          userSelect: 'none',
+          overflow: 'hidden'
         }}
       >
         <img
@@ -62,10 +63,14 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           alt=""
           draggable={false}
           style={{
-            width: '100%',
-            height: '100%',
+            width: '150%',
+            height: '150%',
             objectFit: 'contain',
             display: 'block',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none'
           }}
         />
