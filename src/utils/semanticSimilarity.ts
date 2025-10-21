@@ -9,8 +9,8 @@
  */
 
 // Model selection based on test results
-// Testing RoBERTa model for better technical term matching
-const HF_MODEL = 'sentence-transformers/all-distilroberta-v1';
+// Paraphrase model performs best for technical term matching (75% for 'autological')
+const HF_MODEL = 'sentence-transformers/paraphrase-MiniLM-L6-v2';
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
