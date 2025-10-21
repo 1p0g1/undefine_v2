@@ -19,12 +19,12 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
 }) => {
   const [hover, setHover] = useState(false);
 
-  // Match historical Un diamond footprint using clamp
+  // Increased size by 100% as requested
   const dimension = size === 'lg'
-    ? 'clamp(3.25rem, 8vw, 3.75rem)'
+    ? 'clamp(6.5rem, 16vw, 7.5rem)'
     : size === 'sm'
-    ? 'clamp(2.4rem, 6vw, 2.8rem)'
-    : 'clamp(2.8rem, 7.5vw, 3.2rem)';
+    ? 'clamp(4.8rem, 12vw, 5.6rem)'
+    : 'clamp(5.6rem, 15vw, 6.4rem)';
 
   // Use provided PNGs placed at project root public folder
   // If later moved to /padlocks/, only the paths here need changing
