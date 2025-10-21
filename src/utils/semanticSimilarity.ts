@@ -9,8 +9,8 @@
  */
 
 // Model selection based on test results
-// Testing paraphrase model for better technical term matching
-const HF_MODEL = 'sentence-transformers/paraphrase-MiniLM-L6-v2';
+// Testing RoBERTa model for better technical term matching
+const HF_MODEL = 'sentence-transformers/all-distilroberta-v1';
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
