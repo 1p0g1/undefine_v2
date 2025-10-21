@@ -83,7 +83,7 @@ export async function getWordsForTheme(theme: string): Promise<Array<{
  */
 export async function isThemeGuessCorrect(guess: string, actualTheme: string): Promise<{
   isCorrect: boolean;
-  method: 'exact' | 'synonym' | 'semantic' | 'error';
+  method: 'exact' | 'semantic' | 'error';
   confidence: number;
   similarity?: number;
 }> {
@@ -130,39 +130,8 @@ function isThemeGuessCorrectLegacy(guess: string, actualTheme: string): boolean 
   const normalizedGuess = normalizeText(guess);
   const normalizedTheme = normalizeText(actualTheme);
 
-  // Exact match
-  if (normalizedGuess === normalizedTheme) return true;
-
-  // Define theme synonyms for common themes (legacy list)
-  const themeSynonyms: Record<string, string[]> = {
-    'emotions': ['feelings', 'moods', 'sentiments', 'emotions'],
-    'space': ['astronomy', 'cosmos', 'universe', 'celestial', 'space'],
-    'animals': ['creatures', 'wildlife', 'beasts', 'fauna', 'animals'],
-    'food': ['cuisine', 'meals', 'eating', 'cooking', 'food'],
-    'colors': ['colours', 'hues', 'shades', 'tints', 'colors'],
-    'weather': ['climate', 'meteorology', 'atmospheric', 'weather'],
-    'music': ['musical', 'songs', 'melodies', 'instruments', 'music'],
-    'sports': ['athletics', 'games', 'competition', 'physical', 'sports'],
-    'language': ['words', 'vocabulary', 'linguistics', 'speech', 'terminology', 'lexicon', 'language']
-  };
-
-  // Get synonyms for the actual theme
-  const synonyms = themeSynonyms[normalizedTheme] || [normalizedTheme];
-
-  // Check if guess matches any synonym
-  if (synonyms.some(synonym => normalizeText(synonym) === normalizedGuess)) {
-    return true;
-  }
-
-  // Check partial matches (for compound themes)
-  if (synonyms.some(synonym => 
-    normalizedGuess.includes(normalizeText(synonym)) || 
-    normalizeText(synonym).includes(normalizedGuess)
-  )) {
-    return true;
-  }
-
-  return false;
+  // Exact match only (no synonyms)
+  return normalizedGuess === normalizedTheme;
 }
 
 /**

@@ -20,7 +20,7 @@ const WORD_SIMILARITY_THRESHOLD = 0.75;  // 75% for future word matching
 export interface SemanticSimilarityResult {
   similarity: number;
   isMatch: boolean;
-  method: 'semantic' | 'exact' | 'synonym' | 'error';
+  method: 'semantic' | 'exact' | 'error';
   confidence: number;
   error?: string;
 }

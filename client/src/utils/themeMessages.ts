@@ -23,7 +23,7 @@ export interface ThemeMessage {
 export function getThemeFeedbackMessage(
   confidence: number, 
   actualTheme?: string,
-  method?: 'exact' | 'synonym' | 'semantic' | 'error'
+  method?: 'exact' | 'semantic' | 'error'
 ): ThemeMessage {
   
   // Handle different matching methods
@@ -36,14 +36,6 @@ export function getThemeFeedbackMessage(
     };
   }
   
-  if (method === 'synonym') {
-    return {
-      message: `Perfect! That's exactly "${actualTheme}"`,
-      isCorrect: true,
-      showActualTheme: true,
-      emoji: '✨'
-    };
-  }
   
   if (method === 'error') {
     return {
