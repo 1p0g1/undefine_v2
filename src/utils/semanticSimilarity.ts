@@ -89,7 +89,7 @@ export async function matchThemeWithFuzzy(
   const normalizedGuess = guess.toLowerCase().trim();
   const normalizedTheme = theme.toLowerCase().trim();
   
-  // Tier 1: Exact match (free, instant)
+  // Exact match (case insensitive)
   if (normalizedGuess === normalizedTheme) {
     return {
       similarity: 1.0,
@@ -99,18 +99,7 @@ export async function matchThemeWithFuzzy(
     };
   }
   
-  // Tier 2: Synonym database (free, curated)
-  const synonymMatch = await checkSynonymDatabase(normalizedGuess, normalizedTheme);
-  if (synonymMatch) {
-    return {
-      similarity: 0.95, // High confidence for curated synonyms
-      isMatch: true,
-      method: 'synonym',
-      confidence: 95
-    };
-  }
-  
-  // Tier 3: Semantic similarity (AI - key differentiator)
+  // AI semantic similarity matching
   try {
     const similarity = await computeSemanticSimilarity(normalizedGuess, normalizedTheme);
     const isMatch = similarity >= THEME_SIMILARITY_THRESHOLD;
@@ -136,29 +125,6 @@ export async function matchThemeWithFuzzy(
   }
 }
 
-/**
- * Check curated synonym database
- * Expanded based on user feedback and common theme patterns
- */
-async function checkSynonymDatabase(guess: string, theme: string): Promise<boolean> {
-  const synonyms: Record<string, string[]> = {
-    'drinking alcohol': ['boozing', 'drinking', 'alcohol', 'beverages', 'spirits', 'liquor', 'wine', 'beer'],
-    'emotions': ['feelings', 'moods', 'sentiments', 'emotional', 'feeling'],
-    'space': ['cosmos', 'universe', 'astronomy', 'celestial', 'cosmic', 'stellar'],
-    'mythology': ['legends', 'folklore', 'myths', 'mythical', 'legendary'],
-    'transportation': ['cars', 'vehicles', 'travel', 'transport', 'automotive'],
-    'literature': ['books', 'reading', 'writing', 'stories', 'literary'],
-    'food': ['eating', 'cuisine', 'cooking', 'culinary', 'nutrition'],
-    'music': ['songs', 'musical', 'sound', 'audio', 'melody'],
-    'nature': ['natural', 'outdoors', 'environment', 'wildlife', 'earth'],
-    'technology': ['tech', 'digital', 'computers', 'electronic', 'innovation'],
-    'words that describe themselves (autological)': ['autological', 'self-describing', 'self-referential', 'words that describe themselves']
-  };
-  
-  // Check if guess matches any synonym for the theme
-  const themesynonyms = synonyms[theme] || [];
-  return themesynonyms.includes(guess);
-}
 
 /**
  * Log semantic API usage for cost monitoring
