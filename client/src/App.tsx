@@ -11,6 +11,7 @@ import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
 import { StreakBadge } from './components/StreakBadge';
 import { UnPrefix } from './components/UnPrefix';
+import PadlockCTA from './components/PadlockCTA';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
@@ -535,13 +536,48 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Un· enhanced design */}
+        {/* Padlock CTA - shows different states based on game progress and theme status */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <UnPrefix 
-            onClick={handleThemeClick} 
-            themeGuessData={themeGuessData}
-            gameComplete={gameState.isComplete}
-          />
+          {gameState.isComplete && !themeGuessData?.hasGuessedToday ? (
+            // Show "?" after game completion to encourage theme guessing
+            <div 
+              onClick={handleThemeClick}
+              style={{
+                width: 'clamp(2.8rem, 7.5vw, 3.2rem)',
+                height: 'clamp(2.8rem, 7.5vw, 3.2rem)',
+                backgroundColor: '#8B5CF6',
+                borderRadius: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+                fontWeight: 'bold',
+                color: 'white',
+                transition: 'all 0.2s ease',
+                transform: 'rotate(45deg)',
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'rotate(45deg) scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'rotate(45deg) scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+              }}
+            >
+              ?
+            </div>
+          ) : (
+            // Show padlock CTA (locked/unlocked based on theme guess status)
+            <PadlockCTA
+              locked={!themeGuessData?.isCorrectGuess}
+              onClick={handleThemeClick}
+              size="md"
+              disabled={false}
+            />
+          )}
         </div>
         <div className="define-boxes" style={{ 
           display: 'flex', 
