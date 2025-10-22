@@ -76,7 +76,7 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
             objectFit: 'contain',
             display: 'block',
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none',
-            transform: 'translateY(-47px) translateX(10px)'
+            transform: 'translateY(-32px) translateX(8px)'
           }}
         />
 
