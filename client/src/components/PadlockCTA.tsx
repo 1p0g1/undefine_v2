@@ -19,12 +19,12 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
 }) => {
   const [hover, setHover] = useState(false);
 
-  // Slightly larger than original Un diamond for better visual hierarchy
+  // Much larger padlock as requested (3x bigger)
   const dimension = size === 'lg'
-    ? 'clamp(3.2rem, 8.5vw, 3.8rem)'
+    ? 'clamp(9.6rem, 25.5vw, 11.4rem)'
     : size === 'sm'
-    ? 'clamp(2.6rem, 7vw, 3.0rem)'
-    : 'clamp(3.0rem, 8vw, 3.5rem)';
+    ? 'clamp(7.8rem, 21vw, 9.0rem)'
+    : 'clamp(9.0rem, 24vw, 10.5rem)';
 
   // Use provided PNGs placed at project root public folder
   // If later moved to /padlocks/, only the paths here need changing
@@ -54,8 +54,7 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           placeItems: 'center',
           width: dimension,
           height: dimension,
-          userSelect: 'none',
-          overflow: 'hidden'
+          userSelect: 'none'
         }}
       >
         <img
@@ -63,14 +62,10 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           alt=""
           draggable={false}
           style={{
-            width: '390%',
-            height: '390%',
+            width: '100%',
+            height: '100%',
             objectFit: 'contain',
             display: 'block',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none'
           }}
         />
