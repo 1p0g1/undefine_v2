@@ -536,62 +536,14 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Smart padlock/theme CTA with proper state progression */}
+        {/* Padlock CTA - click to toggle between locked/unlocked for testing */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {gameState.isComplete && !themeGuessData?.isCorrectGuess ? (
-            // Show purple "?" diamond after daily word completion to encourage theme guessing
-            <div 
-              onClick={handleThemeClick}
-              style={{
-                width: 'clamp(3.0rem, 8vw, 3.5rem)',
-                height: 'clamp(3.0rem, 8vw, 3.5rem)',
-                backgroundColor: '#8B5CF6',
-                borderRadius: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: 'clamp(1.6rem, 4.5vw, 2.0rem)',
-                fontWeight: 'bold',
-                color: 'white',
-                transition: 'all 0.2s ease',
-                transform: 'rotate(45deg)',
-                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
-                position: 'relative'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'rotate(45deg) scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'rotate(45deg) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
-              }}
-            >
-              {/* Counter-rotated "Un·" text overlay */}
-              <span
-                style={{
-                  transform: 'rotate(-45deg)',
-                  fontFamily: 'var(--font-primary)',
-                  fontStyle: 'italic',
-                  fontSize: 'clamp(1.2rem, 3.5vw, 1.6rem)',
-                  fontWeight: 600,
-                  color: 'white',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                }}
-              >
-                Un·
-              </span>
-            </div>
-          ) : (
-            // Show padlock CTA (locked until theme guessed correctly)
-            <PadlockCTA
-              locked={!themeGuessData?.isCorrectGuess}
-              onClick={handleThemeClick}
-              size="lg"
-              disabled={false}
-            />
-          )}
+          <PadlockCTA
+            locked={!themeGuessData?.isCorrectGuess}
+            onClick={handleThemeClick}
+            size="lg"
+            disabled={false}
+          />
         </div>
         <div className="define-boxes" style={{ 
           display: 'flex', 

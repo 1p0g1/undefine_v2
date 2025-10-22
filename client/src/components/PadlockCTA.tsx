@@ -18,6 +18,7 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
   showTooltip = true
 }) => {
   const [hover, setHover] = useState(false);
+  const [testLocked, setTestLocked] = useState(true); // For testing toggle functionality
 
   // Much larger padlock as requested (3x bigger)
   const dimension = size === 'lg'
@@ -27,8 +28,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
     : 'clamp(9.0rem, 24vw, 10.5rem)';
 
   // Use provided PNGs placed at project root public folder
-  // If later moved to /padlocks/, only the paths here need changing
-  const src = locked ? '/padlock_locked_256.png' : '/padlock_unlocked_256.png';
+  // For testing: use testLocked state instead of locked prop
+  const src = testLocked ? '/padlock_locked_256.png' : '/padlock_unlocked_256.png';
 
   const handleEnter = () => setHover(true);
   const handleLeave = () => setHover(false);
@@ -36,8 +37,13 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
   return (
     <button
       type="button"
-      aria-label={locked ? 'Guess the theme' : 'Theme unlocked'}
-      onClick={onClick}
+      aria-label={testLocked ? 'Guess the theme (click to test unlock)' : 'Theme unlocked (click to test lock)'}
+      onClick={(e) => {
+        // Toggle for testing
+        setTestLocked(!testLocked);
+        // Also call original onClick if provided
+        if (onClick) onClick();
+      }}
       disabled={disabled}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
