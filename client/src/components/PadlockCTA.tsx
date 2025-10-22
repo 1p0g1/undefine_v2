@@ -63,8 +63,8 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           alt=""
           draggable={false}
           style={{
-            width: '150%',
-            height: '150%',
+            width: '390%',
+            height: '390%',
             objectFit: 'contain',
             display: 'block',
             position: 'absolute',
