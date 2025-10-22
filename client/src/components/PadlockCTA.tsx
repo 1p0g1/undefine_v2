@@ -27,9 +27,9 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
     ? 'clamp(3.9rem, 10.5vw, 4.5rem)'
     : 'clamp(4.05rem, 10.75vw, 4.65rem)';
 
-  // Use provided PNGs placed at project root public folder
+  // Use new padlock PNGs placed at project root public folder
   // For testing: use testLocked state instead of locked prop
-  const src = testLocked ? '/padlock_locked_256.png' : '/padlock_unlocked_256.png';
+  const src = testLocked ? '/padlock_new.png' : '/unlocked_new.png';
 
   const handleEnter = () => setHover(true);
   const handleLeave = () => setHover(false);
