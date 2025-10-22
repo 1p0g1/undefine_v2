@@ -20,12 +20,12 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
   const [hover, setHover] = useState(false);
   const [testLocked, setTestLocked] = useState(true); // For testing toggle functionality
 
-  // Much larger padlock as requested (3x bigger)
+  // Reasonable padlock size - slightly larger than original UnPrefix but not massive
   const dimension = size === 'lg'
-    ? 'clamp(9.6rem, 25.5vw, 11.4rem)'
+    ? 'clamp(4.2rem, 11vw, 4.8rem)' // 1.5x original UnPrefix size
     : size === 'sm'
-    ? 'clamp(7.8rem, 21vw, 9.0rem)'
-    : 'clamp(9.0rem, 24vw, 10.5rem)';
+    ? 'clamp(3.9rem, 10.5vw, 4.5rem)'
+    : 'clamp(4.05rem, 10.75vw, 4.65rem)';
 
   // Use provided PNGs placed at project root public folder
   // For testing: use testLocked state instead of locked prop
@@ -50,7 +50,10 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
       style={{
         all: 'unset',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        display: 'inline-block'
+        display: 'inline-block',
+        // Allow overlapping without affecting layout
+        marginRight: '-1rem', // Negative margin to pull closer to DEFINE boxes
+        zIndex: 1 // Behind DEFINE boxes but above background
       }}
     >
       <span

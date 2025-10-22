@@ -551,7 +551,9 @@ function App() {
           flex: '0 0 auto',
           flexShrink: 0,
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 2 // Above padlock for proper layering
         }}>
           <DefineBoxes
             gameState={gameState}
