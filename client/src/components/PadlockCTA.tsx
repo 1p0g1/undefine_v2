@@ -71,12 +71,12 @@ export const PadlockCTA: React.FC<PadlockCTAProps> = ({
           alt=""
           draggable={false}
           style={{
-            width: '150%',
-            height: '150%',
+            width: '225%',
+            height: '225%',
             objectFit: 'contain',
             display: 'block',
             filter: hover && !disabled ? 'drop-shadow(0 2px 8px rgba(26,35,126,0.25))' : 'none',
-            transform: 'translateY(-25px)'
+            transform: 'translateY(-25px) translateX(15px)'
           }}
         />
 
