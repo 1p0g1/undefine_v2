@@ -12,6 +12,8 @@ interface SettingsModalProps {
   onShowLeaderboard?: () => void;
   onShowAllTimeLeaderboard?: () => void;
   onShowGameHistory?: () => void;
+  onShowWeeklyThemeLeaderboard?: () => void;
+  onShowAllTimeThemeLeaderboard?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -22,7 +24,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onShowRules,
   onShowLeaderboard,
   onShowAllTimeLeaderboard,
-  onShowGameHistory
+  onShowGameHistory,
+  onShowWeeklyThemeLeaderboard,
+  onShowAllTimeThemeLeaderboard
 }) => {
   const [nickname, setNickname] = useState(currentDisplayName || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -300,6 +304,58 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
           >
             📊 All-Time Stats
+          </button>
+
+          <button
+            onClick={() => {
+              onShowWeeklyThemeLeaderboard?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            🎭 Weekly Theme Leaders
+          </button>
+
+          <button
+            onClick={() => {
+              onShowAllTimeThemeLeaderboard?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            🏆 All-Time Theme Champions
           </button>
         </div>
 
