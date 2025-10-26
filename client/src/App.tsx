@@ -16,6 +16,7 @@ import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
 import { WeeklyThemeLeaderboard } from './components/WeeklyThemeLeaderboard';
+import { AllTimeThemeLeaderboard } from './components/AllTimeThemeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
 import { apiClient } from './api/client';
@@ -83,6 +84,9 @@ function App() {
 
   // Weekly theme leaderboard state
   const [showWeeklyThemeLeaderboard, setShowWeeklyThemeLeaderboard] = useState(false);
+
+  // All-time theme leaderboard state
+  const [showAllTimeThemeLeaderboard, setShowAllTimeThemeLeaderboard] = useState(false);
 
   // Theme modal state
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -341,6 +345,11 @@ function App() {
   // Handler to show weekly theme leaderboard
   const handleShowWeeklyThemeLeaderboard = useCallback(() => {
     setShowWeeklyThemeLeaderboard(true);
+  }, []);
+
+  // Handler to show all-time theme leaderboard
+  const handleShowAllTimeThemeLeaderboard = useCallback(() => {
+    setShowAllTimeThemeLeaderboard(true);
   }, []);
 
   // Handle Play Again - reset game and timer
@@ -1170,6 +1179,7 @@ function App() {
         onShowLeaderboard={showLeaderboardModal}
         onShowAllTimeLeaderboard={handleShowAllTimeLeaderboard}
         onShowWeeklyThemeLeaderboard={handleShowWeeklyThemeLeaderboard}
+        onShowAllTimeThemeLeaderboard={handleShowAllTimeThemeLeaderboard}
       />
       {/* Toast Notification */}
       <Toast
@@ -1188,6 +1198,11 @@ function App() {
       <WeeklyThemeLeaderboard
         open={showWeeklyThemeLeaderboard}
         onClose={() => setShowWeeklyThemeLeaderboard(false)}
+      />
+      {/* All-Time Theme Leaderboard */}
+      <AllTimeThemeLeaderboard
+        open={showAllTimeThemeLeaderboard}
+        onClose={() => setShowAllTimeThemeLeaderboard(false)}
       />
 
       {/* Theme Guess Modal */}
