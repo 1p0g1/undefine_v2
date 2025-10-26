@@ -14,6 +14,7 @@ import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
+import { WeeklyThemeLeaderboard } from './components/WeeklyThemeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
 import { apiClient } from './api/client';
@@ -78,6 +79,9 @@ function App() {
 
   // All-time leaderboard state
   const [showAllTimeLeaderboard, setShowAllTimeLeaderboard] = useState(false);
+
+  // Weekly theme leaderboard state
+  const [showWeeklyThemeLeaderboard, setShowWeeklyThemeLeaderboard] = useState(false);
 
   // Theme modal state
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -331,6 +335,11 @@ function App() {
   // Handler to show all-time leaderboard
   const handleShowAllTimeLeaderboard = useCallback(() => {
     setShowAllTimeLeaderboard(true);
+  }, []);
+
+  // Handler to show weekly theme leaderboard
+  const handleShowWeeklyThemeLeaderboard = useCallback(() => {
+    setShowWeeklyThemeLeaderboard(true);
   }, []);
 
   // Handle Play Again - reset game and timer
@@ -1156,6 +1165,7 @@ function App() {
         onShowRules={() => setShowRules(true)}
         onShowLeaderboard={showLeaderboardModal}
         onShowAllTimeLeaderboard={handleShowAllTimeLeaderboard}
+        onShowWeeklyThemeLeaderboard={handleShowWeeklyThemeLeaderboard}
       />
       {/* Toast Notification */}
       <Toast
@@ -1169,6 +1179,11 @@ function App() {
       <AllTimeLeaderboard
         open={showAllTimeLeaderboard}
         onClose={() => setShowAllTimeLeaderboard(false)}
+      />
+      {/* Weekly Theme Leaderboard */}
+      <WeeklyThemeLeaderboard
+        open={showWeeklyThemeLeaderboard}
+        onClose={() => setShowWeeklyThemeLeaderboard(false)}
       />
 
       {/* Theme Guess Modal */}
