@@ -13,6 +13,7 @@ interface SettingsModalProps {
   onShowAllTimeLeaderboard?: () => void;
   onShowGameHistory?: () => void;
   onShowWeeklyThemeLeaderboard?: () => void;
+  onShowAllTimeThemeLeaderboard?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -24,7 +25,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onShowLeaderboard,
   onShowAllTimeLeaderboard,
   onShowGameHistory,
-  onShowWeeklyThemeLeaderboard
+  onShowWeeklyThemeLeaderboard,
+  onShowAllTimeThemeLeaderboard
 }) => {
   const [nickname, setNickname] = useState(currentDisplayName || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -327,7 +329,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
           >
-            🎭 Theme Leaderboard
+            🎭 Weekly Theme Leaders
+          </button>
+
+          <button
+            onClick={() => {
+              onShowAllTimeThemeLeaderboard?.();
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              marginBottom: '0.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              fontFamily: 'var(--font-primary)',
+              textAlign: 'left',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            🏆 All-Time Theme Champions
           </button>
         </div>
 
