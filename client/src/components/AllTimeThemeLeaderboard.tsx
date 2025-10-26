@@ -10,6 +10,7 @@ interface AllTimeThemeLeaderboardEntry {
   themesUnlocked: number;
   avgDayGuessed: number;
   avgDayName: string;
+  avgConfidence: number;
   totalCorrect: number;
   totalAttempts: number;
   successRate: number;
@@ -204,7 +205,7 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '3rem 1fr 5rem 5rem',
+                gridTemplateColumns: '3rem 1fr 4.5rem 4.5rem 3.5rem',
                 gap: '0.5rem',
                 padding: '0.75rem 0.5rem',
                 borderBottom: '2px solid #e5e7eb',
@@ -222,6 +223,7 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
               <div>Player</div>
               <div style={{ textAlign: 'center' }}>Themes</div>
               <div style={{ textAlign: 'center' }}>Avg Day</div>
+              <div style={{ textAlign: 'center' }}>Avg %</div>
             </div>
 
             {/* Table Rows */}
@@ -231,7 +233,7 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
                   key={entry.playerId}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '3rem 1fr 5rem 5rem',
+                    gridTemplateColumns: '3rem 1fr 4.5rem 4.5rem 3.5rem',
                     gap: '0.5rem',
                     padding: '0.75rem 0.5rem',
                     borderBottom: '1px solid #f3f4f6',
@@ -251,7 +253,7 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
-                  title={`${entry.displayName}: ${entry.themesUnlocked} themes, ${entry.successRate}% success rate`}
+                  title={`${entry.displayName}: ${entry.themesUnlocked} themes, ${entry.avgConfidence}% avg confidence, ${entry.successRate}% success rate`}
                 >
                   {/* Rank */}
                   <div style={{ textAlign: 'center', fontWeight: 600 }}>
@@ -297,6 +299,19 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
                   >
                     {entry.avgDayName.substring(0, 3)}
                   </div>
+
+                  {/* Average Confidence % */}
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: entry.avgConfidence >= 80 ? '#10b981' : entry.avgConfidence >= 60 ? '#f59e0b' : '#6b7280',
+                    }}
+                    title={`Average confidence: ${entry.avgConfidence}%`}
+                  >
+                    {entry.avgConfidence}%
+                  </div>
                 </div>
               ))}
             </div>
@@ -310,7 +325,7 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '3rem 1fr 5rem 5rem',
+                    gridTemplateColumns: '3rem 1fr 4.5rem 4.5rem 3.5rem',
                     gap: '0.5rem',
                     padding: '0.75rem 0.5rem',
                     backgroundColor: '#f0f9ff',
@@ -329,6 +344,9 @@ export const AllTimeThemeLeaderboard: React.FC<AllTimeThemeLeaderboardProps> = (
                   </div>
                   <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#6b7280' }}>
                     {playerRankEntry.avgDayName.substring(0, 3)}
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280' }}>
+                    {playerRankEntry.avgConfidence}%
                   </div>
                 </div>
               </div>

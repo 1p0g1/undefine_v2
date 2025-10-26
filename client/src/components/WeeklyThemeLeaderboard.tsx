@@ -10,6 +10,7 @@ interface WeeklyThemeLeaderboardEntry {
   dayNumber: number;
   dayName: string;
   timeGuessed: string;
+  confidencePercent: number;
   createdAt: string;
   isCurrentPlayer?: boolean;
 }
@@ -206,7 +207,7 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '3rem 1fr 5rem 4rem',
+                gridTemplateColumns: '3rem 1fr 4rem 4rem 3rem',
                 gap: '0.5rem',
                 padding: '0.75rem 0.5rem',
                 borderBottom: '2px solid #e5e7eb',
@@ -224,6 +225,7 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
               <div>Player</div>
               <div style={{ textAlign: 'center' }}>Day</div>
               <div style={{ textAlign: 'center' }}>Time</div>
+              <div style={{ textAlign: 'center' }}>%</div>
             </div>
 
             {/* Table Rows */}
@@ -233,7 +235,7 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
                   key={entry.playerId}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '3rem 1fr 5rem 4rem',
+                    gridTemplateColumns: '3rem 1fr 4rem 4rem 3rem',
                     gap: '0.5rem',
                     padding: '0.75rem 0.5rem',
                     borderBottom: '1px solid #f3f4f6',
@@ -297,6 +299,19 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
                   >
                     {entry.timeGuessed}
                   </div>
+
+                  {/* Confidence % */}
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: entry.confidencePercent >= 80 ? '#10b981' : entry.confidencePercent >= 60 ? '#f59e0b' : '#6b7280',
+                    }}
+                    title={`Confidence: ${entry.confidencePercent}%`}
+                  >
+                    {entry.confidencePercent}
+                  </div>
                 </div>
               ))}
             </div>
@@ -310,7 +325,7 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '3rem 1fr 5rem 4rem',
+                    gridTemplateColumns: '3rem 1fr 4rem 4rem 3rem',
                     gap: '0.5rem',
                     padding: '0.75rem 0.5rem',
                     backgroundColor: '#f0f9ff',
@@ -329,6 +344,9 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
                   </div>
                   <div style={{ textAlign: 'center', fontFamily: 'monospace' }}>
                     {playerRankEntry.timeGuessed}
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280' }}>
+                    {playerRankEntry.confidencePercent}
                   </div>
                 </div>
               </div>

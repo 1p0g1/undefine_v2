@@ -33,6 +33,7 @@ interface AllTimeThemeLeaderboardEntry {
   themesUnlocked: number;     // Primary sort: total correct themes
   avgDayGuessed: number;      // Secondary sort: average day (1=Mon, 7=Sun)
   avgDayName: string;         // Human-readable day name (e.g., "Tuesday")
+  avgConfidence: number;      // Average confidence % across all guesses
   totalCorrect: number;       // Context: total correct guesses
   totalAttempts: number;      // Context: total attempts
   successRate: number;        // Context: percentage (0-100)
@@ -84,10 +85,10 @@ async function handler(
 
     console.log('[/api/leaderboard/theme-alltime] Found', themeStartMap.size, 'unique themes');
 
-    // Step 2: Get all correct theme attempts with their dates
+    // Step 2: Get all correct theme attempts with their dates and confidence scores
     const { data: attempts, error: attemptsError } = await supabase
       .from('theme_attempts')
-      .select('player_id, theme, attempt_date, is_correct')
+      .select('player_id, theme, attempt_date, is_correct, confidence_percentage')
       .eq('is_correct', true);
 
     if (attemptsError) {
@@ -107,18 +108,20 @@ async function handler(
     const playerStatsMap = new Map<string, {
       themesUnlocked: Set<string>;
       dayNumbers: number[];
+      confidenceScores: number[];
       totalCorrect: number;
       totalAttempts: number;
     }>();
 
     // First pass: collect correct attempts
     for (const attempt of attempts) {
-      const { player_id, theme, attempt_date } = attempt;
+      const { player_id, theme, attempt_date, confidence_percentage } = attempt;
       
       if (!playerStatsMap.has(player_id)) {
         playerStatsMap.set(player_id, {
           themesUnlocked: new Set(),
           dayNumbers: [],
+          confidenceScores: [],
           totalCorrect: 0,
           totalAttempts: 0
         });
@@ -127,6 +130,11 @@ async function handler(
       const stats = playerStatsMap.get(player_id)!;
       stats.themesUnlocked.add(theme);
       stats.totalCorrect++;
+      
+      // Track confidence percentage
+      if (confidence_percentage !== null && confidence_percentage !== undefined) {
+        stats.confidenceScores.push(confidence_percentage);
+      }
 
       // Calculate day number for this guess
       const themeStart = themeStartMap.get(theme);
@@ -154,9 +162,10 @@ async function handler(
         attemptCounts.set(attempt.player_id, (attemptCounts.get(attempt.player_id) || 0) + 1);
       }
       
-      for (const [playerId, stats] of playerStatsMap.entries()) {
+      // Convert Map.entries() to array to avoid downlevelIteration requirement
+      Array.from(playerStatsMap.entries()).forEach(([playerId, stats]) => {
         stats.totalAttempts = attemptCounts.get(playerId) || stats.totalCorrect;
-      }
+      });
     }
 
     // Step 4: Get player display names
@@ -185,6 +194,11 @@ async function handler(
         const roundedAvgDay = Math.round(avgDay * 10) / 10; // Round to 1 decimal
         const avgDayIndex = Math.max(1, Math.min(7, Math.round(avgDay)));
         
+        // Calculate average confidence percentage
+        const avgConfidence = stats.confidenceScores.length > 0
+          ? Math.round(stats.confidenceScores.reduce((sum, conf) => sum + conf, 0) / stats.confidenceScores.length)
+          : 0;
+        
         return {
           rank: 0, // Will be assigned after sorting
           playerId: pid,
@@ -192,6 +206,7 @@ async function handler(
           themesUnlocked: stats.themesUnlocked.size,
           avgDayGuessed: roundedAvgDay,
           avgDayName: dayNames[avgDayIndex],
+          avgConfidence,
           totalCorrect: stats.totalCorrect,
           totalAttempts: stats.totalAttempts,
           successRate: stats.totalAttempts > 0 

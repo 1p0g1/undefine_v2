@@ -28,6 +28,7 @@ interface WeeklyThemeLeaderboardEntry {
   dayNumber: number;        // 1-7 (Mon-Sun)
   dayName: string;          // "Monday", "Tuesday", etc.
   timeGuessed: string;      // "14:23" (24-hour format)
+  confidencePercent: number; // Best confidence % for this week's theme
   createdAt: string;        // Full ISO timestamp for precise sorting
   isCurrentPlayer?: boolean;
 }
@@ -117,14 +118,15 @@ async function handler(
     const themeStartDate = themeMondayData[0].date;
     console.log('[/api/leaderboard/theme-weekly] Theme started on:', themeStartDate);
 
-    // Step 3: Get all players who guessed this theme correctly
+    // Step 3: Get all players who guessed this theme correctly with confidence scores
     const { data: attempts, error: attemptsError } = await supabase
       .from('theme_attempts')
       .select(`
         player_id,
         attempt_date,
         created_at,
-        is_correct
+        is_correct,
+        confidence_percentage
       `)
       .eq('theme', currentTheme)
       .eq('is_correct', true)
@@ -185,6 +187,7 @@ async function handler(
         dayNumber,
         dayName,
         timeGuessed,
+        confidencePercent: attempt.confidence_percentage || 0,
         createdAt: attempt.created_at,
         isCurrentPlayer: playerId ? attempt.player_id === playerId : false
       };
