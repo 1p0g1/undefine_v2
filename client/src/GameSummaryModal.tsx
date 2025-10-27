@@ -4,7 +4,7 @@ import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
 import { LeaderboardEntry } from './api/types';
 import { createDefaultClueStatus } from '../../shared-types/src/clues';
 import { FirstGamePrompt } from './components/FirstGamePrompt';
-import { UnPrefix } from './components/UnPrefix';
+import { PadlockCTA } from './components/PadlockCTA';
 import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
@@ -327,12 +327,12 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             transformOrigin: 'center'
           }}
         >
-          {/* Un· enhanced design with overlap effect */}
-          <UnPrefix 
-            scaled={true} 
-            onClick={handleOpenThemeModal} 
-            themeGuessData={themeGuessData}
-            gameComplete={true}
+          {/* Padlock CTA with overlap effect */}
+          <PadlockCTA
+            locked={!themeGuessData?.isCorrectGuess}
+            onClick={handleOpenThemeModal}
+            size="sm"
+            showTooltip={false}
           />
           <div style={{ 
             display: 'flex', 
@@ -389,33 +389,27 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             }}>
               ✅ You guessed today's word "{word}"
             </div>
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: '#1a237e',
-              marginBottom: '0.5rem',
-              fontWeight: 600
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.5rem'
             }}>
-              Now guess the{' '}
-              <span 
+              <PadlockCTA
+                locked={true}
                 onClick={handleOpenThemeModal}
-                style={{
-                  color: '#1a237e',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textDecorationStyle: 'dotted'
-                }}
-              >
-                THEME
-              </span>{' '}
-              of the week
-            </div>
-            <div style={{ 
-              fontSize: '0.8rem', 
-              color: '#64748b',
-              lineHeight: '1.4'
-            }}>
-              Can you figure out what connects this week's words?
+                size="sm"
+                showTooltip={false}
+              />
+              <span style={{
+                fontSize: '0.9rem',
+                color: '#1a237e',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}>
+                lock this week's theme
+              </span>
             </div>
           </div>
         )}
