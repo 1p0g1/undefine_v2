@@ -35,7 +35,6 @@ interface WeeklyThemeLeaderboardEntry {
 
 interface WeeklyThemeLeaderboardResponse {
   currentTheme: string | null;
-  themeName: string | null;
   leaderboard: WeeklyThemeLeaderboardEntry[];
   playerRank?: WeeklyThemeLeaderboardEntry;
   totalPlayers: number;
@@ -92,7 +91,6 @@ async function handler(
       console.log('[/api/leaderboard/theme-weekly] No theme found for current week');
       return res.status(200).json({
         currentTheme: null,
-        themeName: null,
         leaderboard: [],
         totalPlayers: 0
       });
@@ -142,7 +140,6 @@ async function handler(
       console.log('[/api/leaderboard/theme-weekly] No correct guesses yet');
       return res.status(200).json({
         currentTheme,
-        themeName: currentTheme,
         leaderboard: [],
         totalPlayers: 0
       });
@@ -210,7 +207,6 @@ async function handler(
 
     return res.status(200).json({
       currentTheme,
-      themeName: currentTheme,
       leaderboard: topLeaderboard,
       playerRank: playerRank && playerRank.rank > 20 ? playerRank : undefined,
       totalPlayers: leaderboardEntries.length

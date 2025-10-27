@@ -17,7 +17,6 @@ interface WeeklyThemeLeaderboardEntry {
 
 interface WeeklyThemeLeaderboardData {
   currentTheme: string | null;
-  themeName: string | null;
   leaderboard: WeeklyThemeLeaderboardEntry[];
   playerRank?: WeeklyThemeLeaderboardEntry;
   totalPlayers: number;
@@ -131,17 +130,6 @@ export const WeeklyThemeLeaderboard: React.FC<WeeklyThemeLeaderboardProps> = ({ 
           >
             🎭 This Week's Theme Leaders
           </div>
-          {data?.themeName && (
-            <div
-              style={{
-                fontSize: '0.875rem',
-                color: '#6b7280',
-                fontStyle: 'italic',
-              }}
-            >
-              Theme: <strong>{data.themeName}</strong>
-            </div>
-          )}
         </div>
 
         {/* Close button */}
