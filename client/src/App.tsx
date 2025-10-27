@@ -1053,10 +1053,10 @@ function App() {
               <div className="hint-row" key={clue.key}>
                 <div className="hint-letter" style={{
                   fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
-                }}>{clue.key}</div>
+                }}>{clue.key === 'E2' ? 'E' : clue.key}</div>
                 <div className="hint-box" style={{
                   backgroundColor: wasWinningClue ? '#f0fdf4' : '#fff', // Light green only for winning clue
-                  borderColor: wasWinningClue ? '#d1fae5' : '#e5e7eb', // Slightly green border only for winning clue
+                  borderColor: wasWinningClue ? '#d1fae5' : 'var(--color-primary)', // Match DEFINE box border color
                   transition: 'background-color 0.2s ease'
                 }}>
                   <div className="hint-title" style={{
