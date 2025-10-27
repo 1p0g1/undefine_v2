@@ -93,6 +93,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [sundayRevelation, setSundayRevelation] = useState<{
     shouldReveal: boolean;
     actualTheme: string;
+    weeklyWords?: Array<{
+      id: string;
+      word: string;
+      date: string;
+      completedOn: string | null;
+      isCompleted: boolean;
+    }>;
   } | null>(null);
 
   const playerId = getPlayerId();
@@ -265,7 +272,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       if (response.shouldRevealTheme && response.revelationReason === 'sunday_failure') {
         setSundayRevelation({
           shouldReveal: true,
-          actualTheme: response.actualTheme || 'Unknown Theme'
+          actualTheme: response.actualTheme || 'Unknown Theme',
+          weeklyWords: response.weeklyWords
         });
       }
 
@@ -498,7 +506,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
                   gap: '0.5rem'
                 }}>
-                  {themeStatus.weeklyThemedWords.map((wordInfo, index) => (
+                  {themeStatus.weeklyThemedWords.map((wordInfo) => (
                     <div 
                       key={wordInfo.id}
                       style={{
@@ -646,10 +654,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
                 {/* Funny Feedback Message - only show for fresh guesses with similarity data */}
                 {lastGuessResult && lastGuessResult.fuzzyMatch && (() => {
+                  // Filter out deprecated 'synonym' method
+                  const validMethod = lastGuessResult.fuzzyMatch.method === 'synonym' 
+                    ? 'semantic' 
+                    : lastGuessResult.fuzzyMatch.method as 'exact' | 'semantic' | 'error';
+                  
                   const feedbackMessage = getThemeFeedbackMessage(
                     lastGuessResult.fuzzyMatch.confidence,
                     lastGuessResult.actualTheme,
-                    lastGuessResult.fuzzyMatch.method
+                    validMethod
                   );
                   
                   return (
@@ -724,10 +737,82 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   fontSize: '1.3rem',
                   fontWeight: 'bold',
                   color: '#1f2937',
-                  fontFamily: 'var(--font-primary)'
+                  fontFamily: 'var(--font-primary)',
+                  marginBottom: '1rem'
                 }}>
                   "{sundayRevelation.actualTheme}"
                 </div>
+                
+                {/* Weekly Words Display */}
+                {sundayRevelation.weeklyWords && sundayRevelation.weeklyWords.length > 0 && (
+                  <div style={{
+                    marginTop: '1rem',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      color: '#374151',
+                      marginBottom: '0.75rem',
+                      textAlign: 'center',
+                      fontFamily: 'var(--font-primary)'
+                    }}>
+                      📚 This Week's Themed Words:
+                    </div>
+                    <div style={{
+                      display: 'grid',
+                      gap: '0.5rem'
+                    }}>
+                      {sundayRevelation.weeklyWords.map((wordData) => {
+                        const date = new Date(wordData.date);
+                        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        
+                        return (
+                          <div
+                            key={wordData.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.75rem',
+                              backgroundColor: wordData.isCompleted ? '#f0fdf4' : '#fef2f2',
+                              border: `2px solid ${wordData.isCompleted ? '#16a34a' : '#dc2626'}`,
+                              borderRadius: '0.5rem',
+                              fontFamily: 'var(--font-primary)'
+                            }}
+                          >
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
+                            }}>
+                              <span style={{
+                                fontSize: '1.2rem'
+                              }}>
+                                {wordData.isCompleted ? '✅' : '❌'}
+                              </span>
+                              <span style={{
+                                fontSize: '1rem',
+                                fontWeight: 'bold',
+                                color: wordData.isCompleted ? '#16a34a' : '#dc2626'
+                              }}>
+                                {wordData.word}
+                              </span>
+                            </div>
+                            <div style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280',
+                              fontWeight: 500
+                            }}>
+                              {dayName}, {dateStr}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

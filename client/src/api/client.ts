@@ -299,13 +299,20 @@ export const apiClient = {
       isCorrectGuess?: boolean;
     };
     fuzzyMatch?: {
-      method: 'exact' | 'synonym' | 'semantic' | 'error';
+      method: 'exact' | 'semantic' | 'error';
       confidence: number;
       similarity?: number;
     };
     // NEW: Sunday failure revelation
     shouldRevealTheme?: boolean;
     revelationReason?: 'sunday_failure';
+    weeklyWords?: Array<{
+      id: string;
+      word: string;
+      date: string;
+      completedOn: string | null;
+      isCompleted: boolean;
+    }>;
   }> {
     return fetchFromApi('/api/theme-guess', {
       method: 'POST',

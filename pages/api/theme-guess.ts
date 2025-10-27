@@ -25,7 +25,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '../../src/env.server';
 import { withCors } from '@/lib/withCors';
-import { getCurrentTheme, submitThemeAttempt, getThemeProgress, isThemeGuessCorrect } from '../../src/game/theme';
+import { getCurrentTheme, submitThemeAttempt, getThemeProgress, isThemeGuessCorrect, getAllWeeklyThemedWords } from '../../src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -53,6 +53,13 @@ interface ThemeGuessResponse {
   // NEW: Sunday failure revelation
   shouldRevealTheme?: boolean;
   revelationReason?: 'sunday_failure';
+  weeklyWords?: Array<{
+    id: string;
+    word: string;
+    date: string;
+    completedOn: string | null;
+    isCompleted: boolean;
+  }>;
 }
 
 export default withCors(async function handler(
@@ -177,10 +184,17 @@ export default withCors(async function handler(
       response.revelationReason = 'sunday_failure';
       response.actualTheme = currentTheme; // Reveal theme on Sunday failure
       
+      // Get all weekly words (completed and missed) for Sunday revelation
+      const weeklyWords = await getAllWeeklyThemedWords(player_id, currentTheme);
+      response.weeklyWords = weeklyWords;
+      
       console.log('[/api/theme-guess] Sunday failure revelation triggered:', {
         guess,
         actualTheme: currentTheme,
-        dayOfWeek
+        dayOfWeek,
+        weeklyWordsCount: weeklyWords.length,
+        completedCount: weeklyWords.filter(w => w.isCompleted).length,
+        missedCount: weeklyWords.filter(w => !w.isCompleted).length
       });
     }
 

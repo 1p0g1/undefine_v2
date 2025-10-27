@@ -476,6 +476,86 @@ function getThemeWeekBoundaries(date: Date = new Date()) {
 }
 
 /**
+ * Get ALL themed words for current week (both completed and missed by player)
+ * Used for Sunday revelation to show complete week overview
+ */
+export async function getAllWeeklyThemedWords(playerId: string, theme: string): Promise<Array<{
+  id: string;
+  word: string;
+  date: string;
+  completedOn: string | null;
+  isCompleted: boolean;
+}>> {
+  try {
+    const { monday, sunday } = getThemeWeekBoundaries();
+    
+    console.log('[getAllWeeklyThemedWords] Getting all weekly themed words for player:', {
+      playerId,
+      theme,
+      weekStart: monday.toISOString().split('T')[0],
+      weekEnd: sunday.toISOString().split('T')[0]
+    });
+
+    // Find all words from current week with matching theme
+    const { data: themedWords, error: wordsError } = await supabase
+      .from('words')
+      .select('id, word, date')
+      .eq('theme', theme)
+      .gte('date', monday.toISOString().split('T')[0])
+      .lte('date', sunday.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
+    if (wordsError) {
+      console.error('[getAllWeeklyThemedWords] Error fetching themed words:', wordsError);
+      return [];
+    }
+
+    if (!themedWords || themedWords.length === 0) {
+      console.log('[getAllWeeklyThemedWords] No themed words found for current week');
+      return [];
+    }
+
+    const wordIds = themedWords.map(w => w.id);
+
+    // Find which ones player has completed using game_sessions
+    const { data: completedSessions, error: sessionsError } = await supabase
+      .from('game_sessions')
+      .select('word_id, created_at')
+      .eq('player_id', playerId)
+      .eq('is_complete', true)
+      .in('word_id', wordIds);
+
+    if (sessionsError) {
+      console.error('[getAllWeeklyThemedWords] Error fetching completed sessions:', sessionsError);
+      return [];
+    }
+
+    // Map all words with completion status
+    const allWords = themedWords.map(word => {
+      const session = completedSessions?.find(s => s.word_id === word.id);
+      return {
+        id: word.id,
+        word: word.word,
+        date: word.date,
+        completedOn: session?.created_at || null,
+        isCompleted: !!session
+      };
+    });
+
+    console.log('[getAllWeeklyThemedWords] Found all themed words:', {
+      totalThemedWords: themedWords.length,
+      completedCount: allWords.filter(w => w.isCompleted).length,
+      missedCount: allWords.filter(w => !w.isCompleted).length
+    });
+
+    return allWords;
+  } catch (error) {
+    console.error('[getAllWeeklyThemedWords] Error:', error);
+    return [];
+  }
+}
+
+/**
  * Get player's completed themed words for current week only
  * This is the core logic for weekly words display feature
  */
