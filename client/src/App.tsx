@@ -10,6 +10,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { Toast } from './components/Toast';
 import { TimerBadge } from './components/TimerBadge';
 import { StreakBadge } from './components/StreakBadge';
+import { InfoDiamond } from './components/InfoDiamond';
 import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
@@ -489,10 +490,11 @@ function App() {
         gap: '0.75rem',
         marginBottom: '1rem',
         paddingTop: '0.5rem'
-      }}>
-        <TimerBadge seconds={timer} />
-        <StreakBadge 
-          streak={effectivePlayerStats?.currentStreak || 0} 
+        }}>
+          <TimerBadge seconds={timer} />
+          <InfoDiamond onClick={() => setShowRules(true)} />
+          <StreakBadge 
+            streak={effectivePlayerStats?.currentStreak || 0}
           highestStreak={effectivePlayerStats?.longestStreak || 0}
           lastWinDate={effectivePlayerStats?.lastWinDate || null}
           playerId={getPlayerId()}
@@ -980,9 +982,101 @@ function App() {
                 <strong>3. More "Fuzzy" Matches</strong> - If still tied, more partial matches (orange highlights) wins
               </div>
             </div>
-            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.9rem', fontStyle: 'italic', color: '#666' }}>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.9rem', fontStyle: 'italic', color: '#666' }}>
               💡 A "fuzzy" match occurs when your guess is similar to the target word - look for orange highlights in your guesses!
             </p>
+            
+            {/* Colored Box Examples */}
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
+              📦 Box Colors Explained
+            </h3>
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.5rem', 
+              marginBottom: '1rem',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Correct - Green */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#4ade80',
+                border: '2px solid #22c55e',
+                borderRadius: '0.5rem',
+                color: '#14532d',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)'
+              }}>D</div>
+              <span style={{ fontSize: '0.9rem', color: '#059669', fontWeight: 600 }}>Correct</span>
+              
+              {/* Fuzzy - Orange */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f4c430',
+                border: '2px solid #ff9800',
+                borderRadius: '0.5rem',
+                color: '#b45309',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)',
+                marginLeft: '1rem'
+              }}>D</div>
+              <span style={{ fontSize: '0.9rem', color: '#ea580c', fontWeight: 600 }}>Fuzzy</span>
+              
+              {/* Incorrect - Red */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#ffb3b3',
+                border: '2px solid #dc2626',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)',
+                marginLeft: '1rem'
+              }}>D</div>
+              <span style={{ fontSize: '0.9rem', color: '#dc2626', fontWeight: 600 }}>Wrong</span>
+            </div>
+            
+            {/* Theme Explanation */}
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
+              🎭 Unlock the Theme of the Week
+            </h3>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Each week, all 7 daily words are connected by a hidden theme. After completing any daily word, you can guess the weekly theme for bonus points and leaderboard glory!
+            </p>
+            <div style={{ 
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #d1fae5',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                color: '#059669'
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>🔓 Theme Benefits:</div>
+                <div>• Compete on weekly and all-time theme leaderboards</div>
+                <div>• Track your theme-guessing streak and statistics</div>
+                <div>• Unlock themes early in the week for maximum points</div>
+              </div>
+            </div>
+            
             <button 
               onClick={() => setShowRules(false)}
               style={{
