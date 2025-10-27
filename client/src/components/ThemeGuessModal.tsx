@@ -365,7 +365,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'flex-start', 
-          marginBottom: '1rem',
+          marginBottom: '2px',
           paddingTop: '0.5rem' // Add more spacing from top
         }}>
           <div style={{ 
@@ -410,6 +410,18 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             }}>
               Theme of the Week
             </div>
+            
+            {/* Instructions */}
+            <div style={{
+              fontSize: '0.85rem',
+              color: '#6b7280',
+              textAlign: 'center',
+              lineHeight: '1.4',
+              fontFamily: 'var(--font-primary)',
+              marginTop: '0.25rem'
+            }}>
+              All 7 of this week's words are connected by a theme, each day you can guess and you will be given a semantic % similarity
+            </div>
           </div>
           <button
             onClick={handleClose}
@@ -451,7 +463,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         {!isLoading && !error && themeStatus && themeStats && (
           <div>
             {/* Theme Status Display */}
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '2px' }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -473,7 +485,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 backgroundColor: '#e5e7eb',
                 borderRadius: '4px',
                 overflow: 'hidden',
-                marginBottom: '1rem'
+                marginBottom: '2px'
               }}>
                 <div style={{
                   width: `${(themeStatus.progress.completedWords / themeStatus.progress.totalWords) * 100}%`,
@@ -491,7 +503,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 border: '1px solid #d1fae5',
                 borderRadius: '0.5rem',
                 padding: '1rem',
-                marginBottom: '1.5rem'
+                marginBottom: '2px'
               }}>
                 <h3 style={{ 
                   margin: '0 0 0.75rem 0', 
@@ -557,9 +569,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 border: '2px solid #e0e4ff',
                 borderRadius: '0.75rem',
                 padding: '1.5rem',
-                marginBottom: '1.5rem'
+                marginBottom: '2px'
               }}>
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '2px' }}>
                   <div style={{
                     fontSize: '1.1rem',
                     fontWeight: 'bold',
@@ -578,7 +590,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                         backgroundColor: '#e5e7eb',
                         borderRadius: '6px',
                         overflow: 'hidden',
-                        marginBottom: '1rem'
+                        marginBottom: '2px'
                       }}>
                         <div style={{
                           width: `${getSimilarityBarWidth(lastGuessResult.fuzzyMatch.confidence)}%`,
@@ -612,7 +624,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                             backgroundColor: '#e5e7eb',
                             borderRadius: '6px',
                             overflow: 'hidden',
-                            marginBottom: '1rem'
+                            marginBottom: '2px'
                           }}>
                             <div style={{
                               width: `${getSimilarityBarWidth(themeStatus.progress.confidencePercentage)}%`,
@@ -721,7 +733,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 border: '2px solid #dc2626',
                 borderRadius: '0.75rem',
                 padding: '1.5rem',
-                marginBottom: '1.5rem',
+                marginBottom: '2px',
                 textAlign: 'center'
               }}>
                 <div style={{
@@ -738,7 +750,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   fontWeight: 'bold',
                   color: '#1f2937',
                   fontFamily: 'var(--font-primary)',
-                  marginBottom: '1rem'
+                  marginBottom: '2px'
                 }}>
                   "{sundayRevelation.actualTheme}"
                 </div>
@@ -746,7 +758,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 {/* Weekly Words Display */}
                 {sundayRevelation.weeklyWords && sundayRevelation.weeklyWords.length > 0 && (
                   <div style={{
-                    marginTop: '1rem',
+                    marginTop: '2px',
                     textAlign: 'left'
                   }}>
                     <div style={{
@@ -818,8 +830,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
             {/* Theme Guess Form or Status */}
             {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme ? (
-              <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-                <div style={{ marginBottom: '1rem' }}>
+              <form onSubmit={handleSubmit} style={{ marginBottom: '2px' }}>
+                <div style={{ marginBottom: '2px' }}>
                   <label style={{ 
                     display: 'block', 
                     marginBottom: '0.5rem',
