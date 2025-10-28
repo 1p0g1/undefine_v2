@@ -23,6 +23,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 }) => {
   // NEW: Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
+  // NEW: Rotation state for animation (additional rotation beyond base 45deg)
+  const [additionalRotation, setAdditionalRotation] = useState(0);
   
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
@@ -133,16 +135,21 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
-    // Transform to diamond shape - rotate 45 degrees
-    transform: scaled ? 'rotate(45deg) scale(0.9)' : 'rotate(45deg)',
+    // Transform to diamond shape - base 45 degrees + additional rotation
+    transform: scaled 
+      ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
+      : `rotate(${45 + additionalRotation}deg)`,
     boxShadow: `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
-    transition: 'all 0.2s ease-in-out',
+    transition: 'all 0.3s ease-in-out', // Slightly longer for rotation animation
     // Add pointer cursor when clickable
     cursor: onClick ? 'pointer' : 'default',
     boxSizing: 'border-box' as const
   };
 
   const handleClick = () => {
+    // Add 90-degree clockwise rotation animation on click
+    setAdditionalRotation(prev => prev + 90);
+    
     if (onClick) {
       onClick();
     }
@@ -151,7 +158,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     setShowTooltip(true); // Show tooltip on hover
     if (onClick) {
-      e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.93)' : 'rotate(45deg) scale(1.03)';
+      // Use current rotation state for hover effects
+      e.currentTarget.style.transform = scaled 
+        ? `rotate(${45 + additionalRotation}deg) scale(0.93)` 
+        : `rotate(${45 + additionalRotation}deg) scale(1.03)`;
       e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}33, 0 0 0 2px ${colors.borderColor}1F`;
     }
   };
@@ -159,7 +169,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     setShowTooltip(false); // Hide tooltip on leave
     if (onClick) {
-      e.currentTarget.style.transform = scaled ? 'rotate(45deg) scale(0.9)' : 'rotate(45deg)';
+      // Reset to current rotation state
+      e.currentTarget.style.transform = scaled 
+        ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
+        : `rotate(${45 + additionalRotation}deg)`;
       e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`;
     }
   };
@@ -176,12 +189,14 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
         <span style={{ 
           position: 'relative', 
           zIndex: 2,
-          transform: 'rotate(-45deg) translateX(-0.04em)', // Slightly adjusted for mobile
+          // Counter-rotate to keep text upright: base -45deg minus additional rotation
+          transform: `rotate(${-45 - additionalRotation}deg) translateX(-0.04em)`,
           marginLeft: '0.08em', // Reduced margin for mobile
           lineHeight: '0.9',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          transition: 'transform 0.3s ease-in-out', // Smooth text rotation
           ...textStyling // Apply dynamic text styling here
         }}>
           {displayText}
