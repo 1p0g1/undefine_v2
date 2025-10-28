@@ -67,7 +67,15 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 
     const { isCorrectGuess, confidencePercentage } = themeGuessData;
     
-    if (isCorrectGuess && confidencePercentage !== null && confidencePercentage >= 85) {
+    // 🥇 GOLD for perfect 100% match
+    if (isCorrectGuess && confidencePercentage === 100) {
+      return {
+        backgroundColor: '#fef3c7', // Light gold background
+        borderColor: '#f59e0b',
+        textColor: '#b45309',
+        glowColor: '#f59e0b'
+      };
+    } else if (isCorrectGuess && confidencePercentage !== null && confidencePercentage >= 85) {
       // Green for correct/high confidence - SOLID background
       return {
         backgroundColor: '#f0fdf4', // Light green background (solid)

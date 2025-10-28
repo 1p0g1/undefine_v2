@@ -161,9 +161,38 @@ async function getCurrentDayLeaderboard(
     ])
   );
 
+  // Get theme guess data for current week
+  const { data: wordData } = await supabase
+    .from('words')
+    .select('theme, date')
+    .eq('id', wordId)
+    .single();
+
+  let themeDataMap = new Map<string, { hasGuessed: boolean; isCorrect: boolean; confidence: number | null }>();
+  
+  if (wordData?.theme) {
+    // Get theme attempts for all players for this theme
+    const { data: themeAttempts } = await supabase
+      .from('theme_attempts')
+      .select('player_id, theme, is_correct, confidence_percentage')
+      .eq('theme', wordData.theme)
+      .in('player_id', playerIds);
+
+    if (themeAttempts) {
+      for (const attempt of themeAttempts) {
+        themeDataMap.set(attempt.player_id, {
+          hasGuessed: true,
+          isCorrect: attempt.is_correct,
+          confidence: attempt.confidence_percentage
+        });
+      }
+    }
+  }
+
   // Transform entries
   const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => {
     const fuzzyData = fuzzyDataMap.get(entry.player_id);
+    const themeData = themeDataMap.get(entry.player_id);
     return {
       id: entry.id,
       word_id: entry.word_id,
@@ -177,7 +206,12 @@ async function getCurrentDayLeaderboard(
       was_top_10: entry.was_top_10 || false,
       is_current_player: entry.player_id === playerId,
       fuzzy_matches: fuzzyData?.fuzzy_matches || 0,
-      fuzzy_bonus: fuzzyData?.fuzzy_bonus || 0
+      fuzzy_bonus: fuzzyData?.fuzzy_bonus || 0,
+      theme_guess_data: themeData ? {
+        has_guessed: themeData.hasGuessed,
+        is_correct: themeData.isCorrect,
+        confidence_percentage: themeData.confidence
+      } : undefined
     };
   });
 

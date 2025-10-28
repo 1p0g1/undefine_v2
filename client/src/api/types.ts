@@ -36,6 +36,11 @@ export interface LeaderboardEntry {
   is_current_player?: boolean;
   fuzzy_matches?: number;       // Number of fuzzy matches (calculated from fuzzy_bonus / 25)
   fuzzy_bonus?: number;         // Bonus points from fuzzy matches
+  theme_guess_data?: {          // Theme guess status for this player
+    has_guessed: boolean;
+    is_correct: boolean;
+    confidence_percentage: number | null;
+  };
 }
 
 /**

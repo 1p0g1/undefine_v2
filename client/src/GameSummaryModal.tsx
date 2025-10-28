@@ -647,31 +647,64 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                         alignItems: 'center',
                         flexWrap: 'nowrap'
                       }}>
-                        {/* Un diamond - neutral color (theme status not available in current API) */}
-                        <div style={{
-                          width: '1.4rem',
-                          height: '1.4rem',
-                          transform: 'rotate(45deg)',
-                          backgroundColor: '#f8fafc',
-                          border: '2px solid #64748b',
-                          borderRadius: '0.15rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <span style={{
-                            transform: 'rotate(-45deg)',
-                            fontFamily: 'var(--font-primary)',
-                            fontStyle: 'italic',
-                            fontWeight: 800,
-                            fontSize: '0.5rem',
-                            color: '#1e293b',
-                            lineHeight: 1
-                          }}>
-                            Un·
-                          </span>
-                        </div>
+                        {/* Un diamond - dynamic color based on theme guess status */}
+                        {(() => {
+                          const themeData = entry.theme_guess_data;
+                          let bgColor = '#f8fafc'; // Default neutral
+                          let borderColor = '#64748b';
+                          let textColor = '#1e293b';
+                          
+                          if (themeData?.has_guessed) {
+                            if (themeData.is_correct && themeData.confidence_percentage === 100) {
+                              // 🥇 Gold for perfect match
+                              bgColor = '#fef3c7';
+                              borderColor = '#f59e0b';
+                              textColor = '#b45309';
+                            } else if (themeData.is_correct && themeData.confidence_percentage !== null && themeData.confidence_percentage >= 85) {
+                              // Green for correct/high confidence
+                              bgColor = '#f0fdf4';
+                              borderColor = '#22c55e';
+                              textColor = '#15803d';
+                            } else if (themeData.confidence_percentage !== null && themeData.confidence_percentage >= 70) {
+                              // Orange for medium confidence
+                              bgColor = '#fff7ed';
+                              borderColor = '#f97316';
+                              textColor = '#ea580c';
+                            } else {
+                              // Red for low confidence/incorrect
+                              bgColor = '#fef2f2';
+                              borderColor = '#ef4444';
+                              textColor = '#dc2626';
+                            }
+                          }
+                          
+                          return (
+                            <div style={{
+                              width: '1.4rem',
+                              height: '1.4rem',
+                              transform: 'rotate(45deg)',
+                              backgroundColor: bgColor,
+                              border: `2px solid ${borderColor}`,
+                              borderRadius: '0.15rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              <span style={{
+                                transform: 'rotate(-45deg)',
+                                fontFamily: 'var(--font-primary)',
+                                fontStyle: 'italic',
+                                fontWeight: 800,
+                                fontSize: '0.5rem',
+                                color: textColor,
+                                lineHeight: 1
+                              }}>
+                                Un·
+                              </span>
+                            </div>
+                          );
+                        })()}
                         
                         {/* DEFINE boxes */}
                         <div style={{
