@@ -23,11 +23,11 @@ import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
 function App() {
-  const { 
-    gameState, 
-    startNewGame, 
+  const {
+    gameState,
+    startNewGame,
     forceNewGame, 
-    submitGuess, 
+    submitGuess,
     guessStatus,
     fuzzyMatchCount,
     showLeaderboard,
@@ -490,8 +490,8 @@ function App() {
         gap: '0.75rem',
         marginBottom: '1rem',
         paddingTop: '0.5rem'
-        }}>
-          <TimerBadge seconds={timer} />
+      }}>
+        <TimerBadge seconds={timer} />
           <InfoDiamond onClick={() => setShowRules(true)} />
           <StreakBadge 
             streak={effectivePlayerStats?.currentStreak || 0}
@@ -1100,7 +1100,7 @@ function App() {
       {gameStarted && gameState.guesses.length > 0 && (
         <div className="past-guesses" style={{
           fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          margin: 'calc(0.25rem + 2px) 0 0.25rem 0'
+          margin: 'calc(0.25rem + 4px) 0 0.25rem 0'
         }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
       {/* Clues Section */}
@@ -1118,11 +1118,8 @@ function App() {
               fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)',
               color: gameState.isWon ? '#22c55e' : '#ef4444',
               fontWeight: 700,
-              marginBottom: '0.75rem',
-              padding: '0.5rem',
-              backgroundColor: '#f8f9ff',
-              borderRadius: '0.5rem',
-              border: '1px solid #e0e4ff'
+              marginBottom: 'calc(0.75rem - 5px)',
+              padding: '0'
             }}>
               The word was: {gameState.wordText}
             </div>

@@ -581,14 +581,14 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             >
               <thead>
                 <tr style={{ background: '#f3f4f6' }}>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                  <th style={{ padding: '0.5rem 0.5rem', borderBottom: '1px solid #e5e7eb', width: '3rem' }}>
                     Rank
                   </th>
                   <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb' }}>
                     Player
                   </th>
                   <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
-                    DEFINE
+                    Result
                   </th>
                   <th
                     style={{
@@ -612,11 +612,10 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                         animation: entry.is_current_player ? 'highlightRow 1s ease-out' : undefined,
                     }}
                   >
-                    <td style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                    <td style={{ padding: '0.5rem 0.5rem', verticalAlign: 'top' }}>
                       <span
                         style={{
                           fontSize: 15,
-                          marginRight: 4,
                           verticalAlign: 'top',
                           display: 'inline-block',
                         }}
@@ -640,13 +639,45 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                         {entry.player_name}
                     </td>
                     <td style={{ padding: '0.5rem', textAlign: 'center', verticalAlign: 'top' }}>
-                      {/* Mini DEFINE boxes */}
+                      {/* Result: Un diamond + Mini DEFINE boxes */}
                       <div style={{ 
                         display: 'flex', 
-                        gap: '2px', 
+                        gap: '3px', 
                         justifyContent: 'center',
+                        alignItems: 'center',
                         flexWrap: 'nowrap'
                       }}>
+                        {/* Un diamond - neutral color (theme status not available in current API) */}
+                        <div style={{
+                          width: '1.4rem',
+                          height: '1.4rem',
+                          transform: 'rotate(45deg)',
+                          backgroundColor: '#f8fafc',
+                          border: '2px solid #64748b',
+                          borderRadius: '0.15rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <span style={{
+                            transform: 'rotate(-45deg)',
+                            fontFamily: 'var(--font-primary)',
+                            fontStyle: 'italic',
+                            fontWeight: 800,
+                            fontSize: '0.5rem',
+                            color: '#1e293b',
+                            lineHeight: 1
+                          }}>
+                            Un·
+                          </span>
+                        </div>
+                        
+                        {/* DEFINE boxes */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '2px'
+                        }}>
                         {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, idx) => {
                           // Determine box color based on game state
                           let bgColor = '#fff'; // Default white (not revealed)
@@ -702,6 +733,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                             </div>
                           );
                         })}
+                        </div>
                       </div>
                     </td>
                     <td
