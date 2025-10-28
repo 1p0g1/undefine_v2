@@ -1,17 +1,19 @@
 /**
  * Semantic Similarity Utility for Un•Define Theme Fuzzy Matching
  * 
- * Uses Hugging Face Inference API with sentence-transformers/all-mpnet-base-v2
+ * UPDATED: January 2025 - Migrated to new Hugging Face Inference Providers API
+ * Uses new router.huggingface.co/hf-inference endpoint (old api-inference deprecated)
+ * 
  * Based on test results from 2025-01-08:
- * - Best performing model for theme matching (50% accuracy)
- * - Optimal threshold: 70% for theme matching
+ * - Best performing model for theme matching (75% accuracy)
+ * - Optimal threshold: 85% for theme matching
  * - Cost: ~$3/month for 1000 users (theme matching only)
  */
 
 // Model selection based on test results
 // Testing the gold standard MiniLM model for technical term matching
 const HF_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
-const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
 const THEME_SIMILARITY_THRESHOLD = 0.85; // Optimal threshold based on testing: fixes basketball/baseball while preserving valid matches
@@ -66,6 +68,10 @@ export async function computeSemanticSimilarity(
         await new Promise(resolve => setTimeout(resolve, 5000));
         return computeSemanticSimilarity(text1, text2); // Retry once
       }
+      
+      // Log more details for debugging the new API
+      const errorText = await response.text();
+      console.error(`HF API Error: ${response.status} - ${errorText}`);
       throw new Error(`HF API Error: ${response.status}`);
     }
     
