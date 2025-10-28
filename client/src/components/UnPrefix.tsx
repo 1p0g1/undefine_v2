@@ -165,11 +165,11 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
           @keyframes pulsate {
             0%, 100% {
               opacity: 1;
-              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1);
+              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3), 0 0 0 2px rgba(139, 92, 246, 0.2);
             }
             50% {
-              opacity: 0.85;
-              box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4), 0 0 0 3px rgba(139, 92, 246, 0.3);
+              opacity: 0.7;
+              box-shadow: 0 12px 32px rgba(139, 92, 246, 0.6), 0 0 0 4px rgba(139, 92, 246, 0.5);
             }
           }
         `}

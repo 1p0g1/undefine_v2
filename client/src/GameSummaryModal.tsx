@@ -8,7 +8,6 @@ import { UnPrefix } from './components/UnPrefix';
 import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
-import { FuzzyTooltip } from './components/FuzzyTooltip';
 
 interface GameSummaryModalProps {
   open: boolean;
@@ -589,19 +588,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                     Player
                   </th>
                   <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
-                    Guesses
-                  </th>
-                  <th style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
-                    <FuzzyTooltip>
-                      <span style={{ 
-                        color: '#1a237e',
-                        fontWeight: 600,
-                        borderBottom: '1px dotted #1a237e',
-                        cursor: 'pointer'
-                      }}>
-                        Fuzzy
-                      </span>
-                    </FuzzyTooltip>
+                    DEFINE
                   </th>
                   <th
                     style={{
@@ -652,11 +639,70 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                     }}>
                         {entry.player_name}
                     </td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}>
-                        {entry.guesses_used}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}>
-                        {entry.fuzzy_matches || 0}
+                    <td style={{ padding: '0.5rem', textAlign: 'center', verticalAlign: 'top' }}>
+                      {/* Mini DEFINE boxes */}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '2px', 
+                        justifyContent: 'center',
+                        flexWrap: 'nowrap'
+                      }}>
+                        {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, idx) => {
+                          // Determine box color based on game state
+                          let bgColor = '#fff'; // Default white (not revealed)
+                          let textColor = '#1a237e';
+                          let borderColor = '#1a237e';
+                          
+                          // Check if this box was reached
+                          if (idx < entry.guesses_used) {
+                            // Box was revealed
+                            if (idx === entry.guesses_used - 1) {
+                              // Winning box (green)
+                              bgColor = '#22c55e';
+                              textColor = '#fff';
+                              borderColor = '#22c55e';
+                            } else {
+                              // Previous guess boxes
+                              // Distribute fuzzy matches among the previous guesses
+                              // First fuzzy_matches boxes are orange, rest are red
+                              const fuzzyCount = entry.fuzzy_matches || 0;
+                              if (idx < fuzzyCount) {
+                                // Orange (fuzzy match)
+                                bgColor = '#f97316';
+                                textColor = '#fff';
+                                borderColor = '#f97316';
+                              } else {
+                                // Red (wrong)
+                                bgColor = '#ef4444';
+                                textColor = '#fff';
+                                borderColor = '#ef4444';
+                              }
+                            }
+                          }
+                          
+                          return (
+                            <div
+                              key={idx}
+                              style={{
+                                width: '1.25rem',
+                                height: '1.25rem',
+                                backgroundColor: bgColor,
+                                border: `2px solid ${borderColor}`,
+                                borderRadius: '0.25rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.625rem',
+                                fontWeight: 700,
+                                color: textColor,
+                                fontFamily: 'var(--font-primary)'
+                              }}
+                            >
+                              {letter}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </td>
                     <td
                       style={{ padding: '0.5rem 0.75rem', textAlign: 'center', verticalAlign: 'top' }}

@@ -1100,7 +1100,7 @@ function App() {
       {gameStarted && gameState.guesses.length > 0 && (
         <div className="past-guesses" style={{
           fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          margin: '0.25rem 0'
+          margin: 'calc(0.25rem + 2px) 0 0.25rem 0'
         }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
       {/* Clues Section */}
@@ -1111,24 +1111,24 @@ function App() {
           margin: '1.5rem auto 0 auto',
           gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
         }}>
-          {/* Show all clues message when game is complete */}
+          {/* Show word reveal when game is complete */}
           {gameState.isComplete && (
             <div style={{
               textAlign: 'center',
-              fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-              color: '#666',
-              fontStyle: 'italic',
+              fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)',
+              color: gameState.isWon ? '#22c55e' : '#ef4444',
+              fontWeight: 700,
               marginBottom: '0.75rem',
               padding: '0.5rem',
               backgroundColor: '#f8f9ff',
               borderRadius: '0.5rem',
               border: '1px solid #e0e4ff'
             }}>
-              📚 All clues revealed - the light green clue shows when you solved it!
+              The word was: {gameState.wordText}
             </div>
           )}
           
-          {visibleClues.map((clue, idx) => {
+          {visibleClues.map((clue) => {
             // Get the full label for the clue heading
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
             const clueLabel = CLUE_LABELS[clueKey];
@@ -1146,7 +1146,9 @@ function App() {
             return (
               <div className="hint-row" key={clue.key}>
                 <div className="hint-letter" style={{
-                  fontSize: 'clamp(0.875rem, 2.5vw, 1rem)'
+                  fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
+                  backgroundColor: wasWinningClue ? '#22c55e' : undefined,
+                  color: wasWinningClue ? '#fff' : undefined
                 }}>{clue.key === 'E2' ? 'E' : clue.key}</div>
                 <div className="hint-box" style={{
                   backgroundColor: wasWinningClue ? '#f0fdf4' : '#fff', // Light green only for winning clue
@@ -1181,19 +1183,6 @@ function App() {
               </div>
             );
           })}
-        </div>
-      )}
-      {/* Solution Reveal */}
-      {gameState.isComplete && (
-        <div
-          className="solution-reveal"
-          style={{ 
-            fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)', 
-            fontWeight: 700, 
-            margin: '1rem 0' 
-          }}
-        >
-          The word was: {gameState.wordText}
         </div>
       )}
       {/* Guess Input Form */}
