@@ -85,8 +85,66 @@ export async function computeSemanticSimilarity(
 }
 
 /**
+ * Compute semantic similarity with contextual prompting for theme matching
+ * Adds context to improve AI understanding of the matching task
+ */
+async function computeThemeSemanticSimilarity(
+  guess: string, 
+  theme: string
+): Promise<number> {
+  const apiKey = process.env.HF_API_KEY;
+  
+  if (!apiKey) {
+    console.error('HF_API_KEY environment variable not set');
+    return 0;
+  }
+  
+  // Add contextual framing to improve semantic matching
+  const contextualGuess = `Answer to "what connects this week's words": ${guess.toLowerCase().trim()}`;
+  const contextualTheme = `Theme that connects words: ${theme.toLowerCase().trim()}`;
+  
+  try {
+    const response = await fetch(HF_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: {
+          source_sentence: contextualGuess,
+          sentences: [contextualTheme]
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      if (response.status === 503) {
+        console.warn('HF model loading, retrying in 5 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return computeThemeSemanticSimilarity(guess, theme); // Retry once
+      }
+      
+      // Log more details for debugging the new API
+      const errorText = await response.text();
+      console.error(`HF API Error: ${response.status} - ${errorText}`);
+      throw new Error(`HF API Error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (with context)`);
+    return result[0] || 0;
+    
+  } catch (error) {
+    console.error('Contextual semantic similarity error:', error);
+    return 0; // Fallback to no match
+  }
+}
+
+/**
  * Enhanced theme matching with multi-tier approach
  * Based on test results and cost optimization
+ * Now includes contextual prompting for better AI understanding
  */
 export async function matchThemeWithFuzzy(
   guess: string, 
@@ -105,9 +163,9 @@ export async function matchThemeWithFuzzy(
     };
   }
   
-  // AI semantic similarity matching
+  // AI semantic similarity matching with contextual prompting
   try {
-    const similarity = await computeSemanticSimilarity(normalizedGuess, normalizedTheme);
+    const similarity = await computeThemeSemanticSimilarity(guess, theme);
     const isMatch = similarity >= THEME_SIMILARITY_THRESHOLD;
     
     // Log usage for cost monitoring

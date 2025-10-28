@@ -54,30 +54,30 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
         >
           i
         </span>
-
-        {/* Tooltip */}
-        {showTooltip && (
-          <span
-            style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 1rem)',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(-45deg)',
-              backgroundColor: 'var(--color-primary)',
-              color: '#fff',
-              padding: '0.35rem 0.6rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.12)',
-              zIndex: 1000
-            }}
-          >
-            How to Play
-          </span>
-        )}
       </span>
+
+      {/* Tooltip - positioned relative to button, not rotated span */}
+      {showTooltip && (
+        <span
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 1rem)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'var(--color-primary)',
+            color: '#fff',
+            padding: '0.35rem 0.6rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.12)',
+            zIndex: 1000
+          }}
+        >
+          How to Play
+        </span>
+      )}
     </button>
   );
 };
