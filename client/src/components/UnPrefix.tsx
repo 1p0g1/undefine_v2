@@ -147,8 +147,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   const handleClick = () => {
-    // Add 90-degree clockwise rotation animation on click
-    setAdditionalRotation(prev => prev + 90);
+    // Add 45-degree clockwise rotation animation on click
+    setAdditionalRotation(prev => prev + 45);
     
     if (onClick) {
       onClick();
