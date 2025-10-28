@@ -29,47 +29,27 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
   
-  // 🎯 NEW: Determine what text to show - '?' for call-to-action or 'Un·'
-  const getDisplayText = () => {
-    // Show '?' when game is complete, theme hasn't been guessed today, AND call-to-action is allowed
-    if (showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday)) {
-      return '?';
-    }
-    // Default to 'Un·' in all other cases
-    return 'Un·';
+  // Always show 'Un·' text (removed '?' call-to-action)
+  const displayText = 'Un·';
+  
+  // Standard styling for 'Un·'
+  const textStyling = {
+    fontStyle: 'italic' as const,
+    fontSize: scaled ? 'clamp(1.1rem, 3.2vw, 1.4rem)' : 'clamp(1.2rem, 3.5vw, 1.5rem)',
+    fontWeight: 800
   };
-
-  // 🎯 NEW: Determine styling based on text content
-  const getTextStyling = () => {
-    const displayText = getDisplayText();
-    
-    if (displayText === '?') {
-      // Special styling for '?' - no italics, larger size
-      return {
-        fontStyle: 'normal' as const, // Remove italics for '?'
-        fontSize: scaled ? 'clamp(1.5rem, 4.2vw, 1.8rem)' : 'clamp(1.6rem, 4.5vw, 2.0rem)', // Even larger
-        fontWeight: 700 // Slightly less bold
-      };
-    } else {
-      // Original styling for 'Un·'
-      return {
-        fontStyle: 'italic' as const,
-        fontSize: scaled ? 'clamp(1.1rem, 3.2vw, 1.4rem)' : 'clamp(1.2rem, 3.5vw, 1.5rem)',
-        fontWeight: 800
-      };
-    }
-  };
+  
+  // Determine if diamond should pulsate (game complete + theme not guessed)
+  const shouldPulsate = showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday);
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
-    const displayText = getDisplayText();
-    
-    // 🎯 NEW: Purple styling for '?' call-to-action (reversed colors like letter boxes)
-    if (displayText === '?') {
+    // Purple styling for call-to-action (game complete + theme not guessed)
+    if (shouldPulsate) {
       return {
         backgroundColor: '#e0e7ff', // Light purple background
         borderColor: '#8b5cf6', // Purple border
-        textColor: '#ffffff', // WHITE text
+        textColor: '#8b5cf6', // Purple text (not white, keep 'Un·' visible)
         glowColor: '#8b5cf6' // Purple glow
       };
     }
@@ -115,8 +95,6 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   const colors = getDiamondColors();
-  const displayText = getDisplayText();
-  const textStyling = getTextStyling();
   
   const containerStyle = {
     width: baseSize,
@@ -141,6 +119,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       : `rotate(${45 + additionalRotation}deg)`,
     boxShadow: `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
     transition: 'all 0.3s ease-in-out', // Slightly longer for rotation animation
+    // Add pulsate animation when theme not guessed
+    animation: shouldPulsate ? 'pulsate 2s ease-in-out infinite' : 'none',
     // Add pointer cursor when clickable
     cursor: onClick ? 'pointer' : 'default',
     boxSizing: 'border-box' as const
@@ -178,13 +158,30 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <div 
-        style={containerStyle}
-        onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
+    <>
+      {/* CSS keyframes for pulsate animation */}
+      <style>
+        {`
+          @keyframes pulsate {
+            0%, 100% {
+              opacity: 1;
+              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1);
+            }
+            50% {
+              opacity: 0.85;
+              box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4), 0 0 0 3px rgba(139, 92, 246, 0.3);
+            }
+          }
+        `}
+      </style>
+      
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div 
+          style={containerStyle}
+          onClick={handleClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
         {/* 🎯 NEW: Dynamic text with appropriate styling */}
         <span style={{ 
           position: 'relative', 
@@ -224,5 +221,6 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 }; 
