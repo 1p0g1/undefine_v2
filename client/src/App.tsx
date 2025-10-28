@@ -361,113 +361,18 @@ function App() {
     forceNewGame();
   };
 
-  // 🎀 Ribbon Confetti - Enhanced bursting ribbon effect
-  const fireRibbonConfetti = () => {
-    const colors = ['#3949ab', '#5e35b1', '#00acc1', '#f59e0b']; // Blue, Purple, Teal, Gold
-    const delays = [0, 150, 300, 450];
-    
-    delays.forEach((delay) => {
-      setTimeout(() => {
-        // Random position clustered near center (0.4-0.6)
-        const originX = 0.45 + Math.random() * 0.1;
-        const originY = 0.5 + Math.random() * 0.1;
-        
-        confetti({
-          particleCount: 60,
-          spread: 80,
-          startVelocity: 40,
-          scalar: 1.3,
-          shapes: ['square'],
-          colors: colors,
-          origin: { x: originX, y: originY },
-          ticks: 120,
-          gravity: 1.2
-        });
-      }, delay);
+  const launchConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
     });
-  };
-
-  // 🎆 Letter Fireworks - Each DEFINE letter launches a mini firework
-  const launchLetterFireworks = () => {
-    // Find all DEFINE letter boxes
-    const letterBoxes = document.querySelectorAll('.letter-box');
-    
-    if (letterBoxes.length === 0) {
-      // Fallback to ribbon confetti if boxes not found
-      fireRibbonConfetti();
-      return;
-    }
-    
-    letterBoxes.forEach((box, index) => {
-      setTimeout(() => {
-        const rect = box.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        // Create rocket element
-        const rocket = document.createElement('div');
-        rocket.style.position = 'fixed';
-        rocket.style.left = `${centerX}px`;
-        rocket.style.top = `${centerY}px`;
-        rocket.style.width = '5px';
-        rocket.style.height = '5px';
-        rocket.style.backgroundColor = '#f59e0b';
-        rocket.style.borderRadius = '50%';
-        rocket.style.zIndex = '9999';
-        rocket.style.pointerEvents = 'none';
-        document.body.appendChild(rocket);
-        
-        // Animate rocket upward
-        const rocketAnimation = rocket.animate([
-          { transform: 'translateY(0px)', opacity: 1 },
-          { transform: 'translateY(-70px)', opacity: 0.8 }
-        ], {
-          duration: 300,
-          easing: 'ease-out'
-        });
-        
-        rocketAnimation.onfinish = () => {
-          // Calculate final position for confetti burst
-          const finalRect = rocket.getBoundingClientRect();
-          const burstX = (finalRect.left + finalRect.width / 2) / window.innerWidth;
-          const burstY = (finalRect.top + finalRect.height / 2) / window.innerHeight;
-          
-          // Fire confetti burst
-          confetti({
-            particleCount: 20,
-            spread: 35,
-            startVelocity: 25,
-            scalar: 0.8,
-            colors: ['#3949ab', '#5e35b1', '#00acc1', '#f59e0b'],
-            origin: { x: burstX, y: burstY },
-            ticks: 80
-          });
-          
-          // Clean up rocket
-          rocket.remove();
-        };
-      }, index * 100); // Stagger launches by 100ms
-    });
-  };
-
-  const launchSpecialConfetti = () => {
-    // For 1-guess wins, use letter fireworks followed by ribbon burst
-    launchLetterFireworks();
-    setTimeout(() => {
-      fireRibbonConfetti();
-    }, 800);
   };
 
   useEffect(() => {
     if (gameState.isComplete && gameState.isWon) {
       setTimeout(() => {
-        // Check if it's a 1-guess win for special confetti (letter fireworks + ribbon)
-        if (gameState.guesses.length === 1) {
-          launchSpecialConfetti();
-        } else {
-          // Regular wins: use ribbon confetti
-          fireRibbonConfetti();
-        }
+        launchConfetti();
       }, 300);
     }
   }, [gameState.isComplete, gameState.isWon, gameState.guesses.length]);

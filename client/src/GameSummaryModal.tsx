@@ -650,6 +650,19 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                         {/* Un diamond - dynamic color based on theme guess status */}
                         {(() => {
                           const themeData = entry.theme_guess_data;
+                          
+                          // Debug logging
+                          if (entry.is_current_player) {
+                            console.log('[GameSummaryModal] Theme data for current player:', {
+                              playerId: entry.player_id,
+                              playerName: entry.player_name,
+                              themeData: themeData,
+                              hasGuessed: themeData?.has_guessed,
+                              isCorrect: themeData?.is_correct,
+                              confidence: themeData?.confidence_percentage
+                            });
+                          }
+                          
                           let bgColor = '#f8fafc'; // Default neutral
                           let borderColor = '#64748b';
                           let textColor = '#1e293b';
