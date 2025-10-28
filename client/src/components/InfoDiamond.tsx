@@ -34,6 +34,7 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
           transform: 'rotate(45deg)',
           backgroundColor: '#e0e4ff',
           border: '2px solid var(--color-primary)',
+          borderRadius: '0.5rem',
           userSelect: 'none'
         }}
       >
@@ -59,7 +60,7 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
           <span
             style={{
               position: 'absolute',
-              bottom: 'calc(100% + 0.5rem)',
+              bottom: 'calc(100% + 1rem)',
               left: '50%',
               transform: 'translateX(-50%) rotate(-45deg)',
               backgroundColor: 'var(--color-primary)',
@@ -70,7 +71,7 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
               fontWeight: 600,
               whiteSpace: 'nowrap',
               boxShadow: '0 4px 6px rgba(0,0,0,0.12)',
-              zIndex: 10
+              zIndex: 1000
             }}
           >
             How to Play

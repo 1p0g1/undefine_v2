@@ -845,7 +845,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     <div style={{
                       fontSize: '0.85rem',
                       color: '#6b7280',
-                      marginBottom: '0.5rem',
+                      marginBottom: 'calc(0.5rem + 1px)',
                       fontStyle: 'italic'
                     }}>
                       Past guesses: {simpleHistory.map((entry, idx) => (
