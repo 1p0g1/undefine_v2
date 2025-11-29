@@ -16,7 +16,7 @@ const HF_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
 
 // Thresholds based on real test data
-const THEME_SIMILARITY_THRESHOLD = 0.85; // Optimal threshold based on testing: fixes basketball/baseball while preserving valid matches
+const THEME_SIMILARITY_THRESHOLD = 0.78; // Lowered to accept valid synonyms (85% was too strict for true synonyms scoring 75-82%)
 const WORD_SIMILARITY_THRESHOLD = 0.75;  // 75% for future word matching
 
 export interface SemanticSimilarityResult {
@@ -100,8 +100,9 @@ async function computeThemeSemanticSimilarity(
   }
   
   // Add contextual framing to improve semantic matching
-  const contextualGuess = `Answer to "what connects this week's words": ${guess.toLowerCase().trim()}`;
-  const contextualTheme = `Theme that connects words: ${theme.toLowerCase().trim()}`;
+  // Explicitly prime AI to recognize synonyms and equivalent terms
+  const contextualGuess = `Synonym or description: ${guess.toLowerCase().trim()}`;
+  const contextualTheme = `Theme or its synonyms: ${theme.toLowerCase().trim()}`;
   
   try {
     const response = await fetch(HF_API_URL, {
@@ -132,7 +133,7 @@ async function computeThemeSemanticSimilarity(
     }
     
     const result = await response.json();
-    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (with context)`);
+    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (with synonym-aware prompting)`);
     return result[0] || 0;
     
   } catch (error) {
