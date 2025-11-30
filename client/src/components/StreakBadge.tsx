@@ -6,13 +6,15 @@ interface StreakBadgeProps {
   highestStreak?: number;
   lastWinDate?: string | null;
   playerId?: string; // Add playerId for calendar modal
+  onSelectArchiveDate?: (date: string) => void; // NEW: Callback for archive play
 }
 
 export const StreakBadge: React.FC<StreakBadgeProps> = ({ 
   streak, 
   highestStreak, 
   lastWinDate,
-  playerId = 'default-player' // fallback value
+  playerId = 'default-player', // fallback value
+  onSelectArchiveDate // NEW: Archive play callback
 }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -271,6 +273,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         open={showCalendar}
         onClose={() => setShowCalendar(false)}
         playerId={playerId}
+        onSelectArchiveDate={onSelectArchiveDate}
       />
     </>
   );

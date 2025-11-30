@@ -131,6 +131,40 @@ function App() {
     }
   };
 
+  // Handle archive play selection
+  const handleArchivePlaySelection = async (date: string) => {
+    try {
+      console.log('[App] Starting archive play for date:', date);
+      
+      // Import gameService directly
+      const { gameService } = await import('./services/GameService');
+      
+      // Start archive game
+      const archiveState = await gameService.startArchiveGame(date);
+      
+      // Update game state
+      setGameState(archiveState);
+      setIsRestoredGame(false);
+      setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      setFuzzyMatchCount(0);
+      setShowLeaderboard(false);
+      setScoreDetails(null);
+      setGameStarted(true);
+      
+      // Show toast notification
+      setToastMessage(`Playing archive word from ${date}`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      
+      console.log('[App] Archive game started successfully');
+    } catch (error) {
+      console.error('[App] Failed to start archive game:', error);
+      setToastMessage('Failed to load archive word. Please try again.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }
+  };
+
   useEffect(() => {
     loadThemeData();
   }, []);
@@ -437,6 +471,28 @@ function App() {
         overflowX: 'hidden' // Prevent horizontal scrolling
       }}
     >
+      {/* Archive Play Banner */}
+      {gameState?.isArchivePlay && (
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '0.75rem 1rem',
+          borderRadius: '0.75rem',
+          marginBottom: '1rem',
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+          maxWidth: '90%',
+          margin: '0 auto 1rem auto'
+        }}>
+          <div style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+            📚 Archive Play
+          </div>
+          <div style={{ fontSize: '0.85rem', opacity: 0.95 }}>
+            {gameState.gameDate} • Won't affect your streak or leaderboard
+          </div>
+        </div>
+      )}
+
       {/* Timer Badge - Centered at top */}
       <div style={{ 
         width: '100%', 
@@ -454,6 +510,7 @@ function App() {
           highestStreak={effectivePlayerStats?.longestStreak || 0}
           lastWinDate={effectivePlayerStats?.lastWinDate || null}
           playerId={getPlayerId()}
+          onSelectArchiveDate={handleArchivePlaySelection}
         />
       </div>
       
@@ -1200,6 +1257,8 @@ function App() {
         currentDisplayName={currentDisplayName}
         onOpenSettings={() => setShowSettings(true)}
         onOpenThemeModal={handleThemeClick}
+        isArchivePlay={gameState.isArchivePlay}
+        gameDate={gameState.gameDate}
       />
       {/* Settings Modal */}
       <SettingsModal

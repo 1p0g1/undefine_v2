@@ -237,6 +237,72 @@ class GameService {
     }
   }
 
+  /**
+   * Start an archive game for a specific date
+   */
+  public async startArchiveGame(date: string): Promise<GameSessionState> {
+    try {
+      console.log('[GameService] Starting archive game for date:', date);
+      
+      // Clear any previous state
+      this.clearState();
+      
+      // Reset session completion flag
+      this.completedInSession = false;
+      
+      const data = await apiClient.getArchiveWord(date);
+
+      // Validate required fields
+      if (!data.gameId || !data.word?.id || !data.start_time) {
+        throw new Error('Invalid response from /api/word: missing required fields');
+      }
+
+      if (!data.isArchivePlay) {
+        console.warn('[GameService] Expected archive play but got live game');
+      }
+
+      // Process clues
+      const processedClues = {
+        definition: String(data.word.definition || ''),
+        equivalents: Array.isArray(data.word.equivalents) ? data.word.equivalents.join(', ') : String(data.word.equivalents || ''),
+        first_letter: String(data.word.first_letter || ''),
+        in_a_sentence: String(data.word.in_a_sentence || ''),
+        number_of_letters: String(data.word.number_of_letters || ''),
+        etymology: String(data.word.etymology || '')
+      };
+
+      // Create new state with archive metadata
+      this.currentState = {
+        gameId: data.gameId,
+        wordId: data.word.id,
+        wordText: data.word.word,
+        clues: processedClues,
+        guesses: [],
+        revealedClues: [],
+        clueStatus: createDefaultClueStatus(),
+        isComplete: false,
+        isWon: false,
+        score: null,
+        startTime: data.start_time,
+        isArchivePlay: true,        // NEW: Archive flag
+        gameDate: data.gameDate      // NEW: Original word date
+      };
+
+      console.log('[GameService] Archive game started:', {
+        gameId: this.currentState.gameId,
+        wordId: this.currentState.wordId,
+        gameDate: data.gameDate,
+        startTime: this.currentState.startTime
+      });
+
+      this.saveState();
+      return this.currentState;
+    } catch (error) {
+      console.error('[GameService] Failed to start archive game:', error);
+      throw error;
+    }
+  }
+
   public async submitGuess(guess: string): Promise<GuessResponse> {
     if (!this.currentState) {
       throw new Error('No active game session');

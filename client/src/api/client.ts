@@ -240,6 +240,22 @@ export const apiClient = {
   },
 
   /**
+   * Get an archive word for a specific date
+   * @param date The date in YYYY-MM-DD format
+   * @returns Promise with the word response including archive metadata
+   */
+  async getArchiveWord(date: string): Promise<WordResponse> {
+    const response = await fetchFromApi<WordResponse>(`/api/word?date=${date}`);
+    
+    // Basic null check
+    if (!response?.word) {
+      throw new ApiError('Invalid word response: missing word data');
+    }
+    
+    return response;
+  },
+
+  /**
    * Submit a guess to the API
    * @param request The guess request
    * @returns Promise with the guess response

@@ -25,7 +25,7 @@ import { WordResponse } from '../../shared-types/src/word';
 import { env } from '@/src/env.server';
 import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 import { withCors } from '@/lib/withCors';
-import { getNewWord } from '../../src/game/word';
+import { getNewWord, getWordByDate, getTodayDateString } from '../../src/game/word';
 import { createDefaultClueStatus } from '@/shared-types/src/clues';
 import { ensurePlayerExists } from '@/src/utils/player';
 
@@ -66,6 +66,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const playerId = (req.headers['player-id'] as string) ?? 'anonymous';
     console.log('[/api/word] Using player ID:', playerId);
 
+    // Check for archive play request
+    const requestedDate = req.query.date as string | undefined;
+    const today = getTodayDateString();
+    const targetDate = requestedDate || today;
+    const isArchivePlay = targetDate !== today;
+
+    console.log('[/api/word] Request details:', {
+      requestedDate,
+      today,
+      targetDate,
+      isArchivePlay
+    });
+
     // Ensure player exists in database
     try {
       await ensurePlayerExists(playerId);
@@ -74,36 +87,49 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // Continue anyway - we'll handle this gracefully
     }
 
-    // Get today's word
-    const word = await getNewWord();
-    if (!word?.word?.id) {
-      console.error('[/api/word] Invalid word response:', word);
+    // Get word (either today's or archive)
+    let wordResult;
+    if (isArchivePlay) {
+      console.log('[/api/word] Fetching archive word for date:', targetDate);
+      wordResult = await getWordByDate(targetDate);
+      if (!wordResult) {
+        console.error('[/api/word] No word found for archive date:', targetDate);
+        return res.status(404).json({ error: `No word found for date: ${targetDate}` });
+      }
+    } else {
+      console.log('[/api/word] Fetching today\'s word');
+      wordResult = await getNewWord();
+    }
+
+    if (!wordResult?.word?.id) {
+      console.error('[/api/word] Invalid word response:', wordResult);
       return res.status(500).json({ error: 'Failed to get valid word' });
     }
 
-    // Create a new game session
-    console.log('[/api/word] Creating game session:', { wordId: word.word.id, playerId });
+    // Create a new game session with archive flags
+    console.log('[/api/word] Creating game session:', { 
+      wordId: wordResult.word.id, 
+      playerId,
+      isArchivePlay,
+      gameDate: targetDate
+    });
+    
     const start_time = new Date().toISOString();
     const clue_status = createDefaultClueStatus();
-    
-    console.log('[/api/word] Initializing game session with:', {
-      playerId,
-      wordId: word.word.id,
-      start_time,
-      clue_status
-    });
 
     const { data: session, error: sessionError } = await supabase
       .from('game_sessions')
       .insert({
         player_id: playerId,
-        word_id: word.word.id,
+        word_id: wordResult.word.id,
         guesses: [],
         revealed_clues: [],
         clue_status,
         is_complete: false,
         is_won: false,
-        start_time
+        start_time,
+        is_archive_play: isArchivePlay,  // NEW: Archive flag
+        game_date: targetDate             // NEW: Word's actual date
       })
       .select('id, start_time')
       .single();
@@ -121,11 +147,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // Return word data with session ID and start_time
+    // Return word data with session ID, start_time, and archive metadata
     res.status(200).json({
-      ...word,
+      ...wordResult,
       gameId: session.id,
-      start_time: session.start_time
+      start_time: session.start_time,
+      isArchivePlay,           // NEW: Tell frontend this is archive
+      gameDate: targetDate      // NEW: Original word date
     });
   } catch (error) {
     console.error('[/api/word] Error:', error);

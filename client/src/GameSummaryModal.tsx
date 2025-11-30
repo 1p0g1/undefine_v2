@@ -35,6 +35,8 @@ interface GameSummaryModalProps {
   currentDisplayName?: string;
   onOpenSettings?: () => void;
   onOpenThemeModal?: () => void;
+  isArchivePlay?: boolean;  // NEW: Archive play flag
+  gameDate?: string;  // NEW: Original word date
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -56,6 +58,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   currentDisplayName,
   onOpenSettings,
   onOpenThemeModal,
+  isArchivePlay = false,  // NEW: Archive play flag
+  gameDate,  // NEW: Original word date
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -306,12 +310,30 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             fontWeight: 700,
             fontSize: 'clamp(1.2rem, 4vw, 1.45rem)',
             textAlign: 'center',
-            marginBottom: '1rem',
+            marginBottom: '0.5rem',
             color: 'var(--color-primary)',
           }}
         >
-          Today's Results
+          {isArchivePlay ? 'Archive Word Completed! 📚' : 'Today\'s Results'}
         </div>
+        {isArchivePlay && gameDate && (
+          <div
+            style={{
+              fontFamily: 'var(--font-primary)',
+              fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)',
+              textAlign: 'center',
+              marginBottom: '1rem',
+              color: '#6b7280',
+              fontStyle: 'italic'
+            }}
+          >
+            You played the word from {gameDate}
+            <br />
+            <span style={{ fontSize: '0.85em' }}>
+              This doesn't affect your live stats, but great job exploring the archive!
+            </span>
+          </div>
+        )}
         <div
           className="gs-modal-define-row"
           style={{

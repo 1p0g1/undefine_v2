@@ -16,6 +16,8 @@ export interface WordResponse {
   gameId: string;
   isFallback: boolean;
   start_time: string;  // ISO string of when the game session was created
+  isArchivePlay?: boolean;  // NEW: True if this is an archive play
+  gameDate?: string;  // NEW: The actual date of the word (YYYY-MM-DD)
 }
 
 export type { GuessRequest, GuessResponse, GameSessionState, ScoreResult };

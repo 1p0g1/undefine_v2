@@ -16,27 +16,53 @@ interface HistoryResponse {
   };
 }
 
+interface AvailableDateInfo {
+  date: string;
+  word: string;
+  hasWord: boolean;
+  theme: string | null;
+  difficulty: string | null;
+}
+
 interface StreakCalendarModalProps {
   open: boolean;
   onClose: () => void;
   playerId: string;
+  onSelectArchiveDate?: (date: string) => void; // NEW: Callback for archive play
 }
 
-export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, onClose, playerId }) => {
+export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ 
+  open, 
+  onClose, 
+  playerId,
+  onSelectArchiveDate 
+}) => {
   const [history, setHistory] = useState<DayHistory[]>([]);
+  const [availableDates, setAvailableDates] = useState<Map<string, AvailableDateInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     if (open) {
-      loadPlayHistory();
+      loadData();
     }
-  }, [open, playerId]);
+  }, [open, playerId, currentDate]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load both play history and available dates in parallel
+      await Promise.all([
+        loadPlayHistory(),
+        loadAvailableDates()
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadPlayHistory = async () => {
     try {
-      setLoading(true);
-      
       console.log('[StreakCalendarModal] Environment check:', {
         playerId,
         baseUrl: getApiBaseUrl(),
@@ -72,8 +98,37 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, 
       
       // Set empty history instead of throwing - calendar should still show
       setHistory([]);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const loadAvailableDates = async () => {
+    try {
+      // Calculate month range
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const startOfMonth = new Date(year, month, 1);
+      const endOfMonth = new Date(year, month + 1, 0);
+      
+      const startDate = startOfMonth.toISOString().split('T')[0];
+      const endDate = endOfMonth.toISOString().split('T')[0];
+      
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}/api/archive/available-dates?start_date=${startDate}&end_date=${endDate}`;
+      console.log('[StreakCalendarModal] Fetching available dates:', url);
+      
+      const data = await safeFetch<{ dates: AvailableDateInfo[] }>(url);
+      
+      // Convert to Map for quick lookup
+      const dateMap = new Map<string, AvailableDateInfo>();
+      (data.dates || []).forEach(dateInfo => {
+        dateMap.set(dateInfo.date, dateInfo);
+      });
+      
+      setAvailableDates(dateMap);
+      console.log(`[StreakCalendarModal] Loaded ${dateMap.size} available dates`);
+    } catch (error) {
+      console.error('[StreakCalendarModal] Failed to load available dates:', error);
+      setAvailableDates(new Map());
     }
   };
 
@@ -96,49 +151,128 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, 
     return history.find(h => h.date === dateString) || null;
   };
 
+  const getDateState = (dateString: string): 'today' | 'won' | 'lost' | 'available' | 'no-word' | 'future' => {
+    const today = new Date().toISOString().split('T')[0];
+    const dateObj = new Date(dateString);
+    const todayObj = new Date(today);
+    
+    // Future date
+    if (dateObj > todayObj) return 'future';
+    
+    // Today
+    if (dateString === today) return 'today';
+    
+    // Check if played
+    const dayData = getDayData(dateString);
+    if (dayData?.played) {
+      return dayData.won ? 'won' : 'lost';
+    }
+    
+    // Check if word exists for this date
+    if (availableDates.has(dateString)) return 'available';
+    
+    // No word
+    return 'no-word';
+  };
+
+  const handleDateClick = (dateString: string) => {
+    const state = getDateState(dateString);
+    
+    // Only allow clicking on available dates (not played) or lost dates (can retry)
+    if ((state === 'available' || state === 'lost') && onSelectArchiveDate) {
+      console.log('[StreakCalendarModal] Selected archive date:', dateString);
+      onSelectArchiveDate(dateString);
+      onClose();
+    }
+  };
+
   const renderCalendarDay = (day: number, month: number, year: number) => {
     const dateString = getDateString(year, month, day);
-    const dayData = getDayData(dateString);
-    const isToday = dateString === new Date().toISOString().split('T')[0];
-    const isPast = new Date(dateString) < new Date(new Date().toISOString().split('T')[0]);
+    const state = getDateState(dateString);
+    const isClickable = (state === 'available' || state === 'lost') && !!onSelectArchiveDate;
     
     let backgroundColor = 'transparent';
     let emoji = '';
     let textColor = '#374151';
+    let borderStyle = '1px solid #e5e7eb';
+    let cursor = 'default';
+    let opacity = 1;
     
-    if (dayData?.played) {
-      if (dayData.won) {
-        backgroundColor = '#f0fdf4'; // Light green
+    switch (state) {
+      case 'today':
+        borderStyle = '2px solid #1a237e';
+        backgroundColor = '#dbeafe';
+        textColor = '#1a237e';
+        break;
+      case 'won':
+        backgroundColor = '#f0fdf4';
         emoji = '✅';
         textColor = '#059669';
-      } else {
-        backgroundColor = '#fef2f2'; // Light red
+        break;
+      case 'lost':
+        backgroundColor = '#fef2f2';
         emoji = '❌';
         textColor = '#dc2626';
-      }
+        cursor = isClickable ? 'pointer' : 'default';
+        break;
+      case 'available':
+        borderStyle = '2px dashed #3b82f6';
+        backgroundColor = '#f0f9ff';
+        textColor = '#1e40af';
+        cursor = isClickable ? 'pointer' : 'default';
+        break;
+      case 'no-word':
+      case 'future':
+        opacity = 0.3;
+        textColor = '#9ca3af';
+        cursor = 'not-allowed';
+        break;
     }
 
     return (
       <div
         key={`${month}-${day}`}
+        onClick={() => isClickable && handleDateClick(dateString)}
         style={{
           minHeight: '40px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          border: isToday ? '2px solid #1a237e' : '1px solid #e5e7eb',
+          border: borderStyle,
           borderRadius: '6px',
           backgroundColor,
           color: textColor,
-          fontWeight: isToday ? 600 : 400,
+          fontWeight: state === 'today' ? 600 : 400,
           fontSize: '0.9rem',
           position: 'relative',
-          gap: '2px'
+          gap: '2px',
+          cursor,
+          opacity,
+          transition: 'all 0.2s ease',
+          ...(isClickable && {
+            ':hover': {
+              transform: 'scale(1.05)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+            }
+          })
+        }}
+        onMouseEnter={(e) => {
+          if (isClickable) {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (isClickable) {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'none';
+          }
         }}
       >
         <span>{day}</span>
         {emoji && <span style={{ fontSize: '0.7rem' }}>{emoji}</span>}
+        {state === 'available' && <span style={{ fontSize: '0.6rem', color: '#3b82f6' }}>📚</span>}
       </div>
     );
   };
@@ -305,31 +439,48 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({ open, 
         {/* Legend */}
         <div style={{
           display: 'flex',
-          justifyContent: 'center',
-          gap: '1.5rem',
+          flexDirection: 'column',
+          gap: '0.75rem',
           padding: '1rem',
           backgroundColor: '#f9fafb',
           borderRadius: '0.5rem',
           fontSize: '0.85rem',
           color: '#374151'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>✅</span>
-            <span>Won</span>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>✅</span>
+              <span>Won</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>❌</span>
+              <span>Lost</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📚</span>
+              <span>Available</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '3px',
+                opacity: 0.3
+              }} />
+              <span>No word</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>❌</span>
-            <span>Lost</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {onSelectArchiveDate && (
             <div style={{ 
-              width: '16px', 
-              height: '16px', 
-              border: '1px solid #d1d5db', 
-              borderRadius: '3px' 
-            }} />
-            <span>No play</span>
-          </div>
+              textAlign: 'center', 
+              fontSize: '0.8rem', 
+              color: '#6b7280',
+              fontStyle: 'italic'
+            }}>
+              Click any available date (📚) to play from the archive!
+            </div>
+          )}
         </div>
 
         {loading && (

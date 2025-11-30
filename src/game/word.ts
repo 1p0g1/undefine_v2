@@ -6,20 +6,22 @@ import { mapWordRowToResponse } from '@/server/src/utils/wordMapper';
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 /**
- * Get a new word for the game
- * In production: Returns today's word, falls back to most recent word if none for today
- * In development: Falls back to random word if no word set for today
+ * Get today's date in YYYY-MM-DD format (UTC)
  */
-export async function getNewWord(): Promise<{ word: WordResponseShape; isFallback: boolean }> {
+export function getTodayDateString(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Get a word by specific date
+ * Used for archive play functionality
+ */
+export async function getWordByDate(date: string): Promise<{ word: WordResponseShape; isFallback: boolean } | null> {
   try {
-    // Get today's date in YYYY-MM-DD format
-    const now = new Date();
-    const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    console.log('[getWordByDate] Looking for word for date:', date);
     
-    console.log('[getNewWord] Looking for word for date:', today);
-    
-    // Try to get today's word first
-    const { data: todayWord, error: todayError } = await supabase
+    const { data: wordData, error } = await supabase
       .from('words')
       .select(`
         id,
@@ -34,15 +36,42 @@ export async function getNewWord(): Promise<{ word: WordResponseShape; isFallbac
         date,
         theme
       `)
-      .eq('date', today)
+      .eq('date', date)
       .single();
 
-    if (!todayError && todayWord) {
-      console.log('[getNewWord] Found word for today:', todayWord.word);
-      return {
-        word: mapWordRowToResponse(todayWord),
-        isFallback: false
-      };
+    if (error || !wordData) {
+      console.log('[getWordByDate] No word found for date:', date);
+      return null;
+    }
+
+    console.log('[getWordByDate] Found word for date:', date, '-', wordData.word);
+    return {
+      word: mapWordRowToResponse(wordData),
+      isFallback: false
+    };
+  } catch (error) {
+    console.error('[getWordByDate] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get a new word for the game
+ * In production: Returns today's word, falls back to most recent word if none for today
+ * In development: Falls back to random word if no word set for today
+ */
+export async function getNewWord(): Promise<{ word: WordResponseShape; isFallback: boolean }> {
+  try {
+    const today = getTodayDateString();
+    
+    console.log('[getNewWord] Looking for word for date:', today);
+    
+    // Try to get today's word first
+    const todayWordResult = await getWordByDate(today);
+    
+    if (todayWordResult) {
+      console.log('[getNewWord] Found word for today:', todayWordResult.word.word);
+      return todayWordResult;
     }
 
     console.log('[getNewWord] No word found for today, falling back to most recent word');
@@ -60,7 +89,8 @@ export async function getNewWord(): Promise<{ word: WordResponseShape; isFallbac
         number_of_letters,
         etymology,
         difficulty,
-        date
+        date,
+        theme
       `)
       .order('date', { ascending: false })
       .limit(1)
