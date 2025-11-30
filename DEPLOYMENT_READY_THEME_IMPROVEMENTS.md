@@ -37,9 +37,11 @@ Theme: "What connects this week's words? words changing meaning"
 - ✅ Enhanced contextual prompts (implicit connection)
 - ✅ Lowered similarity threshold (85% → 78%)
 - ✅ Updated console logs to show "Phase 1.5: implicit connection framing"
+- ✅ Fixed UN diamond color logic (100% matches now show gold/green, not orange)
 
 **Files Changed:**
 - `src/utils/semanticSimilarity.ts`
+- `client/src/components/UnPrefix.tsx`
 
 ---
 
