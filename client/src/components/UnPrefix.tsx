@@ -67,39 +67,46 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 
     const { isCorrectGuess, confidencePercentage } = themeGuessData;
     
-    // 🥇 GOLD for perfect 100% match
-    if (isCorrectGuess && confidencePercentage === 100) {
+    // FIXED LOGIC: Check confidence first, THEN isCorrectGuess for override
+    // This ensures 100% always shows gold, and correct answers always show green
+    
+    // 🥇 GOLD for perfect 100% match (whether isCorrectGuess is true or not)
+    if (confidencePercentage === 100) {
       return {
         backgroundColor: '#fef3c7', // Light gold background
         borderColor: '#f59e0b',
         textColor: '#b45309',
         glowColor: '#f59e0b'
       };
-    } else if (isCorrectGuess && confidencePercentage !== null && confidencePercentage >= 85) {
-      // Green for correct/high confidence - SOLID background
+    }
+    
+    // 🟢 GREEN for correct answers OR high confidence (85%+)
+    if (isCorrectGuess || (confidencePercentage !== null && confidencePercentage >= 85)) {
       return {
         backgroundColor: '#f0fdf4', // Light green background (solid)
         borderColor: '#22c55e',
         textColor: '#15803d',
         glowColor: '#22c55e'
       };
-    } else if (confidencePercentage !== null && confidencePercentage >= 70) {
-      // Orange for medium confidence - SOLID background  
+    }
+    
+    // 🟠 ORANGE for medium confidence (70-84%)
+    if (confidencePercentage !== null && confidencePercentage >= 70) {
       return {
         backgroundColor: '#fff7ed', // Light orange background (solid)
         borderColor: '#f97316',
         textColor: '#ea580c',
         glowColor: '#f97316'
       };
-    } else {
-      // Red for low confidence/incorrect - SOLID background
-      return {
-        backgroundColor: '#fef2f2', // Light red background (solid)
-        borderColor: '#ef4444',
-        textColor: '#dc2626',
-        glowColor: '#ef4444'
-      };
     }
+    
+    // 🔴 RED for low confidence/incorrect
+    return {
+      backgroundColor: '#fef2f2', // Light red background (solid)
+      borderColor: '#ef4444',
+      textColor: '#dc2626',
+      glowColor: '#ef4444'
+    };
   };
 
   const colors = getDiamondColors();
