@@ -68,15 +68,16 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     const { isCorrectGuess, confidencePercentage } = themeGuessData;
     
     // FIXED LOGIC: Check confidence first, THEN isCorrectGuess for override
-    // This ensures 100% always shows gold, and correct answers always show green
+    // This ensures 100% always shows diamond blue with glisten effects
     
-    // 🥇 GOLD for perfect 100% match (whether isCorrectGuess is true or not)
+    // 💎 DIAMOND BLUE for perfect 100% match - with glisten effects!
     if (confidencePercentage === 100) {
       return {
-        backgroundColor: '#fef3c7', // Light gold background
-        borderColor: '#f59e0b',
-        textColor: '#b45309',
-        glowColor: '#f59e0b'
+        backgroundColor: '#dbeafe', // Light diamond blue background
+        borderColor: '#3b82f6', // Bright blue border
+        textColor: '#1e40af', // Deep blue text
+        glowColor: '#60a5fa', // Bright blue glow
+        isDiamond: true // Special flag for extra effects
       };
     }
     
@@ -110,6 +111,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   const colors = getDiamondColors();
+  const isPerfectMatch = (colors as any).isDiamond === true;
   
   const containerStyle = {
     width: baseSize,
@@ -132,10 +134,15 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     transform: scaled 
       ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
       : `rotate(${45 + additionalRotation}deg)`,
-    boxShadow: `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
+    // Enhanced diamond effects for perfect matches
+    boxShadow: isPerfectMatch 
+      ? `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`
+      : `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
     transition: 'all 0.3s ease-in-out', // Slightly longer for rotation animation
-    // Add pulsate animation when theme not guessed
-    animation: shouldPulsate ? 'pulsate 2s ease-in-out infinite' : 'none',
+    // Add glisten animation for perfect matches, pulsate for call-to-action
+    animation: isPerfectMatch 
+      ? 'diamondGlisten 2s ease-in-out infinite' 
+      : shouldPulsate ? 'pulsate 2s ease-in-out infinite' : 'none',
     // Add pointer cursor when clickable
     cursor: onClick ? 'pointer' : 'default',
     boxSizing: 'border-box' as const
@@ -157,7 +164,14 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       e.currentTarget.style.transform = scaled 
         ? `rotate(${45 + additionalRotation}deg) scale(0.93)` 
         : `rotate(${45 + additionalRotation}deg) scale(1.03)`;
-      e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}33, 0 0 0 2px ${colors.borderColor}1F`;
+      
+      // Enhanced hover effects for diamond state
+      if (isPerfectMatch) {
+        e.currentTarget.style.boxShadow = `0 0 35px ${colors.glowColor}80, 0 0 70px ${colors.glowColor}50, 0 6px 20px ${colors.borderColor}60, inset 0 0 20px ${colors.glowColor}30`;
+        e.currentTarget.style.filter = 'brightness(1.3)';
+      } else {
+        e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}33, 0 0 0 2px ${colors.borderColor}1F`;
+      }
     }
   };
 
@@ -168,13 +182,20 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       e.currentTarget.style.transform = scaled 
         ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
         : `rotate(${45 + additionalRotation}deg)`;
-      e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`;
+      
+      // Reset to base shadow (diamond animation will continue)
+      if (isPerfectMatch) {
+        e.currentTarget.style.boxShadow = `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`;
+        e.currentTarget.style.filter = 'brightness(1)';
+      } else {
+        e.currentTarget.style.boxShadow = `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`;
+      }
     }
   };
 
   return (
     <>
-      {/* CSS keyframes for pulsate animation */}
+      {/* CSS keyframes for animations */}
       <style>
         {`
           @keyframes pulsate {
@@ -185,6 +206,41 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
             50% {
               opacity: 0.7;
               box-shadow: 0 12px 32px rgba(139, 92, 246, 0.6), 0 0 0 4px rgba(139, 92, 246, 0.5);
+            }
+          }
+          
+          @keyframes diamondGlisten {
+            0%, 100% {
+              box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 
+                          0 0 40px rgba(59, 130, 246, 0.2), 
+                          0 4px 12px rgba(59, 130, 246, 0.25),
+                          inset 0 0 10px rgba(96, 165, 250, 0.15);
+              filter: brightness(1);
+            }
+            25% {
+              box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 
+                          0 0 60px rgba(59, 130, 246, 0.3), 
+                          0 6px 20px rgba(59, 130, 246, 0.4),
+                          inset 0 0 20px rgba(96, 165, 250, 0.3),
+                          inset -5px -5px 15px rgba(255, 255, 255, 0.4);
+              filter: brightness(1.15);
+            }
+            50% {
+              box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), 
+                          0 0 80px rgba(59, 130, 246, 0.4), 
+                          0 8px 24px rgba(59, 130, 246, 0.5),
+                          inset 0 0 25px rgba(96, 165, 250, 0.4),
+                          inset -8px -8px 20px rgba(255, 255, 255, 0.5),
+                          inset 8px 8px 20px rgba(59, 130, 246, 0.2);
+              filter: brightness(1.25);
+            }
+            75% {
+              box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 
+                          0 0 60px rgba(59, 130, 246, 0.3), 
+                          0 6px 20px rgba(59, 130, 246, 0.4),
+                          inset 0 0 20px rgba(96, 165, 250, 0.3),
+                          inset 5px 5px 15px rgba(255, 255, 255, 0.4);
+              filter: brightness(1.15);
             }
           }
         `}
