@@ -205,19 +205,21 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
         textColor = '#1a237e';
         break;
       case 'won':
-        backgroundColor = '#f0fdf4';
+        backgroundColor = '#d1fae5'; // Stronger green for visibility
         emoji = '✅';
-        textColor = '#059669';
+        textColor = '#065f46';
+        borderStyle = '2px solid #10b981';
         break;
       case 'lost':
-        backgroundColor = '#fef2f2';
+        backgroundColor = '#fee2e2'; // Stronger red for visibility
         emoji = '❌';
-        textColor = '#dc2626';
+        textColor = '#991b1b';
+        borderStyle = '2px solid #ef4444';
         cursor = isClickable ? 'pointer' : 'default';
         break;
       case 'available':
-        borderStyle = '2px dashed #3b82f6';
-        backgroundColor = '#f0f9ff';
+        borderStyle = '2px solid #3b82f6';
+        backgroundColor = '#eff6ff';
         textColor = '#1e40af';
         cursor = isClickable ? 'pointer' : 'default';
         break;
@@ -272,7 +274,6 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
       >
         <span>{day}</span>
         {emoji && <span style={{ fontSize: '0.7rem' }}>{emoji}</span>}
-        {state === 'available' && <span style={{ fontSize: '0.6rem', color: '#3b82f6' }}>📚</span>}
       </div>
     );
   };
@@ -454,21 +455,17 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>❌</span>
-              <span>Lost</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>📚</span>
-              <span>Available</span>
+              <span>Lost (click to retry)</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ 
                 width: '16px', 
                 height: '16px', 
-                border: '1px solid #d1d5db', 
+                border: '2px solid #3b82f6', 
                 borderRadius: '3px',
-                opacity: 0.3
+                backgroundColor: '#eff6ff'
               }} />
-              <span>No word</span>
+              <span>Available (click to play)</span>
             </div>
           </div>
           {onSelectArchiveDate && (
@@ -478,7 +475,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               color: '#6b7280',
               fontStyle: 'italic'
             }}>
-              Click any available date (📚) to play from the archive!
+              Click any blue-bordered date to play from the archive!
             </div>
           )}
         </div>
