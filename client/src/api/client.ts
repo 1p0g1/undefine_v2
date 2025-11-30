@@ -271,13 +271,32 @@ export const apiClient = {
     ].filter(Boolean);
 
     if (missingFields.length > 0) {
+      console.error('[submitGuess] Missing fields:', missingFields, request);
       throw new ApiError(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
-    return fetchFromApi<GuessResponse>('/api/guess', {
-      method: 'POST',
-      body: JSON.stringify(request),
+    console.log('[submitGuess] Submitting guess:', {
+      guess: request.guess,
+      gameId: request.gameId,
+      wordId: request.wordId,
+      playerId: request.playerId,
+      hasStartTime: !!request.start_time
     });
+
+    try {
+      const response = await fetchFromApi<GuessResponse>('/api/guess', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
+      console.log('[submitGuess] Success:', {
+        isCorrect: response.isCorrect,
+        isFuzzy: response.isFuzzyMatch
+      });
+      return response;
+    } catch (error) {
+      console.error('[submitGuess] Failed:', error);
+      throw error;
+    }
   },
 
   /**
