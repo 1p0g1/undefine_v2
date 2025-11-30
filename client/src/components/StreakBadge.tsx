@@ -273,7 +273,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         open={showCalendar}
         onClose={() => setShowCalendar(false)}
         playerId={playerId}
-        onSelectArchiveDate={onSelectArchiveDate}
+        // TEMPORARILY DISABLED: Archive play submissions failing
+        // onSelectArchiveDate={onSelectArchiveDate}
       />
     </>
   );
