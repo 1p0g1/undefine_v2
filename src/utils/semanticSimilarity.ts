@@ -100,9 +100,10 @@ async function computeThemeSemanticSimilarity(
   }
   
   // Add contextual framing to improve semantic matching
-  // Explicitly prime AI to recognize synonyms and equivalent terms
-  const contextualGuess = `Synonym or description: ${guess.toLowerCase().trim()}`;
-  const contextualTheme = `Theme or its synonyms: ${theme.toLowerCase().trim()}`;
+  // Frame BOTH as answers to the same implicit question players are answering
+  // This creates symmetric comparison: both are responses to "What connects the words?"
+  const contextualGuess = `What connects this week's words? ${guess.toLowerCase().trim()}`;
+  const contextualTheme = `What connects this week's words? ${theme.toLowerCase().trim()}`;
   
   try {
     const response = await fetch(HF_API_URL, {
@@ -133,7 +134,7 @@ async function computeThemeSemanticSimilarity(
     }
     
     const result = await response.json();
-    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (with synonym-aware prompting)`);
+    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (Phase 1.5: implicit connection framing)`);
     return result[0] || 0;
     
   } catch (error) {
