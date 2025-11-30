@@ -23,8 +23,6 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 }) => {
   // NEW: Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
-  // NEW: Rotation state for animation (additional rotation beyond base 45deg)
-  const [additionalRotation, setAdditionalRotation] = useState(0);
   
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
@@ -130,10 +128,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     position: 'relative' as const,
     flexShrink: 0,
     aspectRatio: '1 / 1' as const,
-    // Transform to diamond shape - base 45 degrees + additional rotation
+    // Transform to diamond shape - base 45 degrees only
     transform: scaled 
-      ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
-      : `rotate(${45 + additionalRotation}deg)`,
+      ? `rotate(45deg) scale(0.9)` 
+      : `rotate(45deg)`,
     // Enhanced diamond effects for perfect matches
     boxShadow: isPerfectMatch 
       ? `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`
@@ -149,9 +147,6 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   const handleClick = () => {
-    // Add 45-degree clockwise rotation animation on click
-    setAdditionalRotation(prev => prev + 45);
-    
     if (onClick) {
       onClick();
     }
@@ -160,10 +155,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     setShowTooltip(true); // Show tooltip on hover
     if (onClick) {
-      // Use current rotation state for hover effects
+      // Hover effects with scale only (no rotation change)
       e.currentTarget.style.transform = scaled 
-        ? `rotate(${45 + additionalRotation}deg) scale(0.93)` 
-        : `rotate(${45 + additionalRotation}deg) scale(1.03)`;
+        ? `rotate(45deg) scale(0.93)` 
+        : `rotate(45deg) scale(1.03)`;
       
       // Enhanced hover effects for diamond state
       if (isPerfectMatch) {
@@ -178,10 +173,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     setShowTooltip(false); // Hide tooltip on leave
     if (onClick) {
-      // Reset to current rotation state
+      // Reset to base transform (no rotation change)
       e.currentTarget.style.transform = scaled 
-        ? `rotate(${45 + additionalRotation}deg) scale(0.9)` 
-        : `rotate(${45 + additionalRotation}deg)`;
+        ? `rotate(45deg) scale(0.9)` 
+        : `rotate(45deg)`;
       
       // Reset to base shadow (diamond animation will continue)
       if (isPerfectMatch) {
@@ -257,14 +252,13 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
         <span style={{ 
           position: 'relative', 
           zIndex: 2,
-          // Counter-rotate to keep text upright: base -45deg minus additional rotation
-          transform: `rotate(${-45 - additionalRotation}deg) translateX(-0.04em)`,
+          // Counter-rotate to keep text upright: base -45deg only
+          transform: `rotate(-45deg) translateX(-0.04em)`,
           marginLeft: '0.08em', // Reduced margin for mobile
           lineHeight: '0.9',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'transform 0.3s ease-in-out', // Smooth text rotation
           ...textStyling // Apply dynamic text styling here
         }}>
           {displayText}
