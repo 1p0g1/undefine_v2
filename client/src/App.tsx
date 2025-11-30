@@ -26,7 +26,8 @@ function App() {
   const {
     gameState,
     startNewGame,
-    forceNewGame, 
+    forceNewGame,
+    startArchiveGame, // NEW: Archive game support
     submitGuess,
     guessStatus,
     fuzzyMatchCount,
@@ -132,23 +133,14 @@ function App() {
   };
 
   // Handle archive play selection
-  const handleArchivePlaySelection = async (date: string) => {
+  const handleArchivePlaySelection = useCallback(async (date: string) => {
     try {
       console.log('[App] Starting archive play for date:', date);
       
-      // Import gameService directly
-      const { gameService } = await import('./services/GameService');
+      // Use the startArchiveGame method from useGame hook
+      await startArchiveGame(date);
       
-      // Start archive game
-      const archiveState = await gameService.startArchiveGame(date);
-      
-      // Update game state
-      setGameState(archiveState);
-      setIsRestoredGame(false);
-      setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
-      setFuzzyMatchCount(0);
-      setShowLeaderboard(false);
-      setScoreDetails(null);
+      // Set game as started
       setGameStarted(true);
       
       // Show toast notification
@@ -163,7 +155,7 @@ function App() {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     }
-  };
+  }, [startArchiveGame]);
 
   useEffect(() => {
     loadThemeData();

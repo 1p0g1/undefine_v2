@@ -135,6 +135,24 @@ const useGame = () => {
     }
   }, []);
 
+  // Add method for starting archive game
+  const startArchiveGame = useCallback(async (date: string) => {
+    try {
+      console.log('[useGame] Starting archive game for date:', date);
+      const archiveState = await gameService.startArchiveGame(date);
+      setGameState(archiveState);
+      setIsRestoredGame(false);
+      setGuessStatus(['empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+      setFuzzyMatchCount(0);
+      setShowLeaderboard(false);
+      setScoreDetails(null);
+      console.log('[useGame] Archive game started successfully');
+    } catch (error) {
+      console.error('[useGame] Failed to start archive game:', error);
+      throw error;
+    }
+  }, []);
+
   const submitGuess = useCallback(
     async (guess: string) => {
       try {
@@ -187,6 +205,7 @@ const useGame = () => {
     gameState,
     startNewGame,
     forceNewGame,
+    startArchiveGame, // NEW: Archive game support
     submitGuess,
     guessStatus,
     fuzzyMatchCount,

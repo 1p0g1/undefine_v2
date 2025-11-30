@@ -79,6 +79,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
       setHistory(data.history || []);
       
       console.log(`[StreakCalendarModal] Loaded ${data.history?.length || 0} history records`);
+      console.log('[StreakCalendarModal] Sample history data:', data.history?.slice(0, 3));
     } catch (error) {
       console.error('[StreakCalendarModal] Failed to load play history:', error);
       
@@ -165,7 +166,12 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
     // Check if played
     const dayData = getDayData(dateString);
     if (dayData?.played) {
-      return dayData.won ? 'won' : 'lost';
+      const state = dayData.won ? 'won' : 'lost';
+      // Debug logging for first few dates
+      if (dateString.endsWith('-01') || dateString.endsWith('-15')) {
+        console.log('[getDateState] Date', dateString, ':', state, dayData);
+      }
+      return state;
     }
     
     // Check if word exists for this date
