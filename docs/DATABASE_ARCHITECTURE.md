@@ -311,7 +311,8 @@ These tables have multiple FKs pointing to the same column - should be consolida
 1. **`game_sessions.word_id`**: 2 FKs with different ON DELETE behavior
    - `fk_game_sessions_word` → NO ACTION
    - `fk_word_id` → CASCADE
-   - **Recommend**: Keep CASCADE, drop NO ACTION
+   - **Note**: With both present, deletes are effectively **NO ACTION** (the NO ACTION FK blocks CASCADE).
+   - **Cleanup approach (preserve behavior)**: Keep NO ACTION, drop CASCADE.
 
 2. **`leaderboard_summary.player_id`**: 4 FKs!
    - `fk_leaderboard_player_to_players` → NO ACTION
@@ -319,6 +320,11 @@ These tables have multiple FKs pointing to the same column - should be consolida
    - `leaderboard_summary_player_id_fkey_temp` → SET NULL
    - `leaderboard_summary_player_id_to_players` → NO ACTION
    - **Recommend**: Keep one with NO ACTION, drop the rest
+
+### Cleanup Migration (Recommended)
+
+To standardize constraint hygiene without changing live gameplay behavior, apply:
+- `supabase/migrations/20251219000002_cleanup_duplicate_foreign_keys.sql`
 
 ---
 
