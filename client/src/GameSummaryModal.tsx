@@ -761,17 +761,18 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                               textColor = '#fff';
                               borderColor = '#22c55e';
                             } else {
-                              // Previous guess boxes
-                              // Distribute fuzzy matches among the previous guesses
-                              // First fuzzy_matches boxes are orange, rest are red
+                              // Previous guess boxes (wrong guesses before winning)
+                              // Fuzzy matches should be at the END (closest to winning guess)
+                              // E.g., 4 guesses with 1 fuzzy: D=red, E=red, F=orange, I=green
                               const fuzzyCount = entry.fuzzy_matches || 0;
-                              if (idx < fuzzyCount) {
-                                // Orange (fuzzy match)
+                              const fuzzyStartIdx = entry.guesses_used - 1 - fuzzyCount;
+                              if (idx >= fuzzyStartIdx) {
+                                // Orange (fuzzy match - close but not exact)
                                 bgColor = '#f97316';
                                 textColor = '#fff';
                                 borderColor = '#f97316';
                               } else {
-                                // Red (wrong)
+                                // Red (wrong - not close)
                                 bgColor = '#ef4444';
                                 textColor = '#fff';
                                 borderColor = '#ef4444';
