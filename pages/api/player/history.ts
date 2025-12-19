@@ -8,26 +8,33 @@ const supabase = createClient(
 );
 
 // Define proper types for the Supabase response
-interface LeaderboardWithWord {
-  date: string;
-  rank: number;
-  was_top_10: boolean;
-  best_time: number;
-  guesses_used: number;
+interface GameSessionHistory {
+  id: string;
   word_id: string;
+  is_complete: boolean;
+  is_won: boolean;
+  is_archive_play: boolean;
+  game_date: string;
+  end_time: string;
+  guesses: string[];
   words: {
     word: string;
     date: string;
   } | null;
 }
 
+interface LeaderboardEntry {
+  date: string;
+  rank: number;
+  guesses_used: number;
+  best_time: number;
+}
+
 export default withCors(async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // 🔧 FIX: Accept GET requests (not POST) since calendar modal uses GET
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 🔧 FIX: Get parameters from query string (not request body)
   const { player_id, months = 2 } = req.query;
 
   if (!player_id) {
@@ -37,54 +44,95 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
   try {
     console.log('[/api/player/history] Fetching play history for player:', player_id);
 
-    // Calculate date range (e.g., last 2 months)
+    // Calculate date range
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(endDate.getMonth() - parseInt(months as string));
 
-    // Get leaderboard data for the player within date range
-    const { data: leaderboardData, error: leaderboardError } = await supabase
-      .from('leaderboard_summary')
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    // Get ALL completed game sessions (both wins AND losses)
+    // This is the source of truth for play history
+    const { data: gameSessionData, error: sessionError } = await supabase
+      .from('game_sessions')
       .select(`
-        date,
-        rank,
-        was_top_10,
-        best_time,
-        guesses_used,
+        id,
         word_id,
+        is_complete,
+        is_won,
+        is_archive_play,
+        game_date,
+        end_time,
+        guesses,
         words (
           word,
           date
         )
       `)
       .eq('player_id', player_id)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: true }) as { data: LeaderboardWithWord[] | null, error: any };
+      .eq('is_complete', true)
+      .eq('is_archive_play', false)  // Only show live plays in history
+      .gte('game_date', startDateStr)
+      .lte('game_date', endDateStr)
+      .order('game_date', { ascending: true }) as { data: GameSessionHistory[] | null, error: any };
 
-    if (leaderboardError) {
-      console.error('[/api/player/history] Error fetching leaderboard data:', leaderboardError);
+    if (sessionError) {
+      console.error('[/api/player/history] Error fetching game sessions:', sessionError);
       return res.status(500).json({ error: 'Failed to fetch play history' });
     }
 
-    // Transform data into the format expected by the calendar
-    const history = leaderboardData?.map(entry => ({
-      date: entry.date,
-      played: true,
-      won: true, // FIXED: All leaderboard_summary entries are wins (completed games)
-      rank: entry.rank,
-      guesses: entry.guesses_used,
-      time: entry.best_time,
-      word: entry.words?.word || 'Unknown'
-    })) || [];
+    // Also get leaderboard data for ranks (wins only)
+    const { data: leaderboardData, error: leaderboardError } = await supabase
+      .from('leaderboard_summary')
+      .select('date, rank, guesses_used, best_time')
+      .eq('player_id', player_id)
+      .gte('date', startDateStr)
+      .lte('date', endDateStr) as { data: LeaderboardEntry[] | null, error: any };
 
-    console.log(`[/api/player/history] Found ${history.length} play records for player ${player_id}`);
+    if (leaderboardError) {
+      console.warn('[/api/player/history] Warning fetching leaderboard data:', leaderboardError);
+      // Continue without rank data
+    }
+
+    // Create a map of dates to ranks
+    const rankMap = new Map<string, number>();
+    leaderboardData?.forEach(entry => {
+      rankMap.set(entry.date, entry.rank);
+    });
+
+    // Deduplicate by game_date (keep most recent session per date)
+    const dateMap = new Map<string, GameSessionHistory>();
+    gameSessionData?.forEach(session => {
+      const date = session.game_date || session.words?.date;
+      if (date) {
+        const existing = dateMap.get(date);
+        if (!existing || new Date(session.end_time) > new Date(existing.end_time)) {
+          dateMap.set(date, session);
+        }
+      }
+    });
+
+    // Transform data into the format expected by the calendar
+    const history = Array.from(dateMap.entries()).map(([date, session]) => ({
+      date,
+      played: true,
+      won: session.is_won,  // FIXED: Now correctly reports wins AND losses
+      rank: session.is_won ? rankMap.get(date) : undefined,
+      guesses: session.guesses?.length || 0,
+      word: session.words?.word || 'Unknown'
+    }));
+
+    // Sort by date
+    history.sort((a, b) => a.date.localeCompare(b.date));
+
+    console.log(`[/api/player/history] Found ${history.length} play records (${history.filter(h => h.won).length} wins, ${history.filter(h => !h.won).length} losses)`);
 
     return res.status(200).json({
       history,
       dateRange: {
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
+        start: startDateStr,
+        end: endDateStr
       }
     });
 
