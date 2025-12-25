@@ -40,6 +40,8 @@ interface ThemeGuessModalProps {
   open: boolean;
   onClose: () => void;
   gameId: string;
+  gameDate?: string;
+  isArchivePlay?: boolean;
   gameComplete?: boolean; // NEW: To detect when game is finished for call-to-action
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
@@ -52,6 +54,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   open, 
   onClose, 
   gameId,
+  gameDate,
+  isArchivePlay = false,
   gameComplete = false, // NEW: Default to false
   onThemeDataUpdate
 }) => {
@@ -75,6 +79,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     themeStatus: ThemeStatus | null;
     themeStats: ThemeStats | null;
     timestamp: number;
+    contextDate: string | null;
   } | null>(null);
 
   // Theme data state for UN diamond coloring
@@ -116,7 +121,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       
       // Use pre-loaded data if available and recent (within 2 minutes)
       const now = Date.now();
-      if (preloadedData && (now - preloadedData.timestamp < 120000)) {
+      const preloadedContextDate = preloadedData?.contextDate ?? null;
+      const effectiveContextDate = gameDate ?? null;
+      const isPreloadedForThisContext = preloadedContextDate === effectiveContextDate;
+
+      if (preloadedData && (now - preloadedData.timestamp < 120000) && isPreloadedForThisContext) {
         console.log('[ThemeGuessModal] Using pre-loaded theme data');
         setThemeStatus(preloadedData.themeStatus);
         setThemeStats(preloadedData.themeStats);
@@ -141,7 +150,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       }
       
       // Use cached data if available and recent (within 2 minutes)
-      if (dataCache && (now - dataCache.timestamp < 120000)) {
+      if (dataCache && (now - dataCache.timestamp < 120000) && dataCache.contextDate === (gameDate ?? null)) {
         console.log('[ThemeGuessModal] Using cached theme data');
         setThemeStatus(dataCache.themeStatus);
         setThemeStats(dataCache.themeStats);
@@ -161,7 +170,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       loadThemeData();
       }
     }
-  }, [open, playerId]);
+  }, [open, playerId, gameDate, isArchivePlay]);
 
   const loadThemeData = async () => {
     if (!playerId) return;
@@ -170,7 +179,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     setError(null);
     try {
       const [statusResult, statsResult] = await Promise.all([
-        apiClient.getThemeStatus(playerId),
+        apiClient.getThemeStatus(playerId, gameDate),
         apiClient.getThemeStats(playerId)
       ]);
 
@@ -188,8 +197,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       const status = statusResult as ThemeStatus;
       
       // If player hasn't completed any words this week, show a friendly message
-      if (status.hasActiveTheme && status.weeklyThemedWords.length === 0) {
-        setError('Complete at least one word this week to unlock theme guessing!');
+      if (status.hasActiveTheme && status.progress.completedWords === 0) {
+        setError(isArchivePlay ? 'Win at least one word in this archive week to unlock theme guessing!' : 'Complete at least one word this week to unlock theme guessing!');
       } else {
         setThemeStatus(status);
         setThemeStats(statsResult as ThemeStats);
@@ -212,7 +221,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setDataCache({
           themeStatus: status,
           themeStats: statsResult as ThemeStats,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          contextDate: gameDate ?? null
         });
       }
     } catch (error) {
@@ -256,7 +266,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       const response = await apiClient.submitThemeGuess({
         player_id: playerId,
         guess: guess.trim(),
-        gameId
+        gameId,
+        gameDate
       });
 
       console.log('[ThemeGuessModal] Theme guess response:', response);

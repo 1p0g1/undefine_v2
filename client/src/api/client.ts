@@ -322,6 +322,7 @@ export const apiClient = {
     player_id: string;
     guess: string;
     gameId: string;
+    gameDate?: string;
   }): Promise<{
     isCorrect: boolean;
     guess: string;
@@ -360,7 +361,7 @@ export const apiClient = {
    * @param playerId The player ID
    * @returns Promise with the theme status response
    */
-  async getThemeStatus(playerId: string): Promise<{
+  async getThemeStatus(playerId: string, gameDate?: string): Promise<{
     currentTheme?: string | null;
     hasActiveTheme: boolean;
     progress: {
@@ -383,7 +384,11 @@ export const apiClient = {
       wasWon: boolean;
     }>;
   }> {
-    return fetchFromApi(`/api/theme-status?player_id=${playerId}`);
+    const params = new URLSearchParams({ player_id: playerId });
+    if (gameDate) {
+      params.append('date', gameDate);
+    }
+    return fetchFromApi(`/api/theme-status?${params.toString()}`);
   },
 
   /**

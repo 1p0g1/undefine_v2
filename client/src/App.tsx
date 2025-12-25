@@ -1293,6 +1293,8 @@ function App() {
         open={showThemeModal}
         onClose={() => handleCloseThemeModal()}
         gameId={gameState.gameId}
+        gameDate={gameState.gameDate}
+        isArchivePlay={gameState.isArchivePlay === true}
         gameComplete={gameState.isComplete}
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />

@@ -17,7 +17,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '../../src/env.server';
 import { withCors } from '@/lib/withCors';
 import { 
-  getCurrentTheme, 
+  getThemeForDate,
   getThemeProgress, 
   isThemeGuessCorrect, 
   getPlayerWeeklyThemedWords 
@@ -55,6 +55,7 @@ export default withCors(async function handler(
 
   try {
     const playerId = (req.headers['player-id'] as string) ?? req.query.player_id as string;
+    const requestedDate = req.query.date as string | undefined;
     
     if (!playerId) {
       return res.status(400).json({ error: 'Missing player_id' });
@@ -62,9 +63,12 @@ export default withCors(async function handler(
 
     console.log('[/api/theme-status] Getting theme status for player:', playerId);
 
-    // Get current theme
-    const currentTheme = await getCurrentTheme();
-    console.log('[/api/theme-status] Current theme from getCurrentTheme():', currentTheme);
+    const today = new Date().toISOString().split('T')[0];
+    const themeContextDate = requestedDate || today;
+
+    // Get theme for requested date's week (archive-safe)
+    const currentTheme = await getThemeForDate(themeContextDate);
+    console.log('[/api/theme-status] Theme context:', { requestedDate, today, themeContextDate, currentTheme });
     
     if (!currentTheme) {
       console.log('[/api/theme-status] No current theme found, returning inactive status');
@@ -83,10 +87,10 @@ export default withCors(async function handler(
     }
 
     // Get theme progress for player
-    const progress = await getThemeProgress(playerId, currentTheme);
+    const progress = await getThemeProgress(playerId, currentTheme, themeContextDate);
 
     // Get player's completed themed words from current week
-    const weeklyThemedWords = await getPlayerWeeklyThemedWords(playerId, currentTheme);
+    const weeklyThemedWords = await getPlayerWeeklyThemedWords(playerId, currentTheme, themeContextDate);
 
     // Check if player's guess was correct (if they made one)
     let isCorrectGuess = false;
@@ -112,6 +116,7 @@ export default withCors(async function handler(
     console.log('[/api/theme-status] Theme status:', {
       playerId,
       currentTheme,
+      themeContextDate,
       hasGuess: !!progress.themeGuess,
       isCorrectGuess,
       progress: progress,

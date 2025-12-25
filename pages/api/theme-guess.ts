@@ -25,7 +25,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '../../src/env.server';
 import { withCors } from '@/lib/withCors';
-import { getCurrentTheme, submitThemeAttempt, getThemeProgress, isThemeGuessCorrect, getAllWeeklyThemedWords } from '../../src/game/theme';
+import { getThemeForDate, submitThemeAttempt, getThemeProgress, isThemeGuessCorrect, getAllWeeklyThemedWords } from '../../src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -33,6 +33,7 @@ interface ThemeGuessRequest {
   player_id: string;
   guess: string;
   gameId: string;
+  gameDate?: string;
 }
 
 interface ThemeGuessResponse {
@@ -91,7 +92,15 @@ export default withCors(async function handler(
     // Validate game session exists and belongs to player
     const { data: gameSession, error: sessionError } = await supabase
       .from('game_sessions')
-      .select('id, player_id, word_id, theme_guess')
+      .select(`
+        id,
+        player_id,
+        word_id,
+        theme_guess,
+        is_archive_play,
+        game_date,
+        words ( date )
+      `)
       .eq('id', gameId)
       .eq('player_id', player_id)
       .single();
@@ -112,8 +121,15 @@ export default withCors(async function handler(
       });
     }
 
-    // Get current theme
-    const currentTheme = await getCurrentTheme();
+    const today = new Date().toISOString().split('T')[0];
+    const themeContextDate =
+      (gameSession as any)?.game_date ||
+      (gameSession as any)?.words?.date ||
+      today;
+    const isArchiveAttempt = (gameSession as any)?.is_archive_play === true;
+
+    // Get theme for this game’s week (archive-safe)
+    const currentTheme = await getThemeForDate(String(themeContextDate));
     if (!currentTheme) {
       return res.status(400).json({ 
         error: 'No active theme for this week' 
@@ -131,7 +147,7 @@ export default withCors(async function handler(
     console.log('[/api/theme-guess] Fuzzy matching result:', fuzzyMatchResult);
 
     // Submit theme attempt (handles validation and daily constraint)
-    const attemptResult = await submitThemeAttempt(player_id, currentTheme, guess);
+    const attemptResult = await submitThemeAttempt(player_id, currentTheme, guess, String(themeContextDate), isArchiveAttempt);
 
     if (!attemptResult.success) {
       if (attemptResult.alreadyGuessedToday) {
@@ -147,7 +163,7 @@ export default withCors(async function handler(
     }
 
     // Get updated theme progress
-    const progress = await getThemeProgress(player_id, currentTheme);
+    const progress = await getThemeProgress(player_id, currentTheme, String(themeContextDate));
 
     console.log('[/api/theme-guess] Theme guess processed:', {
       isCorrect: attemptResult.isCorrect,
@@ -175,8 +191,8 @@ export default withCors(async function handler(
     }
 
     // NEW: Check if this is a Sunday failure (incorrect guess on Sunday)
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday
+    // For archive contexts, we treat "Sunday" as the game’s date day-of-week.
+    const dayOfWeek = new Date(String(themeContextDate)).getDay(); // 0 = Sunday
     const isSunday = dayOfWeek === 0;
     
     if (!attemptResult.isCorrect && isSunday) {
@@ -185,7 +201,7 @@ export default withCors(async function handler(
       response.actualTheme = currentTheme; // Reveal theme on Sunday failure
       
       // Get all weekly words (completed and missed) for Sunday revelation
-      const weeklyWords = await getAllWeeklyThemedWords(player_id, currentTheme);
+      const weeklyWords = await getAllWeeklyThemedWords(player_id, currentTheme, String(themeContextDate));
       response.weeklyWords = weeklyWords;
       
       console.log('[/api/theme-guess] Sunday failure revelation triggered:', {

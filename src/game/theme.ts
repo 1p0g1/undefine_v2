@@ -170,7 +170,9 @@ export async function getCurrentTheme(): Promise<string | null> {
 export async function submitThemeAttempt(
   playerId: string,
   theme: string,
-  guess: string
+  guess: string,
+  contextDate?: string,
+  isArchiveAttempt?: boolean
 ): Promise<{
   success: boolean;
   isCorrect: boolean;
@@ -179,14 +181,20 @@ export async function submitThemeAttempt(
   totalGuesses: number;
 }> {
   try {
-    // Check if player already guessed today
     const today = new Date().toISOString().split('T')[0];
+    const effectiveContextDate = contextDate || today;
+    const derivedIsArchiveAttempt = isArchiveAttempt ?? (effectiveContextDate !== today);
+    const weekStart = getWeekStart(new Date(effectiveContextDate)).toISOString().split('T')[0];
+
+    // Check if player already guessed today
     const { data: existingAttempt } = await supabase
       .from('theme_attempts')
       .select('id')
       .eq('player_id', playerId)
       .eq('theme', theme)
       .eq('attempt_date', today)
+      .eq('is_archive_attempt', derivedIsArchiveAttempt)
+      .eq('week_start', weekStart)
       .single();
 
     if (existingAttempt) {
@@ -200,7 +208,7 @@ export async function submitThemeAttempt(
     }
 
     // Get statistics at time of guess
-    const progress = await getThemeProgress(playerId, theme);
+    const progress = await getThemeProgress(playerId, theme, effectiveContextDate);
     const { data: totalGuessStats } = await supabase
       .from('game_sessions')
       .select('guesses')
@@ -233,6 +241,8 @@ export async function submitThemeAttempt(
         guess: guess.trim(),
         is_correct: isCorrect,
         attempt_date: today,
+        week_start: weekStart,
+        is_archive_attempt: derivedIsArchiveAttempt,
         words_completed_when_guessed: progress.completedWords,
         total_word_guesses: totalWordGuesses,
         // Add similarity tracking data
@@ -328,7 +338,7 @@ export async function getPlayerThemeStats(playerId: string): Promise<{
 /**
  * Get theme progress for a player
  */
-export async function getThemeProgress(playerId: string, theme: string): Promise<{
+export async function getThemeProgress(playerId: string, theme: string, contextDate?: string): Promise<{
   totalWords: number;
   completedWords: number;
   themeGuess: string | null;
@@ -339,10 +349,30 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
   similarityScore?: number | null;
   confidencePercentage?: number | null;
   matchingMethod?: string | null;
+}>;
+
+export async function getThemeProgress(
+  playerId: string,
+  theme: string,
+  contextDate?: string
+): Promise<{
+  totalWords: number;
+  completedWords: number;
+  themeGuess: string | null;
+  canGuessTheme: boolean;
+  hasGuessedToday: boolean;
+  isCorrectGuess: boolean;
+  similarityScore?: number | null;
+  confidencePercentage?: number | null;
+  matchingMethod?: string | null;
 }> {
   try {
-    // Get current week boundaries
-    const { monday, sunday } = getThemeWeekBoundaries();
+    const today = new Date().toISOString().split('T')[0];
+    const effectiveContextDate = contextDate || today;
+    const isArchiveContext = effectiveContextDate !== today;
+    const contextDateObj = new Date(effectiveContextDate);
+    const { monday, sunday } = getThemeWeekBoundaries(contextDateObj);
+    const weekStart = monday.toISOString().split('T')[0];
     
     // Get themed words for this theme from CURRENT WEEK ONLY (not all-time)
     const { data: themeWords, error: wordsError } = await supabase
@@ -375,6 +405,7 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       .from('game_sessions')
       .select('word_id, is_complete, is_won, is_archive_play')
       .eq('player_id', playerId)
+      .eq('is_archive_play', isArchiveContext)
       .in('word_id', wordIds);
 
     if (error) {
@@ -396,16 +427,16 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     // "completedWords" should mean the player actually guessed the word (won),
     // not merely that the session ended (a loss still has is_complete=true).
     const completedWinningSessions =
-      sessions?.filter(s => s.is_complete && s.is_won && s.is_archive_play !== true) || [];
+      sessions?.filter(s => s.is_complete && s.is_won) || [];
 
-    // Get all theme attempts for this week, ordered by date (most recent first)
+    // Get all theme attempts for this theme-week context (archive-safe)
     const { data: weeklyAttempts, error: attemptsError } = await supabase
       .from('theme_attempts')
-      .select('guess, is_correct, similarity_score, confidence_percentage, matching_method, attempt_date')
+      .select('guess, is_correct, similarity_score, confidence_percentage, matching_method, attempt_date, week_start, is_archive_attempt')
       .eq('player_id', playerId)
       .eq('theme', theme)
-      .gte('attempt_date', monday.toISOString().split('T')[0])
-      .lte('attempt_date', sunday.toISOString().split('T')[0])
+      .eq('week_start', weekStart)
+      .eq('is_archive_attempt', isArchiveContext)
       .order('attempt_date', { ascending: false });
 
     if (attemptsError && attemptsError.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -425,21 +456,22 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       }
     }
 
-    // Check today's attempt specifically for canGuessTheme logic
-    const today = new Date().toISOString().split('T')[0];
+    // Check today's attempt specifically for canGuessTheme logic (context-scoped)
     const { data: todayAttempt, error: attemptError } = await supabase
       .from('theme_attempts')
       .select('guess')
       .eq('player_id', playerId)
       .eq('theme', theme)
       .eq('attempt_date', today)
+      .eq('week_start', weekStart)
+      .eq('is_archive_attempt', isArchiveContext)
       .single();
 
     if (attemptError && attemptError.code !== 'PGRST116') { // PGRST116 = no rows found
       console.error('[getThemeProgress] Theme attempt error:', attemptError);
     }
 
-    // Can guess theme if won at least one word this week and haven't guessed today
+    // Can guess theme if won at least one word in this theme-week context and haven't guessed today
     const hasWonWordThisWeek = completedWinningSessions.length > 0;
 
     return {
@@ -483,7 +515,19 @@ function getThemeWeekBoundaries(date: Date = new Date()) {
  * Get ALL themed words for current week (both completed and missed by player)
  * Used for Sunday revelation to show complete week overview
  */
-export async function getAllWeeklyThemedWords(playerId: string, theme: string): Promise<Array<{
+export async function getAllWeeklyThemedWords(playerId: string, theme: string, contextDate?: string): Promise<Array<{
+  id: string;
+  word: string;
+  date: string;
+  completedOn: string | null;
+  isCompleted: boolean;
+}>>;
+
+export async function getAllWeeklyThemedWords(
+  playerId: string,
+  theme: string,
+  contextDate?: string
+): Promise<Array<{
   id: string;
   word: string;
   date: string;
@@ -491,7 +535,10 @@ export async function getAllWeeklyThemedWords(playerId: string, theme: string): 
   isCompleted: boolean;
 }>> {
   try {
-    const { monday, sunday } = getThemeWeekBoundaries();
+    const today = new Date().toISOString().split('T')[0];
+    const effectiveContextDate = contextDate || today;
+    const isArchiveContext = effectiveContextDate !== today;
+    const { monday, sunday } = getThemeWeekBoundaries(new Date(effectiveContextDate));
     
     console.log('[getAllWeeklyThemedWords] Getting all weekly themed words for player:', {
       playerId,
@@ -527,7 +574,7 @@ export async function getAllWeeklyThemedWords(playerId: string, theme: string): 
       .select('word_id, created_at, is_won, is_archive_play')
       .eq('player_id', playerId)
       .eq('is_complete', true)
-      .eq('is_archive_play', false)
+      .eq('is_archive_play', isArchiveContext)
       .in('word_id', wordIds);
 
     if (sessionsError) {
@@ -564,7 +611,19 @@ export async function getAllWeeklyThemedWords(playerId: string, theme: string): 
  * Get player's completed themed words for current week only
  * This is the core logic for weekly words display feature
  */
-export async function getPlayerWeeklyThemedWords(playerId: string, theme: string): Promise<Array<{
+export async function getPlayerWeeklyThemedWords(playerId: string, theme: string, contextDate?: string): Promise<Array<{
+  id: string;
+  word: string;
+  date: string;
+  completedOn: string;
+  wasWon: boolean;
+}>>;
+
+export async function getPlayerWeeklyThemedWords(
+  playerId: string,
+  theme: string,
+  contextDate?: string
+): Promise<Array<{
   id: string;
   word: string;
   date: string;
@@ -572,7 +631,10 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
   wasWon: boolean;
 }>> {
   try {
-    const { monday, sunday } = getThemeWeekBoundaries();
+    const today = new Date().toISOString().split('T')[0];
+    const effectiveContextDate = contextDate || today;
+    const isArchiveContext = effectiveContextDate !== today;
+    const { monday, sunday } = getThemeWeekBoundaries(new Date(effectiveContextDate));
     
     console.log('[getPlayerWeeklyThemedWords] Getting weekly themed words for player:', {
       playerId,
@@ -609,7 +671,7 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
       .select('word_id, created_at, end_time, is_won, is_archive_play')
       .eq('player_id', playerId)
       .eq('is_complete', true)
-      .eq('is_archive_play', false)
+      .eq('is_archive_play', isArchiveContext)
       .in('word_id', wordIds);
 
     if (sessionsError) {

@@ -143,7 +143,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         const playerId = getPlayerId();
         if (!playerId) return;
         
-        const themeStatus = await apiClient.getThemeStatus(playerId);
+        const themeStatus = await apiClient.getThemeStatus(playerId, gameDate);
         if (themeStatus && themeStatus.progress) {
           setThemeGuessData({
             hasGuessedToday: themeStatus.progress.hasGuessedToday,
@@ -170,7 +170,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
       
       // Load theme data in background
       const [statusResult, statsResult] = await Promise.all([
-        apiClient.getThemeStatus(playerId),
+        apiClient.getThemeStatus(playerId, gameDate),
         apiClient.getThemeStats(playerId)
       ]);
       
@@ -182,7 +182,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         (window as any).__themeDataCache = {
           themeStatus: statusResult,
           themeStats: statsResult,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          contextDate: gameDate || null
         };
       }
     } catch (error) {
