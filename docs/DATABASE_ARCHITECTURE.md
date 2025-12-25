@@ -1,7 +1,7 @@
 # UnDEFINE Database Architecture
 
 > **🔴 SINGLE SOURCE OF TRUTH** - This document supersedes all other database references.  
-> Last Updated: 2024-12-19  
+> Last Updated: 2025-12-25  
 > Source: Supabase Dashboard exports
 
 ---
@@ -79,7 +79,6 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 **Primary Key**: `game_sessions_pkey` on `(id)`  
 **Foreign Keys**:
 - `fk_game_sessions_word` → `words(id)` ON DELETE NO ACTION
-- `fk_word_id` → `words(id)` ON DELETE CASCADE ⚠️ *DUPLICATE FK*
 
 **Check Constraints**:
 - `valid_game_state`: `state IN ('active', 'completed')`
@@ -131,9 +130,6 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 
 **Foreign Keys**:
 - `fk_leaderboard_player_to_players` → `players(id)` ON DELETE NO ACTION
-- `fk_leaderboard_summary_player_id_to_players` → `players(id)` ON DELETE NO ACTION ⚠️ *DUPLICATE*
-- `leaderboard_summary_player_id_fkey_temp` → `players(id)` ON DELETE SET NULL ⚠️ *DUPLICATE*
-- `leaderboard_summary_player_id_to_players` → `players(id)` ON DELETE NO ACTION ⚠️ *DUPLICATE*
 - `leaderboard_summary_word_id_fkey` → `words(id)` ON DELETE CASCADE
 
 **Note**: Only contains WINNING games. Updated by trigger on `game_sessions`.
@@ -282,11 +278,7 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 |-------|---------|--------|------------|-----------|
 | `daily_leaderboard_snapshots` | `daily_leaderboard_snapshots_word_id_fkey` | `word_id` | `words(id)` | CASCADE |
 | `game_sessions` | `fk_game_sessions_word` | `word_id` | `words(id)` | NO ACTION |
-| `game_sessions` | `fk_word_id` | `word_id` | `words(id)` | CASCADE |
 | `leaderboard_summary` | `fk_leaderboard_player_to_players` | `player_id` | `players(id)` | NO ACTION |
-| `leaderboard_summary` | `fk_leaderboard_summary_player_id_to_players` | `player_id` | `players(id)` | NO ACTION |
-| `leaderboard_summary` | `leaderboard_summary_player_id_fkey_temp` | `player_id` | `players(id)` | SET NULL |
-| `leaderboard_summary` | `leaderboard_summary_player_id_to_players` | `player_id` | `players(id)` | NO ACTION |
 | `leaderboard_summary` | `leaderboard_summary_word_id_fkey` | `word_id` | `words(id)` | CASCADE |
 | `player_streaks` | `player_streaks_player_id_fkey` | `player_id` | `players(id)` | CASCADE |
 | `scores` | `fk_scores_game_session` | `game_session_id` | `game_sessions(id)` | NO ACTION |
@@ -310,21 +302,22 @@ These tables have multiple FKs pointing to the same column - should be consolida
 
 1. **`game_sessions.word_id`**: 2 FKs with different ON DELETE behavior
    - `fk_game_sessions_word` → NO ACTION
-   - `fk_word_id` → CASCADE
-   - **Note**: With both present, deletes are effectively **NO ACTION** (the NO ACTION FK blocks CASCADE).
-   - **Cleanup approach (preserve behavior)**: Keep NO ACTION, drop CASCADE.
+   - **Status**: ✅ Cleaned up (duplicate removed; NO ACTION preserved)
 
 2. **`leaderboard_summary.player_id`**: 4 FKs!
    - `fk_leaderboard_player_to_players` → NO ACTION
-   - `fk_leaderboard_summary_player_id_to_players` → NO ACTION  
-   - `leaderboard_summary_player_id_fkey_temp` → SET NULL
-   - `leaderboard_summary_player_id_to_players` → NO ACTION
-   - **Recommend**: Keep one with NO ACTION, drop the rest
+   - **Status**: ✅ Cleaned up (duplicates removed; NO ACTION preserved)
 
 ### Cleanup Migration (Recommended)
 
 To standardize constraint hygiene without changing live gameplay behavior, apply:
 - `supabase/migrations/20251219000002_cleanup_duplicate_foreign_keys.sql`
+
+### Applied Changes Log
+
+- **2025-12-25**: Applied `supabase/migrations/20251219000002_cleanup_duplicate_foreign_keys.sql`
+  - Removed duplicate FKs on `game_sessions.word_id` and `leaderboard_summary.player_id`
+  - Preserved effective delete behavior (NO ACTION)
 
 ---
 

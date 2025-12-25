@@ -54,13 +54,13 @@ This project is FOCUSED ON PRODUCTION DEPLOYMENT. Local development is NOT a pri
    ```
 
 4. Database Schema:
-   For the complete and authoritative database schema, see `docs/ACTUAL_DATABASE_SCHEMA.md`. Key highlights:
+   For the complete and authoritative database schema, see `docs/DATABASE_ARCHITECTURE.md`. Key highlights:
 
    1. **Core Tables**
       - `words`: Daily word bank with clues
       - `game_sessions`: Active gameplay tracking
       - `scores`: Completion metrics
-      - `user_stats`: Player statistics
+      - `player_streaks`: Streak tracking
       - `leaderboard_summary`: Daily rankings
 
    2. **Key Relationships**

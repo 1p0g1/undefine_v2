@@ -4,6 +4,11 @@
 - See implementation-plan.mdc Phase 7 for audit and documentation tasks.
 - All documentation and troubleshooting will be updated as part of this phase.
 
+# Database Source of Truth
+
+For the current, authoritative Supabase schema (tables + constraints), use `docs/DATABASE_ARCHITECTURE.md`.  
+Any historical references here to `user_stats` are part of older debugging context and should not be treated as current schema guidance.
+
 # Vercel Alignment & Debug Log
 
 This document tracks the alignment between our deployed frontend (`undefine-v2.vercel.app`) and backend `/api` routes, with a focus on debugging persistent fetch/session errors.

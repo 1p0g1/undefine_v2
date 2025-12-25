@@ -24,6 +24,7 @@ interface ThemeStatus {
     word: string;
     date: string;
     completedOn: string;
+    wasWon: boolean;
   }>;
 }
 
@@ -522,8 +523,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     <div 
                       key={wordInfo.id}
                       style={{
-                        backgroundColor: '#ecfdf5',
-                        border: '1px solid #a7f3d0',
+                        backgroundColor: wordInfo.wasWon ? '#ecfdf5' : '#fef2f2',
+                        border: wordInfo.wasWon ? '1px solid #a7f3d0' : '1px solid #fecaca',
                         borderRadius: '0.375rem',
                         padding: '0.5rem',
                         textAlign: 'center'
@@ -532,13 +533,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       <div style={{ 
                         fontSize: '0.85rem', 
                         fontWeight: '600',
-                        color: '#047857' 
+                        color: wordInfo.wasWon ? '#047857' : '#b91c1c'
                       }}>
                         {wordInfo.word}
                       </div>
                       <div style={{ 
                         fontSize: '0.7rem', 
-                        color: '#059669',
+                        color: wordInfo.wasWon ? '#059669' : '#dc2626',
                         marginTop: '0.25rem'
                       }}>
                         {new Date(wordInfo.date).toLocaleDateString('en-US', { 
@@ -557,7 +558,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   textAlign: 'center',
                   fontStyle: 'italic'
                 }}>
-                  These are the themed words you've completed this week
+                  Green = you got the word. Red = you didn't get the word.
                 </div>
               </div>
             )}

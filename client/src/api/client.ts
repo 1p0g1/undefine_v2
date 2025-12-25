@@ -290,7 +290,7 @@ export const apiClient = {
       });
       console.log('[submitGuess] Success:', {
         isCorrect: response.isCorrect,
-        isFuzzy: response.isFuzzyMatch
+        isFuzzy: response.isFuzzy
       });
       return response;
     } catch (error) {
@@ -380,6 +380,7 @@ export const apiClient = {
       word: string;
       date: string;
       completedOn: string;
+      wasWon: boolean;
     }>;
   }> {
     return fetchFromApi(`/api/theme-status?player_id=${playerId}`);

@@ -1,5 +1,8 @@
 # Leaderboard System Troubleshooting Guide
 
+> **Database Source of Truth**: `docs/DATABASE_ARCHITECTURE.md`  
+> If anything here conflicts with the schema, defer to that document.
+
 ## Overview
 This guide helps diagnose and resolve common issues with the leaderboard system. The leaderboard data flows through several tables and is managed by database triggers.
 
@@ -17,11 +20,10 @@ This guide helps diagnose and resolve common issues with the leaderboard system.
 - Key fields: player_id, word_id, guesses_used, completion_time_seconds, score, penalties
 - Purpose: Historical record and detailed scoring breakdown
 
-### 3. User Stats (`user_stats`)
-- Player statistics aggregation
-- Key fields: games_played, games_won, streaks, total_score
-- Purpose: Track player performance metrics
-- Required for leaderboard foreign key chain
+### 3. Player Streaks (`player_streaks`)
+- Player streak storage
+- Key fields: current_streak, highest_streak, last_win_date
+- Purpose: Track streaks; other aggregate stats are computed from `game_sessions`, `scores`, and `leaderboard_summary`
 
 ### 4. Leaderboard Summary (`leaderboard_summary`)
 - Optimized leaderboard rankings
@@ -56,8 +58,7 @@ This guide helps diagnose and resolve common issues with the leaderboard system.
    ```sql
    -- In /api/guess.ts
    INSERT INTO scores (...) VALUES (...);
-   -- ⚠️ NOTE: user_stats is NOT updated with data - it's FK-only
-   -- Stats are calculated from other tables on-demand
+   -- Note: Streaks are stored in player_streaks; other stats are calculated from source tables
    ```
 
 ## Trigger Monitoring

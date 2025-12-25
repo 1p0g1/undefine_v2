@@ -2,6 +2,9 @@
 *Generated: July 2, 2025*
 *Source: Verified from supabase/types.ts and migration files*
 
+> **Superseded**: This document is no longer the database source of truth.  
+> Use `docs/DATABASE_ARCHITECTURE.md` for the current, authoritative Supabase schema (tables, PKs/FKs, unique/check constraints, and applied FK cleanup).
+
 ## 🎯 **VERIFIED SCHEMA STRUCTURE**
 
 This document reflects the **actual** database structure as it exists in production, not assumptions or outdated documentation.

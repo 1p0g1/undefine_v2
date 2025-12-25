@@ -43,7 +43,8 @@ Create a modern, clean architectural diagram showing a **two-tier web applicatio
   - **`players`**: User profiles with display names
   - **`words`**: Daily word collection with clues
   - **`scores`**: Game completion records
-  - **`user_stats`**: Player statistics and streaks
+  - **`player_streaks`**: Player streak tracking
+  - **`game_sessions`**: Game attempt history and state
   - **`leaderboard_summary`**: Optimized ranking data with auto-triggers
 
 ### **Data Storage (Browser - Top Left)**

@@ -373,7 +373,7 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
     // Get player's completed sessions for CURRENT WEEK themed words only
     const { data: sessions, error } = await supabase
       .from('game_sessions')
-      .select('word_id, is_complete')
+      .select('word_id, is_complete, is_won, is_archive_play')
       .eq('player_id', playerId)
       .in('word_id', wordIds);
 
@@ -392,7 +392,11 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       };
     }
 
-    const completedSessions = sessions?.filter(s => s.is_complete) || [];
+    // IMPORTANT:
+    // "completedWords" should mean the player actually guessed the word (won),
+    // not merely that the session ended (a loss still has is_complete=true).
+    const completedWinningSessions =
+      sessions?.filter(s => s.is_complete && s.is_won && s.is_archive_play !== true) || [];
 
     // Get all theme attempts for this week, ordered by date (most recent first)
     const { data: weeklyAttempts, error: attemptsError } = await supabase
@@ -435,14 +439,14 @@ export async function getThemeProgress(playerId: string, theme: string): Promise
       console.error('[getThemeProgress] Theme attempt error:', attemptError);
     }
 
-    // Can guess theme if completed at least one word this week and haven't guessed today
-    const hasCompletedWordThisWeek = completedSessions.length > 0;
+    // Can guess theme if won at least one word this week and haven't guessed today
+    const hasWonWordThisWeek = completedWinningSessions.length > 0;
 
     return {
       totalWords: themeWords?.length || 0,
-      completedWords: completedSessions.length,
+      completedWords: completedWinningSessions.length,
       themeGuess: mostRecentAttempt?.guess || null,
-      canGuessTheme: hasCompletedWordThisWeek && !todayAttempt,
+      canGuessTheme: hasWonWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,
       isCorrectGuess: mostRecentAttempt?.is_correct || false,
       // Include similarity data if available
@@ -517,12 +521,13 @@ export async function getAllWeeklyThemedWords(playerId: string, theme: string): 
 
     const wordIds = themedWords.map(w => w.id);
 
-    // Find which ones player has completed using game_sessions
+    // Find which ones player has won using game_sessions
     const { data: completedSessions, error: sessionsError } = await supabase
       .from('game_sessions')
-      .select('word_id, created_at')
+      .select('word_id, created_at, is_won, is_archive_play')
       .eq('player_id', playerId)
       .eq('is_complete', true)
+      .eq('is_archive_play', false)
       .in('word_id', wordIds);
 
     if (sessionsError) {
@@ -532,7 +537,7 @@ export async function getAllWeeklyThemedWords(playerId: string, theme: string): 
 
     // Map all words with completion status
     const allWords = themedWords.map(word => {
-      const session = completedSessions?.find(s => s.word_id === word.id);
+      const session = completedSessions?.find(s => s.word_id === word.id && s.is_won === true);
       return {
         id: word.id,
         word: word.word,
@@ -564,6 +569,7 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
   word: string;
   date: string;
   completedOn: string;
+  wasWon: boolean;
 }>> {
   try {
     const { monday, sunday } = getThemeWeekBoundaries();
@@ -596,12 +602,14 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
 
     const wordIds = themedWords.map(w => w.id);
 
-    // Find which ones player has completed using game_sessions (consistent with getThemeProgress)
+    // Find which themed words player has played this week (won or lost), excluding archive plays.
+    // If multiple sessions exist for the same word, prefer a winning session; otherwise use the most recent completion.
     const { data: completedSessions, error: sessionsError } = await supabase
       .from('game_sessions')
-      .select('word_id, created_at')
+      .select('word_id, created_at, end_time, is_won, is_archive_play')
       .eq('player_id', playerId)
       .eq('is_complete', true)
+      .eq('is_archive_play', false)
       .in('word_id', wordIds);
 
     if (sessionsError) {
@@ -609,23 +617,33 @@ export async function getPlayerWeeklyThemedWords(playerId: string, theme: string
       return [];
     }
 
-    // Match completed words with their theme word data
     const completedWords = themedWords
       .filter(word => completedSessions?.some(session => session.word_id === word.id))
       .map(word => {
-        const session = completedSessions?.find(s => s.word_id === word.id);
+        const sessionsForWord = (completedSessions || []).filter(s => s.word_id === word.id);
+        const winningSession = sessionsForWord.find(s => s.is_won === true);
+        const mostRecentSession = sessionsForWord
+          .slice()
+          .sort((a, b) => {
+            const aTime = new Date(a.end_time || a.created_at).getTime();
+            const bTime = new Date(b.end_time || b.created_at).getTime();
+            return bTime - aTime;
+          })[0];
+        const chosenSession = winningSession || mostRecentSession;
+
         return {
           id: word.id,
           word: word.word,
           date: word.date,
-          completedOn: session?.created_at || word.date
+          completedOn: chosenSession?.created_at || word.date,
+          wasWon: chosenSession?.is_won === true
         };
       });
 
     console.log('[getPlayerWeeklyThemedWords] Found completed themed words:', {
       totalThemedWords: themedWords.length,
       completedCount: completedWords.length,
-      completedWords: completedWords.map(w => ({ word: w.word, date: w.date }))
+      completedWords: completedWords.map(w => ({ word: w.word, date: w.date, wasWon: w.wasWon }))
     });
 
     return completedWords;

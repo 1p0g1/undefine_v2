@@ -41,6 +41,7 @@ interface ThemeStatusResponse {
     word: string;
     date: string;
     completedOn: string;
+    wasWon: boolean;
   }>;
 }
 

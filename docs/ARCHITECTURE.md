@@ -177,12 +177,12 @@ export default withCors(async function handler(req, res) {
    - API Endpoint (`pages/api/guess.ts`):
      - Updates game_sessions with guess, outcome, and clues
      - Inserts row into scores table
-     - Updates user_stats (streaks, averages)
+    - Updates player_streaks (streaks)
      - Full game round finalization
 
 ### Database Schema
 
-For detailed schema information, see `docs/ACTUAL_DATABASE_SCHEMA.md`. Key points:
+For detailed schema information, see `docs/DATABASE_ARCHITECTURE.md`. Key points:
 
 1. **Core Tables**
    - `words`: Daily word bank with clues
