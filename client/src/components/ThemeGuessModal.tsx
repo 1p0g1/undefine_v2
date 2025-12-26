@@ -255,6 +255,23 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     }
   };
 
+  const handleClose = (overrideThemeData?: {
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  }) => {
+    setGuess('');
+    setError(null);
+    setLastGuessResult(null);
+    
+    const themeDataToReturn = overrideThemeData || themeGuessData;
+    if (onThemeDataUpdate && themeDataToReturn) {
+      onThemeDataUpdate(themeDataToReturn);
+    }
+    
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guess.trim() || isSubmitting || !playerId) return;
@@ -279,6 +296,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         actualTheme: response.actualTheme,
         fuzzyMatch: response.fuzzyMatch
       });
+
+      // Update theme data for Un diamond and parent
+      const updatedThemeData = {
+        hasGuessedToday: true,
+        isCorrectGuess: response.isCorrect,
+        confidencePercentage: response.fuzzyMatch?.confidence || null
+      };
+      setThemeGuessData(updatedThemeData);
 
       // NEW: Check for Sunday failure revelation
       if (response.shouldRevealTheme && response.revelationReason === 'sunday_failure') {
@@ -321,25 +346,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // Clear the guess input
       setGuess('');
 
+      // Theme-first flow: after the player makes their guess, move them on to results
+      handleClose(updatedThemeData);
+
     } catch (error) {
       console.error('[ThemeGuessModal] Error submitting theme guess:', error);
       setError('Failed to submit theme guess. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleClose = () => {
-    setGuess('');
-    setError(null);
-    setLastGuessResult(null);
-    
-    // Pass back current theme data to parent for immediate Un diamond update
-    if (onThemeDataUpdate && themeGuessData) {
-      onThemeDataUpdate(themeGuessData);
-    }
-    
-    onClose();
   };
 
   if (!open) return null;

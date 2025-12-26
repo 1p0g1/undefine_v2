@@ -61,6 +61,8 @@ function App() {
   const [showSummary, setShowSummary] = useState(false);
   const [canReopenSummary, setCanReopenSummary] = useState(false);
   const [summaryShownForGame, setSummaryShownForGame] = useState<string | null>(null); // Track which game ID has shown modal
+  const [pendingSummaryAfterTheme, setPendingSummaryAfterTheme] = useState(false);
+  const pendingSummaryGameIdRef = useRef<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showRules, setShowRules] = useState(false);
@@ -192,11 +194,14 @@ function App() {
       // This is a game that was completed in the current session (not restored)
       // Double-check with wasCompletedInSession to avoid race conditions
       if (wasCompletedInSession()) {
-        console.log('[App] Game completed in current session, showing summary modal');
+        console.log('[App] Game completed in current session, starting theme-first flow');
         setGameStarted(true);
-        setShowSummary(true);
+        setShowSummary(false);
         setCanReopenSummary(false);
-        setSummaryShownForGame(gameState.gameId); // Mark as shown
+        setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
+        setPendingSummaryAfterTheme(true);
+        pendingSummaryGameIdRef.current = gameState.gameId;
+        setShowThemeModal(true);
         if (gameState.score) {
           setTimer(0);
         }
@@ -220,13 +225,8 @@ function App() {
     }
     
     if (gameState.isComplete && gameStarted && wasCompletedInSession()) {
-      // Only show modal with delay if game was completed in this session
+      // Theme-first flow handles the primary completion modal sequence
       if (timerRef.current) clearInterval(timerRef.current);
-      summaryTimeoutRef.current = setTimeout(() => {
-        setShowSummary(true);
-        setCanReopenSummary(false);
-        setSummaryShownForGame(gameState.gameId); // Mark as shown
-      }, 5000);
       return;
     }
     // Only start timer if game has been started
@@ -444,6 +444,15 @@ function App() {
     } else {
       // Fallback: reload theme data if no data provided
       loadThemeData();
+    }
+
+    // If we were waiting to show the results modal after theme flow, do it now
+    const pendingGameId = pendingSummaryGameIdRef.current;
+    if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
+      setPendingSummaryAfterTheme(false);
+      pendingSummaryGameIdRef.current = null;
+      // Fetch leaderboard + show results modal
+      showLeaderboardModal();
     }
   };
 
