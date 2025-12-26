@@ -29,7 +29,8 @@ const useGame = () => {
       isComplete: false,
       isWon: false,
       score: null,
-      startTime: ''
+      startTime: '',
+      endTime: undefined
     };
   });
 

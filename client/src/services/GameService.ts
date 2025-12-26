@@ -32,6 +32,11 @@ class GameService {
       if (saved) {
         const parsed: any = JSON.parse(saved);
         if (this.validateGameState(parsed)) {
+          const restoredEndTime =
+            typeof parsed.endTime === 'string'
+              ? parsed.endTime
+              : (parsed.isComplete && typeof parsed.savedAt === 'string' ? parsed.savedAt : undefined);
+
           // Extract only GameSessionState properties
           this.currentState = {
             gameId: parsed.gameId,
@@ -44,12 +49,16 @@ class GameService {
             isComplete: parsed.isComplete,
             isWon: parsed.isWon,
             score: parsed.score,
-            startTime: parsed.startTime
+            startTime: parsed.startTime,
+            endTime: restoredEndTime,
+            isArchivePlay: parsed.isArchivePlay,
+            gameDate: parsed.gameDate
           };
           console.log('[GameService] Restored state:', {
             gameId: parsed.gameId,
             wordId: parsed.wordId,
             startTime: parsed.startTime,
+            endTime: restoredEndTime,
             isComplete: parsed.isComplete,
             savedSessionId: parsed.sessionId || 'unknown',
             currentSessionId: this.sessionId
@@ -220,7 +229,10 @@ class GameService {
         isComplete: false,
         isWon: false,
         score: null,
-        startTime: data.start_time
+        startTime: data.start_time,
+        endTime: undefined,
+        isArchivePlay: false,
+        gameDate: data.gameDate
       };
 
       console.log('[GameService] New game started:', {
@@ -284,6 +296,7 @@ class GameService {
         isWon: false,
         score: null,
         startTime: data.start_time,
+        endTime: undefined,
         isArchivePlay: true,        // NEW: Archive flag
         gameDate: data.gameDate      // NEW: Original word date
       };
@@ -349,7 +362,8 @@ class GameService {
         revealedClues: response.revealedClues,
         isComplete: response.gameOver,
         isWon: response.isCorrect,
-        score: response.score?.score ?? null
+        score: response.score?.score ?? null,
+        endTime: response.gameOver ? new Date().toISOString() : this.currentState.endTime
       };
 
       // Mark as completed in this session if game is over

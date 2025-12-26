@@ -70,6 +70,20 @@ function App() {
   
   // Game start state
   const [gameStarted, setGameStarted] = useState(false);
+
+  const computeElapsedSeconds = useCallback(() => {
+    if (!gameState?.startTime) return 0;
+    const startMs = Date.parse(gameState.startTime);
+    if (Number.isNaN(startMs)) return 0;
+
+    const endMs = gameState.isComplete
+      ? (gameState.endTime ? Date.parse(gameState.endTime) : Number.NaN)
+      : Date.now();
+
+    if (Number.isNaN(endMs)) return 0;
+
+    return Math.max(0, Math.floor((endMs - startMs) / 1000));
+  }, [gameState.startTime, gameState.endTime, gameState.isComplete]);
   
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
@@ -202,9 +216,7 @@ function App() {
         setPendingSummaryAfterTheme(true);
         pendingSummaryGameIdRef.current = gameState.gameId;
         setShowThemeModal(true);
-        if (gameState.score) {
-          setTimer(0);
-        }
+        setTimer(computeElapsedSeconds());
       } else {
         console.log('[App] Game completed but not in current session, treating as restored');
         setGameStarted(true);
@@ -219,24 +231,28 @@ function App() {
   }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession, summaryShownForGame]);
 
   useEffect(() => {
-    // Don't show modal with delay if we've already shown it for this game
-    if (summaryShownForGame === gameState.gameId) {
-      return;
+    // Always derive timer from start/end timestamps so it doesn't reset on refresh.
+    setTimer(computeElapsedSeconds());
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-    
-    if (gameState.isComplete && gameStarted && wasCompletedInSession()) {
-      // Theme-first flow handles the primary completion modal sequence
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
-    // Only start timer if game has been started
+
+    // For completed games, timer should be fixed.
+    if (gameState.isComplete) return;
+
+    // Only run timer for active games.
     if (gameStarted) {
-      timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+      timerRef.current = setInterval(() => {
+        setTimer(computeElapsedSeconds());
+      }, 1000);
     }
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameState.isComplete, gameStarted, wasCompletedInSession, gameState.gameId, summaryShownForGame]);
+  }, [computeElapsedSeconds, gameStarted, gameState.isComplete]);
 
   useEffect(() => {
     return () => {

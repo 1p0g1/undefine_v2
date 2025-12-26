@@ -51,6 +51,7 @@ export interface GameSessionState {
   isWon: boolean;
   score: number | null;
   startTime: string;  // ISO string of game start time
+  endTime?: string;   // ISO string of game end time (present when isComplete=true)
   isArchivePlay?: boolean;  // NEW: True if this is an archive play
   gameDate?: string;  // NEW: The actual date of the word (YYYY-MM-DD)
 }
