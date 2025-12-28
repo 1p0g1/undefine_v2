@@ -20,3 +20,11 @@ yarn-error.log*
 
 client/dist/
 server/dist/
+
+# Dictionary source files (large, not needed in repo)
+DICTIONARY/
+
+# Dictionary pipeline outputs (generated, can be regenerated)
+dictionary-pipeline/output/*.csv
+dictionary-pipeline/output/cache/
+dictionary-pipeline/output/reports/
