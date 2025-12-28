@@ -22,7 +22,8 @@ client/dist/
 server/dist/
 
 # Dictionary source files (large, not needed in repo)
-DICTIONARY/
+# Note: Use /DICTIONARY/ to only match root-level folder, not pages/api/admin/dictionary/
+/DICTIONARY/
 
 # Dictionary pipeline outputs (generated, can be regenerated)
 dictionary-pipeline/output/*.csv
