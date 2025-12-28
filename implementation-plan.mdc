@@ -783,3 +783,81 @@ The all-time leaderboard system is now complete and ready for production. Future
 
 **Key Achievement**: Avoided destructive mass migration while deploying essential fixes. **Daily snapshots system discovered to be already deployed with better architecture than expected.**
 
+---
+
+## Phase 12: Dictionary Pipeline (OPTED / Webster 1913) — December 2025
+
+### 12.1: Pipeline scaffolding
+- [x] Create `dictionary-pipeline/` structure (raw/scripts/output), add README, local requirements, and ignore generated outputs
+  - Done
+  - Added `dictionary-pipeline/README.md` with run instructions and step breakdown.
+  - Added `dictionary-pipeline/requirements.txt` + `dictionary-pipeline/.gitignore` and placeholder dirs for raw/output/cache.
+
+### 12.2: Parse OPTED HTML → raw CSV
+- [x] Implement `dictionary-pipeline/scripts/parse_opted_html.py`
+  - Done
+  - Added a deterministic parser for OPTED HTML `<P>` entries (headword `<B>`, POS `<I>`, cleaned definition text).
+  - Supports single file or glob input and writes `dictionary-pipeline/output/dictionary_raw.csv` with source provenance columns.
+
+### 12.3: Normalize words + derived fields
+- [x] Implement `dictionary-pipeline/scripts/normalize_dictionary.py`
+  - Done
+  - Added a tunable normalization policy (lowercase, diacritic→ASCII, strip non-letters) and derived fields (first_letter, number_of_letters).
+  - Added optional dedupe by `normalized_word` (keeps best definition) with a collisions report for debugging.
+
+### 12.4: Compute deterministic lex_rank
+- [x] Implement `dictionary-pipeline/scripts/compute_lex_rank.py`
+  - Done
+  - Deterministically sorts by `normalized_word` (stable tie-breakers) and assigns `lex_rank` starting at 1.
+  - Produces `dictionary_ranked.csv` suitable for neighbour queries by rank after import.
+
+### 12.5: Optional offline enrichment (dictionaryapi.dev)
+- [x] Scaffold `dictionary-pipeline/scripts/enrich_dictionaryapi.py` with caching + fail-soft behavior
+  - Done
+  - Added an offline enrichment step that caches `dictionaryapi.dev` responses locally and never hard-fails on missing words.
+  - Supports rate limiting and `--max-calls` for safe testing; enrichment is optional and not used in runtime gameplay.
+
+### 12.6: Build final Supabase import CSV
+- [x] Implement `dictionary-pipeline/scripts/build_final_csv.py`
+  - Done
+  - Added a final CSV builder that outputs clean columns aligned to the intended `dictionary_entries` import schema.
+  - Works with either ranked or enriched inputs and strips whitespace noise deterministically.
+
+### 12.7: Entry-point runner + sanity checks
+- [x] Implement `dictionary-pipeline/scripts/run_pipeline.py` and `dictionary-pipeline/scripts/sanity_check_ranked.py`
+  - Done
+  - Added a one-command pipeline runner that chains parse → normalize → rank → (optional enrich) → final.
+  - Added a quick sanity check to validate lex_rank contiguity, ordering, and derived fields correctness.
+
+### 12.8: Supabase schema for dictionary + linkage stub
+- [x] Add migrations to create `public.dictionary` and add `words.dictionary_id` FK column (no backfill)
+  - Done
+  - Added migrations creating `public.dictionary` with RLS enabled and indexes (lex_rank unique, normalized_word, word).
+  - Added `public.words.dictionary_id` referencing `public.dictionary(id)` without changing gameplay/runtime logic.
+
+### 12.9: Offline/admin enrichment into Supabase (no runtime integration)
+- [x] Add `dictionary-pipeline/scripts/enrich_dictionaryapi_supabase.py` and document how to run it
+  - Done
+  - Added a local script that selects dictionary rows by `api_enrich_status`, caches dictionaryapi.dev responses, and updates Supabase via service role.
+  - Added README sections covering migrations, CSV import options, and enrichment invocation (dry-run default).
+
+### 12.10: Multi-source etymology enrichment (pre-import)
+- [x] Add `dictionary-pipeline/scripts/enrich_etymology.py` for cascading etymology lookup
+  - Done
+  - Cascades through: dictionaryapi.dev → WordsAPI (optional) → Wiktionary (MediaWiki API fallback).
+  - Caches all responses locally; adds `etymology_source` column to track provenance.
+  - Runs **before** Supabase import to enrich the `etymology` field that Webster 1913 lacks.
+
+### 12.11: FK constraint restoration migration
+- [x] Add migration to restore `words_dictionary_id_fkey` after manual drop
+  - Done
+  - Created `supabase/migrations/20251228200000_restore_words_dictionary_fk.sql`.
+  - Documents the manual steps taken during initial setup and provides idempotent FK restoration with `ON DELETE SET NULL`.
+
+### 12.12: Documentation updates (etymology explanation + known issues)
+- [x] Update `dictionary-pipeline/README.md` with etymology explanation and FK issue context
+  - Done
+  - Explained why `etymology` is blank in Webster 1913 output.
+  - Documented multi-source enrichment workflow and API key setup.
+  - Added "Known Issues" section documenting the FK drop/restore manual steps.
+

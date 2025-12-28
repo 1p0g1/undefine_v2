@@ -1,0 +1,7 @@
+raw/*.html
+output/*.csv
+output/cache/
+output/reports/
+__pycache__/
+.pytest_cache/
+
