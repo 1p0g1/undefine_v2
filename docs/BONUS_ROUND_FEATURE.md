@@ -47,13 +47,44 @@ If player wins in 3 guesses:
 
 ### Database Requirements
 
-The `words` table needs a `dictionary_id` FK to `public.dictionary`:
-- This was added in migration `20251228193010_add_dictionary_id_to_words.sql`
+The `words` table has a `dictionary_id` FK to `public.dictionary`:
+- Added in migration `20251228193010_add_dictionary_id_to_words.sql`
 - Admin portal can link words to dictionary entries
 
-If `dictionary_id` is not set for today's word, fall back to:
-1. Lookup by exact normalized word match
-2. If still not found, bonus round is skipped
+### Spelling Normalization (Algorithmic)
+
+The bonus round uses **algorithmic British→American spelling conversion** instead of a static lookup table. This handles ALL words matching common patterns:
+
+| British Pattern | American | Example |
+|-----------------|----------|---------|
+| -our | -or | colour → color |
+| -ise | -ize | realise → realize |
+| -yse | -yze | analyse → analyze |
+| -re | -er | centre → center |
+| -ogue | -og | catalogue → catalog |
+| -ae- | -e- | anaemia → anemia |
+| -ence | -ense | defence → defense |
+
+This is implemented in `src/utils/spelling.ts`:
+- `generateAllLookupVariants(word)` - returns all possible dictionary lookups
+- `detectPotentialBritishSpelling(word)` - warns about British spellings
+
+### Fallback Lex Rank Estimation
+
+The bonus round **ALWAYS works**, even if a word isn't in the dictionary:
+
+1. **Best case**: Word found via `dictionary_id` FK
+2. **Fallback 1**: Lookup by normalized word (with algorithmic variants)
+3. **Fallback 2**: Binary search to estimate position alphabetically
+
+The estimation finds the word's neighbors and uses the midpoint:
+```
+"forest" not in dictionary
+→ Would appear between "foresee" (rank 45231) and "forge" (rank 45245)
+→ Estimated rank: 45238
+```
+
+This ensures no player is blocked from playing the bonus round.
 
 ### API Endpoint
 
@@ -91,9 +122,52 @@ Response (word not found):
 }
 ```
 
+### Admin Validation Endpoint
+
+`POST /api/admin/dictionary/validate`
+
+Pre-checks a word for bonus round compatibility **before** it becomes the word of the day.
+
+Request:
+```json
+{
+  "word": "colour"
+}
+```
+
+Response:
+```json
+{
+  "word": "colour",
+  "normalized": "colour",
+  "foundInDictionary": true,
+  "matchedVariant": "color",
+  "matchedWord": "Color",
+  "lexRank": 22345,
+  "warnings": [
+    "Potential British spelling detected (-our). American equivalent: \"color\""
+  ],
+  "potentialBritish": {
+    "isBritish": true,
+    "pattern": "-our",
+    "suggestedAmerican": "color"
+  },
+  "variantsChecked": ["colour", "color"],
+  "nearbyWords": [
+    { "word": "Colophon", "lexRank": 22340, "distance": 5 },
+    { "word": "Color", "lexRank": 22345, "distance": 0 },
+    { "word": "Colorado", "lexRank": 22350, "distance": 5 }
+  ],
+  "bonusRoundCompatible": true,
+  "bonusRoundNote": "✓ Exact match found at rank 22345. Bonus round will work perfectly."
+}
+```
+
+Use this in the admin dashboard to validate words when creating them.
+
 ### Frontend Component
 
-`BonusRoundModal.tsx`:
+`BonusRoundInline.tsx`:
 - Shows remaining bonus attempts
 - Input field for word guess
 - Visual feedback (gold/silver/bronze/miss)

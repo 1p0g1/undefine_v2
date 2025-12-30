@@ -4,6 +4,11 @@
  * Checks a player's bonus round guess against the dictionary.
  * Calculates distance from today's word using lex_rank.
  * 
+ * Features:
+ * - Algorithmic British→American spelling conversion (no static table needed)
+ * - Fallback lex_rank estimation when word not in dictionary (binary search)
+ * - The bonus round ALWAYS works, even for words not in dictionary
+ * 
  * Scoring:
  * - Distance ≤ 10: Perfect (Gold) - 100 points
  * - Distance ≤ 20: Good (Silver) - 50 points
@@ -15,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
+import { generateAllLookupVariants } from '@/src/utils/spelling';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -48,6 +54,7 @@ interface BonusGuessResponse {
   color?: string;
   error?: string;
   message?: string;
+  isEstimated?: boolean; // True if lex_rank was estimated (word not in dictionary)
 }
 
 /**
@@ -63,63 +70,89 @@ function normalizeWord(word: string): string {
 }
 
 /**
- * Try to find American spelling variant of a word
- */
-async function getAmericanSpelling(word: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('spelling_variants')
-    .select('normalized_word')
-    .eq('variant_word', word.toLowerCase())
-    .limit(1)
-    .single();
-
-  return data?.normalized_word || null;
-}
-
-/**
  * Get the lex_rank for a word from the dictionary
- * Tries: 1) exact match, 2) American spelling variant
+ * Uses algorithmic British→American conversion (pattern-based, not lookup table)
+ * Returns the first match from any variant
  */
-async function getWordLexRank(word: string): Promise<{ lexRank: number; word: string } | null> {
-  const normalized = normalizeWord(word);
+async function getWordLexRank(word: string): Promise<{ lexRank: number; word: string; isEstimated: boolean } | null> {
+  // Generate all possible lookup variants (including American spellings)
+  const variants = generateAllLookupVariants(word);
+  console.log(`[bonus/check-guess] Looking up variants for "${word}":`, variants);
   
-  // First, try exact match
-  const { data, error } = await supabase
-    .from('dictionary')
-    .select('lex_rank, word, normalized_word')
-    .eq('normalized_word', normalized)
-    .limit(1)
-    .single();
-
-  if (!error && data) {
-    return { lexRank: data.lex_rank, word: data.word };
-  }
-
-  // Try American spelling variant (e.g., "honour" → "honor")
-  const americanSpelling = await getAmericanSpelling(normalized);
-  if (americanSpelling) {
-    console.log(`[bonus/check-guess] Trying American spelling: ${normalized} → ${americanSpelling}`);
-    const { data: variantData } = await supabase
+  // Try each variant until we find a match
+  for (const variant of variants) {
+    const { data, error } = await supabase
       .from('dictionary')
       .select('lex_rank, word, normalized_word')
-      .eq('normalized_word', americanSpelling)
+      .eq('normalized_word', variant)
       .limit(1)
       .single();
 
-    if (variantData) {
-      return { lexRank: variantData.lex_rank, word: variantData.word };
+    if (!error && data) {
+      console.log(`[bonus/check-guess] Found match: "${variant}" → ${data.word} (rank ${data.lex_rank})`);
+      return { lexRank: data.lex_rank, word: data.word, isEstimated: false };
     }
   }
 
-  console.log(`[bonus/check-guess] Word not found in dictionary: ${word} (normalized: ${normalized})`);
+  console.log(`[bonus/check-guess] No exact match found for "${word}", estimating position...`);
   return null;
 }
 
 /**
- * Get the target word's lex_rank from today's word
- * First tries dictionary_id FK, then falls back to word lookup
+ * Estimate where a word would appear in the dictionary (by lex_rank)
+ * Uses binary search to find the nearest neighbors
+ * 
+ * This ensures the bonus round ALWAYS works, even for words not in the dictionary
  */
-async function getTargetLexRank(wordId: string): Promise<{ lexRank: number; word: string } | null> {
+async function estimateWordLexRank(word: string): Promise<{ lexRank: number; word: string; isEstimated: boolean }> {
+  const normalized = normalizeWord(word);
+  
+  // Find the word that would come immediately after this one alphabetically
+  const { data: nextWord } = await supabase
+    .from('dictionary')
+    .select('lex_rank, word, normalized_word')
+    .gt('normalized_word', normalized)
+    .order('normalized_word', { ascending: true })
+    .limit(1)
+    .single();
+
+  // Find the word that would come immediately before this one alphabetically
+  const { data: prevWord } = await supabase
+    .from('dictionary')
+    .select('lex_rank, word, normalized_word')
+    .lt('normalized_word', normalized)
+    .order('normalized_word', { ascending: false })
+    .limit(1)
+    .single();
+
+  let estimatedRank: number;
+  
+  if (nextWord && prevWord) {
+    // Word would be between these two - use midpoint
+    estimatedRank = Math.round((prevWord.lex_rank + nextWord.lex_rank) / 2);
+    console.log(`[bonus/check-guess] Estimated rank for "${normalized}": ${estimatedRank} (between "${prevWord.normalized_word}" at ${prevWord.lex_rank} and "${nextWord.normalized_word}" at ${nextWord.lex_rank})`);
+  } else if (nextWord) {
+    // Word would be at the very beginning
+    estimatedRank = nextWord.lex_rank - 1;
+    console.log(`[bonus/check-guess] Estimated rank for "${normalized}": ${estimatedRank} (before "${nextWord.normalized_word}")`);
+  } else if (prevWord) {
+    // Word would be at the very end
+    estimatedRank = prevWord.lex_rank + 1;
+    console.log(`[bonus/check-guess] Estimated rank for "${normalized}": ${estimatedRank} (after "${prevWord.normalized_word}")`);
+  } else {
+    // Empty dictionary - shouldn't happen
+    estimatedRank = 1;
+    console.log(`[bonus/check-guess] Dictionary appears empty, using rank 1`);
+  }
+
+  return { lexRank: estimatedRank, word: normalized, isEstimated: true };
+}
+
+/**
+ * Get the target word's lex_rank from today's word
+ * First tries dictionary_id FK, then falls back to word lookup, then estimation
+ */
+async function getTargetLexRank(wordId: string): Promise<{ lexRank: number; word: string; isEstimated: boolean } | null> {
   // First, get the word entry
   const { data: wordData, error: wordError } = await supabase
     .from('words')
@@ -132,7 +165,7 @@ async function getTargetLexRank(wordId: string): Promise<{ lexRank: number; word
     return null;
   }
 
-  // If dictionary_id is set, use it directly
+  // If dictionary_id is set, use it directly (fastest path)
   if (wordData.dictionary_id) {
     const { data: dictData, error: dictError } = await supabase
       .from('dictionary')
@@ -141,12 +174,20 @@ async function getTargetLexRank(wordId: string): Promise<{ lexRank: number; word
       .single();
 
     if (!dictError && dictData) {
-      return { lexRank: dictData.lex_rank, word: dictData.word };
+      console.log(`[bonus/check-guess] Target word via FK: ${dictData.word} (rank ${dictData.lex_rank})`);
+      return { lexRank: dictData.lex_rank, word: dictData.word, isEstimated: false };
     }
   }
 
-  // Fallback: lookup by normalized word
-  return getWordLexRank(wordData.word);
+  // Fallback: lookup by word (with algorithmic variant matching)
+  const lookupResult = await getWordLexRank(wordData.word);
+  if (lookupResult) {
+    return lookupResult;
+  }
+
+  // Final fallback: estimate position
+  console.log(`[bonus/check-guess] Target word "${wordData.word}" not in dictionary, estimating position`);
+  return estimateWordLexRank(wordData.word);
 }
 
 /**
@@ -188,13 +229,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
   console.log(`[bonus/check-guess] Processing guess: ${guess} (normalized: ${normalizedGuess}) for wordId: ${wordId}`);
 
   try {
-    // Get the target word's lex_rank
+    // Get the target word's lex_rank (always succeeds via estimation fallback)
     const targetResult = await getTargetLexRank(wordId);
     if (!targetResult) {
       return res.status(400).json({
         valid: false,
         error: 'target_not_found',
-        message: 'Could not find target word in dictionary. Bonus round unavailable.'
+        message: 'Could not find target word. Please try again.'
       });
     }
 
@@ -207,21 +248,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       });
     }
 
-    // Get the guessed word's lex_rank
-    const guessResult = await getWordLexRank(guess);
+    // Get the guessed word's lex_rank (try exact match first, then estimate)
+    let guessResult = await getWordLexRank(guess);
     if (!guessResult) {
-      return res.status(200).json({
-        valid: false,
-        error: 'word_not_found',
-        message: 'Word not found in dictionary. Try another word!'
-      });
+      // Word not in dictionary - estimate its position
+      guessResult = await estimateWordLexRank(guess);
     }
 
     // Calculate distance and tier
     const distance = Math.abs(guessResult.lexRank - targetResult.lexRank);
     const tierInfo = calculateTier(distance);
 
-    console.log(`[bonus/check-guess] Result: ${guess} (rank ${guessResult.lexRank}) vs ${targetResult.word} (rank ${targetResult.lexRank}) = distance ${distance} = ${tierInfo.tier}`);
+    console.log(`[bonus/check-guess] Result: ${guess} (rank ${guessResult.lexRank}${guessResult.isEstimated ? ' est.' : ''}) vs ${targetResult.word} (rank ${targetResult.lexRank}${targetResult.isEstimated ? ' est.' : ''}) = distance ${distance} = ${tierInfo.tier}`);
 
     // Save to database if gameSessionId provided
     if (gameSessionId) {
@@ -257,7 +295,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       distance,
       tier: tierInfo.tier as Tier,
       points: tierInfo.points,
-      color: tierInfo.color
+      color: tierInfo.color,
+      isEstimated: guessResult.isEstimated || targetResult.isEstimated
     });
 
   } catch (error) {
