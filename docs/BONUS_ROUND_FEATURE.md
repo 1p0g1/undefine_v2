@@ -9,6 +9,7 @@ Players who solve the daily word in fewer than 6 guesses earn bonus attempts to 
 ### Trigger Condition
 - Player wins the game in **fewer than 6 guesses** (before the Etymology clue is revealed)
 - Unused guesses convert to bonus round attempts
+- Bonus round appears **inline** after "The word was: [X]" message
 
 ### Example
 If player wins in 3 guesses:
@@ -21,20 +22,20 @@ If player wins in 3 guesses:
 
 ### Bonus Round Gameplay
 
-1. Player is shown: "Guess a word close to [WORD] in the dictionary"
-2. Player types a word guess
-3. System checks `lex_rank` distance between:
-   - The guessed word's `lex_rank` in `public.dictionary`
-   - Today's word's `lex_rank` (looked up via `words.dictionary_id` FK)
+1. After winning early, an inline bonus round UI appears
+2. Shows: "Can you guess [Y] words nearby '[WORD]' in the dictionary?"
+3. Displays scoring table with tiers
+4. Player types guesses one at a time
+5. Each guess shows result with medal emoji
 
 ### Scoring
 
-| Distance (lex_rank diff) | Tier | Color | Points |
-|--------------------------|------|-------|--------|
-| ≤ 10 | Perfect | 🥇 Gold | 100 |
-| ≤ 20 | Good | 🥈 Silver | 50 |
-| ≤ 30 | Average | 🥉 Bronze | 25 |
-| > 30 | Miss | Gray | 0 |
+| Distance (lex_rank diff) | Tier | Medal |
+|--------------------------|------|-------|
+| ≤ 10 | Perfect | 🥇 Gold |
+| ≤ 20 | Good | 🥈 Silver |
+| ≤ 30 | Average | 🥉 Bronze |
+| > 30 | Miss | ❌ |
 
 ### Edge Cases
 

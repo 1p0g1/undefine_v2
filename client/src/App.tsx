@@ -19,7 +19,7 @@ import { WeeklyThemeLeaderboard } from './components/WeeklyThemeLeaderboard';
 import { AllTimeThemeLeaderboard } from './components/AllTimeThemeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
-import { BonusRoundModal, BonusResult } from './components/BonusRoundModal';
+import { BonusRoundInline, BonusGuessResult } from './components/BonusRoundInline';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
@@ -116,11 +116,9 @@ function App() {
     confidencePercentage: number | null;
   } | undefined>(undefined);
 
-  // Bonus round state
-  const [showBonusRound, setShowBonusRound] = useState(false);
-  const [bonusRoundResults, setBonusRoundResults] = useState<BonusResult[]>([]);
-  const [bonusRoundTotalPoints, setBonusRoundTotalPoints] = useState(0);
-  const [pendingBonusRound, setPendingBonusRound] = useState(false); // Wait for bonus round after theme
+  // Bonus round state (inline UI after winning early)
+  const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
+  const [bonusRoundComplete, setBonusRoundComplete] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -220,22 +218,14 @@ function App() {
         setShowSummary(false);
         setCanReopenSummary(false);
         setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
-        
-        // Check if eligible for bonus round (won in < 6 guesses)
-        const guessesUsed = gameState.guesses?.length || 0;
-        const isWin = gameState.isWon;
-        const eligibleForBonus = isWin && guessesUsed < 6;
-        
-        console.log('[App] Bonus round eligibility:', { guessesUsed, isWin, eligibleForBonus });
-        
-        if (eligibleForBonus) {
-          setPendingBonusRound(true); // Will show bonus after theme
-        }
-        
         setPendingSummaryAfterTheme(true);
         pendingSummaryGameIdRef.current = gameState.gameId;
         setShowThemeModal(true);
         setTimer(computeElapsedSeconds());
+        
+        // Reset bonus round state for new game
+        setBonusRoundResults([]);
+        setBonusRoundComplete(false);
       } else {
         console.log('[App] Game completed but not in current session, treating as restored');
         setGameStarted(true);
@@ -484,14 +474,6 @@ function App() {
     // If we were waiting to show the results modal after theme flow, do it now
     const pendingGameId = pendingSummaryGameIdRef.current;
     if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
-      // Check if bonus round is pending
-      if (pendingBonusRound) {
-        console.log('[App] Opening bonus round after theme modal');
-        setShowBonusRound(true);
-        // Don't reset pendingSummaryAfterTheme yet - will do after bonus round
-        return;
-      }
-      
       setPendingSummaryAfterTheme(false);
       pendingSummaryGameIdRef.current = null;
       // Fetch leaderboard + show results modal
@@ -499,40 +481,14 @@ function App() {
     }
   };
 
-  // Bonus round handlers
-  const handleBonusRoundComplete = (results: BonusResult[], totalPoints: number) => {
-    console.log('[App] Bonus round complete:', { results, totalPoints });
-    setShowBonusRound(false);
-    setPendingBonusRound(false);
+  // Bonus round completion handler (for inline UI)
+  const handleBonusRoundComplete = (results: BonusGuessResult[]) => {
+    console.log('[App] Bonus round complete:', results);
     setBonusRoundResults(results);
-    setBonusRoundTotalPoints(totalPoints);
-    
-    // Now show the summary modal
-    const pendingGameId = pendingSummaryGameIdRef.current;
-    if (pendingGameId && pendingGameId === gameState.gameId) {
-      setPendingSummaryAfterTheme(false);
-      pendingSummaryGameIdRef.current = null;
-      showLeaderboardModal();
-    }
+    setBonusRoundComplete(true);
   };
 
-  const handleBonusRoundSkip = () => {
-    console.log('[App] Bonus round skipped');
-    setShowBonusRound(false);
-    setPendingBonusRound(false);
-    setBonusRoundResults([]);
-    setBonusRoundTotalPoints(0);
-    
-    // Show the summary modal
-    const pendingGameId = pendingSummaryGameIdRef.current;
-    if (pendingGameId && pendingGameId === gameState.gameId) {
-      setPendingSummaryAfterTheme(false);
-      pendingSummaryGameIdRef.current = null;
-      showLeaderboardModal();
-    }
-  };
-
-  // Calculate bonus attempts (unused guesses)
+  // Calculate bonus attempts (unused guesses) - only for early wins
   const bonusAttempts = gameState.isWon && gameState.guesses 
     ? Math.max(0, 6 - gameState.guesses.length) 
     : 0;
@@ -1219,6 +1175,39 @@ function App() {
               The word was: {gameState.wordText}
             </div>
           )}
+
+          {/* Bonus Round - shows for early wins (< 6 guesses) */}
+          {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && !bonusRoundComplete && (
+            <BonusRoundInline
+              wordId={gameState.wordId}
+              playerId={getPlayerId()}
+              targetWord={gameState.wordText}
+              remainingAttempts={bonusAttempts}
+              onComplete={handleBonusRoundComplete}
+            />
+          )}
+
+          {/* Bonus Round Results Summary */}
+          {bonusRoundComplete && bonusRoundResults.length > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              border: '2px solid #22c55e',
+              borderRadius: '12px',
+              padding: '0.75rem',
+              marginTop: '0.5rem',
+              marginBottom: '0.5rem',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontWeight: 600, color: '#166534', marginBottom: '0.25rem' }}>
+                🎯 Bonus Round Complete!
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#15803d' }}>
+                {bonusRoundResults.filter(r => r.tier === 'perfect').length} Gold,{' '}
+                {bonusRoundResults.filter(r => r.tier === 'good').length} Silver,{' '}
+                {bonusRoundResults.filter(r => r.tier === 'average').length} Bronze
+              </div>
+            </div>
+          )}
           
           {visibleClues.map((clue) => {
             // Get the full label for the clue heading
@@ -1387,17 +1376,6 @@ function App() {
         isArchivePlay={gameState.isArchivePlay === true}
         gameComplete={gameState.isComplete}
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
-      />
-
-      {/* Bonus Round Modal */}
-      <BonusRoundModal
-        isOpen={showBonusRound}
-        wordId={gameState.wordId}
-        playerId={getPlayerId()}
-        targetWord={gameState.wordText}
-        totalAttempts={bonusAttempts}
-        onComplete={handleBonusRoundComplete}
-        onSkip={handleBonusRoundSkip}
       />
 
       <style>{`
