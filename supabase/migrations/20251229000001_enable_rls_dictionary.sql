@@ -10,15 +10,13 @@
 -- Enable RLS
 ALTER TABLE public.dictionary ENABLE ROW LEVEL SECURITY;
 
--- Policy: Only service_role can read dictionary
+-- Policy: Only service_role can access dictionary
 -- (Admin API routes use service role key)
-CREATE POLICY "dictionary_service_role_read" ON public.dictionary
-FOR SELECT TO service_role
-USING (true);
-
--- Policy: Only service_role can write dictionary
-CREATE POLICY "dictionary_service_role_write" ON public.dictionary
-FOR INSERT, UPDATE, DELETE TO service_role
+-- Note: service_role bypasses RLS by default, but we create explicit policies
+-- to document intent. No policies for anon/authenticated = they are blocked.
+CREATE POLICY "dictionary_service_role_all" ON public.dictionary
+FOR ALL
+TO service_role
 USING (true)
 WITH CHECK (true);
 
@@ -44,6 +42,5 @@ WHERE tablename = 'dictionary';
 -- =====================================================
 
 -- ALTER TABLE public.dictionary DISABLE ROW LEVEL SECURITY;
--- DROP POLICY IF EXISTS "dictionary_service_role_read" ON public.dictionary;
--- DROP POLICY IF EXISTS "dictionary_service_role_write" ON public.dictionary;
+-- DROP POLICY IF EXISTS "dictionary_service_role_all" ON public.dictionary;
 

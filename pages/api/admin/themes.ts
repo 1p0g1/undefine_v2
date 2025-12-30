@@ -94,7 +94,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse<ThemesRespons
 
   // Build response
   const themes: ThemeStats[] = [];
-  for (const [theme, data] of themeMap) {
+  Array.from(themeMap.entries()).forEach(([theme, data]) => {
     const sortedDates = data.dates.sort();
     themes.push({
       theme,
@@ -103,7 +103,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse<ThemesRespons
       firstDate: sortedDates[0],
       lastDate: sortedDates[sortedDates.length - 1]
     });
-  }
+  });
 
   // Sort by most recent first
   themes.sort((a, b) => b.lastDate.localeCompare(a.lastDate));
