@@ -152,12 +152,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse<WeeksResponse |
       // Determine dominant theme for week (most common)
       let weekTheme: string | null = null;
       let maxCount = 0;
-      for (const [theme, count] of themesInWeek) {
+      Array.from(themesInWeek.entries()).forEach(([theme, count]) => {
         if (count > maxCount) {
           weekTheme = theme;
           maxCount = count;
         }
-      }
+      });
 
       weeks.push({
         weekStart: formatDate(currentWeekStart),
