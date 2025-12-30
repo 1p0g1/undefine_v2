@@ -80,7 +80,8 @@ USING (true);
 -- =============================================================================
 
 COMMENT ON TABLE public.bonus_round_guesses IS 'Stores bonus round guesses for early finishers (<6 guesses)';
-COMMENT ON COLUMN public.bonus_round_guesses.lex_rank IS 'Lexicographic rank from dictionary table';
+COMMENT ON COLUMN public.bonus_round_guesses.guess_lex_rank IS 'Lexicographic rank of guessed word from dictionary table';
+COMMENT ON COLUMN public.bonus_round_guesses.target_lex_rank IS 'Lexicographic rank of target word';
 COMMENT ON COLUMN public.bonus_round_guesses.tier IS 'Scoring tier: perfect (≤10), good (≤20), average (≤30), miss (>30)';
 COMMENT ON COLUMN public.bonus_round_guesses.distance IS 'Absolute difference between guess and target lex_rank';
 

@@ -63,11 +63,27 @@ function normalizeWord(word: string): string {
 }
 
 /**
+ * Try to find American spelling variant of a word
+ */
+async function getAmericanSpelling(word: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('spelling_variants')
+    .select('normalized_word')
+    .eq('variant_word', word.toLowerCase())
+    .limit(1)
+    .single();
+
+  return data?.normalized_word || null;
+}
+
+/**
  * Get the lex_rank for a word from the dictionary
+ * Tries: 1) exact match, 2) American spelling variant
  */
 async function getWordLexRank(word: string): Promise<{ lexRank: number; word: string } | null> {
   const normalized = normalizeWord(word);
   
+  // First, try exact match
   const { data, error } = await supabase
     .from('dictionary')
     .select('lex_rank, word, normalized_word')
@@ -75,12 +91,28 @@ async function getWordLexRank(word: string): Promise<{ lexRank: number; word: st
     .limit(1)
     .single();
 
-  if (error || !data) {
-    console.log(`[bonus/check-guess] Word not found in dictionary: ${word} (normalized: ${normalized})`);
-    return null;
+  if (!error && data) {
+    return { lexRank: data.lex_rank, word: data.word };
   }
 
-  return { lexRank: data.lex_rank, word: data.word };
+  // Try American spelling variant (e.g., "honour" → "honor")
+  const americanSpelling = await getAmericanSpelling(normalized);
+  if (americanSpelling) {
+    console.log(`[bonus/check-guess] Trying American spelling: ${normalized} → ${americanSpelling}`);
+    const { data: variantData } = await supabase
+      .from('dictionary')
+      .select('lex_rank, word, normalized_word')
+      .eq('normalized_word', americanSpelling)
+      .limit(1)
+      .single();
+
+    if (variantData) {
+      return { lexRank: variantData.lex_rank, word: variantData.word };
+    }
+  }
+
+  console.log(`[bonus/check-guess] Word not found in dictionary: ${word} (normalized: ${normalized})`);
+  return null;
 }
 
 /**
