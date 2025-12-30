@@ -48,6 +48,14 @@ async function adminFetch<T>(
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}${path}`;
 
+  console.log('[adminFetch] Making admin API request:', {
+    url,
+    baseUrl,
+    path,
+    hasAdminKey: !!adminKey,
+    adminKeyLength: adminKey.length
+  });
+
   const response = await fetch(url, {
     ...options,
     headers: {

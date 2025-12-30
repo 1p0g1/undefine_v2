@@ -34,9 +34,21 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
         setAdminKey(''); // Clear invalid key
         setError('Invalid admin password');
       }
-    } catch (err) {
+    } catch (err: any) {
       setAdminKey(''); // Clear on error
-      setError('Failed to verify credentials');
+      console.error('[AdminLogin] Auth error:', err);
+      
+      // Provide more detailed error message
+      let errorMsg = 'Failed to verify credentials';
+      if (err?.status === 401) {
+        errorMsg = 'Invalid admin password';
+      } else if (err?.status === 500) {
+        errorMsg = 'Backend error: Admin auth not configured. Check ADMIN_PASSWORD env var.';
+      } else if (err?.message) {
+        errorMsg = `Error: ${err.message}`;
+      }
+      
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
