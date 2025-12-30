@@ -33,6 +33,7 @@ interface BonusGuessRequest {
   wordId: string;
   playerId: string;
   attemptNumber: number;
+  gameSessionId?: string; // Optional - for persisting to database
 }
 
 interface BonusGuessResponse {
@@ -131,7 +132,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
     return res.status(405).json({ valid: false, error: 'method_not_allowed', message: 'Method not allowed' });
   }
 
-  const { guess, wordId, playerId, attemptNumber } = req.body as BonusGuessRequest;
+  const { guess, wordId, playerId, attemptNumber, gameSessionId } = req.body as BonusGuessRequest;
 
   // Validate required fields
   if (!guess || !wordId || !playerId) {
@@ -189,6 +190,31 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
     const tierInfo = calculateTier(distance);
 
     console.log(`[bonus/check-guess] Result: ${guess} (rank ${guessResult.lexRank}) vs ${targetResult.word} (rank ${targetResult.lexRank}) = distance ${distance} = ${tierInfo.tier}`);
+
+    // Save to database if gameSessionId provided
+    if (gameSessionId) {
+      const { error: insertError } = await supabase
+        .from('bonus_round_guesses')
+        .insert({
+          game_session_id: gameSessionId,
+          player_id: playerId,
+          word_id: wordId,
+          attempt_number: attemptNumber,
+          guess: guessResult.word,
+          guess_lex_rank: guessResult.lexRank,
+          target_lex_rank: targetResult.lexRank,
+          distance,
+          tier: tierInfo.tier,
+          is_valid: true
+        });
+
+      if (insertError) {
+        // Log but don't fail - storage is optional
+        console.error('[bonus/check-guess] Failed to save guess:', insertError);
+      } else {
+        console.log('[bonus/check-guess] Saved bonus guess to database');
+      }
+    }
 
     return res.status(200).json({
       valid: true,

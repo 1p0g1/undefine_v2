@@ -22,6 +22,7 @@ interface BonusRoundInlineProps {
   playerId: string;
   targetWord: string;
   remainingAttempts: number; // Number of unused guesses
+  gameSessionId?: string; // For persisting guesses to database
   onComplete?: (results: BonusGuessResult[]) => void;
 }
 
@@ -38,6 +39,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   playerId,
   targetWord,
   remainingAttempts,
+  gameSessionId,
   onComplete
 }) => {
   const [currentAttempt, setCurrentAttempt] = useState(0);
@@ -64,7 +66,8 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           guess: guess.trim(),
           wordId,
           playerId,
-          attemptNumber: currentAttempt + 1
+          attemptNumber: currentAttempt + 1,
+          gameSessionId
         })
       });
 

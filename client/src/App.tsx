@@ -1183,6 +1183,7 @@ function App() {
               playerId={getPlayerId()}
               targetWord={gameState.wordText}
               remainingAttempts={bonusAttempts}
+              gameSessionId={gameState.gameId}
               onComplete={handleBonusRoundComplete}
             />
           )}
