@@ -119,6 +119,11 @@ function App() {
   // Bonus round state (inline UI after winning early)
   const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
   const [bonusRoundComplete, setBonusRoundComplete] = useState(false);
+  
+  // NEW: Celebration animation state for post-game ceremony
+  const [celebrateDiamond, setCelebrateDiamond] = useState(false);
+  // NEW: Track if bonus round should show after theme guess
+  const [pendingBonusRound, setPendingBonusRound] = useState(false);
 
   // Initialize display name from localStorage or generate default
   useEffect(() => {
@@ -213,19 +218,29 @@ function App() {
       // This is a game that was completed in the current session (not restored)
       // Double-check with wasCompletedInSession to avoid race conditions
       if (wasCompletedInSession()) {
-        console.log('[App] Game completed in current session, starting theme-first flow');
+        console.log('[App] Game completed in current session, starting celebration flow');
         setGameStarted(true);
         setShowSummary(false);
         setCanReopenSummary(false);
         setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
         setPendingSummaryAfterTheme(true);
         pendingSummaryGameIdRef.current = gameState.gameId;
-        setShowThemeModal(true);
         setTimer(computeElapsedSeconds());
         
         // Reset bonus round state for new game
         setBonusRoundResults([]);
         setBonusRoundComplete(false);
+        
+        // NEW: Start with celebration animation, then show theme modal
+        // (Theme modal will be shown after celebration completes)
+        setCelebrateDiamond(true);
+        
+        // Check if player is eligible for bonus round (won in < 6 guesses)
+        const hasUnusedGuesses = gameState.isWon && gameState.guesses && gameState.guesses.length < 6;
+        if (hasUnusedGuesses) {
+          console.log('[App] Player eligible for bonus round:', 6 - gameState.guesses.length, 'attempts');
+          setPendingBonusRound(true);
+        }
       } else {
         console.log('[App] Game completed but not in current session, treating as restored');
         setGameStarted(true);
@@ -448,12 +463,22 @@ function App() {
   const handleStartGame = () => {
     setGameStarted(true);
     setImmediateStreakData(null); // Clear any previous immediate streak data
+    // Reset celebration/bonus state for fresh game
+    setCelebrateDiamond(false);
+    setPendingBonusRound(false);
   };
 
   // Theme modal handlers
   const handleThemeClick = () => {
     setShowThemeModal(true);
     setShowSummary(false); // Close summary modal when opening theme modal
+  };
+  
+  // NEW: Handler for when diamond celebration completes
+  const handleCelebrationComplete = () => {
+    console.log('[App] Diamond celebration complete, showing theme modal');
+    setCelebrateDiamond(false);
+    setShowThemeModal(true);
   };
 
   const handleCloseThemeModal = (updatedThemeData?: {
@@ -471,12 +496,20 @@ function App() {
       loadThemeData();
     }
 
-    // If we were waiting to show the results modal after theme flow, do it now
+    // If we were waiting to show the results modal after theme flow...
     const pendingGameId = pendingSummaryGameIdRef.current;
     if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
+      // NEW: Check if bonus round is pending - if so, DON'T show leaderboard yet
+      // Bonus round will show inline, and leaderboard shows after bonus is complete
+      if (pendingBonusRound) {
+        console.log('[App] Theme closed, bonus round pending - user will play bonus round');
+        // Don't clear pendingSummaryAfterTheme yet - bonus round will trigger leaderboard
+        return;
+      }
+      
+      // No bonus round pending, show leaderboard now
       setPendingSummaryAfterTheme(false);
       pendingSummaryGameIdRef.current = null;
-      // Fetch leaderboard + show results modal
       showLeaderboardModal();
     }
   };
@@ -486,6 +519,18 @@ function App() {
     console.log('[App] Bonus round complete:', results);
     setBonusRoundResults(results);
     setBonusRoundComplete(true);
+    setPendingBonusRound(false);
+    
+    // NOW show the leaderboard (after theme + bonus round are done)
+    if (pendingSummaryAfterTheme) {
+      console.log('[App] Bonus round done, now showing leaderboard');
+      setPendingSummaryAfterTheme(false);
+      pendingSummaryGameIdRef.current = null;
+      // Small delay to let bonus results display before showing modal
+      setTimeout(() => {
+        showLeaderboardModal();
+      }, 1500);
+    }
   };
 
   // Calculate bonus attempts (unused guesses) - only for early wins
@@ -612,6 +657,8 @@ function App() {
             onClick={handleThemeClick} 
             themeGuessData={themeGuessData}
             gameComplete={gameState.isComplete}
+            celebrateCompletion={celebrateDiamond}
+            onCelebrationComplete={handleCelebrationComplete}
           />
         </div>
         <div className="define-boxes" style={{ 
@@ -1176,8 +1223,9 @@ function App() {
             </div>
           )}
 
-          {/* Bonus Round - shows for early wins (< 6 guesses) */}
-          {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && !bonusRoundComplete && (
+          {/* Bonus Round - shows for early wins (< 6 guesses) AFTER theme modal closes */}
+          {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
+           pendingBonusRound && !showThemeModal && !bonusRoundComplete && (
             <BonusRoundInline
               wordId={gameState.wordId}
               playerId={getPlayerId()}
