@@ -157,8 +157,10 @@ export default withCors(async function handler(
         });
       }
       
+      console.error('[/api/theme-guess] Submit attempt failed:', attemptResult);
       return res.status(500).json({ 
-        error: 'Failed to submit theme attempt'
+        error: 'Failed to submit theme attempt',
+        details: (attemptResult as any).error || 'Unknown database error'
       });
     }
 

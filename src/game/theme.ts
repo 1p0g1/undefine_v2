@@ -292,12 +292,19 @@ export async function submitThemeAttempt(
 
     if (insertError) {
       console.error('[submitThemeAttempt] Insert error:', insertError);
+      console.error('[submitThemeAttempt] Insert error details:', {
+        code: insertError.code,
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint
+      });
       return {
         success: false,
         isCorrect: false,
         alreadyGuessedToday: false,
         wordsCompleted: progress.completedWords,
-        totalGuesses: totalWordGuesses
+        totalGuesses: totalWordGuesses,
+        error: insertError.message
       };
     }
 
