@@ -191,20 +191,22 @@ function App() {
     startNewGame();
   }, [startNewGame]);
 
-  // Updated effect to handle restored completed games - DON'T show modal for restored games
+  // Effect to handle game completion - triggers celebration flow
   useEffect(() => {
-    console.log('[App] Restoration effect triggered:', {
+    const completedInSession = wasCompletedInSession();
+    
+    console.log('[App] Game completion effect triggered:', {
       isComplete: gameState.isComplete,
       gameStarted,
       isRestoredGame,
       gameId: gameState.gameId,
       wordText: gameState.wordText,
-      wasCompletedInSession: wasCompletedInSession(),
+      completedInSession,
       summaryShownForGame
     });
     
-    // Only proceed if we have a valid game state
-    if (!gameState.gameId) {
+    // Only proceed if we have a valid, complete game state
+    if (!gameState.gameId || !gameState.isComplete) {
       return;
     }
     
@@ -214,45 +216,38 @@ function App() {
       return;
     }
     
-    if (gameState.isComplete && !gameStarted && !isRestoredGame) {
-      // This is a game that was completed in the current session (not restored)
-      // Double-check with wasCompletedInSession to avoid race conditions
-      if (wasCompletedInSession()) {
-        console.log('[App] Game completed in current session, starting celebration flow');
-        setGameStarted(true);
-        setShowSummary(false);
-        setCanReopenSummary(false);
-        setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
-        setPendingSummaryAfterTheme(true);
-        pendingSummaryGameIdRef.current = gameState.gameId;
-        setTimer(computeElapsedSeconds());
-        
-        // Reset bonus round state for new game
-        setBonusRoundResults([]);
-        setBonusRoundComplete(false);
-        
-        // NEW: Start with celebration animation, then show theme modal
-        // (Theme modal will be shown after celebration completes)
-        setCelebrateDiamond(true);
-        
-        // Check if player is eligible for bonus round (won in < 6 guesses)
-        const hasUnusedGuesses = gameState.isWon && gameState.guesses && gameState.guesses.length < 6;
-        if (hasUnusedGuesses) {
-          console.log('[App] Player eligible for bonus round:', 6 - gameState.guesses.length, 'attempts');
-          setPendingBonusRound(true);
-        }
-      } else {
-        console.log('[App] Game completed but not in current session, treating as restored');
-        setGameStarted(true);
-        setCanReopenSummary(true);
+    // KEY FIX: Check if game was completed in THIS session (not restored from previous session)
+    // The `completedInSession` flag is set when submitGuess returns gameOver=true
+    if (completedInSession) {
+      console.log('[App] Game completed in current session, starting celebration flow');
+      setGameStarted(true);
+      setShowSummary(false);
+      setCanReopenSummary(false);
+      setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
+      setPendingSummaryAfterTheme(true);
+      pendingSummaryGameIdRef.current = gameState.gameId;
+      setTimer(computeElapsedSeconds());
+      
+      // Reset bonus round state for new game
+      setBonusRoundResults([]);
+      setBonusRoundComplete(false);
+      
+      // Start with celebration animation, then show theme modal
+      setCelebrateDiamond(true);
+      
+      // Check if player is eligible for bonus round (won in < 6 guesses)
+      const hasUnusedGuesses = gameState.isWon && gameState.guesses && gameState.guesses.length < 6;
+      if (hasUnusedGuesses) {
+        console.log('[App] Player eligible for bonus round:', 6 - gameState.guesses.length, 'attempts');
+        setPendingBonusRound(true);
       }
-    } else if (gameState.isComplete && !gameStarted && isRestoredGame) {
-      // This is a restored game - just mark as started but don't show modal
-      console.log('[App] Restored completed game, NOT showing summary modal');
+    } else if (!gameStarted) {
+      // This is a restored completed game from a previous session
+      console.log('[App] Restored completed game, enabling reopen summary');
       setGameStarted(true);
       setCanReopenSummary(true);
     }
-  }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession, summaryShownForGame]);
+  }, [gameState.isComplete, gameState.gameId, gameStarted, wasCompletedInSession, summaryShownForGame]);
 
   useEffect(() => {
     // Always derive timer from start/end timestamps so it doesn't reset on refresh.
