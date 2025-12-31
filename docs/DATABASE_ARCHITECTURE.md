@@ -1,7 +1,7 @@
 # UnDEFINE Database Architecture
 
 > **🔴 SINGLE SOURCE OF TRUTH** - This document supersedes all other database references.  
-> Last Updated: 2025-12-25  
+> Last Updated: 2025-12-30  
 > Source: Supabase Dashboard exports
 
 ---
@@ -44,12 +44,18 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 | `difficulty` | text | YES | NULL | Word difficulty rating |
 | `date` | date | YES | NULL | Scheduled play date |
 | `theme` | text | YES | NULL | Weekly theme connection |
+| `dictionary_id` | bigint | YES | NULL | **FK to dictionary.id** - Links to full dictionary for bonus round |
 | `created_at` | timestamptz | YES | CURRENT_TIMESTAMP | - |
 
 **Primary Key**: `words_pkey` on `(id)`  
 **Unique Constraints**:
 - `unique_word_text` on `(word)` - No duplicate words
 - `words_date_unique` on `(date)` - One word per day
+
+**Foreign Keys**:
+- `words_dictionary_id_fkey` → `dictionary(id)` ON DELETE SET NULL
+
+**Note**: `dictionary_id` links words to the full dictionary for the bonus round feature. When a word is linked, players who win early can guess dictionary neighbours.
 
 ---
 
@@ -247,6 +253,80 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 
 ---
 
+### 11. `dictionary`
+**Purpose**: Full English dictionary for bonus round feature. Contains ~115,000 words with lexicographic ranking.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | bigint | NO | - | **PRIMARY KEY** - Auto-generated |
+| `word` | text | NO | - | Original headword (mixed case) |
+| `normalized_word` | text | NO | - | Lowercase, no diacritics/punctuation |
+| `part_of_speech` | text | YES | NULL | n., v., adj., etc. |
+| `definition` | text | YES | NULL | Word definition |
+| `etymology` | text | YES | NULL | Word origin |
+| `first_letter` | text | NO | - | First letter (from normalized) |
+| `number_of_letters` | integer | NO | - | Length of normalized word |
+| `lex_rank` | integer | NO | - | **Lexicographic position** (1-115k) |
+| `api_origin` | text | YES | NULL | Source API if enriched |
+| `api_payload` | jsonb | YES | NULL | Raw API response |
+| `api_enrich_status` | text | YES | 'pending' | pending/complete/failed |
+| `api_last_enriched_at` | timestamptz | YES | NULL | Last enrichment timestamp |
+| `api_enrich_error` | text | YES | NULL | Error message if failed |
+| `created_at` | timestamptz | YES | CURRENT_TIMESTAMP | - |
+| `updated_at` | timestamptz | YES | CURRENT_TIMESTAMP | - |
+
+**Primary Key**: `dictionary_pkey` on `(id)`  
+**Unique Constraints**:
+- `dictionary_lex_rank_key` on `(lex_rank)` - Each word has unique position
+
+**Indexes**:
+- `idx_dictionary_normalized_word` on `(normalized_word)`
+- `idx_dictionary_word` on `(word)`
+
+**RLS**: Enabled. Only `service_role` can access (admin/backend only).
+
+**Key Logic**:
+- `lex_rank` is the alphabetical position in the dictionary
+- Bonus round uses `lex_rank` difference to score guesses
+- Distance ≤10 = Gold, ≤20 = Silver, ≤30 = Bronze, >30 = Miss
+
+**Data Source**: OPTED/Webster's 1913 dictionary, processed via `dictionary-pipeline/`
+
+---
+
+### 12. `bonus_round_guesses`
+**Purpose**: Track player guesses in the bonus round (early finisher mini-game).
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | NO | gen_random_uuid() | **PRIMARY KEY** |
+| `game_session_id` | uuid | NO | - | FK to game_sessions.id |
+| `player_id` | text | NO | - | FK to players.id |
+| `word_id` | uuid | NO | - | FK to words.id (today's word) |
+| `attempt_number` | integer | NO | - | Which bonus attempt (1, 2, 3...) |
+| `guess` | text | NO | - | Player's guess word |
+| `guess_lex_rank` | integer | YES | NULL | Lex rank of guessed word (if found) |
+| `target_lex_rank` | integer | YES | NULL | Lex rank of target word |
+| `distance` | integer | YES | NULL | Absolute difference in lex_rank |
+| `tier` | text | YES | NULL | 'perfect', 'good', 'average', 'miss' |
+| `is_valid` | boolean | YES | true | Whether guess was in dictionary |
+| `created_at` | timestamptz | YES | CURRENT_TIMESTAMP | - |
+
+**Primary Key**: `bonus_round_guesses_pkey` on `(id)`  
+**Unique Constraints**:
+- `bonus_round_guesses_session_attempt_key` on `(game_session_id, attempt_number)` - One guess per attempt
+
+**Foreign Keys**:
+- `bonus_round_guesses_game_session_id_fkey` → `game_sessions(id)` ON DELETE CASCADE
+- `bonus_round_guesses_player_id_fkey` → `players(id)` ON DELETE CASCADE
+- `bonus_round_guesses_word_id_fkey` → `words(id)` ON DELETE CASCADE
+
+**Check Constraints**:
+- `check_tier_values`: `tier IN ('perfect', 'good', 'average', 'miss') OR tier IS NULL`
+- `check_attempt_number_positive`: `attempt_number > 0`
+
+---
+
 ## Constraints Summary
 
 ### Primary Keys
@@ -276,6 +356,9 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 ### Foreign Keys
 | Table | FK Name | Column | References | On Delete |
 |-------|---------|--------|------------|-----------|
+| `bonus_round_guesses` | `bonus_round_guesses_game_session_id_fkey` | `game_session_id` | `game_sessions(id)` | CASCADE |
+| `bonus_round_guesses` | `bonus_round_guesses_player_id_fkey` | `player_id` | `players(id)` | CASCADE |
+| `bonus_round_guesses` | `bonus_round_guesses_word_id_fkey` | `word_id` | `words(id)` | CASCADE |
 | `daily_leaderboard_snapshots` | `daily_leaderboard_snapshots_word_id_fkey` | `word_id` | `words(id)` | CASCADE |
 | `game_sessions` | `fk_game_sessions_word` | `word_id` | `words(id)` | NO ACTION |
 | `leaderboard_summary` | `fk_leaderboard_player_to_players` | `player_id` | `players(id)` | NO ACTION |
@@ -284,6 +367,7 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 | `scores` | `fk_scores_game_session` | `game_session_id` | `game_sessions(id)` | NO ACTION |
 | `scores` | `fk_scores_player_to_players` | `player_id` | `players(id)` | NO ACTION |
 | `theme_attempts` | `theme_attempts_player_id_to_players` | `player_id` | `players(id)` | NO ACTION |
+| `words` | `words_dictionary_id_fkey` | `dictionary_id` | `dictionary(id)` | SET NULL |
 
 ### Check Constraints
 | Table | Constraint Name | Rule |
@@ -329,17 +413,30 @@ players (id)
     ├── player_streaks (player_id) [CASCADE]
     ├── leaderboard_summary (player_id)
     ├── scores (player_id)
-    └── theme_attempts (player_id)
+    ├── theme_attempts (player_id)
+    └── bonus_round_guesses (player_id) [CASCADE]
 
 words (id)
-    ├── game_sessions (word_id) [CASCADE]
+    ├── game_sessions (word_id)
     ├── leaderboard_summary (word_id) [CASCADE]
     ├── scores (word_id)
-    └── daily_leaderboard_snapshots (word_id) [CASCADE]
+    ├── daily_leaderboard_snapshots (word_id) [CASCADE]
+    ├── bonus_round_guesses (word_id) [CASCADE]
+    └── dictionary (via dictionary_id) [SET NULL]
+
+dictionary (id)
+    └── words (dictionary_id) [SET NULL] - Links playable words to full dictionary
 
 game_sessions (id)
-    └── scores (game_session_id)
+    ├── scores (game_session_id)
+    └── bonus_round_guesses (game_session_id) [CASCADE]
 ```
+
+### Bonus Round Data Flow
+1. Player wins in < 6 guesses → Bonus round triggered
+2. Player guesses neighbour word → API checks `dictionary.lex_rank`
+3. Distance calculated → `bonus_round_guesses` INSERT
+4. Results displayed → Gold/Silver/Bronze/Miss
 
 ---
 

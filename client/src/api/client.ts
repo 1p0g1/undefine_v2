@@ -443,4 +443,41 @@ export const apiClient = {
       total_play_time_seconds: 0, // TODO: Add to API
     };
   },
+
+  /**
+   * Check a bonus round guess
+   * @param guess The word to check
+   * @param wordId The ID of today's word
+   * @param playerId The player ID
+   * @param attemptNumber The current bonus attempt number
+   * @returns Promise with the bonus guess result
+   */
+  async checkBonusGuess(
+    guess: string,
+    wordId: string,
+    playerId: string,
+    attemptNumber: number
+  ): Promise<{
+    valid: boolean;
+    guessedWord?: string;
+    guessLexRank?: number;
+    targetWord?: string;
+    targetLexRank?: number;
+    distance?: number;
+    tier?: 'perfect' | 'good' | 'average' | 'miss';
+    points?: number;
+    color?: string;
+    error?: string;
+    message?: string;
+  }> {
+    return fetchFromApi('/api/bonus/check-guess', {
+      method: 'POST',
+      body: JSON.stringify({
+        guess,
+        wordId,
+        playerId,
+        attemptNumber
+      }),
+    });
+  },
 };

@@ -19,6 +19,7 @@ import { WeeklyThemeLeaderboard } from './components/WeeklyThemeLeaderboard';
 import { AllTimeThemeLeaderboard } from './components/AllTimeThemeLeaderboard';
 import { SentenceWithLogo } from './components/SentenceWithLogo';
 import { ThemeGuessModal } from './components/ThemeGuessModal';
+import { BonusRoundInline, BonusGuessResult } from './components/BonusRoundInline';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
@@ -115,6 +116,15 @@ function App() {
     confidencePercentage: number | null;
   } | undefined>(undefined);
 
+  // Bonus round state (inline UI after winning early)
+  const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
+  const [bonusRoundComplete, setBonusRoundComplete] = useState(false);
+  
+  // NEW: Celebration animation state for post-game ceremony
+  const [celebrateDiamond, setCelebrateDiamond] = useState(false);
+  // NEW: Track if bonus round should show after theme guess
+  const [pendingBonusRound, setPendingBonusRound] = useState(false);
+
   // Initialize display name from localStorage or generate default
   useEffect(() => {
     const savedDisplayName = localStorage.getItem('playerDisplayName');
@@ -181,20 +191,22 @@ function App() {
     startNewGame();
   }, [startNewGame]);
 
-  // Updated effect to handle restored completed games - DON'T show modal for restored games
+  // Effect to handle game completion - triggers celebration flow
   useEffect(() => {
-    console.log('[App] Restoration effect triggered:', {
+    const completedInSession = wasCompletedInSession();
+    
+    console.log('[App] Game completion effect triggered:', {
       isComplete: gameState.isComplete,
       gameStarted,
       isRestoredGame,
       gameId: gameState.gameId,
       wordText: gameState.wordText,
-      wasCompletedInSession: wasCompletedInSession(),
+      completedInSession,
       summaryShownForGame
     });
     
-    // Only proceed if we have a valid game state
-    if (!gameState.gameId) {
+    // Only proceed if we have a valid, complete game state
+    if (!gameState.gameId || !gameState.isComplete) {
       return;
     }
     
@@ -204,31 +216,38 @@ function App() {
       return;
     }
     
-    if (gameState.isComplete && !gameStarted && !isRestoredGame) {
-      // This is a game that was completed in the current session (not restored)
-      // Double-check with wasCompletedInSession to avoid race conditions
-      if (wasCompletedInSession()) {
-        console.log('[App] Game completed in current session, starting theme-first flow');
-        setGameStarted(true);
-        setShowSummary(false);
-        setCanReopenSummary(false);
-        setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
-        setPendingSummaryAfterTheme(true);
-        pendingSummaryGameIdRef.current = gameState.gameId;
-        setShowThemeModal(true);
-        setTimer(computeElapsedSeconds());
-      } else {
-        console.log('[App] Game completed but not in current session, treating as restored');
-        setGameStarted(true);
-        setCanReopenSummary(true);
+    // KEY FIX: Check if game was completed in THIS session (not restored from previous session)
+    // The `completedInSession` flag is set when submitGuess returns gameOver=true
+    if (completedInSession) {
+      console.log('[App] Game completed in current session, starting celebration flow');
+      setGameStarted(true);
+      setShowSummary(false);
+      setCanReopenSummary(false);
+      setSummaryShownForGame(gameState.gameId); // Mark as shown (flow started)
+      setPendingSummaryAfterTheme(true);
+      pendingSummaryGameIdRef.current = gameState.gameId;
+      setTimer(computeElapsedSeconds());
+      
+      // Reset bonus round state for new game
+      setBonusRoundResults([]);
+      setBonusRoundComplete(false);
+      
+      // Start with celebration animation, then show theme modal
+      setCelebrateDiamond(true);
+      
+      // Check if player is eligible for bonus round (won in < 6 guesses)
+      const hasUnusedGuesses = gameState.isWon && gameState.guesses && gameState.guesses.length < 6;
+      if (hasUnusedGuesses) {
+        console.log('[App] Player eligible for bonus round:', 6 - gameState.guesses.length, 'attempts');
+        setPendingBonusRound(true);
       }
-    } else if (gameState.isComplete && !gameStarted && isRestoredGame) {
-      // This is a restored game - just mark as started but don't show modal
-      console.log('[App] Restored completed game, NOT showing summary modal');
+    } else if (!gameStarted) {
+      // This is a restored completed game from a previous session
+      console.log('[App] Restored completed game, enabling reopen summary');
       setGameStarted(true);
       setCanReopenSummary(true);
     }
-  }, [gameState.isComplete, gameState.gameId, gameStarted, isRestoredGame, wasCompletedInSession, summaryShownForGame]);
+  }, [gameState.isComplete, gameState.gameId, gameStarted, wasCompletedInSession, summaryShownForGame]);
 
   useEffect(() => {
     // Always derive timer from start/end timestamps so it doesn't reset on refresh.
@@ -439,12 +458,22 @@ function App() {
   const handleStartGame = () => {
     setGameStarted(true);
     setImmediateStreakData(null); // Clear any previous immediate streak data
+    // Reset celebration/bonus state for fresh game
+    setCelebrateDiamond(false);
+    setPendingBonusRound(false);
   };
 
   // Theme modal handlers
   const handleThemeClick = () => {
     setShowThemeModal(true);
     setShowSummary(false); // Close summary modal when opening theme modal
+  };
+  
+  // NEW: Handler for when diamond celebration completes
+  const handleCelebrationComplete = () => {
+    console.log('[App] Diamond celebration complete, showing theme modal');
+    setCelebrateDiamond(false);
+    setShowThemeModal(true);
   };
 
   const handleCloseThemeModal = (updatedThemeData?: {
@@ -462,15 +491,47 @@ function App() {
       loadThemeData();
     }
 
-    // If we were waiting to show the results modal after theme flow, do it now
+    // If we were waiting to show the results modal after theme flow...
     const pendingGameId = pendingSummaryGameIdRef.current;
     if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
+      // NEW: Check if bonus round is pending - if so, DON'T show leaderboard yet
+      // Bonus round will show inline, and leaderboard shows after bonus is complete
+      if (pendingBonusRound) {
+        console.log('[App] Theme closed, bonus round pending - user will play bonus round');
+        // Don't clear pendingSummaryAfterTheme yet - bonus round will trigger leaderboard
+        return;
+      }
+      
+      // No bonus round pending, show leaderboard now
       setPendingSummaryAfterTheme(false);
       pendingSummaryGameIdRef.current = null;
-      // Fetch leaderboard + show results modal
       showLeaderboardModal();
     }
   };
+
+  // Bonus round completion handler (for inline UI)
+  const handleBonusRoundComplete = (results: BonusGuessResult[]) => {
+    console.log('[App] Bonus round complete:', results);
+    setBonusRoundResults(results);
+    setBonusRoundComplete(true);
+    setPendingBonusRound(false);
+    
+    // NOW show the leaderboard (after theme + bonus round are done)
+    if (pendingSummaryAfterTheme) {
+      console.log('[App] Bonus round done, now showing leaderboard');
+      setPendingSummaryAfterTheme(false);
+      pendingSummaryGameIdRef.current = null;
+      // Small delay to let bonus results display before showing modal
+      setTimeout(() => {
+        showLeaderboardModal();
+      }, 1500);
+    }
+  };
+
+  // Calculate bonus attempts (unused guesses) - only for early wins
+  const bonusAttempts = gameState.isWon && gameState.guesses 
+    ? Math.max(0, 6 - gameState.guesses.length) 
+    : 0;
 
   return (
     <div
@@ -591,6 +652,8 @@ function App() {
             onClick={handleThemeClick} 
             themeGuessData={themeGuessData}
             gameComplete={gameState.isComplete}
+            celebrateCompletion={celebrateDiamond}
+            onCelebrationComplete={handleCelebrationComplete}
           />
         </div>
         <div className="define-boxes" style={{ 
@@ -1107,6 +1170,43 @@ function App() {
               </div>
             </div>
             
+            {/* Bonus Round Explanation */}
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+              🎯 Bonus Round
+            </h3>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Solve the word in fewer than 6 guesses? You've unlocked the Bonus Round! Guess words that are <strong>close to today's word in the dictionary</strong> to earn bonus medals:
+            </p>
+            <div style={{ 
+              backgroundColor: '#fef3c7',
+              border: '2px solid #fcd34d',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                color: '#92400e'
+              }}>
+                <div><span style={{ color: '#fbbf24' }}>🥇</span> <strong>Gold</strong> - Within 10 words (Perfect!)</div>
+                <div><span style={{ color: '#9ca3af' }}>🥈</span> <strong>Silver</strong> - Within 20 words (Good!)</div>
+                <div><span style={{ color: '#d97706' }}>🥉</span> <strong>Bronze</strong> - Within 30 words (Average)</div>
+              </div>
+            </div>
+            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.85rem', fontStyle: 'italic', color: '#666' }}>
+              Our dictionary is based on{' '}
+              <a 
+                href="https://www.mso.anu.edu.au/~ralph/OPTED/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: '#1a237e', textDecoration: 'underline' }}
+              >
+                OPTED (Online Plain Text English Dictionary)
+              </a>
+              , derived from Webster's 1913 Unabridged Dictionary. Both British and American English spellings are accepted!
+            </p>
+            
             <button 
               onClick={() => setShowRules(false)}
               style={{
@@ -1152,6 +1252,41 @@ function App() {
               padding: '0'
             }}>
               The word was: {gameState.wordText}
+            </div>
+          )}
+
+          {/* Bonus Round - shows for early wins (< 6 guesses) AFTER celebration + theme modal */}
+          {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
+           pendingBonusRound && !celebrateDiamond && !showThemeModal && !bonusRoundComplete && (
+            <BonusRoundInline
+              wordId={gameState.wordId}
+              playerId={getPlayerId()}
+              targetWord={gameState.wordText}
+              remainingAttempts={bonusAttempts}
+              gameSessionId={gameState.gameId}
+              onComplete={handleBonusRoundComplete}
+            />
+          )}
+
+          {/* Bonus Round Results Summary */}
+          {bonusRoundComplete && bonusRoundResults.length > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              border: '2px solid #22c55e',
+              borderRadius: '12px',
+              padding: '0.75rem',
+              marginTop: '0.5rem',
+              marginBottom: '0.5rem',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontWeight: 600, color: '#166534', marginBottom: '0.25rem' }}>
+                🎯 Bonus Round Complete!
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#15803d' }}>
+                {bonusRoundResults.filter(r => r.tier === 'perfect').length} Gold,{' '}
+                {bonusRoundResults.filter(r => r.tier === 'good').length} Silver,{' '}
+                {bonusRoundResults.filter(r => r.tier === 'average').length} Bronze
+              </div>
             </div>
           )}
           

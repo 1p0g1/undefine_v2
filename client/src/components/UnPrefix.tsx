@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getUnDiamondColor } from '../utils/themeMessages';
 
 interface UnPrefixProps {
   scaled?: boolean; // For use in GameSummaryModal with transform scale
   onClick?: () => void;
-  gameComplete?: boolean; // NEW: To detect when game is finished
-  showCallToAction?: boolean; // NEW: Control whether to show '?' call-to-action
+  gameComplete?: boolean; // To detect when game is finished
+  showCallToAction?: boolean; // Control whether to show '?' call-to-action
+  // Celebratory animation for just-completed games
+  celebrateCompletion?: boolean; // Triggers the spin/grow animation
+  onCelebrationComplete?: () => void; // Callback when celebration ends
   // Theme guess color-coding props
   themeGuessData?: {
     hasGuessedToday: boolean;
@@ -17,17 +20,67 @@ interface UnPrefixProps {
 export const UnPrefix: React.FC<UnPrefixProps> = ({ 
   scaled = false, 
   onClick, 
-  gameComplete = false, // NEW: Default to false
-  showCallToAction = true, // NEW: Default to true for backwards compatibility
+  gameComplete = false,
+  showCallToAction = true,
+  celebrateCompletion = false,
+  onCelebrationComplete,
   themeGuessData 
 }) => {
-  // NEW: Hover state for tooltip
+  // Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
+  
+  // Track celebration animation state
+  const [isCelebrating, setIsCelebrating] = useState(false);
+  
+  // Use refs to prevent issues with cleanup clearing timeouts
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackFiredRef = useRef(false);
+  
+  // Trigger celebration when prop changes to true
+  useEffect(() => {
+    // Start celebration when prop becomes true
+    if (celebrateCompletion && !callbackFiredRef.current) {
+      console.log('[UnPrefix] Starting celebration animation, celebrateCompletion:', celebrateCompletion);
+      setIsCelebrating(true);
+      
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
+      // Animation lasts 1.5s, then trigger callback
+      timerRef.current = setTimeout(() => {
+        console.log('[UnPrefix] Celebration animation complete, firing callback');
+        setIsCelebrating(false);
+        callbackFiredRef.current = true;
+        timerRef.current = null;
+        
+        if (onCelebrationComplete) {
+          console.log('[UnPrefix] Calling onCelebrationComplete');
+          onCelebrationComplete();
+        }
+      }, 1500);
+    }
+    
+    // Reset when celebrateCompletion goes back to false
+    if (!celebrateCompletion && callbackFiredRef.current) {
+      callbackFiredRef.current = false;
+      setIsCelebrating(false);
+    }
+    
+    // Cleanup only on unmount
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [celebrateCompletion, onCelebrationComplete]); // Removed isCelebrating from deps!
   
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
   
-  // Always show 'Un·' text (removed '?' call-to-action)
+  // Always show 'Un·' text
   const displayText = 'Un·';
   
   // Standard styling for 'Un·'
@@ -38,16 +91,27 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
   
   // Determine if diamond should pulsate (game complete + theme not guessed)
-  const shouldPulsate = showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday);
+  const shouldPulsate = showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday) && !isCelebrating;
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
+    // During celebration, use a golden/sparkly color but KEEP the default dark text
+    if (isCelebrating) {
+      return {
+        backgroundColor: '#fef3c7', // Light gold background
+        borderColor: '#f59e0b', // Amber border
+        textColor: '#1e293b', // Keep dark text (NOT maroon)
+        glowColor: '#fbbf24', // Bright gold glow
+        isCelebrating: true
+      };
+    }
+    
     // Purple styling for call-to-action (game complete + theme not guessed)
     if (shouldPulsate) {
       return {
         backgroundColor: '#e0e7ff', // Light purple background
         borderColor: '#8b5cf6', // Purple border
-        textColor: '#8b5cf6', // Purple text (not white, keep 'Un·' visible)
+        textColor: '#8b5cf6', // Purple text
         glowColor: '#8b5cf6' // Purple glow
       };
     }
@@ -65,24 +129,21 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 
     const { isCorrectGuess, confidencePercentage } = themeGuessData;
     
-    // FIXED LOGIC: Check confidence first, THEN isCorrectGuess for override
-    // This ensures 100% always shows diamond blue with glisten effects
-    
-    // 💎 DIAMOND BLUE for perfect 100% match - with glisten effects!
+    // 💎 DIAMOND BLUE for perfect 100% match
     if (confidencePercentage === 100) {
       return {
-        backgroundColor: '#dbeafe', // Light diamond blue background
-        borderColor: '#3b82f6', // Bright blue border
-        textColor: '#1e40af', // Deep blue text
-        glowColor: '#60a5fa', // Bright blue glow
-        isDiamond: true // Special flag for extra effects
+        backgroundColor: '#dbeafe',
+        borderColor: '#3b82f6',
+        textColor: '#1e40af',
+        glowColor: '#60a5fa',
+        isDiamond: true
       };
     }
     
     // 🟢 GREEN for correct answers OR high confidence (85%+)
     if (isCorrectGuess || (confidencePercentage !== null && confidencePercentage >= 85)) {
       return {
-        backgroundColor: '#f0fdf4', // Light green background (solid)
+        backgroundColor: '#f0fdf4',
         borderColor: '#22c55e',
         textColor: '#15803d',
         glowColor: '#22c55e'
@@ -92,7 +153,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     // 🟠 ORANGE for medium confidence (70-84%)
     if (confidencePercentage !== null && confidencePercentage >= 70) {
       return {
-        backgroundColor: '#fff7ed', // Light orange background (solid)
+        backgroundColor: '#fff7ed',
         borderColor: '#f97316',
         textColor: '#ea580c',
         glowColor: '#f97316'
@@ -101,7 +162,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     
     // 🔴 RED for low confidence/incorrect
     return {
-      backgroundColor: '#fef2f2', // Light red background (solid)
+      backgroundColor: '#fef2f2',
       borderColor: '#ef4444',
       textColor: '#dc2626',
       glowColor: '#ef4444'
@@ -110,8 +171,23 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
 
   const colors = getDiamondColors();
   const isPerfectMatch = (colors as any).isDiamond === true;
+  const showCelebrationAnimation = (colors as any).isCelebrating === true;
   
-  const containerStyle = {
+  // Determine which animation to use
+  const getAnimation = () => {
+    if (showCelebrationAnimation) {
+      return 'celebrateSpin 1.5s ease-in-out';
+    }
+    if (isPerfectMatch) {
+      return 'diamondGlisten 2s ease-in-out infinite';
+    }
+    if (shouldPulsate) {
+      return 'pulsate 2s ease-in-out infinite';
+    }
+    return 'none';
+  };
+  
+  const containerStyle: React.CSSProperties = {
     width: baseSize,
     height: baseSize,
     borderRadius: '0.5rem',
@@ -125,42 +201,37 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     fontWeight: 800,
     color: colors.textColor,
     fontSize: scaled ? 'clamp(1.1rem, 3.2vw, 1.4rem)' : 'clamp(1.2rem, 3.5vw, 1.5rem)',
-    position: 'relative' as const,
+    position: 'relative',
     flexShrink: 0,
-    aspectRatio: '1 / 1' as const,
-    // Transform to diamond shape - base 45 degrees only
-    transform: scaled 
-      ? `rotate(45deg) scale(0.9)` 
-      : `rotate(45deg)`,
-    // Enhanced diamond effects for perfect matches
-    boxShadow: isPerfectMatch 
-      ? `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`
-      : `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
-    transition: 'all 0.3s ease-in-out', // Slightly longer for rotation animation
-    // Add glisten animation for perfect matches, pulsate for call-to-action
-    animation: isPerfectMatch 
-      ? 'diamondGlisten 2s ease-in-out infinite' 
-      : shouldPulsate ? 'pulsate 2s ease-in-out infinite' : 'none',
-    // Add pointer cursor when clickable
+    aspectRatio: '1 / 1',
+    // Transform to diamond shape
+    transform: scaled ? `rotate(45deg) scale(0.9)` : `rotate(45deg)`,
+    boxShadow: showCelebrationAnimation
+      ? `0 0 30px ${colors.glowColor}80, 0 0 60px ${colors.glowColor}50, 0 8px 24px ${colors.borderColor}60`
+      : isPerfectMatch 
+        ? `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`
+        : `0 4px 12px ${colors.borderColor}26, 0 0 0 1px ${colors.borderColor}1A`,
+    transition: showCelebrationAnimation ? 'none' : 'all 0.3s ease-in-out',
+    animation: getAnimation(),
     cursor: onClick ? 'pointer' : 'default',
-    boxSizing: 'border-box' as const
+    boxSizing: 'border-box'
   };
 
   const handleClick = () => {
+    // Allow click even during celebration - user might want to skip
     if (onClick) {
       onClick();
     }
   };
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-    setShowTooltip(true); // Show tooltip on hover
+    if (isCelebrating) return;
+    setShowTooltip(true);
     if (onClick) {
-      // Hover effects with scale only (no rotation change)
       e.currentTarget.style.transform = scaled 
         ? `rotate(45deg) scale(0.93)` 
         : `rotate(45deg) scale(1.03)`;
       
-      // Enhanced hover effects for diamond state
       if (isPerfectMatch) {
         e.currentTarget.style.boxShadow = `0 0 35px ${colors.glowColor}80, 0 0 70px ${colors.glowColor}50, 0 6px 20px ${colors.borderColor}60, inset 0 0 20px ${colors.glowColor}30`;
         e.currentTarget.style.filter = 'brightness(1.3)';
@@ -171,14 +242,13 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    setShowTooltip(false); // Hide tooltip on leave
+    if (isCelebrating) return;
+    setShowTooltip(false);
     if (onClick) {
-      // Reset to base transform (no rotation change)
       e.currentTarget.style.transform = scaled 
         ? `rotate(45deg) scale(0.9)` 
         : `rotate(45deg)`;
       
-      // Reset to base shadow (diamond animation will continue)
       if (isPerfectMatch) {
         e.currentTarget.style.boxShadow = `0 0 20px ${colors.glowColor}66, 0 0 40px ${colors.glowColor}33, 0 4px 12px ${colors.borderColor}40, inset 0 0 10px ${colors.glowColor}20`;
         e.currentTarget.style.filter = 'brightness(1)';
@@ -238,6 +308,58 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
               filter: brightness(1.15);
             }
           }
+          
+          /* Celebration animation - flash, spin 360°, grow - NO forwards to let React control final state */
+          @keyframes celebrateSpin {
+            0% {
+              transform: rotate(45deg) scale(1);
+              filter: brightness(1);
+              box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            }
+            15% {
+              transform: rotate(45deg) scale(1.15);
+              filter: brightness(1.5);
+              box-shadow: 0 0 40px rgba(251, 191, 36, 0.8), 
+                          0 0 80px rgba(245, 158, 11, 0.5);
+            }
+            30% {
+              transform: rotate(225deg) scale(1.2);
+              filter: brightness(1.8);
+              box-shadow: 0 0 60px rgba(251, 191, 36, 1), 
+                          0 0 100px rgba(245, 158, 11, 0.7),
+                          inset 0 0 30px rgba(255, 255, 255, 0.5);
+            }
+            50% {
+              transform: rotate(405deg) scale(1.25);
+              filter: brightness(2);
+              box-shadow: 0 0 80px rgba(251, 191, 36, 1), 
+                          0 0 120px rgba(245, 158, 11, 0.8),
+                          inset 0 0 40px rgba(255, 255, 255, 0.6);
+            }
+            70% {
+              transform: rotate(405deg) scale(1.15);
+              filter: brightness(1.5);
+              box-shadow: 0 0 50px rgba(251, 191, 36, 0.8), 
+                          0 0 80px rgba(245, 158, 11, 0.5);
+            }
+            85% {
+              transform: rotate(405deg) scale(1.05);
+              filter: brightness(1.2);
+              box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+            }
+            100% {
+              transform: rotate(405deg) scale(1);
+              filter: brightness(1);
+              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            }
+          }
+          
+          @keyframes counterRotateText {
+            0% { transform: rotate(-45deg) translateX(-0.04em); }
+            30% { transform: rotate(-225deg) translateX(-0.04em); }
+            50% { transform: rotate(-405deg) translateX(-0.04em); }
+            100% { transform: rotate(-405deg) translateX(-0.04em); }
+          }
         `}
       </style>
       
@@ -248,25 +370,25 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-        {/* 🎯 NEW: Dynamic text with appropriate styling */}
+        {/* Dynamic text with appropriate styling */}
         <span style={{ 
           position: 'relative', 
           zIndex: 2,
-          // Counter-rotate to keep text upright: base -45deg only
           transform: `rotate(-45deg) translateX(-0.04em)`,
-          marginLeft: '0.08em', // Reduced margin for mobile
+          marginLeft: '0.08em',
           lineHeight: '0.9',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          ...textStyling // Apply dynamic text styling here
+          animation: isCelebrating ? 'counterRotateText 1.5s ease-in-out' : 'none',
+          ...textStyling
         }}>
           {displayText}
         </span>
       </div>
 
-      {/* 🎯 NEW: Tooltip for 'Theme of the week' */}
-      {showTooltip && onClick && (
+      {/* Tooltip for 'Theme of the week' */}
+      {showTooltip && onClick && !isCelebrating && (
         <div style={{
           position: 'absolute',
           top: '-3rem',
@@ -288,4 +410,4 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     </div>
     </>
   );
-}; 
+};
