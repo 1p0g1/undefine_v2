@@ -1218,9 +1218,9 @@ function App() {
             </div>
           )}
 
-          {/* Bonus Round - shows for early wins (< 6 guesses) AFTER theme modal closes */}
+          {/* Bonus Round - shows for early wins (< 6 guesses) AFTER celebration + theme modal */}
           {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
-           pendingBonusRound && !showThemeModal && !bonusRoundComplete && (
+           pendingBonusRound && !celebrateDiamond && !showThemeModal && !bonusRoundComplete && (
             <BonusRoundInline
               wordId={gameState.wordId}
               playerId={getPlayerId()}
