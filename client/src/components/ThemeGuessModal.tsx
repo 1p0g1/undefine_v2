@@ -43,6 +43,7 @@ interface ThemeGuessModalProps {
   gameDate?: string;
   isArchivePlay?: boolean;
   gameComplete?: boolean; // NEW: To detect when game is finished for call-to-action
+  bonusRoundAttempts?: number; // NEW: Number of bonus round attempts unlocked (0 if none)
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
@@ -57,6 +58,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   gameDate,
   isArchivePlay = false,
   gameComplete = false, // NEW: Default to false
+  bonusRoundAttempts = 0, // NEW: Default to 0 (no bonus round)
   onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');
@@ -65,6 +67,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [themeStats, setThemeStats] = useState<ThemeStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showingResult, setShowingResult] = useState(false); // NEW: Show result before closing
   const [lastGuessResult, setLastGuessResult] = useState<{
     guess: string;
     isCorrect: boolean;
@@ -346,8 +349,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // Clear the guess input
       setGuess('');
 
-      // Theme-first flow: after the player makes their guess, move them on to results
-      handleClose(updatedThemeData);
+      // NEW: Show result first, don't close immediately
+      setShowingResult(true);
 
     } catch (error) {
       console.error('[ThemeGuessModal] Error submitting theme guess:', error);
@@ -750,6 +753,70 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 </div>
                   );
                 })()}
+
+                {/* NEW: Bonus Round Unlock Message - only show after fresh guess */}
+                {showingResult && bonusRoundAttempts > 0 && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                    border: '2px solid #f59e0b',
+                    borderRadius: '0.75rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      background: 'linear-gradient(90deg, #f59e0b, #d97706, #f59e0b)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      marginBottom: '0.5rem'
+                    }}>
+                      🎯 BONUS ROUND UNLOCKED! 🎯
+                    </div>
+                    <div style={{
+                      fontSize: '1rem',
+                      color: '#92400e',
+                      fontWeight: 500
+                    }}>
+                      You solved today's word in <strong>{6 - bonusRoundAttempts}</strong> guess{6 - bonusRoundAttempts !== 1 ? 'es' : ''}!
+                    </div>
+                    <div style={{
+                      fontSize: '1.1rem',
+                      color: '#78350f',
+                      fontWeight: 600,
+                      marginTop: '0.25rem'
+                    }}>
+                      You have <span style={{ 
+                        color: '#f59e0b', 
+                        fontSize: '1.3rem',
+                        textShadow: '0 0 10px rgba(245, 158, 11, 0.5)'
+                      }}>{bonusRoundAttempts}</span> bonus guess{bonusRoundAttempts !== 1 ? 'es' : ''} to find dictionary neighbors!
+                    </div>
+                  </div>
+                )}
+
+                {/* NEW: Continue button after showing result */}
+                {showingResult && (
+                  <button
+                    onClick={() => handleClose(themeGuessData)}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem',
+                      marginTop: '1rem',
+                      backgroundColor: bonusRoundAttempts > 0 ? '#f59e0b' : '#1a237e',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {bonusRoundAttempts > 0 ? '🎯 Continue to Bonus Round!' : '📊 Continue to Results'}
+                  </button>
+                )}
               </div>
             ) : null}
 

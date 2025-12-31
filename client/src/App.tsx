@@ -1456,6 +1456,7 @@ function App() {
         gameDate={gameState.gameDate}
         isArchivePlay={gameState.isArchivePlay === true}
         gameComplete={gameState.isComplete}
+        bonusRoundAttempts={gameState.isWon && gameState.guesses ? Math.max(0, 6 - gameState.guesses.length) : 0}
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />
 

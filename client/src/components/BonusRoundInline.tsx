@@ -47,6 +47,10 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [results, setResults] = useState<BonusGuessResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showNearbyWords, setShowNearbyWords] = useState(false);
+  const [nearbyWords, setNearbyWords] = useState<{ above: string[]; below: string[] } | null>(null);
+  const [loadingNearby, setLoadingNearby] = useState(false);
+  const [userFinished, setUserFinished] = useState(false); // User clicked continue
 
   const isComplete = currentAttempt >= remainingAttempts;
 
@@ -108,10 +112,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       setCurrentAttempt(prev => prev + 1);
       setGuess('');
 
-      // Check if complete
-      if (currentAttempt + 1 >= remainingAttempts && onComplete) {
-        onComplete([...results, result]);
-      }
+      // Don't auto-complete - let user review results and click continue
 
     } catch (error) {
       console.error('[BonusRound] Error:', error);
@@ -122,10 +123,38 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   }, [guess, wordId, playerId, currentAttempt, remainingAttempts, isSubmitting, isComplete, results, onComplete]);
 
   const handleSkip = useCallback(() => {
+    setUserFinished(true);
     if (onComplete) {
       onComplete(results);
     }
   }, [results, onComplete]);
+
+  const handleContinue = useCallback(() => {
+    setUserFinished(true);
+    if (onComplete) {
+      onComplete(results);
+    }
+  }, [results, onComplete]);
+
+  const fetchNearbyWords = useCallback(async () => {
+    if (nearbyWords || loadingNearby) return;
+    
+    setLoadingNearby(true);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/bonus/nearby-words?wordId=${wordId}`);
+      const data = await response.json();
+      
+      if (data.above && data.below) {
+        setNearbyWords({ above: data.above, below: data.below });
+        setShowNearbyWords(true);
+      }
+    } catch (error) {
+      console.error('[BonusRound] Error fetching nearby words:', error);
+    } finally {
+      setLoadingNearby(false);
+    }
+  }, [wordId, nearbyWords, loadingNearby]);
 
   if (remainingAttempts <= 0) return null;
 
@@ -192,7 +221,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       )}
 
       {/* Input or completion */}
-      {!isComplete ? (
+      {!isComplete && !userFinished ? (
         <>
           <form onSubmit={handleSubmit} style={styles.form}>
             <input
@@ -219,12 +248,63 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             Skip Bonus Round
           </button>
         </>
-      ) : (
-        <div style={styles.complete}>
-          <span style={styles.completeEmoji}>✅</span>
-          <span>Bonus round complete!</span>
+      ) : !userFinished ? (
+        // Complete state - show results and action buttons
+        <div style={styles.completeSection}>
+          {/* Summary */}
+          <div style={styles.summaryBox}>
+            <div style={styles.summaryTitle}>🎯 Your Results</div>
+            <div style={styles.summaryStats}>
+              <span style={styles.statGold}>🥇 {results.filter(r => r.tier === 'perfect').length}</span>
+              <span style={styles.statSilver}>🥈 {results.filter(r => r.tier === 'good').length}</span>
+              <span style={styles.statBronze}>🥉 {results.filter(r => r.tier === 'average').length}</span>
+              <span style={styles.statMiss}>❌ {results.filter(r => r.tier === 'miss').length}</span>
+            </div>
+          </div>
+
+          {/* Nearby words toggle */}
+          <button 
+            onClick={fetchNearbyWords} 
+            style={styles.nearbyButton}
+            disabled={loadingNearby}
+          >
+            {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Nearby Words' : '📖 Show Nearby Words (Answers)'}
+          </button>
+
+          {/* Nearby words display */}
+          {showNearbyWords && nearbyWords && (
+            <div style={styles.nearbySection}>
+              <div style={styles.nearbyColumn}>
+                <div style={styles.nearbyHeader}>⬆️ Words Above</div>
+                {nearbyWords.above.map((word, idx) => (
+                  <div key={`above-${idx}`} style={styles.nearbyWord}>
+                    <span style={styles.nearbyRank}>-{nearbyWords.above.length - idx}</span>
+                    <span>{word}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={styles.nearbyCenter}>
+                <div style={styles.targetWordLabel}>Today's Word</div>
+                <div style={styles.targetWordBox}>{targetWord}</div>
+              </div>
+              <div style={styles.nearbyColumn}>
+                <div style={styles.nearbyHeader}>⬇️ Words Below</div>
+                {nearbyWords.below.map((word, idx) => (
+                  <div key={`below-${idx}`} style={styles.nearbyWord}>
+                    <span style={styles.nearbyRank}>+{idx + 1}</span>
+                    <span>{word}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Continue button */}
+          <button onClick={handleContinue} style={styles.continueButton}>
+            📊 Continue to Results
+          </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
@@ -344,17 +424,118 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     opacity: 0.7,
   },
-  complete: {
+  completeSection: {
     display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  summaryBox: {
+    background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+    border: '2px solid #10b981',
+    borderRadius: '10px',
+    padding: '1rem',
+  },
+  summaryTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    color: '#065f46',
+    marginBottom: '0.5rem',
+  },
+  summaryStats: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    fontSize: '1.1rem',
+    fontWeight: 600,
+  },
+  statGold: {
+    color: '#b8860b',
+  },
+  statSilver: {
+    color: '#6b7280',
+  },
+  statBronze: {
+    color: '#92400e',
+  },
+  statMiss: {
+    color: '#dc2626',
+  },
+  nearbyButton: {
+    padding: '0.625rem 1rem',
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    background: '#fef3c7',
+    color: '#92400e',
+    border: '2px solid #f59e0b',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  nearbySection: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
+    gap: '0.5rem',
+    background: '#fffbeb',
+    border: '1px solid #fcd34d',
+    borderRadius: '8px',
+    padding: '0.75rem',
+    fontSize: '0.8rem',
+    textAlign: 'left',
+  },
+  nearbyColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+  },
+  nearbyHeader: {
+    fontWeight: 600,
+    color: '#92400e',
+    marginBottom: '0.25rem',
+    textAlign: 'center',
+    fontSize: '0.85rem',
+  },
+  nearbyWord: {
+    display: 'flex',
+    gap: '0.5rem',
+    padding: '0.2rem 0.4rem',
+    background: '#fff',
+    borderRadius: '4px',
+    border: '1px solid #fde68a',
+  },
+  nearbyRank: {
+    color: '#9ca3af',
+    fontSize: '0.75rem',
+    minWidth: '24px',
+  },
+  nearbyCenter: {
+    display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.5rem',
-    color: '#166534',
-    fontWeight: 600,
-    fontSize: '1rem',
+    padding: '0 0.5rem',
   },
-  completeEmoji: {
-    fontSize: '1.25rem',
+  targetWordLabel: {
+    fontSize: '0.7rem',
+    color: '#6b7280',
+    marginBottom: '0.25rem',
+  },
+  targetWordBox: {
+    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+    color: '#fff',
+    fontWeight: 700,
+    padding: '0.5rem 0.75rem',
+    borderRadius: '6px',
+    textTransform: 'uppercase',
+    fontSize: '0.9rem',
+  },
+  continueButton: {
+    padding: '0.875rem 1.5rem',
+    fontSize: '1rem',
+    fontWeight: 700,
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
   },
 };
 
