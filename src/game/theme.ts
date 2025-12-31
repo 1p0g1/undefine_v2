@@ -233,23 +233,42 @@ export async function submitThemeAttempt(
     });
 
     // Insert theme attempt with similarity tracking
-    const { error: insertError } = await supabase
+    // First try with all columns (including optional similarity tracking)
+    let insertError = null;
+    
+    const baseInsertData = {
+      player_id: playerId,
+      theme,
+      guess: guess.trim(),
+      is_correct: isCorrect,
+      attempt_date: today,
+      week_start: weekStart,
+      is_archive_attempt: derivedIsArchiveAttempt,
+      words_completed_when_guessed: progress.completedWords,
+      total_word_guesses: totalWordGuesses
+    };
+    
+    // Try with similarity tracking columns first
+    const { error: fullInsertError } = await supabase
       .from('theme_attempts')
       .insert({
-        player_id: playerId,
-        theme,
-        guess: guess.trim(),
-        is_correct: isCorrect,
-        attempt_date: today,
-        week_start: weekStart,
-        is_archive_attempt: derivedIsArchiveAttempt,
-        words_completed_when_guessed: progress.completedWords,
-        total_word_guesses: totalWordGuesses,
-        // Add similarity tracking data
+        ...baseInsertData,
+        // Add similarity tracking data (optional columns)
         similarity_score: guessResult.similarity || null,
         confidence_percentage: guessResult.confidence,
         matching_method: guessResult.method
       });
+
+    if (fullInsertError) {
+      console.warn('[submitThemeAttempt] Insert with similarity columns failed, trying without:', fullInsertError.message);
+      
+      // Retry without optional similarity columns (in case migration hasn't been applied)
+      const { error: basicInsertError } = await supabase
+        .from('theme_attempts')
+        .insert(baseInsertData);
+      
+      insertError = basicInsertError;
+    }
 
     if (insertError) {
       console.error('[submitThemeAttempt] Insert error:', insertError);

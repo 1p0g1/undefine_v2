@@ -54,6 +54,26 @@ class GameService {
             isArchivePlay: parsed.isArchivePlay,
             gameDate: parsed.gameDate
           };
+          
+          // IMPORTANT: Detect if game was RECENTLY completed (within 30 seconds)
+          // This handles HMR/module reload scenarios where the singleton gets recreated
+          // but the game was completed in the same browser session
+          const completedRecently = parsed.isComplete && parsed.completedInSession && parsed.savedAt;
+          if (completedRecently) {
+            const savedTime = new Date(parsed.savedAt).getTime();
+            const now = Date.now();
+            const secondsSinceSave = (now - savedTime) / 1000;
+            
+            // If completed within last 30 seconds, treat as freshly completed
+            if (secondsSinceSave < 30) {
+              this.completedInSession = true;
+              console.log('[GameService] Game completed recently, restoring completedInSession flag:', {
+                secondsSinceSave,
+                savedAt: parsed.savedAt
+              });
+            }
+          }
+          
           console.log('[GameService] Restored state:', {
             gameId: parsed.gameId,
             wordId: parsed.wordId,
@@ -61,7 +81,9 @@ class GameService {
             endTime: restoredEndTime,
             isComplete: parsed.isComplete,
             savedSessionId: parsed.sessionId || 'unknown',
-            currentSessionId: this.sessionId
+            currentSessionId: this.sessionId,
+            savedCompletedInSession: parsed.completedInSession,
+            restoredCompletedInSession: this.completedInSession
           });
         } else {
           console.warn('[GameService] Invalid saved state, clearing...');
