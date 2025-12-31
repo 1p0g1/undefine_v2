@@ -1,7 +1,7 @@
 # UnDEFINE Database Architecture
 
 > **🔴 SINGLE SOURCE OF TRUTH** - This document supersedes all other database references.  
-> Last Updated: 2025-12-30  
+> Last Updated: 2025-12-31  
 > Source: Supabase Dashboard exports
 
 ---
@@ -398,6 +398,16 @@ To standardize constraint hygiene without changing live gameplay behavior, apply
 - `supabase/migrations/20251219000002_cleanup_duplicate_foreign_keys.sql`
 
 ### Applied Changes Log
+
+- **2025-12-31**: Applied `supabase/migrations/20251231000001_add_week_start_and_archive_columns_to_theme_attempts.sql`
+  - Added `week_start` DATE column to `theme_attempts`
+  - Added `is_archive_attempt` BOOLEAN column to `theme_attempts`
+  - Updated unique constraint to support archive vs live play context
+  - Fixes theme guess 500 errors caused by missing columns
+
+- **2025-12-30**: Applied `supabase/migrations/20251230000001_create_bonus_round_guesses_table.sql`
+  - Created `bonus_round_guesses` table for tracking early finisher mini-game guesses
+  - Tracks player guesses, lex_rank distances, and tier achievements (Gold/Silver/Bronze)
 
 - **2025-12-25**: Applied `supabase/migrations/20251219000002_cleanup_duplicate_foreign_keys.sql`
   - Removed duplicate FKs on `game_sessions.word_id` and `leaderboard_summary.player_id`
