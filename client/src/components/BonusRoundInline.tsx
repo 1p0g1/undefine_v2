@@ -3,9 +3,15 @@
  * 
  * Inline bonus round UI - shows after winning early (<6 guesses).
  * Allows player to guess dictionary neighbours of today's word.
+ * 
+ * Visual design: "Golden Hour" / "Unlocked Chamber" aesthetic
+ * - Soft golden aura with animated gradient
+ * - Floating sparkle particles (CSS pseudo-elements)
+ * - Gold-themed inputs and buttons
+ * - Respects prefers-reduced-motion
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { getApiBaseUrl } from '../utils/apiHelpers';
 
 export interface BonusGuessResult {
@@ -16,6 +22,119 @@ export interface BonusGuessResult {
   error?: string;
   message?: string;
 }
+
+// CSS for golden aura animations - injected once
+const BONUS_ROUND_STYLES = `
+  @keyframes goldenAuraPulse {
+    0%, 100% {
+      box-shadow: 
+        0 0 30px rgba(251, 191, 36, 0.3),
+        0 0 60px rgba(251, 191, 36, 0.15),
+        inset 0 0 30px rgba(251, 191, 36, 0.05);
+    }
+    50% {
+      box-shadow: 
+        0 0 40px rgba(251, 191, 36, 0.4),
+        0 0 80px rgba(251, 191, 36, 0.2),
+        inset 0 0 40px rgba(251, 191, 36, 0.08);
+    }
+  }
+
+  @keyframes shimmerText {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes floatSparkle {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(-8px) scale(1.1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes gentleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @keyframes successPulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+    50% { transform: scale(1.02); box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.3); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bonus-round-container,
+    .bonus-round-title,
+    .bonus-sparkle,
+    .bonus-result-row {
+      animation: none !important;
+    }
+  }
+
+  .bonus-round-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: saturate(0.8);
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .bonus-round-container {
+    position: relative;
+    z-index: 51;
+    animation: goldenAuraPulse 4s ease-in-out infinite;
+  }
+
+  .bonus-round-title {
+    background: linear-gradient(
+      90deg,
+      #b8860b 0%,
+      #ffd700 25%,
+      #fff8dc 50%,
+      #ffd700 75%,
+      #b8860b 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmerText 3s linear infinite;
+  }
+
+  .bonus-sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: floatSparkle 3s ease-in-out infinite;
+  }
+
+  .bonus-input:focus {
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3), 0 0 20px rgba(251, 191, 36, 0.2) !important;
+    outline: none;
+  }
+
+  .bonus-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+  }
+
+  .bonus-result-row.success {
+    animation: successPulse 0.6s ease-out;
+  }
+`;
 
 interface BonusRoundInlineProps {
   wordId: string;
@@ -50,9 +169,21 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [showNearbyWords, setShowNearbyWords] = useState(false);
   const [nearbyWords, setNearbyWords] = useState<{ above: string[]; below: string[] } | null>(null);
   const [loadingNearby, setLoadingNearby] = useState(false);
-  const [userFinished, setUserFinished] = useState(false); // User clicked continue
+  const [userFinished, setUserFinished] = useState(false);
+  const [lastResultSuccess, setLastResultSuccess] = useState(false); // For success animation
 
   const isComplete = currentAttempt >= remainingAttempts;
+
+  // Inject styles once on mount
+  useEffect(() => {
+    const styleId = 'bonus-round-styles';
+    if (!document.getElementById(styleId)) {
+      const styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      styleEl.textContent = BONUS_ROUND_STYLES;
+      document.head.appendChild(styleEl);
+    }
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +243,12 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       setCurrentAttempt(prev => prev + 1);
       setGuess('');
 
+      // Trigger success animation for scoring guesses
+      if (result.tier && result.tier !== 'miss') {
+        setLastResultSuccess(true);
+        setTimeout(() => setLastResultSuccess(false), 600);
+      }
+
       // Don't auto-complete - let user review results and click continue
 
     } catch (error) {
@@ -122,19 +259,32 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
     }
   }, [guess, wordId, playerId, currentAttempt, remainingAttempts, isSubmitting, isComplete, results, onComplete]);
 
-  const handleSkip = useCallback(() => {
+  const handleContinue = useCallback(async () => {
+    // Finalize bonus score before completing
+    if (gameSessionId && results.length > 0) {
+      try {
+        const baseUrl = getApiBaseUrl();
+        await fetch(`${baseUrl}/api/bonus/finalize-score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gameSessionId,
+            playerId,
+            wordId
+          })
+        });
+        console.log('[BonusRound] Score finalized');
+      } catch (error) {
+        console.error('[BonusRound] Error finalizing score:', error);
+        // Continue anyway - don't block the user
+      }
+    }
+    
     setUserFinished(true);
     if (onComplete) {
       onComplete(results);
     }
-  }, [results, onComplete]);
-
-  const handleContinue = useCallback(() => {
-    setUserFinished(true);
-    if (onComplete) {
-      onComplete(results);
-    }
-  }, [results, onComplete]);
+  }, [results, onComplete, gameSessionId, playerId, wordId]);
 
   const fetchNearbyWords = useCallback(async () => {
     if (nearbyWords || loadingNearby) return;
@@ -159,96 +309,86 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   if (remainingAttempts <= 0) return null;
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <span style={styles.emoji}>🎯</span>
-        <span style={styles.title}>Bonus Round!</span>
-      </div>
+    <>
+      {/* Subtle page overlay - dims and desaturates background */}
+      {!userFinished && <div className="bonus-round-overlay" />}
+      
+      <div className="bonus-round-container" style={styles.container}>
+        {/* Floating sparkles - subtle ambient motion */}
+        <div className="bonus-sparkle" style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
+        <div className="bonus-sparkle" style={{ top: '20%', right: '8%', animationDelay: '1s' }} />
+        <div className="bonus-sparkle" style={{ bottom: '15%', left: '10%', animationDelay: '2s' }} />
+        <div className="bonus-sparkle" style={{ bottom: '25%', right: '5%', animationDelay: '0.5s' }} />
 
-      {/* Explanation */}
-      <div style={styles.explanation}>
-        Can you guess <strong>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearby "<strong>{targetWord}</strong>" in the dictionary?
-      </div>
-
-      {/* Scoring table */}
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>Distance</th>
-            <th style={styles.th}>Tier</th>
-            <th style={styles.th}>Medal</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={styles.td}>≤ 10</td>
-            <td style={styles.td}>Perfect</td>
-            <td style={styles.td}>🥇 Gold</td>
-          </tr>
-          <tr>
-            <td style={styles.td}>≤ 20</td>
-            <td style={styles.td}>Good</td>
-            <td style={styles.td}>🥈 Silver</td>
-          </tr>
-          <tr>
-            <td style={styles.td}>≤ 30</td>
-            <td style={styles.td}>Average</td>
-            <td style={styles.td}>🥉 Bronze</td>
-          </tr>
-          <tr>
-            <td style={styles.td}>&gt; 30</td>
-            <td style={styles.td}>Miss</td>
-            <td style={styles.td}>❌</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Results list */}
-      {results.length > 0 && (
-        <div style={styles.results}>
-          {results.map((r, idx) => {
-            const tier = TIER_INFO[r.tier || 'miss'];
-            return (
-              <div key={idx} style={{ ...styles.resultRow, background: tier.bg }}>
-                <span style={styles.resultEmoji}>{tier.emoji}</span>
-                <span style={styles.resultWord}>{r.guess}</span>
-                <span style={styles.resultDistance}>{r.distance} away</span>
-              </div>
-            );
-          })}
+        {/* Header with shimmer effect */}
+        <div style={styles.header}>
+          <span style={styles.emoji}>✨</span>
+          <span className="bonus-round-title" style={styles.title}>Bonus Round!</span>
+          <span style={styles.emoji}>✨</span>
         </div>
-      )}
 
-      {/* Input or completion */}
-      {!isComplete && !userFinished ? (
-        <>
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <input
-              type="text"
-              value={guess}
-              onChange={(e) => setGuess(e.target.value)}
-              placeholder={`Guess ${currentAttempt + 1} of ${remainingAttempts}`}
-              style={styles.input}
-              disabled={isSubmitting}
-              autoFocus
-            />
-            <button
-              type="submit"
-              style={styles.button}
-              disabled={!guess.trim() || isSubmitting}
-            >
-              {isSubmitting ? '...' : 'Go'}
-            </button>
-          </form>
-          {errorMessage && (
-            <div style={styles.error}>{errorMessage}</div>
-          )}
-          <button onClick={handleSkip} style={styles.skipButton}>
-            Skip Bonus Round
-          </button>
-        </>
-      ) : !userFinished ? (
+        {/* Explanation */}
+        <div style={styles.explanation}>
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} near "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
+        </div>
+
+        {/* Compact scoring legend */}
+        <div style={styles.scoringLegend}>
+          <span><span style={{ color: '#b8860b' }}>🥇</span> ≤10</span>
+          <span><span style={{ color: '#6b7280' }}>🥈</span> ≤20</span>
+          <span><span style={{ color: '#92400e' }}>🥉</span> ≤30</span>
+          <span>❌ &gt;30</span>
+        </div>
+
+        {/* Results list with success animation */}
+        {results.length > 0 && (
+          <div style={styles.results}>
+            {results.map((r, idx) => {
+              const tier = TIER_INFO[r.tier || 'miss'];
+              const isLatest = idx === results.length - 1 && lastResultSuccess;
+              return (
+                <div 
+                  key={idx} 
+                  className={`bonus-result-row ${isLatest ? 'success' : ''}`}
+                  style={{ ...styles.resultRow, background: tier.bg }}
+                >
+                  <span style={styles.resultEmoji}>{tier.emoji}</span>
+                  <span style={styles.resultWord}>{r.guess}</span>
+                  <span style={styles.resultDistance}>{r.distance} away</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Input or completion */}
+        {!isComplete && !userFinished ? (
+          <>
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <input
+                type="text"
+                value={guess}
+                onChange={(e) => setGuess(e.target.value)}
+                placeholder={`Guess ${currentAttempt + 1} of ${remainingAttempts}`}
+                className="bonus-input"
+                style={styles.input}
+                disabled={isSubmitting}
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="bonus-button"
+                style={styles.button}
+                disabled={!guess.trim() || isSubmitting}
+              >
+                {isSubmitting ? '...' : 'Go'}
+              </button>
+            </form>
+            {errorMessage && (
+              <div style={styles.error}>{errorMessage}</div>
+            )}
+          </>
+        ) : !userFinished ? (
         // Complete state - show results and action buttons
         <div style={styles.completeSection}>
           {/* Summary */}
@@ -304,60 +444,55 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             📊 Continue to Results
           </button>
         </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+    </>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    background: 'linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)',
-    border: '2px solid #fbbf24',
-    borderRadius: '12px',
-    padding: '1rem',
+    position: 'relative',
+    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%)',
+    border: '3px solid #fbbf24',
+    borderRadius: '16px',
+    padding: '1.25rem',
     marginTop: '1rem',
     marginBottom: '1rem',
     textAlign: 'center',
+    overflow: 'hidden',
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.5rem',
-    marginBottom: '0.75rem',
+    marginBottom: '0.5rem',
   },
   emoji: {
-    fontSize: '1.5rem',
+    fontSize: '1.25rem',
   },
   title: {
-    fontSize: '1.25rem',
-    fontWeight: 700,
-    color: '#92400e',
+    fontSize: '1.4rem',
+    fontWeight: 800,
     fontFamily: 'var(--font-primary)',
   },
   explanation: {
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     color: '#78350f',
-    marginBottom: '1rem',
+    marginBottom: '0.75rem',
     lineHeight: 1.4,
   },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginBottom: '1rem',
-    fontSize: '0.85rem',
-  },
-  th: {
-    background: '#fde68a',
+  scoringLegend: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '0.75rem',
+    fontSize: '0.8rem',
+    color: '#78350f',
+    marginBottom: '0.75rem',
     padding: '0.5rem',
-    fontWeight: 600,
-    color: '#78350f',
-    borderBottom: '2px solid #f59e0b',
-  },
-  td: {
-    padding: '0.4rem',
-    borderBottom: '1px solid #fcd34d',
-    color: '#78350f',
+    background: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: '8px',
   },
   results: {
     display: 'flex',
@@ -413,16 +548,9 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#dc2626',
     fontSize: '0.85rem',
     marginBottom: '0.5rem',
-  },
-  skipButton: {
-    padding: '0.5rem 1rem',
-    fontSize: '0.85rem',
-    background: 'transparent',
-    color: '#92400e',
-    border: '1px solid #d97706',
+    background: 'rgba(255, 255, 255, 0.8)',
+    padding: '0.5rem',
     borderRadius: '6px',
-    cursor: 'pointer',
-    opacity: 0.7,
   },
   completeSection: {
     display: 'flex',

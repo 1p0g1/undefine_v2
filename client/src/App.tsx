@@ -670,6 +670,7 @@ function App() {
             guessStatus={boxStatus}
             onBoxClick={handleDefineBoxClick}
             isLoading={isSubmitting}
+            bonusResults={bonusRoundResults.map(r => r.tier || null)}
           />
         </div>
       </div>

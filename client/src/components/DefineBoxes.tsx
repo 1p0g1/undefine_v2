@@ -10,6 +10,17 @@ type DefineKey = (typeof DEFINE_KEYS)[number];
 
 export type GuessStatus = 'correct' | 'incorrect' | 'fuzzy' | 'active' | 'empty';
 
+// Bonus round tier type
+export type BonusTier = 'perfect' | 'good' | 'average' | 'miss' | null;
+
+// Bonus round tier colors - Gold, Silver, Bronze
+const BONUS_TIER_COLORS: Record<string, { bg: string; border: string; text: string }> = {
+  perfect: { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', border: '#B8860B', text: '#fff' },
+  good: { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)', border: '#808080', text: '#fff' },
+  average: { bg: 'linear-gradient(135deg, #CD7F32 0%, #A05A2C 100%)', border: '#8B4513', text: '#fff' },
+  miss: { bg: '#f3f4f6', border: '#d1d5db', text: '#6b7280' }
+};
+
 // Mapping of DEFINE keys to their hint descriptions
 const DEFINE_HINTS: Record<string, string> = {
   'D': 'Definition: Guess to reveal hints',
@@ -26,6 +37,8 @@ interface DefineBoxesProps {
   guessStatus: GuessStatus[];
   onBoxClick?: (message: string) => void;
   isLoading?: boolean;
+  // NEW: Bonus round results - array of tiers for each bonus guess
+  bonusResults?: BonusTier[];
 }
 
 export const DefineBoxes: React.FC<DefineBoxesProps> = ({
@@ -33,7 +46,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
   revealedClues,
   guessStatus,
   onBoxClick,
-  isLoading = false
+  isLoading = false,
+  bonusResults = []
 }) => {
   const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
   const [showHint, setShowHint] = useState<string | null>(null);
@@ -56,6 +70,11 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
     };
   }, [hintTimer]);
 
+  // Calculate which boxes are for guesses vs bonus round
+  const guessCount = gameState.guesses?.length || 0;
+  const isGameWon = gameState.isWon;
+  const isGameComplete = gameState.isComplete;
+
   return (
     <div className="define-boxes-wrapper" style={{ 
       display: 'flex', 
@@ -73,13 +92,36 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           const isIncorrect = guessStatus[index] === 'incorrect';
           const isFuzzy = guessStatus[index] === 'fuzzy';
 
+          // Determine if this box should show bonus round result
+          // Bonus results apply to boxes AFTER the guesses used (when player won early)
+          const bonusIndex = index - guessCount;
+          const hasBonusResult = isGameWon && isGameComplete && bonusIndex >= 0 && bonusIndex < bonusResults.length;
+          const bonusTier = hasBonusResult ? bonusResults[bonusIndex] : null;
+          const bonusColors = bonusTier ? BONUS_TIER_COLORS[bonusTier] : null;
+
+          // Determine colors - bonus round takes precedence for remaining boxes
           let backgroundColor = '#fff';
           let borderColor = 'var(--color-primary, #1a237e)';
+          let textColor = 'var(--color-primary, #1a237e)';
+          let backgroundStyle: React.CSSProperties = {};
           
-          if (isCorrect) backgroundColor = '#4caf50';
-          else if (isIncorrect) backgroundColor = '#ef5350';
-          else if (isFuzzy) backgroundColor = '#ff9800';
-          else if (isActive) backgroundColor = '#e8eaf6';
+          if (bonusColors && hasBonusResult) {
+            // Bonus round result styling
+            backgroundStyle = { background: bonusColors.bg };
+            borderColor = bonusColors.border;
+            textColor = bonusColors.text;
+          } else if (isCorrect) {
+            backgroundColor = '#4caf50';
+            textColor = '#fff';
+          } else if (isIncorrect) {
+            backgroundColor = '#ef5350';
+            textColor = '#fff';
+          } else if (isFuzzy) {
+            backgroundColor = '#ff9800';
+            textColor = '#fff';
+          } else if (isActive) {
+            backgroundColor = '#e8eaf6';
+          }
 
           // Handle special case for second E
           const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
@@ -105,14 +147,15 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 justifyContent: 'center',
                 fontSize: 'clamp(1.3rem, 3.8vw, 1.6rem)',
                 fontWeight: 700,
-                color: isCorrect || isIncorrect || isFuzzy ? '#fff' : 'var(--color-primary, #1a237e)',
-                backgroundColor,
+                color: textColor,
+                backgroundColor: bonusColors ? undefined : backgroundColor,
                 cursor: isRevealed ? 'pointer' : 'default',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.3s ease',
                 animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
                 fontFamily: 'var(--font-primary)',
                 position: 'relative',
-                zIndex: 1
+                zIndex: 1,
+                ...backgroundStyle
               }}
             >
               {letter}
