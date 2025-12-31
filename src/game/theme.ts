@@ -252,42 +252,61 @@ export async function submitThemeAttempt(
       similarity: guessResult.similarity
     });
 
-    // Insert theme attempt with similarity tracking
-    // First try with all columns (including optional similarity tracking)
+    // Insert theme attempt - use tiered fallback for schema compatibility
+    // Tier 1: All columns (similarity tracking + week_start/is_archive_attempt)
+    // Tier 2: Base columns (week_start/is_archive_attempt but no similarity)
+    // Tier 3: Minimal columns (original schema only)
     let insertError = null;
     
-    const baseInsertData = {
+    // Minimal required columns (original schema)
+    const minimalInsertData = {
       player_id: playerId,
       theme,
       guess: guess.trim(),
       is_correct: isCorrect,
       attempt_date: today,
-      week_start: weekStart,
-      is_archive_attempt: derivedIsArchiveAttempt,
       words_completed_when_guessed: progress.completedWords,
       total_word_guesses: totalWordGuesses
     };
     
-    // Try with similarity tracking columns first
+    // Extended columns (requires migration 20251231000001)
+    const extendedInsertData = {
+      ...minimalInsertData,
+      week_start: weekStart,
+      is_archive_attempt: derivedIsArchiveAttempt
+    };
+    
+    // Full columns (requires similarity migration)
+    const fullInsertData = {
+      ...extendedInsertData,
+      similarity_score: guessResult.similarity || null,
+      confidence_percentage: guessResult.confidence,
+      matching_method: guessResult.method
+    };
+    
+    // Tier 1: Try with all columns (full schema)
     const { error: fullInsertError } = await supabase
       .from('theme_attempts')
-      .insert({
-        ...baseInsertData,
-        // Add similarity tracking data (optional columns)
-        similarity_score: guessResult.similarity || null,
-        confidence_percentage: guessResult.confidence,
-        matching_method: guessResult.method
-      });
+      .insert(fullInsertData);
 
     if (fullInsertError) {
-      console.warn('[submitThemeAttempt] Insert with similarity columns failed, trying without:', fullInsertError.message);
+      console.warn('[submitThemeAttempt] Tier 1 insert failed (full schema):', fullInsertError.message);
       
-      // Retry without optional similarity columns (in case migration hasn't been applied)
-      const { error: basicInsertError } = await supabase
+      // Tier 2: Try with extended columns but no similarity tracking
+      const { error: extendedInsertError } = await supabase
         .from('theme_attempts')
-        .insert(baseInsertData);
+        .insert(extendedInsertData);
       
-      insertError = basicInsertError;
+      if (extendedInsertError) {
+        console.warn('[submitThemeAttempt] Tier 2 insert failed (extended schema):', extendedInsertError.message);
+        
+        // Tier 3: Try with minimal columns (original schema)
+        const { error: minimalInsertError } = await supabase
+          .from('theme_attempts')
+          .insert(minimalInsertData);
+        
+        insertError = minimalInsertError;
+      }
     }
 
     if (insertError) {
