@@ -32,36 +32,50 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   // Track celebration animation state
   const [isCelebrating, setIsCelebrating] = useState(false);
   
-  // Use ref to track if callback was already called (prevents double-firing)
+  // Use refs to prevent issues with cleanup clearing timeouts
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const callbackFiredRef = useRef(false);
   
   // Trigger celebration when prop changes to true
   useEffect(() => {
     // Start celebration when prop becomes true
-    if (celebrateCompletion && !isCelebrating && !callbackFiredRef.current) {
-      console.log('[UnPrefix] Starting celebration animation');
+    if (celebrateCompletion && !callbackFiredRef.current) {
+      console.log('[UnPrefix] Starting celebration animation, celebrateCompletion:', celebrateCompletion);
       setIsCelebrating(true);
       
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
       // Animation lasts 1.5s, then trigger callback
-      const timer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         console.log('[UnPrefix] Celebration animation complete, firing callback');
         setIsCelebrating(false);
         callbackFiredRef.current = true;
+        timerRef.current = null;
         
         if (onCelebrationComplete) {
           console.log('[UnPrefix] Calling onCelebrationComplete');
           onCelebrationComplete();
         }
       }, 1500);
-      
-      return () => clearTimeout(timer);
     }
     
-    // Reset the callback flag when celebrateCompletion goes back to false
-    if (!celebrateCompletion) {
+    // Reset when celebrateCompletion goes back to false
+    if (!celebrateCompletion && callbackFiredRef.current) {
       callbackFiredRef.current = false;
+      setIsCelebrating(false);
     }
-  }, [celebrateCompletion, isCelebrating, onCelebrationComplete]);
+    
+    // Cleanup only on unmount
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [celebrateCompletion, onCelebrationComplete]); // Removed isCelebrating from deps!
   
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';

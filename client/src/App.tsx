@@ -1170,6 +1170,43 @@ function App() {
               </div>
             </div>
             
+            {/* Bonus Round Explanation */}
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+              🎯 Bonus Round
+            </h3>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Solve the word in fewer than 6 guesses? You've unlocked the Bonus Round! Guess words that are <strong>close to today's word in the dictionary</strong> to earn bonus medals:
+            </p>
+            <div style={{ 
+              backgroundColor: '#fef3c7',
+              border: '2px solid #fcd34d',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                color: '#92400e'
+              }}>
+                <div><span style={{ color: '#fbbf24' }}>🥇</span> <strong>Gold</strong> - Within 10 words (Perfect!)</div>
+                <div><span style={{ color: '#9ca3af' }}>🥈</span> <strong>Silver</strong> - Within 20 words (Good!)</div>
+                <div><span style={{ color: '#d97706' }}>🥉</span> <strong>Bronze</strong> - Within 30 words (Average)</div>
+              </div>
+            </div>
+            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.85rem', fontStyle: 'italic', color: '#666' }}>
+              Our dictionary is based on{' '}
+              <a 
+                href="https://www.mso.anu.edu.au/~ralph/OPTED/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: '#1a237e', textDecoration: 'underline' }}
+              >
+                OPTED (Online Plain Text English Dictionary)
+              </a>
+              , derived from Webster's 1913 Unabridged Dictionary. Both British and American English spellings are accepted!
+            </p>
+            
             <button 
               onClick={() => setShowRules(false)}
               style={{
