@@ -95,10 +95,30 @@ export async function isThemeGuessCorrect(guess: string, actualTheme: string): P
     };
   }
 
-  // Import semantic similarity (dynamic import to avoid circular dependencies)
-  const { matchThemeWithFuzzy } = await import('../utils/semanticSimilarity');
+  // First check for exact match (fast, no API needed)
+  const normalizedGuess = normalizeText(guess);
+  const normalizedTheme = normalizeText(actualTheme);
   
+  if (normalizedGuess === normalizedTheme) {
+    console.log('[isThemeGuessCorrect] Exact match found');
+    return {
+      isCorrect: true,
+      method: 'exact',
+      confidence: 100,
+      similarity: 1.0
+    };
+  }
+
+  // Try semantic similarity with robust error handling
   try {
+    // Dynamic import with timeout to prevent hanging
+    const importPromise = import('../utils/semanticSimilarity');
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Import timeout')), 5000)
+    );
+    
+    const { matchThemeWithFuzzy } = await Promise.race([importPromise, timeoutPromise]) as any;
+    
     const result = await matchThemeWithFuzzy(guess, actualTheme);
     
     return {
@@ -108,7 +128,7 @@ export async function isThemeGuessCorrect(guess: string, actualTheme: string): P
       similarity: result.similarity
     };
   } catch (error) {
-    console.error('[isThemeGuessCorrect] Error:', error);
+    console.error('[isThemeGuessCorrect] Semantic matching failed, using legacy fallback:', error);
     
     // Fallback to legacy matching if AI fails
     const legacyResult = isThemeGuessCorrectLegacy(guess, actualTheme);
