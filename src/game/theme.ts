@@ -199,6 +199,7 @@ export async function submitThemeAttempt(
   alreadyGuessedToday: boolean;
   wordsCompleted: number;
   totalGuesses: number;
+  error?: string;
 }> {
   try {
     const today = new Date().toISOString().split('T')[0];
