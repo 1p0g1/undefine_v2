@@ -1191,8 +1191,8 @@ function App() {
                 color: '#92400e'
               }}>
                 <div><span style={{ color: '#fbbf24' }}>🥇</span> <strong>Gold</strong> - Within 10 words (Perfect!)</div>
-                <div><span style={{ color: '#9ca3af' }}>🥈</span> <strong>Silver</strong> - Within 20 words (Good!)</div>
-                <div><span style={{ color: '#d97706' }}>🥉</span> <strong>Bronze</strong> - Within 30 words (Average)</div>
+                <div><span style={{ color: '#9ca3af' }}>🥈</span> <strong>Silver</strong> - Within 25 words (Good!)</div>
+                <div><span style={{ color: '#d97706' }}>🥉</span> <strong>Bronze</strong> - Within 50 words (Average)</div>
               </div>
             </div>
             <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.85rem', fontStyle: 'italic', color: '#666' }}>

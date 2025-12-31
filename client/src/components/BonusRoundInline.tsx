@@ -335,9 +335,9 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
         {/* Compact scoring legend */}
         <div style={styles.scoringLegend}>
           <span><span style={{ color: '#b8860b' }}>🥇</span> ≤10</span>
-          <span><span style={{ color: '#6b7280' }}>🥈</span> ≤20</span>
-          <span><span style={{ color: '#92400e' }}>🥉</span> ≤30</span>
-          <span>❌ &gt;30</span>
+          <span><span style={{ color: '#6b7280' }}>🥈</span> ≤25</span>
+          <span><span style={{ color: '#92400e' }}>🥉</span> ≤50</span>
+          <span>❌ &gt;50</span>
         </div>
 
         {/* Results list with success animation */}

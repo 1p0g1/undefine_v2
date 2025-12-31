@@ -288,7 +288,7 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 **Key Logic**:
 - `lex_rank` is the alphabetical position in the dictionary
 - Bonus round uses `lex_rank` difference to score guesses
-- Distance ≤10 = Gold, ≤20 = Silver, ≤30 = Bronze, >30 = Miss
+- Distance ≤10 = Gold, ≤25 = Silver, ≤50 = Bronze, >50 = Miss
 
 **Data Source**: OPTED/Webster's 1913 dictionary, processed via `dictionary-pipeline/`
 

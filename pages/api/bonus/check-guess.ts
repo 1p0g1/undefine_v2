@@ -11,9 +11,9 @@
  * 
  * Scoring:
  * - Distance ≤ 10: Perfect (Gold) - 100 points
- * - Distance ≤ 20: Good (Silver) - 50 points
- * - Distance ≤ 30: Average (Bronze) - 25 points
- * - Distance > 30: Miss - 0 points
+ * - Distance ≤ 25: Good (Silver) - 50 points
+ * - Distance ≤ 50: Average (Bronze) - 25 points
+ * - Distance > 50: Miss - 0 points
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -24,11 +24,11 @@ import { generateAllLookupVariants } from '@/src/utils/spelling';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-// Scoring tiers
+// Scoring tiers (loosened for word derivatives like love/lovely/loving)
 const SCORING = {
   PERFECT: { maxDistance: 10, tier: 'perfect', points: 100, color: 'gold' },
-  GOOD: { maxDistance: 20, tier: 'good', points: 50, color: 'silver' },
-  AVERAGE: { maxDistance: 30, tier: 'average', points: 25, color: 'bronze' },
+  GOOD: { maxDistance: 25, tier: 'good', points: 50, color: 'silver' },
+  AVERAGE: { maxDistance: 50, tier: 'average', points: 25, color: 'bronze' },
   MISS: { maxDistance: Infinity, tier: 'miss', points: 0, color: 'gray' },
 } as const;
 

@@ -6,9 +6,9 @@
  * 
  * Scoring:
  * - Gold (≤10 distance): 100 points
- * - Silver (≤20 distance): 50 points
- * - Bronze (≤30 distance): 25 points
- * - Miss (>30): 0 points
+ * - Silver (≤25 distance): 50 points
+ * - Bronze (≤50 distance): 25 points
+ * - Miss (>50): 0 points
  */
 
 import { createClient } from '@supabase/supabase-js';
