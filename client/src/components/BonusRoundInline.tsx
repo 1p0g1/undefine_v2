@@ -208,23 +208,33 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
       const data = await response.json();
 
-      // If word not found or same word, show error but don't advance
-      if (data.error === 'word_not_found') {
-        setErrorMessage('Word not in dictionary. Try another!');
+      // If word not in dictionary, show error but don't advance attempt
+      if (data.error === 'not_in_dictionary' || data.error === 'word_not_found') {
+        setErrorMessage(data.message || 'Word not in dictionary. Try a real word!');
         setGuess('');
         setIsSubmitting(false);
         return;
       }
       
+      // If it's the same as today's word
       if (data.error === 'same_word') {
-        setErrorMessage("That's today's word! Try a nearby word.");
+        setErrorMessage(data.message || "That's today's word! Try a nearby word.");
         setGuess('');
         setIsSubmitting(false);
         return;
       }
 
+      // If target word lookup failed
       if (data.error === 'target_not_found') {
-        setErrorMessage('Bonus round unavailable for this word.');
+        setErrorMessage(data.message || 'Bonus round unavailable for this word.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // If guess is invalid (too short, etc)
+      if (data.error === 'invalid_guess') {
+        setErrorMessage(data.message || 'Please enter a valid word.');
+        setGuess('');
         setIsSubmitting(false);
         return;
       }

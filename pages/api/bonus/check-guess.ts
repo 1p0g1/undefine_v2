@@ -6,8 +6,8 @@
  * 
  * Features:
  * - Algorithmic British→American spelling conversion (no static table needed)
- * - Fallback lex_rank estimation when word not in dictionary (binary search)
- * - The bonus round ALWAYS works, even for words not in dictionary
+ * - ONLY accepts real dictionary words (no made-up words)
+ * - Target word position can be estimated if needed (for words not linked to dictionary)
  * 
  * Scoring:
  * - Distance ≤ 10: Perfect (Gold) - 100 points
@@ -248,11 +248,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       });
     }
 
-    // Get the guessed word's lex_rank (try exact match first, then estimate)
-    let guessResult = await getWordLexRank(guess);
+    // Get the guessed word's lex_rank - MUST be a real dictionary word
+    const guessResult = await getWordLexRank(guess);
     if (!guessResult) {
-      // Word not in dictionary - estimate its position
-      guessResult = await estimateWordLexRank(guess);
+      // Word not in dictionary - reject it (no made-up words allowed)
+      return res.status(400).json({
+        valid: false,
+        error: 'not_in_dictionary',
+        message: `"${guess}" is not in our dictionary. Try a real word!`
+      });
     }
 
     // Calculate distance and tier

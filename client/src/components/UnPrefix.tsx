@@ -315,43 +315,70 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
             }
           }
           
-          /* Celebration animation - spin 360°, grow, neutral color glow - NO color change */
+          /* Vault unlocking animation - click, click, swing open */
           @keyframes celebrateSpin {
+            /* Initial state - vault locked */
             0% {
               transform: rotate(45deg) scale(1);
               filter: brightness(1);
               box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
             }
+            /* First tumbler click - small jerk */
+            10% {
+              transform: rotate(45deg) scale(1.05);
+              filter: brightness(1.2);
+              box-shadow: 0 0 20px rgba(100, 116, 139, 0.5);
+            }
             15% {
-              transform: rotate(45deg) scale(1.15);
+              transform: rotate(60deg) scale(1.05);
+              filter: brightness(1.1);
+              box-shadow: 0 0 25px rgba(100, 116, 139, 0.4);
+            }
+            /* Second tumbler click - rotate more */
+            25% {
+              transform: rotate(60deg) scale(1.08);
               filter: brightness(1.3);
-              box-shadow: 0 0 40px rgba(100, 116, 139, 0.6), 
-                          0 0 80px rgba(100, 116, 139, 0.4);
+              box-shadow: 0 0 30px rgba(100, 116, 139, 0.6);
             }
             30% {
-              transform: rotate(225deg) scale(1.2);
-              filter: brightness(1.5);
-              box-shadow: 0 0 60px rgba(100, 116, 139, 0.8), 
-                          0 0 100px rgba(100, 116, 139, 0.5),
-                          inset 0 0 30px rgba(255, 255, 255, 0.4);
+              transform: rotate(135deg) scale(1.08);
+              filter: brightness(1.2);
+              box-shadow: 0 0 35px rgba(100, 116, 139, 0.5);
+            }
+            /* Third tumbler - the big turn */
+            40% {
+              transform: rotate(135deg) scale(1.12);
+              filter: brightness(1.4);
+              box-shadow: 0 0 45px rgba(100, 116, 139, 0.7),
+                          inset 0 0 20px rgba(255, 255, 255, 0.3);
             }
             50% {
-              transform: rotate(405deg) scale(1.25);
+              transform: rotate(315deg) scale(1.15);
+              filter: brightness(1.5);
+              box-shadow: 0 0 60px rgba(100, 116, 139, 0.8),
+                          0 0 100px rgba(100, 116, 139, 0.4),
+                          inset 0 0 30px rgba(255, 255, 255, 0.4);
+            }
+            /* Vault swings open - final rotation + slight tilt */
+            60% {
+              transform: rotate(405deg) scale(1.18) perspective(500px) rotateY(15deg);
               filter: brightness(1.6);
-              box-shadow: 0 0 80px rgba(100, 116, 139, 0.9), 
-                          0 0 120px rgba(100, 116, 139, 0.6),
+              box-shadow: 0 0 70px rgba(100, 116, 139, 0.9),
+                          0 0 120px rgba(100, 116, 139, 0.5),
                           inset 0 0 40px rgba(255, 255, 255, 0.5);
             }
-            70% {
-              transform: rotate(405deg) scale(1.15);
-              filter: brightness(1.3);
-              box-shadow: 0 0 50px rgba(100, 116, 139, 0.6), 
+            /* Hold open briefly */
+            75% {
+              transform: rotate(405deg) scale(1.12) perspective(500px) rotateY(10deg);
+              filter: brightness(1.4);
+              box-shadow: 0 0 50px rgba(100, 116, 139, 0.7),
                           0 0 80px rgba(100, 116, 139, 0.4);
             }
-            85% {
-              transform: rotate(405deg) scale(1.05);
+            /* Settle back */
+            90% {
+              transform: rotate(405deg) scale(1.03);
               filter: brightness(1.1);
-              box-shadow: 0 0 30px rgba(100, 116, 139, 0.4);
+              box-shadow: 0 0 25px rgba(100, 116, 139, 0.4);
             }
             100% {
               transform: rotate(405deg) scale(1);
@@ -360,10 +387,37 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
             }
           }
           
+          /* Spoke decoration for vault effect */
+          .vault-spoke {
+            position: absolute;
+            width: 2px;
+            height: 40%;
+            background: linear-gradient(to bottom, rgba(100, 116, 139, 0.6), transparent);
+            top: 50%;
+            left: 50%;
+            transform-origin: center top;
+            opacity: 0;
+            pointer-events: none;
+          }
+          
+          .celebrating .vault-spoke {
+            animation: spokeReveal 1.5s ease-out;
+          }
+          
+          @keyframes spokeReveal {
+            0% { opacity: 0; }
+            20% { opacity: 0.8; }
+            60% { opacity: 0.6; }
+            100% { opacity: 0; }
+          }
+          
           @keyframes counterRotateText {
+            /* Counter-rotate text to keep it readable during vault unlock */
             0% { transform: rotate(-45deg) translateX(-0.04em); }
-            30% { transform: rotate(-225deg) translateX(-0.04em); }
-            50% { transform: rotate(-405deg) translateX(-0.04em); }
+            15% { transform: rotate(-60deg) translateX(-0.04em); }
+            30% { transform: rotate(-135deg) translateX(-0.04em); }
+            50% { transform: rotate(-315deg) translateX(-0.04em); }
+            60% { transform: rotate(-405deg) translateX(-0.04em); }
             100% { transform: rotate(-405deg) translateX(-0.04em); }
           }
         `}
@@ -371,27 +425,42 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <div 
+          className={isCelebrating ? 'celebrating' : ''}
           style={containerStyle}
           onClick={handleClick}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-        {/* Dynamic text with appropriate styling */}
-        <span style={{ 
-          position: 'relative', 
-          zIndex: 2,
-          transform: `rotate(-45deg) translateX(-0.04em)`,
-          marginLeft: '0.08em',
-          lineHeight: '0.9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: isCelebrating ? 'counterRotateText 1.5s ease-in-out' : 'none',
-          ...textStyling
-        }}>
-          {displayText}
-        </span>
-      </div>
+          {/* Vault spokes - decorative lines that appear during unlock animation */}
+          {isCelebrating && (
+            <>
+              <div className="vault-spoke" style={{ transform: 'rotate(0deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(45deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(90deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(135deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(180deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(225deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(270deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(315deg) translateX(-50%)' }} />
+            </>
+          )}
+          
+          {/* Dynamic text with appropriate styling */}
+          <span style={{ 
+            position: 'relative', 
+            zIndex: 2,
+            transform: `rotate(-45deg) translateX(-0.04em)`,
+            marginLeft: '0.08em',
+            lineHeight: '0.9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: isCelebrating ? 'counterRotateText 1.5s ease-in-out' : 'none',
+            ...textStyling
+          }}>
+            {displayText}
+          </span>
+        </div>
 
       {/* Tooltip for 'Theme of the week' */}
       {showTooltip && onClick && !isCelebrating && (
