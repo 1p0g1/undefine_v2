@@ -1412,6 +1412,7 @@ function App() {
         onOpenThemeModal={handleThemeClick}
         isArchivePlay={gameState.isArchivePlay}
         gameDate={gameState.gameDate}
+        bonusRoundResults={bonusRoundResults}
       />
       {/* Settings Modal */}
       <SettingsModal

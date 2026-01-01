@@ -43,6 +43,7 @@ export interface LeaderboardEntry {
     is_correct: boolean;
     confidence_percentage: number | null;
   };
+  bonus_results?: Array<'perfect' | 'good' | 'average' | 'miss' | null>;  // Bonus round results (gold/silver/bronze)
 }
 
 /**

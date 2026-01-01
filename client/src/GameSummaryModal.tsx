@@ -9,6 +9,11 @@ import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 
+// Bonus round result type (matches BonusRoundInline)
+interface BonusGuessResult {
+  tier?: 'perfect' | 'good' | 'average' | 'miss' | null;
+}
+
 interface GameSummaryModalProps {
   open: boolean;
   onClose: () => void;
@@ -37,6 +42,7 @@ interface GameSummaryModalProps {
   onOpenThemeModal?: () => void;
   isArchivePlay?: boolean;  // NEW: Archive play flag
   gameDate?: string;  // NEW: Original word date
+  bonusRoundResults?: BonusGuessResult[];  // Bonus round results for DEFINE boxes
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -60,6 +66,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   onOpenThemeModal,
   isArchivePlay = false,  // NEW: Archive play flag
   gameDate,  // NEW: Original word date
+  bonusRoundResults = [],  // Bonus round results for DEFINE boxes
 }) => {
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -385,6 +392,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               revealedClues={[]}
               guessStatus={guessStatus}
               onBoxClick={() => {}}
+              bonusResults={bonusRoundResults.map(r => r.tier || null)}
             />
           </div>
         </div>
@@ -752,6 +760,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                           let bgColor = '#fff'; // Default white (not revealed)
                           let textColor = '#1a237e';
                           let borderColor = '#1a237e';
+                          let useGradient = false;
+                          let gradientBg = '';
                           
                           // Check if this box was reached
                           if (idx < entry.guesses_used) {
@@ -779,6 +789,36 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                                 borderColor = '#ef4444';
                               }
                             }
+                          } else if (entry.bonus_results && entry.bonus_results.length > 0) {
+                            // Bonus round results for remaining boxes
+                            const bonusIdx = idx - entry.guesses_used;
+                            if (bonusIdx >= 0 && bonusIdx < entry.bonus_results.length) {
+                              const tier = entry.bonus_results[bonusIdx];
+                              if (tier === 'perfect') {
+                                // Gold gradient
+                                useGradient = true;
+                                gradientBg = 'linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)';
+                                textColor = '#78350f';
+                                borderColor = '#b45309';
+                              } else if (tier === 'good') {
+                                // Silver gradient
+                                useGradient = true;
+                                gradientBg = 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 50%, #6b7280 100%)';
+                                textColor = '#1f2937';
+                                borderColor = '#4b5563';
+                              } else if (tier === 'average') {
+                                // Bronze gradient
+                                useGradient = true;
+                                gradientBg = 'linear-gradient(135deg, #fbbf24 0%, #b45309 50%, #78350f 100%)';
+                                textColor = '#fef3c7';
+                                borderColor = '#92400e';
+                              } else {
+                                // Miss - gray
+                                bgColor = '#9ca3af';
+                                textColor = '#fff';
+                                borderColor = '#6b7280';
+                              }
+                            }
                           }
                           
                           return (
@@ -787,7 +827,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                               style={{
                                 width: '1.25rem',
                                 height: '1.25rem',
-                                backgroundColor: bgColor,
+                                background: useGradient ? gradientBg : bgColor,
                                 border: `2px solid ${borderColor}`,
                                 borderRadius: '0.25rem',
                                 display: 'flex',

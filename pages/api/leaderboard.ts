@@ -161,6 +161,24 @@ async function getCurrentDayLeaderboard(
     ])
   );
 
+  // Get bonus round results for all players
+  const { data: bonusGuessesData } = await supabase
+    .from('bonus_round_guesses')
+    .select('player_id, tier, attempt_number')
+    .eq('word_id', wordId)
+    .in('player_id', playerIds)
+    .order('attempt_number', { ascending: true });
+
+  // Group bonus guesses by player
+  const bonusResultsMap = new Map<string, Array<'perfect' | 'good' | 'average' | 'miss' | null>>();
+  if (bonusGuessesData) {
+    for (const guess of bonusGuessesData) {
+      const existing = bonusResultsMap.get(guess.player_id) || [];
+      existing.push(guess.tier as 'perfect' | 'good' | 'average' | 'miss' | null);
+      bonusResultsMap.set(guess.player_id, existing);
+    }
+  }
+
   // Get theme guess data for current week
   const { data: wordData } = await supabase
     .from('words')
@@ -193,6 +211,7 @@ async function getCurrentDayLeaderboard(
   const transformedEntries: LeaderboardEntry[] = allEntries.map((entry) => {
     const fuzzyData = fuzzyDataMap.get(entry.player_id);
     const themeData = themeDataMap.get(entry.player_id);
+    const bonusResults = bonusResultsMap.get(entry.player_id);
     return {
       id: entry.id,
       word_id: entry.word_id,
@@ -211,7 +230,8 @@ async function getCurrentDayLeaderboard(
         has_guessed: themeData.hasGuessed,
         is_correct: themeData.isCorrect,
         confidence_percentage: themeData.confidence
-      } : undefined
+      } : undefined,
+      bonus_results: bonusResults || undefined
     };
   });
 

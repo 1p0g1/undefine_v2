@@ -73,6 +73,7 @@ export interface LeaderboardEntry {
   is_current_player?: boolean;
   fuzzy_matches?: number;      // Number of fuzzy matches (calculated from fuzzy_bonus / 25)
   fuzzy_bonus?: number;        // Bonus points from fuzzy matches
+  bonus_results?: Array<'perfect' | 'good' | 'average' | 'miss' | null>;  // Bonus round results (gold/silver/bronze)
 }
 
 /**
