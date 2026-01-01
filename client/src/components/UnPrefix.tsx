@@ -418,103 +418,28 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
             }
           }
           
-          /* Vault door spokes - permanent decorative lines extending from corners */
-          .vault-spoke-corner {
+          /* Spoke decoration for vault effect */
+          .vault-spoke {
             position: absolute;
             width: 2px;
-            background: currentColor;
-            pointer-events: none;
-            opacity: 0.6;
-          }
-          
-          /* Corner spokes pointing outward from diamond corners */
-          .vault-spoke-top { 
-            height: 18%; 
-            top: -1px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-          }
-          .vault-spoke-right { 
-            width: 18%; 
-            height: 2px; 
-            right: -1px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-          }
-          .vault-spoke-bottom { 
-            height: 18%; 
-            bottom: -1px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-          }
-          .vault-spoke-left { 
-            width: 18%; 
-            height: 2px; 
-            left: -1px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-          }
-          
-          /* Diagonal corner spokes (reaching toward diamond points) */
-          .vault-spoke-tl {
-            width: 15%;
-            height: 2px;
-            top: 15%;
-            left: 15%;
-            transform: rotate(-45deg);
-            transform-origin: left center;
-          }
-          .vault-spoke-tr {
-            width: 15%;
-            height: 2px;
-            top: 15%;
-            right: 15%;
-            transform: rotate(45deg);
-            transform-origin: right center;
-          }
-          .vault-spoke-bl {
-            width: 15%;
-            height: 2px;
-            bottom: 15%;
-            left: 15%;
-            transform: rotate(45deg);
-            transform-origin: left center;
-          }
-          .vault-spoke-br {
-            width: 15%;
-            height: 2px;
-            bottom: 15%;
-            right: 15%;
-            transform: rotate(-45deg);
-            transform-origin: right center;
-          }
-          
-          /* Small rivets at corners */
-          .vault-rivet {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: currentColor;
-            border-radius: 50%;
-            opacity: 0.5;
+            height: 40%;
+            background: linear-gradient(to bottom, rgba(100, 116, 139, 0.6), transparent);
+            top: 50%;
+            left: 50%;
+            transform-origin: center top;
+            opacity: 0;
             pointer-events: none;
           }
-          .rivet-tl { top: 18%; left: 18%; }
-          .rivet-tr { top: 18%; right: 18%; }
-          .rivet-bl { bottom: 18%; left: 18%; }
-          .rivet-br { bottom: 18%; right: 18%; }
           
-          /* Animation enhancement for celebration - spokes glow */
-          .celebrating .vault-spoke-corner,
-          .celebrating .vault-rivet {
-            animation: spokeGlow 1.5s ease-out;
+          .celebrating .vault-spoke {
+            animation: spokeReveal 1.5s ease-out;
           }
           
-          @keyframes spokeGlow {
-            0% { opacity: 0.6; }
-            30% { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
-            60% { opacity: 0.9; }
-            100% { opacity: 0.6; }
+          @keyframes spokeReveal {
+            0% { opacity: 0; }
+            20% { opacity: 0.8; }
+            60% { opacity: 0.6; }
+            100% { opacity: 0; }
           }
           
           @keyframes counterRotateText {
@@ -537,22 +462,19 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          {/* Vault door spokes - permanent decorative elements */}
-          {/* Corner spokes pointing outward */}
-          <div className="vault-spoke-corner vault-spoke-top" />
-          <div className="vault-spoke-corner vault-spoke-right" />
-          <div className="vault-spoke-corner vault-spoke-bottom" />
-          <div className="vault-spoke-corner vault-spoke-left" />
-          
-          {/* Diagonal spokes */}
-          <div className="vault-spoke-corner vault-spoke-tl" />
-          <div className="vault-spoke-corner vault-spoke-tr" />
-          
-          {/* Corner rivets */}
-          <div className="vault-rivet rivet-tl" />
-          <div className="vault-rivet rivet-tr" />
-          <div className="vault-rivet rivet-bl" />
-          <div className="vault-rivet rivet-br" />
+          {/* Vault spokes - decorative lines that appear during unlock animation */}
+          {isCelebrating && (
+            <>
+              <div className="vault-spoke" style={{ transform: 'rotate(0deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(45deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(90deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(135deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(180deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(225deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(270deg) translateX(-50%)' }} />
+              <div className="vault-spoke" style={{ transform: 'rotate(315deg) translateX(-50%)' }} />
+            </>
+          )}
           
           {/* Dynamic text with appropriate styling */}
           <span style={{ 
