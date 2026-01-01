@@ -362,34 +362,81 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
   if (!open) return null;
 
+  // CSS for cerebral theme animation
+  const cerebralStyles = `
+    @keyframes themeModalGlow {
+      0%, 100% { box-shadow: 0 0 30px rgba(26, 35, 126, 0.15), 0 0 60px rgba(59, 130, 246, 0.1); }
+      50% { box-shadow: 0 0 40px rgba(26, 35, 126, 0.25), 0 0 80px rgba(59, 130, 246, 0.15); }
+    }
+    @keyframes thinkingPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
+    }
+    @keyframes floatingIdea {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+      25% { transform: translateY(-5px) rotate(5deg); opacity: 0.7; }
+      50% { transform: translateY(-10px) rotate(0deg); opacity: 0.5; }
+      75% { transform: translateY(-5px) rotate(-5deg); opacity: 0.7; }
+    }
+    .theme-modal-cerebral::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, 
+        rgba(26, 35, 126, 0.3) 0%, 
+        rgba(59, 130, 246, 0.2) 25%,
+        rgba(139, 92, 246, 0.2) 50%,
+        rgba(59, 130, 246, 0.2) 75%,
+        rgba(26, 35, 126, 0.3) 100%
+      );
+      border-radius: 1.1rem;
+      z-index: -1;
+      animation: thinkingPulse 4s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .theme-modal-cerebral, .theme-modal-cerebral::before { animation: none !important; }
+    }
+  `;
+
   return (
-    <div className="modal-overlay" onClick={handleClose} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'rgba(10, 10, 10, 0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
-      boxSizing: 'border-box'
-    }}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{
-        background: '#fdfbf6',
-          borderRadius: '1rem',
-        padding: 'clamp(1rem, 4vw, 2rem)',
-          width: '100%',
-        maxWidth: 'min(480px, 90vw)',
-        maxHeight: 'min(90vh, calc(100vh - 2rem))',
-          overflowY: 'auto',
-        boxShadow: '0 0 20px rgba(0, 0, 0, 0.1)',
-          color: '#1a237e',
-        fontSize: '1rem',
-        boxSizing: 'border-box'
+    <>
+      <style>{cerebralStyles}</style>
+      <div className="modal-overlay" onClick={() => handleClose()} style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(10, 10, 30, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
+        boxSizing: 'border-box',
+        backdropFilter: 'blur(2px)'
       }}>
+        <div 
+          className="modal-content theme-modal-cerebral" 
+          onClick={e => e.stopPropagation()} 
+          style={{
+            background: 'linear-gradient(180deg, #fdfbf6 0%, #f8f4ee 100%)',
+            borderRadius: '1rem',
+            padding: 'clamp(1rem, 4vw, 2rem)',
+            width: '100%',
+            maxWidth: 'min(480px, 90vw)',
+            maxHeight: 'min(90vh, calc(100vh - 2rem))',
+            overflowY: 'auto',
+            color: '#1a237e',
+            fontSize: '1rem',
+            boxSizing: 'border-box',
+            position: 'relative',
+            animation: 'themeModalGlow 3s ease-in-out infinite'
+          }}
+        >
         {/* Modal Header with improved styling */}
         <div style={{ 
           display: 'flex', 
@@ -754,50 +801,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   );
                 })()}
 
-                {/* NEW: Bonus Round Unlock Message - only show after fresh guess */}
-                {showingResult && bonusRoundAttempts > 0 && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '1rem',
-                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                    border: '2px solid #f59e0b',
-                    borderRadius: '0.75rem',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{
-                      fontSize: '1.3rem',
-                      fontWeight: 'bold',
-                      background: 'linear-gradient(90deg, #f59e0b, #d97706, #f59e0b)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      marginBottom: '0.5rem'
-                    }}>
-                      🎯 BONUS ROUND UNLOCKED! 🎯
-                    </div>
-                    <div style={{
-                      fontSize: '1rem',
-                      color: '#92400e',
-                      fontWeight: 500
-                    }}>
-                      You solved today's word in <strong>{6 - bonusRoundAttempts}</strong> guess{6 - bonusRoundAttempts !== 1 ? 'es' : ''}!
-                    </div>
-                    <div style={{
-                      fontSize: '1.1rem',
-                      color: '#78350f',
-                      fontWeight: 600,
-                      marginTop: '0.25rem'
-                    }}>
-                      You have <span style={{ 
-                        color: '#f59e0b', 
-                        fontSize: '1.3rem',
-                        textShadow: '0 0 10px rgba(245, 158, 11, 0.5)'
-                      }}>{bonusRoundAttempts}</span> bonus guess{bonusRoundAttempts !== 1 ? 'es' : ''} to find dictionary neighbors!
-                    </div>
-                  </div>
-                )}
-
-                {/* NEW: Continue button after showing result */}
+                {/* Continue button after showing result */}
                 {showingResult && (
                   <button
                     onClick={() => handleClose(themeGuessData)}
@@ -805,7 +809,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       width: '100%',
                       padding: '0.875rem',
                       marginTop: '1rem',
-                      backgroundColor: bonusRoundAttempts > 0 ? '#f59e0b' : '#1a237e',
+                      backgroundColor: '#1a237e',
                       color: 'white',
                       border: 'none',
                       borderRadius: '0.5rem',
@@ -814,7 +818,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       cursor: 'pointer'
                     }}
                   >
-                    {bonusRoundAttempts > 0 ? '🎯 Continue to Bonus Round!' : '📊 Continue to Results'}
+                    📊 Continue to Results
                   </button>
                 )}
               </div>
@@ -934,23 +938,68 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     What connects this week's words?
                   </label>
                   
-                  {/* NEW: Simple theme history display */}
+                  {/* Theme history display - show past guesses with scores */}
                   {simpleHistory.length > 0 && (
                     <div style={{
-                      fontSize: '0.85rem',
-                      color: '#6b7280',
-                      marginBottom: 'calc(0.5rem + 1px)',
-                      fontStyle: 'italic'
+                      backgroundColor: '#f0f4ff',
+                      border: '1px solid #c7d2fe',
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem',
+                      marginBottom: '1rem'
                     }}>
-                      Past guesses: {simpleHistory.map((entry, idx) => (
-                        <span key={idx}>
-                          {entry.guess}
-                          {entry.confidencePercentage !== null && (
-                            <span> ({entry.confidencePercentage}%)</span>
-                          )}
-                          {idx < simpleHistory.length - 1 && ', '}
-                        </span>
-                      ))}
+                      <div style={{
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: '#4338ca',
+                        marginBottom: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        🧠 Your Previous Guesses:
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.375rem'
+                      }}>
+                        {simpleHistory.map((entry, idx) => (
+                          <div 
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '0.375rem 0.5rem',
+                              backgroundColor: 'white',
+                              borderRadius: '0.25rem',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            <span style={{ color: '#374151', fontWeight: 500 }}>
+                              "{entry.guess}"
+                            </span>
+                            {entry.confidencePercentage !== null && (
+                              <span style={{ 
+                                color: getSimilarityBarColor(entry.confidencePercentage),
+                                fontWeight: 600,
+                                fontSize: '0.8rem'
+                              }}>
+                                {entry.confidencePercentage}%
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#6366f1',
+                        marginTop: '0.5rem',
+                        fontStyle: 'italic',
+                        textAlign: 'center'
+                      }}>
+                        Use your previous guesses to narrow down the theme!
+                      </div>
                     </div>
                   )}
                   
@@ -1018,7 +1067,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             )}
           </div>
         )}
+          </div>
       </div>
-    </div>
+    </>
   );
 }; 

@@ -470,9 +470,18 @@ function App() {
   };
   
   // NEW: Handler for when diamond celebration completes
+  // FLOW: Celebration → Bonus Round (if eligible) → Theme Modal → Leaderboard
   const handleCelebrationComplete = () => {
-    console.log('[App] Diamond celebration complete, showing theme modal');
+    console.log('[App] Diamond celebration complete');
     setCelebrateDiamond(false);
+    
+    // If bonus round is pending, let it show inline (don't show theme modal yet)
+    if (pendingBonusRound) {
+      console.log('[App] Bonus round pending - showing inline bonus round first');
+      return; // Bonus round will show inline, then trigger theme modal when complete
+    }
+    
+    // No bonus round, go straight to theme modal
     setShowThemeModal(true);
   };
 
@@ -492,17 +501,11 @@ function App() {
     }
 
     // If we were waiting to show the results modal after theme flow...
+    // FLOW: Celebration → Bonus Round (done) → Theme Modal (closing now) → Leaderboard
     const pendingGameId = pendingSummaryGameIdRef.current;
     if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
-      // NEW: Check if bonus round is pending - if so, DON'T show leaderboard yet
-      // Bonus round will show inline, and leaderboard shows after bonus is complete
-      if (pendingBonusRound) {
-        console.log('[App] Theme closed, bonus round pending - user will play bonus round');
-        // Don't clear pendingSummaryAfterTheme yet - bonus round will trigger leaderboard
-        return;
-      }
-      
-      // No bonus round pending, show leaderboard now
+      // Theme modal done, show leaderboard now
+      console.log('[App] Theme modal closed, showing leaderboard');
       setPendingSummaryAfterTheme(false);
       pendingSummaryGameIdRef.current = null;
       showLeaderboardModal();
@@ -510,20 +513,19 @@ function App() {
   };
 
   // Bonus round completion handler (for inline UI)
+  // FLOW: After bonus round → Show theme modal → Then leaderboard
   const handleBonusRoundComplete = (results: BonusGuessResult[]) => {
     console.log('[App] Bonus round complete:', results);
     setBonusRoundResults(results);
     setBonusRoundComplete(true);
     setPendingBonusRound(false);
     
-    // NOW show the leaderboard (after theme + bonus round are done)
+    // After bonus round, show theme modal (then theme modal will trigger leaderboard on close)
     if (pendingSummaryAfterTheme) {
-      console.log('[App] Bonus round done, now showing leaderboard');
-      setPendingSummaryAfterTheme(false);
-      pendingSummaryGameIdRef.current = null;
-      // Small delay to let bonus results display before showing modal
+      console.log('[App] Bonus round done, now showing theme modal');
+      // Small delay to let bonus results display before showing theme modal
       setTimeout(() => {
-        showLeaderboardModal();
+        setShowThemeModal(true);
       }, 1500);
     }
   };
@@ -1256,17 +1258,60 @@ function App() {
             </div>
           )}
 
-          {/* Bonus Round - shows for early wins (< 6 guesses) AFTER celebration + theme modal */}
+          {/* Bonus Round Unlock Prompt - inline on main page */}
           {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
-           pendingBonusRound && !celebrateDiamond && !showThemeModal && !bonusRoundComplete && (
-            <BonusRoundInline
-              wordId={gameState.wordId}
-              playerId={getPlayerId()}
-              targetWord={gameState.wordText}
-              remainingAttempts={bonusAttempts}
-              gameSessionId={gameState.gameId}
-              onComplete={handleBonusRoundComplete}
-            />
+           pendingBonusRound && !celebrateDiamond && !bonusRoundComplete && (
+            <>
+              {/* Inline bonus round unlock message with proper pluralization */}
+              <div style={{
+                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                border: '2px solid #f59e0b',
+                borderRadius: '12px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '1.3rem',
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(90deg, #b45309, #d97706, #b45309)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  marginBottom: '0.5rem'
+                }}>
+                  🎯 BONUS ROUND UNLOCKED! 🎯
+                </div>
+                <div style={{
+                  fontSize: '1rem',
+                  color: '#92400e',
+                  fontWeight: 500
+                }}>
+                  You solved today's word in <strong>{gameState.guesses.length}</strong> guess{gameState.guesses.length !== 1 ? 'es' : ''}!
+                </div>
+                <div style={{
+                  fontSize: '1.1rem',
+                  color: '#78350f',
+                  fontWeight: 600,
+                  marginTop: '0.25rem'
+                }}>
+                  You have <span style={{ 
+                    color: '#d97706', 
+                    fontSize: '1.3rem'
+                  }}>{bonusAttempts}</span> bonus guess{bonusAttempts !== 1 ? 'es' : ''} to find dictionary neighbors!
+                </div>
+              </div>
+              
+              {/* The actual bonus round component */}
+              <BonusRoundInline
+                wordId={gameState.wordId}
+                playerId={getPlayerId()}
+                targetWord={gameState.wordText}
+                remainingAttempts={bonusAttempts}
+                gameSessionId={gameState.gameId}
+                onComplete={handleBonusRoundComplete}
+              />
+            </>
           )}
 
           {/* Bonus Round Results Summary */}
