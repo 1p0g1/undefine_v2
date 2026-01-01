@@ -9,6 +9,8 @@ interface UnPrefixProps {
   // Celebratory animation for just-completed games
   celebrateCompletion?: boolean; // Triggers the spin/grow animation
   onCelebrationComplete?: () => void; // Callback when celebration ends
+  // Bonus round active - subtle shake to prompt theme guess
+  bonusRoundActive?: boolean; // Shows subtle cranking animation during bonus round
   // Theme guess color-coding props
   themeGuessData?: {
     hasGuessedToday: boolean;
@@ -24,6 +26,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   showCallToAction = true,
   celebrateCompletion = false,
   onCelebrationComplete,
+  bonusRoundActive = false,
   themeGuessData 
 }) => {
   // Hover state for tooltip
@@ -181,6 +184,10 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     if (showCelebrationAnimation) {
       return 'celebrateSpin 1.5s ease-in-out';
     }
+    if (bonusRoundActive && !themeGuessData?.hasGuessedToday) {
+      // Subtle crank/nudge during bonus round to prompt theme guess
+      return 'bonusCrank 3s ease-in-out infinite';
+    }
     if (isPerfectMatch) {
       return 'diamondGlisten 2s ease-in-out infinite';
     }
@@ -277,6 +284,30 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
               opacity: 0.85;
               box-shadow: 0 8px 24px rgba(100, 116, 139, 0.5), 0 0 0 3px rgba(100, 116, 139, 0.35);
               transform: rotate(45deg) scale(1.03);
+            }
+          }
+          
+          /* Bonus round crank - subtle periodic nudge to remind player to guess theme */
+          @keyframes bonusCrank {
+            0%, 85%, 100% {
+              transform: rotate(45deg) scale(1);
+              box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+            }
+            88% {
+              transform: rotate(48deg) scale(1.02);
+              box-shadow: 0 4px 16px rgba(100, 116, 139, 0.4);
+            }
+            91% {
+              transform: rotate(42deg) scale(1.02);
+              box-shadow: 0 4px 16px rgba(100, 116, 139, 0.4);
+            }
+            94% {
+              transform: rotate(46deg) scale(1.01);
+              box-shadow: 0 4px 14px rgba(100, 116, 139, 0.35);
+            }
+            97% {
+              transform: rotate(44deg) scale(1.01);
+              box-shadow: 0 4px 14px rgba(100, 116, 139, 0.35);
             }
           }
           

@@ -423,35 +423,50 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
           {/* Nearby words display */}
           {showNearbyWords && nearbyWords && (
-            <div style={styles.nearbySection}>
-              <div style={styles.nearbyColumn}>
-                <div style={styles.nearbyHeader}>⬆️ Words Above</div>
-                {nearbyWords.above.map((word, idx) => (
-                  <div key={`above-${idx}`} style={styles.nearbyWord}>
-                    <span style={styles.nearbyRank}>-{nearbyWords.above.length - idx}</span>
-                    <span>{word}</span>
-                  </div>
-                ))}
+            <>
+              <div style={styles.nearbySection}>
+                <div style={styles.nearbyColumn}>
+                  <div style={styles.nearbyHeader}>⬆️ Words Above</div>
+                  {nearbyWords.above.map((word, idx) => (
+                    <div key={`above-${idx}`} style={styles.nearbyWord}>
+                      <span style={styles.nearbyRank}>-{nearbyWords.above.length - idx}</span>
+                      <span>{word}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={styles.nearbyCenter}>
+                  <div style={styles.targetWordLabel}>Today's Word</div>
+                  <div style={styles.targetWordBox}>{targetWord}</div>
+                </div>
+                <div style={styles.nearbyColumn}>
+                  <div style={styles.nearbyHeader}>⬇️ Words Below</div>
+                  {nearbyWords.below.map((word, idx) => (
+                    <div key={`below-${idx}`} style={styles.nearbyWord}>
+                      <span style={styles.nearbyRank}>+{idx + 1}</span>
+                      <span>{word}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={styles.nearbyCenter}>
-                <div style={styles.targetWordLabel}>Today's Word</div>
-                <div style={styles.targetWordBox}>{targetWord}</div>
+              {/* Dictionary attribution */}
+              <div style={styles.dictionaryAttribution}>
+                📚 Dictionary from{' '}
+                <a 
+                  href="https://www.gutenberg.org/files/669/669-h/669-h.htm" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={styles.attributionLink}
+                >
+                  Project Gutenberg's OPTED
+                </a>
+                {' '}• British/American spellings normalized
               </div>
-              <div style={styles.nearbyColumn}>
-                <div style={styles.nearbyHeader}>⬇️ Words Below</div>
-                {nearbyWords.below.map((word, idx) => (
-                  <div key={`below-${idx}`} style={styles.nearbyWord}>
-                    <span style={styles.nearbyRank}>+{idx + 1}</span>
-                    <span>{word}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            </>
           )}
 
-          {/* Continue button */}
+          {/* Continue button - leads to theme guess */}
           <button onClick={handleContinue} style={styles.continueButton}>
-            📊 Continue to Results
+            <span style={styles.unlockIcon}>🔓</span> Un·lock the theme of the week
           </button>
         </div>
         ) : null}
@@ -674,6 +689,28 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    width: '100%',
+    marginTop: '0.5rem',
+  },
+  unlockIcon: {
+    fontSize: '1.1rem',
+  },
+  dictionaryAttribution: {
+    fontSize: '0.7rem',
+    color: '#78716c',
+    textAlign: 'center' as const,
+    marginTop: '0.5rem',
+    marginBottom: '0.5rem',
+    lineHeight: 1.4,
+    fontStyle: 'italic',
+  },
+  attributionLink: {
+    color: '#059669',
+    textDecoration: 'underline',
   },
 };
 

@@ -656,6 +656,7 @@ function App() {
             gameComplete={gameState.isComplete}
             celebrateCompletion={celebrateDiamond}
             onCelebrationComplete={handleCelebrationComplete}
+            bonusRoundActive={pendingBonusRound && !celebrateDiamond && !bonusRoundComplete}
           />
         </div>
         <div className="define-boxes" style={{ 
