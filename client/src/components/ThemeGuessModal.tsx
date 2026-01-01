@@ -42,8 +42,7 @@ interface ThemeGuessModalProps {
   gameId: string;
   gameDate?: string;
   isArchivePlay?: boolean;
-  gameComplete?: boolean; // NEW: To detect when game is finished for call-to-action
-  bonusRoundAttempts?: number; // NEW: Number of bonus round attempts unlocked (0 if none)
+  gameComplete?: boolean; // To detect when game is finished for call-to-action
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
@@ -57,8 +56,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   gameId,
   gameDate,
   isArchivePlay = false,
-  gameComplete = false, // NEW: Default to false
-  bonusRoundAttempts = 0, // NEW: Default to 0 (no bonus round)
+  gameComplete = false,
   onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');

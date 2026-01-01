@@ -791,32 +791,33 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                             }
                           } else if (entry.bonus_results && entry.bonus_results.length > 0) {
                             // Bonus round results for remaining boxes
+                            // MUST match DefineBoxes.tsx colors exactly
                             const bonusIdx = idx - entry.guesses_used;
                             if (bonusIdx >= 0 && bonusIdx < entry.bonus_results.length) {
                               const tier = entry.bonus_results[bonusIdx];
                               if (tier === 'perfect') {
-                                // Gold gradient
+                                // Gold gradient - matches DefineBoxes
                                 useGradient = true;
-                                gradientBg = 'linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)';
-                                textColor = '#78350f';
-                                borderColor = '#b45309';
-                              } else if (tier === 'good') {
-                                // Silver gradient
-                                useGradient = true;
-                                gradientBg = 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 50%, #6b7280 100%)';
-                                textColor = '#1f2937';
-                                borderColor = '#4b5563';
-                              } else if (tier === 'average') {
-                                // Bronze gradient
-                                useGradient = true;
-                                gradientBg = 'linear-gradient(135deg, #fbbf24 0%, #b45309 50%, #78350f 100%)';
-                                textColor = '#fef3c7';
-                                borderColor = '#92400e';
-                              } else {
-                                // Miss - gray
-                                bgColor = '#9ca3af';
+                                gradientBg = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
                                 textColor = '#fff';
-                                borderColor = '#6b7280';
+                                borderColor = '#B8860B';
+                              } else if (tier === 'good') {
+                                // Silver gradient - matches DefineBoxes
+                                useGradient = true;
+                                gradientBg = 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)';
+                                textColor = '#fff';
+                                borderColor = '#808080';
+                              } else if (tier === 'average') {
+                                // Bronze gradient - matches DefineBoxes
+                                useGradient = true;
+                                gradientBg = 'linear-gradient(135deg, #CD7F32 0%, #A05A2C 100%)';
+                                textColor = '#fff';
+                                borderColor = '#8B4513';
+                              } else {
+                                // Miss - gray - matches DefineBoxes
+                                bgColor = '#f3f4f6';
+                                textColor = '#6b7280';
+                                borderColor = '#d1d5db';
                               }
                             }
                           }

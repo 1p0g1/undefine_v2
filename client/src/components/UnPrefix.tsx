@@ -95,24 +95,27 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
   
   // Determine diamond color based on theme guess results
   const getDiamondColors = () => {
-    // During celebration, use a golden/sparkly color but KEEP the default dark text
+    // During celebration, KEEP the original neutral colors - animation only, no color change
+    // This avoids confusion with gold (which means perfect bonus round guess)
     if (isCelebrating) {
       return {
-        backgroundColor: '#fef3c7', // Light gold background
-        borderColor: '#f59e0b', // Amber border
-        textColor: '#1e293b', // Keep dark text (NOT maroon)
-        glowColor: '#fbbf24', // Bright gold glow
+        backgroundColor: '#f8fafc', // Keep neutral background
+        borderColor: '#64748b', // Keep neutral border
+        textColor: '#1e293b', // Keep dark text
+        glowColor: '#64748b', // Neutral glow for animation
         isCelebrating: true
       };
     }
     
-    // Purple styling for call-to-action (game complete + theme not guessed)
+    // After celebration, show interactive state to encourage theme guess
+    // Use subtle animation cue without color change
     if (shouldPulsate) {
       return {
-        backgroundColor: '#e0e7ff', // Light purple background
-        borderColor: '#8b5cf6', // Purple border
-        textColor: '#8b5cf6', // Purple text
-        glowColor: '#8b5cf6' // Purple glow
+        backgroundColor: '#f8fafc', // Keep neutral background
+        borderColor: '#64748b', // Keep neutral border (no purple)
+        textColor: '#1e293b', // Keep dark text (no purple)
+        glowColor: '#64748b', // Neutral glow
+        isPulsating: true // Flag for animation
       };
     }
     
@@ -263,14 +266,17 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       {/* CSS keyframes for animations */}
       <style>
         {`
+          /* Pulsate animation - neutral glow to indicate interactivity without color change */
           @keyframes pulsate {
             0%, 100% {
               opacity: 1;
-              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3), 0 0 0 2px rgba(139, 92, 246, 0.2);
+              box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3), 0 0 0 2px rgba(100, 116, 139, 0.2);
+              transform: rotate(45deg) scale(1);
             }
             50% {
-              opacity: 0.7;
-              box-shadow: 0 12px 32px rgba(139, 92, 246, 0.6), 0 0 0 4px rgba(139, 92, 246, 0.5);
+              opacity: 0.85;
+              box-shadow: 0 8px 24px rgba(100, 116, 139, 0.5), 0 0 0 3px rgba(100, 116, 139, 0.35);
+              transform: rotate(45deg) scale(1.03);
             }
           }
           
@@ -309,48 +315,48 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
             }
           }
           
-          /* Celebration animation - flash, spin 360°, grow - NO forwards to let React control final state */
+          /* Celebration animation - spin 360°, grow, neutral color glow - NO color change */
           @keyframes celebrateSpin {
             0% {
               transform: rotate(45deg) scale(1);
               filter: brightness(1);
-              box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+              box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
             }
             15% {
               transform: rotate(45deg) scale(1.15);
-              filter: brightness(1.5);
-              box-shadow: 0 0 40px rgba(251, 191, 36, 0.8), 
-                          0 0 80px rgba(245, 158, 11, 0.5);
+              filter: brightness(1.3);
+              box-shadow: 0 0 40px rgba(100, 116, 139, 0.6), 
+                          0 0 80px rgba(100, 116, 139, 0.4);
             }
             30% {
               transform: rotate(225deg) scale(1.2);
-              filter: brightness(1.8);
-              box-shadow: 0 0 60px rgba(251, 191, 36, 1), 
-                          0 0 100px rgba(245, 158, 11, 0.7),
-                          inset 0 0 30px rgba(255, 255, 255, 0.5);
+              filter: brightness(1.5);
+              box-shadow: 0 0 60px rgba(100, 116, 139, 0.8), 
+                          0 0 100px rgba(100, 116, 139, 0.5),
+                          inset 0 0 30px rgba(255, 255, 255, 0.4);
             }
             50% {
               transform: rotate(405deg) scale(1.25);
-              filter: brightness(2);
-              box-shadow: 0 0 80px rgba(251, 191, 36, 1), 
-                          0 0 120px rgba(245, 158, 11, 0.8),
-                          inset 0 0 40px rgba(255, 255, 255, 0.6);
+              filter: brightness(1.6);
+              box-shadow: 0 0 80px rgba(100, 116, 139, 0.9), 
+                          0 0 120px rgba(100, 116, 139, 0.6),
+                          inset 0 0 40px rgba(255, 255, 255, 0.5);
             }
             70% {
               transform: rotate(405deg) scale(1.15);
-              filter: brightness(1.5);
-              box-shadow: 0 0 50px rgba(251, 191, 36, 0.8), 
-                          0 0 80px rgba(245, 158, 11, 0.5);
+              filter: brightness(1.3);
+              box-shadow: 0 0 50px rgba(100, 116, 139, 0.6), 
+                          0 0 80px rgba(100, 116, 139, 0.4);
             }
             85% {
               transform: rotate(405deg) scale(1.05);
-              filter: brightness(1.2);
-              box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+              filter: brightness(1.1);
+              box-shadow: 0 0 30px rgba(100, 116, 139, 0.4);
             }
             100% {
               transform: rotate(405deg) scale(1);
               filter: brightness(1);
-              box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+              box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
             }
           }
           
