@@ -9,6 +9,8 @@ import { adminApi, WeekInfo, DayInfo, WordResponse, clearAdminKey } from './api/
 import { WeekCalendar } from './components/WeekCalendar';
 import { WordEditor } from './components/WordEditor';
 import { StatsPanel } from './components/StatsPanel';
+import { DictionarySearch } from './components/DictionarySearch';
+import { ThemeWizard } from './components/ThemeWizard';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -47,6 +49,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Editor state
   const [editorDate, setEditorDate] = useState<string | null>(null);
   const [editorWord, setEditorWord] = useState<WordResponse | null>(null);
+  
+  // Modal states
+  const [showDictionarySearch, setShowDictionarySearch] = useState(false);
+  const [showThemeWizard, setShowThemeWizard] = useState(false);
+  const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -205,23 +212,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         <div style={styles.quickActions}>
           <h3 style={styles.sectionTitle}>Quick Actions</h3>
           <div style={styles.actionButtons}>
+            {/* Primary action - Theme wizard */}
             <button 
-              style={styles.actionBtn}
+              style={styles.primaryActionBtn}
               onClick={() => {
-                const nextEmpty = weeks.flatMap(w => w.days).find(d => !d.hasWord && d.date >= today);
-                if (nextEmpty) handleDayClick(nextEmpty.date, null);
+                // Find next empty Monday
+                const emptyWeek = weeks.find(w => !w.days.some(d => d.hasWord));
+                if (emptyWeek) {
+                  setWizardStartDate(emptyWeek.weekStart);
+                  setShowThemeWizard(true);
+                } else {
+                  // If no empty week, use next week
+                  const nextWeek = new Date();
+                  nextWeek.setDate(nextWeek.getDate() + (8 - nextWeek.getDay()) % 7);
+                  setWizardStartDate(nextWeek.toISOString().split('T')[0]);
+                  setShowThemeWizard(true);
+                }
               }}
             >
-              📝 Add Next Missing Word
+              🎯 Submit New Theme & Words
+            </button>
+            
+            {/* Secondary actions */}
+            <button 
+              style={styles.actionBtn}
+              onClick={() => setShowDictionarySearch(true)}
+            >
+              📖 Search Dictionary
             </button>
             <button 
               style={styles.actionBtn}
               onClick={() => {
-                const noTheme = weeks.flatMap(w => w.days).find(d => d.hasWord && !d.theme && d.date >= today);
-                if (noTheme) handleDayClick(noTheme.date, noTheme);
+                const nextEmpty = weeks.flatMap(w => w.days).find(d => !d.hasWord && d.date >= today);
+                if (nextEmpty) {
+                  handleDayClick(nextEmpty.date, null);
+                } else {
+                  alert('No empty days found in the visible range!');
+                }
               }}
             >
-              🏷️ Add Theme to Untagged
+              📝 Add Single Word
             </button>
           </div>
         </div>
@@ -235,6 +265,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           existingThemes={stats.uniqueThemes}
           onSave={handleEditorSave}
           onClose={handleEditorClose}
+        />
+      )}
+
+      {/* Dictionary Search Modal */}
+      {showDictionarySearch && (
+        <DictionarySearch onClose={() => setShowDictionarySearch(false)} />
+      )}
+
+      {/* Theme Wizard Modal */}
+      {showThemeWizard && wizardStartDate && (
+        <ThemeWizard
+          startDate={wizardStartDate}
+          onComplete={() => {
+            setShowThemeWizard(false);
+            setWizardStartDate(null);
+            loadData();
+          }}
+          onClose={() => {
+            setShowThemeWizard(false);
+            setWizardStartDate(null);
+          }}
         />
       )}
     </div>
@@ -389,6 +440,17 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #e0e0e0',
     borderRadius: '6px',
     cursor: 'pointer',
+  },
+  primaryActionBtn: {
+    padding: '0.875rem 1.5rem',
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    background: '#1a237e',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(26, 35, 126, 0.3)',
   },
 };
 

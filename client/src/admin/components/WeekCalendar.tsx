@@ -97,6 +97,8 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
             const status = getDayStatus(day);
             const isToday = day.date === today;
             const isSelected = day.date === selectedDate;
+            // Only allow clicking on days WITHOUT existing words
+            const isClickable = !day.hasWord;
             
             return (
               <div
@@ -106,9 +108,19 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                   backgroundColor: getStatusBg(status),
                   borderColor: isSelected ? '#1a237e' : isToday ? '#2196f3' : getStatusColor(status),
                   borderWidth: isSelected || isToday ? '2px' : '1px',
+                  cursor: isClickable ? 'pointer' : 'default',
+                  opacity: day.hasWord ? 0.85 : 1,
                 }}
-                onClick={() => onDayClick(day.date, day.hasWord ? day : null)}
-                title={`${day.date}${day.word ? `: ${day.word}` : ''}`}
+                onClick={() => {
+                  // Only allow clicking to ADD new words (not edit existing)
+                  if (!day.hasWord) {
+                    onDayClick(day.date, null);
+                  }
+                }}
+                title={day.hasWord 
+                  ? `${day.date}: ${day.word} (already scheduled)` 
+                  : `${day.date}: Click to add word`
+                }
               >
                 <span style={styles.dayNumber}>{formatDayLabel(day.date)}</span>
                 {day.hasWord && (
@@ -118,6 +130,9 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                 )}
                 {!day.hasWord && status !== 'future' && (
                   <span style={styles.addIcon}>+</span>
+                )}
+                {day.hasWord && (
+                  <span style={styles.doneIndicator}>✓</span>
                 )}
               </div>
             );
@@ -207,6 +222,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '1.25rem',
     color: '#999',
     fontWeight: 300,
+  },
+  doneIndicator: {
+    position: 'absolute',
+    top: '4px',
+    right: '4px',
+    fontSize: '0.6rem',
+    color: '#4caf50',
+    fontWeight: 700,
   },
   themeCell: {
     padding: '8px',

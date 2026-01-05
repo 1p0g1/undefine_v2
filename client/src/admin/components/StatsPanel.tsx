@@ -4,7 +4,7 @@
  * Displays quick stats about word coverage and themes.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface StatsPanelProps {
   stats: {
@@ -17,6 +17,8 @@ interface StatsPanelProps {
 }
 
 export const StatsPanel: React.FC<StatsPanelProps> = ({ stats, totalWeeks }) => {
+  const [showAllThemes, setShowAllThemes] = useState(false);
+  
   const coveragePercent = stats.totalDays > 0 
     ? Math.round((stats.daysWithWords / stats.totalDays) * 100) 
     : 0;
@@ -24,6 +26,9 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ stats, totalWeeks }) => 
   const themePercent = totalWeeks > 0
     ? Math.round((stats.weeksWithThemes / totalWeeks) * 100)
     : 0;
+
+  const displayedThemes = showAllThemes ? stats.uniqueThemes : stats.uniqueThemes.slice(0, 5);
+  const hiddenCount = stats.uniqueThemes.length - 5;
 
   return (
     <div style={styles.container}>
@@ -65,11 +70,24 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ stats, totalWeeks }) => 
         <div style={styles.statValue}>{stats.uniqueThemes.length}</div>
         <div style={styles.statLabel}>Unique Themes</div>
         <div style={styles.themeList}>
-          {stats.uniqueThemes.slice(0, 5).map(theme => (
+          {displayedThemes.map(theme => (
             <span key={theme} style={styles.themeTag}>{theme}</span>
           ))}
-          {stats.uniqueThemes.length > 5 && (
-            <span style={styles.moreTag}>+{stats.uniqueThemes.length - 5} more</span>
+          {!showAllThemes && hiddenCount > 0 && (
+            <button 
+              style={styles.moreBtn}
+              onClick={() => setShowAllThemes(true)}
+            >
+              +{hiddenCount} more
+            </button>
+          )}
+          {showAllThemes && stats.uniqueThemes.length > 5 && (
+            <button 
+              style={styles.moreBtn}
+              onClick={() => setShowAllThemes(false)}
+            >
+              Show less
+            </button>
           )}
         </div>
       </div>
@@ -134,10 +152,15 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '4px',
     fontWeight: 500,
   },
-  moreTag: {
+  moreBtn: {
     fontSize: '0.65rem',
     padding: '0.25rem 0.5rem',
-    color: '#888',
+    color: '#1565c0',
+    background: 'transparent',
+    border: '1px solid #1565c0',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: 500,
   },
 };
 
