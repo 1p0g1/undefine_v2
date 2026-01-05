@@ -12,6 +12,7 @@ import { TimerBadge } from './components/TimerBadge';
 import { StreakBadge } from './components/StreakBadge';
 import { InfoDiamond } from './components/InfoDiamond';
 import { UnPrefix } from './components/UnPrefix';
+import { VaultLogo } from './components/VaultLogo';
 import { getPlayerId } from './utils/player';
 import { CLUE_LABELS, CLUE_KEY_MAP } from '../../shared-types/src/clues';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
@@ -648,9 +649,9 @@ function App() {
           minWidth: 0
         }}
       >
-        {/* Un· enhanced design */}
+        {/* Vault Logo - replaces Un· diamond with PNG images */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <UnPrefix 
+          <VaultLogo 
             onClick={handleThemeClick} 
             themeGuessData={themeGuessData}
             gameComplete={gameState.isComplete}

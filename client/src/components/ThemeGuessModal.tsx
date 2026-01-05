@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
 import { UnPrefix } from './UnPrefix';
+import { VaultLogo, VAULT_UNLOCK_SEQUENCE } from './VaultLogo';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -109,7 +110,45 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     }>;
   } | null>(null);
 
+  // Vault unlock animation state
+  const [isPlayingVaultAnimation, setIsPlayingVaultAnimation] = useState(false);
+  const [vaultAnimationFrame, setVaultAnimationFrame] = useState<string>('/ClosedVault.png');
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const playerId = getPlayerId();
+
+  // Cleanup animation timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Function to play vault unlock animation
+  const playVaultUnlockAnimation = useCallback(async () => {
+    setIsPlayingVaultAnimation(true);
+    
+    let elapsed = 0;
+    for (const frame of VAULT_UNLOCK_SEQUENCE) {
+      await new Promise<void>((resolve) => {
+        animationTimeoutRef.current = setTimeout(() => {
+          setVaultAnimationFrame(frame.image);
+          resolve();
+        }, elapsed === 0 ? 0 : frame.duration);
+        elapsed += frame.duration;
+      });
+      
+      // Wait for the frame duration before moving to next
+      if (frame.duration > 0) {
+        await new Promise(resolve => setTimeout(resolve, frame.duration));
+      }
+    }
+    
+    // Keep final state (OpenVault)
+    setIsPlayingVaultAnimation(false);
+  }, []);
 
   // Load theme data when modal opens
   useEffect(() => {
@@ -347,6 +386,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // Clear the guess input
       setGuess('');
 
+      // NEW: If correct guess, play vault unlock animation
+      if (response.isCorrect) {
+        await playVaultUnlockAnimation();
+      }
+
       // NEW: Show result first, don't close immediately
       setShowingResult(true);
 
@@ -451,16 +495,19 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             flex: '1',
             textAlign: 'center'
           }}>
-            {/* Un diamond + lock line */}
+            {/* Vault Logo + lock line */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <UnPrefix 
+              <VaultLogo 
+                scaled={true}
                 themeGuessData={themeGuessData} 
                 gameComplete={gameComplete}
                 showCallToAction={false}
+                isAnimating={isPlayingVaultAnimation}
+                currentAnimationFrame={isPlayingVaultAnimation ? vaultAnimationFrame : undefined}
               />
               <span style={{
                 fontStyle: 'italic',
