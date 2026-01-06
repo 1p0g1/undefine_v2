@@ -129,21 +129,45 @@ Shows `ClosedVault.png` or `OpenVault.png` based on `themeGuessData.isCorrectGue
 
 Modal controls the animation sequence and passes current frame.
 
-## CSS Considerations
+## Size Configurations
+
+The VaultLogo component supports three size modes:
+
+| Mode | Size | Margin | Use Case |
+|------|------|--------|----------|
+| **Default (main page)** | `clamp(4.5rem, 12vw, 5.5rem)` | `-0.8rem` | Main game header, 70% larger than original |
+| **Scaled** | `clamp(4rem, 10vw, 5rem)` | `-0.3rem` | Smaller modal contexts |
+| **Large** | `clamp(7rem, 18vw, 9rem)` | `0` | Theme modal animation showcase (2.5x) |
+
+### Size Rationale
+
+- **Main page (70% larger)**: The vault is the key visual element and needed more presence
+- **Theme modal (2.5x larger)**: The unlock animation is the "hero moment" - needs dramatic size to showcase the full animation glory
+- **Center point preservation**: Negative margins are calculated to keep visual center aligned with the D.E.F.I.N.E. boxes despite the larger size
+
+## CSS Implementation
 
 ```css
+/* Main page vault */
 .vault-logo {
-  /* Same size as original diamond */
-  width: clamp(2.8rem, 7.5vw, 3.2rem);
-  height: clamp(2.8rem, 7.5vw, 3.2rem);
-  
-  /* OVERLAP the D box (higher z-index) */
+  width: clamp(4.5rem, 12vw, 5.5rem);
+  height: clamp(4.5rem, 12vw, 5.5rem);
   position: relative;
-  z-index: 5;
-  margin-right: -0.3rem; /* Slight overlap into DEFINE boxes */
-  
-  /* Smooth image transitions */
-  transition: opacity 0.1s ease-in-out;
+  z-index: 10;
+  margin-right: -0.8rem; /* Adjusted for larger size to maintain center */
+}
+
+/* Theme modal vault (large showcase) */
+.vault-logo-large {
+  width: clamp(7rem, 18vw, 9rem);
+  height: clamp(7rem, 18vw, 9rem);
+}
+
+/* "lock" text in theme modal */
+.vault-lock-text {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+  font-style: italic;
 }
 
 .vault-logo img {
@@ -174,4 +198,8 @@ Modal controls the animation sequence and passes current frame.
 |------|--------|
 | Jan 2026 | Initial documentation created |
 | Jan 2026 | Added image assets to `client/public/` |
+| Jan 2026 | Increased main page vault size by 70% (keeping center aligned) |
+| Jan 2026 | Added `large` prop for theme modal showcase (2.5x size) |
+| Jan 2026 | Made "lock" text in theme modal 2.5-3x larger for animation impact |
+| Jan 2026 | Updated PNG images with transparent backgrounds |
 

@@ -495,14 +495,16 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             flex: '1',
             textAlign: 'center'
           }}>
-            {/* Vault Logo + lock line */}
+            {/* Vault Logo + lock line - LARGE for animation showcase */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              justifyContent: 'center',
+              gap: '0.75rem',
+              marginBottom: '0.5rem'
             }}>
               <VaultLogo 
-                scaled={true}
+                large={true}
                 themeGuessData={themeGuessData} 
                 gameComplete={gameComplete}
                 showCallToAction={false}
@@ -511,12 +513,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               />
               <span style={{
                 fontStyle: 'italic',
-                fontSize: '1.4rem',
-                fontWeight: '600',
+                fontSize: 'clamp(2.5rem, 8vw, 4rem)',
+                fontWeight: '700',
+                fontFamily: 'var(--font-primary)',
                 color: themeGuessData?.hasGuessedToday 
                   ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
                   : '#1a237e',
-                marginLeft: '-0.1rem'
+                marginLeft: '-0.5rem',
+                letterSpacing: '-0.02em'
               }}>
                 lock
               </span>

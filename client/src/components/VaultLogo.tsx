@@ -11,7 +11,8 @@ const VAULT_UNLOCK_SEQUENCE = [
 ];
 
 interface VaultLogoProps {
-  scaled?: boolean; // For use in modals with transform scale
+  scaled?: boolean; // For use in modals with transform scale (smaller)
+  large?: boolean; // For theme modal animation showcase (2-3x larger)
   onClick?: () => void;
   gameComplete?: boolean; // To detect when game is finished
   showCallToAction?: boolean; // Control whether to show pulsing hint
@@ -35,6 +36,7 @@ interface VaultLogoProps {
 
 export const VaultLogo: React.FC<VaultLogoProps> = ({
   scaled = false,
+  large = false,
   onClick,
   gameComplete = false,
   showCallToAction = true,
@@ -135,8 +137,23 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     return '/ClosedVault.png';
   }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData]);
   
-  // Size - same as original UnPrefix diamond
-  const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
+  // Size calculations:
+  // - Main page: 70% larger than original (was ~3rem, now ~5rem)
+  // - Scaled (small modals): slightly smaller
+  // - Large (theme modal animation showcase): 2-3x larger for dramatic effect
+  const getSize = () => {
+    if (large) {
+      // Theme modal showcase - 2.5x larger for animation glory
+      return 'clamp(7rem, 18vw, 9rem)';
+    }
+    if (scaled) {
+      // Small modal usage
+      return 'clamp(4rem, 10vw, 5rem)';
+    }
+    // Main page - 70% larger than original, keeping center aligned
+    return 'clamp(4.5rem, 12vw, 5.5rem)';
+  };
+  const baseSize = getSize();
   
   // Determine if should pulsate (game complete + theme not guessed)
   const shouldPulsate = showCallToAction && gameComplete && (!themeGuessData?.hasGuessedToday) && !isCelebrating;
@@ -155,6 +172,14 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     return 'none';
   };
   
+  // Margin adjustments to keep center point stable despite size changes
+  const getMarginRight = () => {
+    if (large) return '0'; // No margin adjustment needed in modal
+    if (scaled) return '-0.3rem';
+    // Main page: larger image needs more negative margin to overlap correctly
+    return '-0.8rem';
+  };
+
   const containerStyle: React.CSSProperties = {
     width: baseSize,
     height: baseSize,
@@ -164,7 +189,8 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     position: 'relative',
     flexShrink: 0,
     // OVERLAP the D box - push into it slightly and ensure higher z-index
-    marginRight: '-0.4rem',
+    // Larger size needs more negative margin to maintain visual center
+    marginRight: getMarginRight(),
     zIndex: 10,
     cursor: onClick ? 'pointer' : 'default',
     animation: getAnimation(),
