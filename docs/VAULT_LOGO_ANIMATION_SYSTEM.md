@@ -170,6 +170,20 @@ The VaultLogo component supports three size modes:
   font-style: italic;
 }
 
+.vault-logo .vault-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+  color: #1a237e;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+
 .vault-logo img {
   width: 100%;
   height: 100%;

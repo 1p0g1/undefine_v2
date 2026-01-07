@@ -32,6 +32,8 @@ interface VaultLogoProps {
   currentAnimationFrame?: string;
   // Callback when modal animation completes
   onAnimationComplete?: () => void;
+  // Toggle to show "Un" overlay text
+  showUnText?: boolean;
 }
 
 export const VaultLogo: React.FC<VaultLogoProps> = ({
@@ -46,7 +48,8 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   themeGuessData,
   isAnimating = false,
   currentAnimationFrame,
-  onAnimationComplete
+  onAnimationComplete,
+  showUnText = true
 }) => {
   // Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
@@ -194,15 +197,24 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     zIndex: 10,
     cursor: onClick ? 'pointer' : 'default',
     animation: getAnimation(),
-    transition: 'transform 0.2s ease-in-out'
+    transition: 'transform 0.2s ease-in-out',
+    backgroundColor: 'transparent'
   };
   
   const imageStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
     objectFit: 'contain',
+    display: 'block',
+    backgroundColor: 'transparent',
     // Smooth transitions between images
     transition: 'opacity 0.1s ease-in-out'
+  };
+
+  const getUnTextSize = () => {
+    if (large) return 'clamp(2.1rem, 5vw, 2.8rem)';
+    if (scaled) return 'clamp(1.4rem, 3.8vw, 1.9rem)';
+    return 'clamp(1.6rem, 4.5vw, 2.2rem)';
   };
 
   const handleClick = () => {
@@ -298,6 +310,27 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
             style={imageStyle}
             draggable={false}
           />
+          {showUnText && (
+            <span
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-primary)',
+                fontWeight: 700,
+                fontSize: getUnTextSize(),
+                color: '#1a237e',
+                textShadow: '0 0 6px rgba(255,255,255,0.85)',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                lineHeight: 1
+              }}
+            >
+              Un
+            </span>
+          )}
         </div>
 
         {/* Tooltip for 'Theme of the week' */}
