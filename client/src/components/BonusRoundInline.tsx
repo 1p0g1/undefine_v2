@@ -304,13 +304,21 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/bonus/nearby-words?wordId=${wordId}`);
       const data = await response.json();
-      
+
+      if (!response.ok || data.error) {
+        setErrorMessage(data.error || 'Unable to load nearby words right now.');
+        setShowNearbyWords(false);
+        return;
+      }
+
       if (data.above && data.below) {
         setNearbyWords({ above: data.above, below: data.below });
         setShowNearbyWords(true);
+        setErrorMessage('');
       }
     } catch (error) {
       console.error('[BonusRound] Error fetching nearby words:', error);
+      setErrorMessage('Unable to load nearby words right now.');
     } finally {
       setLoadingNearby(false);
     }
@@ -320,6 +328,20 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
   return (
     <>
+      <style>
+        {`
+          @keyframes bonusCtaPulse {
+            0%, 100% {
+              transform: scale(1);
+              box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18), 0 0 0 0 rgba(37, 99, 235, 0.35);
+            }
+            50% {
+              transform: scale(1.02);
+              box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28), 0 0 0 8px rgba(37, 99, 235, 0.15);
+            }
+          }
+        `}
+      </style>
       {/* Subtle page overlay - dims and desaturates background */}
       {!userFinished && <div className="bonus-round-overlay" />}
       
@@ -420,6 +442,10 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           >
             {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Nearby Words' : '📖 Show Nearby Words (Answers)'}
           </button>
+
+          {errorMessage && (
+            <div style={{ ...styles.error, marginTop: '0.35rem' }}>{errorMessage}</div>
+          )}
 
           {/* Nearby words display */}
           {showNearbyWords && nearbyWords && (
@@ -681,20 +707,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.9rem',
   },
   continueButton: {
-    padding: '0.875rem 1.5rem',
+    padding: '0.95rem 1.6rem',
     fontSize: '1rem',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    fontWeight: 800,
+    background: 'linear-gradient(135deg, #4338ca 0%, #2563eb 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.5rem',
     width: '100%',
-    marginTop: '0.5rem',
+    marginTop: '0.75rem',
+    boxShadow: '0 14px 30px rgba(37, 99, 235, 0.25)',
+    animation: 'bonusCtaPulse 1.9s ease-in-out infinite',
+    transformOrigin: 'center',
   },
   unlockIcon: {
     fontSize: '1.1rem',

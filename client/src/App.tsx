@@ -125,6 +125,12 @@ function App() {
   // NEW: Track if bonus round should show after theme guess
   const [pendingBonusRound, setPendingBonusRound] = useState(false);
 
+  // After bonus round (or when no bonus), nudge players toward the theme guess
+  const themePromptActive =
+    gameState.isComplete &&
+    !themeGuessData?.hasGuessedToday &&
+    (!pendingBonusRound || bonusRoundComplete);
+
   // Initialize display name from localStorage or generate default
   useEffect(() => {
     const savedDisplayName = localStorage.getItem('playerDisplayName');
@@ -657,6 +663,7 @@ function App() {
             celebrateCompletion={celebrateDiamond}
             onCelebrationComplete={handleCelebrationComplete}
             bonusRoundActive={pendingBonusRound && !celebrateDiamond && !bonusRoundComplete}
+            themePromptActive={themePromptActive}
           />
         </div>
         <div className="define-boxes" style={{ 
@@ -1333,6 +1340,38 @@ function App() {
                 {bonusRoundResults.filter(r => r.tier === 'perfect').length} Gold,{' '}
                 {bonusRoundResults.filter(r => r.tier === 'good').length} Silver,{' '}
                 {bonusRoundResults.filter(r => r.tier === 'average').length} Bronze
+              </div>
+            </div>
+          )}
+
+          {bonusRoundComplete && !themeGuessData?.hasGuessedToday && (
+            <div style={{
+              background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
+              border: '2px solid #4338ca',
+              borderRadius: '12px',
+              padding: '0.85rem',
+              marginBottom: '0.35rem',
+              textAlign: 'center',
+              boxShadow: '0 8px 20px rgba(67, 56, 202, 0.08)'
+            }}>
+              <div style={{
+                fontWeight: 700,
+                color: '#312e81',
+                fontSize: '1.05rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem'
+              }}>
+                Tap the Un diamond to unlock this week’s theme
+                <span role="img" aria-label="sparkles">✨</span>
+              </div>
+              <div style={{
+                fontSize: '0.9rem',
+                color: '#4338ca',
+                marginTop: '0.2rem'
+              }}>
+                It’s jiggling above — that’s your next step!
               </div>
             </div>
           )}

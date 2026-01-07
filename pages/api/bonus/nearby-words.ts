@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/src/env.server';
 import { withCors } from '@/lib/withCors';
+import { generateAllLookupVariants } from '@/src/utils/spelling';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -18,6 +19,15 @@ interface NearbyWordsResponse {
   targetWord?: string;
   targetLexRank?: number;
   error?: string;
+}
+
+function normalizeWord(word: string): string {
+  return word
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^a-z]/g, ''); // Remove non-alpha
 }
 
 async function handler(
@@ -46,19 +56,53 @@ async function handler(
       return res.status(404).json({ above: [], below: [], error: 'Word not found' });
     }
 
-    if (!wordData.dictionary_id) {
-      return res.status(400).json({ above: [], below: [], error: 'Word not linked to dictionary' });
+    // Resolve dictionary entry (fall back to normalized lookup if dictionary_id missing)
+    let dictEntry:
+      | {
+          lex_rank: number;
+          normalized_word: string;
+        }
+      | null = null;
+
+    if (wordData.dictionary_id) {
+      const { data, error } = await supabase
+        .from('dictionary')
+        .select('lex_rank, normalized_word')
+        .eq('id', wordData.dictionary_id)
+        .single();
+
+      if (!error && data) {
+        dictEntry = data;
+      }
     }
 
-    // Get the dictionary entry to find lex_rank
-    const { data: dictEntry, error: dictError } = await supabase
-      .from('dictionary')
-      .select('lex_rank, normalized_word')
-      .eq('id', wordData.dictionary_id)
-      .single();
+    if (!dictEntry) {
+      const normalized = normalizeWord(wordData.word);
+      const variants = generateAllLookupVariants(wordData.word);
+      const lookupCandidates = Array.from(new Set([normalized, ...variants]));
 
-    if (dictError || !dictEntry) {
-      return res.status(404).json({ above: [], below: [], error: 'Dictionary entry not found' });
+      for (const candidate of lookupCandidates) {
+        const { data } = await supabase
+          .from('dictionary')
+          .select('lex_rank, normalized_word')
+          .eq('normalized_word', candidate)
+          .limit(1)
+          .single();
+
+        if (data) {
+          dictEntry = data;
+          break;
+        }
+      }
+    }
+
+    if (!dictEntry) {
+      return res.status(200).json({
+        above: [],
+        below: [],
+        targetWord: wordData.word,
+        error: 'No nearby words available for this entry yet.'
+      });
     }
 
     const targetLexRank = dictEntry.lex_rank;
