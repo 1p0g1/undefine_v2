@@ -579,6 +579,28 @@ function App() {
         </div>
       )}
 
+      {/* No Word of the Day Notice */}
+      {gameState?.isFallback && !gameState?.isArchivePlay && (
+        <div style={{
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: 'white',
+          padding: '0.75rem 1rem',
+          borderRadius: '0.75rem',
+          marginBottom: '1rem',
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+          maxWidth: '90%',
+          margin: '0 auto 1rem auto'
+        }}>
+          <div style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+            ⚠️ No Word of the Day Set
+          </div>
+          <div style={{ fontSize: '0.85rem', opacity: 0.95 }}>
+            Playing the most recent word instead. Check back later for today's word!
+          </div>
+        </div>
+      )}
+
       {/* Timer Badge - Centered at top */}
       <div style={{ 
         width: '100%', 
@@ -769,7 +791,7 @@ function App() {
                 </div>
               </div>
               <div style={{ color: '#374151', fontSize: '0.9em', marginBottom: '0.5rem' }}>
-                Guess today's word in 6 guesses or less. Clues revealed each round:
+                Guess today's word in 6 guesses or less. Clues revealed after each guess:
               </div>
               <ol style={{ 
                 margin: '0', 
@@ -986,7 +1008,7 @@ function App() {
                     return `Sunday ${getOrdinal(day)} ${month}`;
                   })()}
                 </span>
-                {' '}23:59, guess this week's theme
+                {' '}23:59, guess what theme connects this week's 7 secret words
               </div>
             </div>
           </div>

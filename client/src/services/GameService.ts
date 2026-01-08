@@ -254,13 +254,15 @@ class GameService {
         startTime: data.start_time,
         endTime: undefined,
         isArchivePlay: false,
-        gameDate: data.gameDate
+        gameDate: data.gameDate,
+        isFallback: data.isFallback  // Track if no word of the day was set
       };
 
       console.log('[GameService] New game started:', {
         gameId: this.currentState.gameId,
         wordId: this.currentState.wordId,
-        startTime: this.currentState.startTime
+        startTime: this.currentState.startTime,
+        isFallback: data.isFallback
       });
 
       this.saveState();

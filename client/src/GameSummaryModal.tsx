@@ -381,7 +381,9 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                   number_of_letters: '',
                   etymology: ''
                 },
-                guesses: [],
+                // CRITICAL: Pass actual guess count so bonus results align correctly
+                // Bonus results start AFTER the winning guess box
+                guesses: Array(guessesUsed).fill(''),
                 revealedClues: [],
                 clueStatus: createDefaultClueStatus(),
                 isComplete: true,
