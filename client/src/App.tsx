@@ -658,6 +658,7 @@ function App() {
             celebrateCompletion={celebrateDiamond}
             onCelebrationComplete={handleCelebrationComplete}
             bonusRoundActive={pendingBonusRound && !celebrateDiamond && !bonusRoundComplete}
+            disableCelebrateAnimation={true} // Keep homepage vault static (only open/closed)
           />
         </div>
         <div className="define-boxes" style={{ 

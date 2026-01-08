@@ -13,6 +13,7 @@ const VAULT_UNLOCK_SEQUENCE = [
 interface VaultLogoProps {
   scaled?: boolean; // For use in modals with transform scale (smaller)
   large?: boolean; // For theme modal animation showcase (2-3x larger)
+  disableCelebrateAnimation?: boolean; // Skip celebrate animation (homepage should stay static)
   onClick?: () => void;
   gameComplete?: boolean; // To detect when game is finished
   showCallToAction?: boolean; // Control whether to show pulsing hint
@@ -39,6 +40,7 @@ interface VaultLogoProps {
 export const VaultLogo: React.FC<VaultLogoProps> = ({
   scaled = false,
   large = false,
+  disableCelebrateAnimation = false,
   onClick,
   gameComplete = false,
   showCallToAction = true,
@@ -73,6 +75,8 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   
   // Handle celebration animation (main page)
   useEffect(() => {
+    if (disableCelebrateAnimation) return;
+
     if (celebrateCompletion && !callbackFiredRef.current) {
       console.log('[VaultLogo] Starting celebration animation');
       setIsCelebrating(true);

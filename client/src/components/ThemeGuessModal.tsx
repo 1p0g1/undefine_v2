@@ -689,7 +689,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             )}
 
             {/* Fuzzy Match Result Display - Show for fresh guess OR when user has already guessed today */}
-            {(lastGuessResult && lastGuessResult.fuzzyMatch) || (themeStatus.progress.hasGuessedToday && themeStatus.progress.themeGuess) ? (
+            {(((lastGuessResult && lastGuessResult.fuzzyMatch) || (themeStatus.progress.hasGuessedToday && themeStatus.progress.themeGuess)) && !(isPlayingVaultAnimation && lastGuessResult?.isCorrect)) ? (
               <div style={{
                 backgroundColor: '#f8f9ff',
                 border: '2px solid #e0e4ff',
@@ -872,6 +872,22 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 )}
               </div>
             ) : null}
+
+            {/* Unlocking placeholder during animation (prevents early reveal) */}
+            {isPlayingVaultAnimation && lastGuessResult?.isCorrect && (
+              <div style={{
+                backgroundColor: '#f8f9ff',
+                border: '2px solid #e0e4ff',
+                borderRadius: '0.75rem',
+                padding: '1rem',
+                marginBottom: '2px',
+                textAlign: 'center',
+                color: '#1a237e',
+                fontWeight: 600
+              }}>
+                🔓 Unlocking... finishing animation
+              </div>
+            )}
 
             {/* NEW: Sunday Failure Revelation Panel */}
             {sundayRevelation?.shouldReveal && (
