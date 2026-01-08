@@ -170,6 +170,7 @@ The VaultLogo component supports three size modes:
   font-style: italic;
 }
 
+/* "Un" text overlay - matches original UnPrefix styling */
 .vault-logo .vault-label {
   position: absolute;
   inset: 0;
@@ -177,8 +178,9 @@ The VaultLogo component supports three size modes:
   align-items: center;
   justify-content: center;
   font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(1.2rem, 3.5vw, 1.5rem); /* Matches UnPrefix normal */
   color: #1a237e;
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
   pointer-events: none;
@@ -216,4 +218,7 @@ The VaultLogo component supports three size modes:
 | Jan 2026 | Added `large` prop for theme modal showcase (2.5x size) |
 | Jan 2026 | Made "lock" text in theme modal 2.5-3x larger for animation impact |
 | Jan 2026 | Updated PNG images with transparent backgrounds |
+| Jan 2026 | Fixed "Un" text size/style to match UnPrefix (smaller, italic, 800 weight) |
+| Jan 2026 | Reduced gap between vault and "lock" text (removed interpunct) |
+| Jan 2026 | Fixed animation timing: visual changes (colors) now occur AFTER vault animation completes |
 

@@ -211,10 +211,11 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     transition: 'opacity 0.1s ease-in-out'
   };
 
+  // Match original UnPrefix text sizes - smaller, proportional to original diamond
   const getUnTextSize = () => {
-    if (large) return 'clamp(2.1rem, 5vw, 2.8rem)';
-    if (scaled) return 'clamp(1.4rem, 3.8vw, 1.9rem)';
-    return 'clamp(1.6rem, 4.5vw, 2.2rem)';
+    if (large) return 'clamp(1.8rem, 4.5vw, 2.4rem)'; // Larger for modal but still proportional
+    if (scaled) return 'clamp(1.1rem, 3.2vw, 1.4rem)'; // Match UnPrefix scaled
+    return 'clamp(1.2rem, 3.5vw, 1.5rem)'; // Match UnPrefix normal
   };
 
   const handleClick = () => {
@@ -319,7 +320,8 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontFamily: 'var(--font-primary)',
-                fontWeight: 700,
+                fontStyle: 'italic', // Match UnPrefix styling
+                fontWeight: 800, // Match UnPrefix fontWeight
                 fontSize: getUnTextSize(),
                 color: '#1a237e',
                 textShadow: '0 0 6px rgba(255,255,255,0.85)',

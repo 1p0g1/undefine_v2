@@ -337,13 +337,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         fuzzyMatch: response.fuzzyMatch
       });
 
-      // Update theme data for Un diamond and parent
+      // Prepare theme data update (but don't apply yet for correct guesses)
       const updatedThemeData = {
         hasGuessedToday: true,
         isCorrectGuess: response.isCorrect,
         confidencePercentage: response.fuzzyMatch?.confidence || null
       };
-      setThemeGuessData(updatedThemeData);
 
       // NEW: Check for Sunday failure revelation
       if (response.shouldRevealTheme && response.revelationReason === 'sunday_failure') {
@@ -354,28 +353,18 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         });
       }
 
-      // Update theme status based on response
-      if (themeStatus) {
-        const updatedThemeStatus = {
-          ...themeStatus,
-          progress: {
-            ...themeStatus.progress,
-            hasGuessedToday: true,
-            themeGuess: guess.trim(),
-            isCorrectGuess: response.isCorrect,
-            confidencePercentage: response.fuzzyMatch?.confidence || null,
-            matchingMethod: response.fuzzyMatch?.method || null
-          }
-        };
-        setThemeStatus(updatedThemeStatus);
-        
-        // Update theme guess data for Un diamond coloring
-        setThemeGuessData({
+      // Prepare theme status update
+      const updatedThemeStatus = themeStatus ? {
+        ...themeStatus,
+        progress: {
+          ...themeStatus.progress,
           hasGuessedToday: true,
+          themeGuess: guess.trim(),
           isCorrectGuess: response.isCorrect,
-          confidencePercentage: response.fuzzyMatch?.confidence || null
-        });
-      }
+          confidencePercentage: response.fuzzyMatch?.confidence || null,
+          matchingMethod: response.fuzzyMatch?.method || null
+        }
+      } : null;
 
       // NEW: Add guess to simple history
       setSimpleHistory(prev => [...prev, {
@@ -386,13 +375,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // Clear the guess input
       setGuess('');
 
-      // NEW: If correct guess, play vault unlock animation
+      // CRITICAL: For correct guesses, play animation FIRST, then update visual states
+      // This creates suspense and makes the reveal more impactful
       if (response.isCorrect) {
+        // Play vault unlock animation BEFORE showing colors/results
         await playVaultUnlockAnimation();
+        
+        // NOW update theme data (triggers color changes)
+        setThemeGuessData(updatedThemeData);
+        if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
+        
+        // Show result after animation
+        setShowingResult(true);
+      } else {
+        // For incorrect guesses, update immediately (no animation)
+        setThemeGuessData(updatedThemeData);
+        if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
+        setShowingResult(true);
       }
-
-      // NEW: Show result first, don't close immediately
-      setShowingResult(true);
 
     } catch (error) {
       console.error('[ThemeGuessModal] Error submitting theme guess:', error);
@@ -500,7 +500,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.75rem',
+              gap: '0.25rem', // Reduced gap since no interpunct
               marginBottom: '0.5rem'
             }}>
               <VaultLogo 
@@ -519,7 +519,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 color: themeGuessData?.hasGuessedToday 
                   ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
                   : '#1a237e',
-                marginLeft: '-0.5rem',
+                marginLeft: '-0.75rem', // More negative margin since no interpunct
                 letterSpacing: '-0.02em'
               }}>
                 lock
