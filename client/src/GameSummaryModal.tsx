@@ -368,6 +368,14 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',
             flex: '0 0 auto'
           }}>
+          {(() => {
+            // Use guessesUsed prop when available; fall back to guessStatus for safety
+            const guessCount = guessesUsed > 0 
+              ? guessesUsed 
+              : guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length;
+            const safeGuessCount = Math.max(guessCount, 0);
+            
+            return (
             <DefineBoxes
               gameState={{
                 gameId: '',
@@ -383,7 +391,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                 },
                 // CRITICAL: Pass actual guess count so bonus results align correctly
                 // Bonus results start AFTER the winning guess box
-                guesses: Array(guessesUsed).fill(''),
+                guesses: Array(safeGuessCount).fill(''),
                 revealedClues: [],
                 clueStatus: createDefaultClueStatus(),
                 isComplete: true,
@@ -396,6 +404,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               onBoxClick={() => {}}
               bonusResults={bonusRoundResults.map(r => r.tier || null)}
             />
+            );
+          })()}
           </div>
         </div>
         

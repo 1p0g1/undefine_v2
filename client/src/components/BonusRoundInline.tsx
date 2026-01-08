@@ -361,7 +361,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} near "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
         </div>
 
         {/* Compact scoring legend */}
@@ -440,7 +440,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             style={styles.nearbyButton}
             disabled={loadingNearby}
           >
-            {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Nearby Words' : '📖 Show Nearby Words (Answers)'}
+            {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Neighbouring Words' : '📖 Show Neighbouring Words (Answers)'}
           </button>
 
           {errorMessage && (
