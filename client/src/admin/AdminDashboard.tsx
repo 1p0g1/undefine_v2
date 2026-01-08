@@ -11,6 +11,7 @@ import { WordEditor } from './components/WordEditor';
 import { StatsPanel } from './components/StatsPanel';
 import { DictionarySearch } from './components/DictionarySearch';
 import { ThemeWizard } from './components/ThemeWizard';
+import { ThemeTestLab } from './components/ThemeTestLab';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -53,6 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Modal states
   const [showDictionarySearch, setShowDictionarySearch] = useState(false);
   const [showThemeWizard, setShowThemeWizard] = useState(false);
+  const [showThemeTestLab, setShowThemeTestLab] = useState(false);
   const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
 
   // Load data
@@ -253,6 +255,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             >
               📝 Add Single Word
             </button>
+            <button 
+              style={styles.actionBtn}
+              onClick={() => setShowThemeTestLab(true)}
+            >
+              🧪 Theme Test Lab
+            </button>
           </div>
         </div>
       </main>
@@ -271,6 +279,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       {/* Dictionary Search Modal */}
       {showDictionarySearch && (
         <DictionarySearch onClose={() => setShowDictionarySearch(false)} />
+      )}
+
+      {/* Theme Test Lab Modal */}
+      {showThemeTestLab && (
+        <ThemeTestLab onClose={() => setShowThemeTestLab(false)} />
       )}
 
       {/* Theme Wizard Modal */}
