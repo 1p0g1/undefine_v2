@@ -11,7 +11,7 @@ import { WordEditor } from './components/WordEditor';
 import { StatsPanel } from './components/StatsPanel';
 import { DictionarySearch } from './components/DictionarySearch';
 import { ThemeWizard } from './components/ThemeWizard';
-import { ThemeTestLab } from './components/ThemeTestLab';
+import { ThemeTestTool } from './components/ThemeTestTool';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -54,7 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Modal states
   const [showDictionarySearch, setShowDictionarySearch] = useState(false);
   const [showThemeWizard, setShowThemeWizard] = useState(false);
-  const [showThemeTestLab, setShowThemeTestLab] = useState(false);
+  const [showThemeTestTool, setShowThemeTestTool] = useState(false);
   const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
 
   // Load data
@@ -257,12 +257,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </button>
             <button 
               style={styles.actionBtn}
-              onClick={() => setShowThemeTestLab(true)}
+              onClick={() => setShowThemeTestTool(!showThemeTestTool)}
             >
-              🧪 Theme Test Lab
+              🧪 {showThemeTestTool ? 'Hide' : 'Show'} Theme Test Lab
             </button>
           </div>
         </div>
+
+        {/* Theme Test Tool */}
+        {showThemeTestTool && (
+          <div style={styles.themeTestSection}>
+            <ThemeTestTool />
+          </div>
+        )}
       </main>
 
       {/* Word Editor Modal */}
@@ -278,26 +285,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
       {/* Dictionary Search Modal */}
       {showDictionarySearch && (
-        <DictionarySearch onClose={() => setShowDictionarySearch(false)} />
-      )}
-
-      {/* Theme Test Lab Modal */}
-      {showThemeTestLab && (
-        <ThemeTestLab onClose={() => setShowThemeTestLab(false)} />
+        <DictionarySearch
+          onClose={() => setShowDictionarySearch(false)}
+          onSelectWord={(word) => {
+            setShowDictionarySearch(false);
+            // You could auto-fill a word editor here if needed
+          }}
+        />
       )}
 
       {/* Theme Wizard Modal */}
       {showThemeWizard && wizardStartDate && (
         <ThemeWizard
           startDate={wizardStartDate}
-          onComplete={() => {
-            setShowThemeWizard(false);
-            setWizardStartDate(null);
-            loadData();
-          }}
+          existingThemes={stats.uniqueThemes}
           onClose={() => {
             setShowThemeWizard(false);
             setWizardStartDate(null);
+          }}
+          onSave={() => {
+            setShowThemeWizard(false);
+            setWizardStartDate(null);
+            loadData();
           }}
         />
       )}
@@ -458,14 +467,16 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.875rem 1.5rem',
     fontSize: '0.95rem',
     fontWeight: 600,
-    background: '#1a237e',
+    background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
     boxShadow: '0 2px 8px rgba(26, 35, 126, 0.3)',
   },
+  themeTestSection: {
+    marginTop: '1.5rem',
+  },
 };
 
 export default AdminDashboard;
-

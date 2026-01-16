@@ -269,6 +269,31 @@ export const adminApi = {
       body: JSON.stringify({ theme, ...options }),
     });
   },
+
+  /**
+   * Test theme similarity scoring
+   */
+  async testTheme(
+    theme: string,
+    guess: string
+  ): Promise<{
+    similarity: number;
+    isMatch: boolean;
+    method: string;
+    confidence: number;
+    error?: string;
+  }> {
+    return adminFetch<{
+      similarity: number;
+      isMatch: boolean;
+      method: string;
+      confidence: number;
+      error?: string;
+    }>('/api/admin/theme-test', {
+      method: 'POST',
+      body: JSON.stringify({ theme, guess }),
+    });
+  },
 };
 
 export default adminApi;
