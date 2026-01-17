@@ -486,9 +486,9 @@ export const ThemeTestTool: React.FC = () => {
         </div>
 
         <div style={styles.infoSection}>
-          <h4 style={styles.infoSectionTitle}>🧠 NLI (cross-encoder/nli-deberta-v3-xsmall)</h4>
+          <h4 style={styles.infoSectionTitle}>🧠 NLI (facebook/bart-large-mnli)</h4>
           <p style={styles.infoText}>
-            Natural Language Inference checks if the guess logically entails the theme. Better at rejecting category mismatches like "begin with b" vs "parts of speech".
+            Zero-shot classification checks if the guess logically relates to the theme. Better at rejecting category mismatches like "begin with b" vs "parts of speech".
           </p>
         </div>
 

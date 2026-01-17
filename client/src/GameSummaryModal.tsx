@@ -201,8 +201,40 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
 
   if (!open) return null;
 
+  // Generate share text with bonus round medals
+  const generateShareText = (includeRank: boolean) => {
+    // Build the DEFINE row - first the guess status, then bonus round medals
+    const guessEmojis = guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜'));
+    
+    // Add bonus round medals for remaining slots after guesses
+    const remainingSlots = 6 - guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length;
+    const bonusMedals = bonusRoundResults.slice(0, remainingSlots).map(r => {
+      if (r.tier === 'perfect') return '🥇';
+      if (r.tier === 'good') return '🥈';
+      if (r.tier === 'average') return '🥉';
+      return '⬜';
+    });
+    
+    // Pad with empty squares if needed
+    while (guessEmojis.length + bonusMedals.length < 6) {
+      bonusMedals.push('⬜');
+    }
+    
+    const allEmojis = [...guessEmojis.slice(0, guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length), ...bonusMedals];
+    
+    // Check if bonus round was played
+    const bonusRoundPlayed = bonusRoundResults.length > 0;
+    const bonusLine = bonusRoundPlayed ? '\n✨ Bonus Round Unlocked ✨' : '';
+    
+    if (includeRank) {
+      return `I ranked #${playerRank || '?'} in today's Un·Define!${bonusLine}\n${allEmojis.join('')}\n${time}\nhttps://undefine-v2-front.vercel.app`;
+    } else {
+      return `UN·DEFINE ${date}${bonusLine}\n${allEmojis.join('')}\n${time}\nhttps://undefine-v2-front.vercel.app`;
+    }
+  };
+
   const handleCopy = () => {
-    const summary = `UN·DEFINE ${date}\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
+    const summary = generateShareText(false);
     navigator.clipboard.writeText(summary);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -215,7 +247,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   };
 
   const handleShare = () => {
-    const shareText = `I ranked #${playerRank || '?'} in today's Un·Define!\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
+    const shareText = generateShareText(true);
     navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

@@ -17,7 +17,7 @@
 
 // Model configuration
 const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
-const NLI_MODEL = 'cross-encoder/nli-deberta-v3-xsmall';
+const NLI_MODEL = 'facebook/bart-large-mnli'; // Zero-shot classification model for NLI
 const HF_API_BASE = 'https://router.huggingface.co/hf-inference/models';
 
 // Thresholds (tunable via admin lab)
@@ -141,6 +141,8 @@ async function computeEmbeddingSimilarity(
  * 
  * High entailment = guess captures the theme meaning
  * High contradiction = guess is incompatible with theme
+ * 
+ * Note: Cross-encoder models use zero-shot classification format, not sentence pairs
  */
 async function computeNLIScores(
   premise: string,
@@ -153,7 +155,9 @@ async function computeNLIScores(
     throw new Error('HF_API_KEY not configured');
   }
   
-  const url = `${HF_API_BASE}/${NLI_MODEL}`;
+  // Use zero-shot classification endpoint which is more reliable
+  // This checks if the hypothesis entails/contradicts/is neutral to the premise
+  const url = `${HF_API_BASE}/facebook/bart-large-mnli`;
   
   try {
     const response = await fetch(url, {
@@ -163,7 +167,11 @@ async function computeNLIScores(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: `${premise} [SEP] ${hypothesis}`
+        inputs: premise,
+        parameters: {
+          candidate_labels: [hypothesis],
+          multi_label: false
+        }
       })
     });
     
@@ -179,17 +187,20 @@ async function computeNLIScores(
     
     const result = await response.json();
     
-    // Parse the NLI output
-    // Format: [{ label: "ENTAILMENT", score: 0.9 }, { label: "NEUTRAL", score: 0.05 }, ...]
-    const scores = { entailment: 0, contradiction: 0, neutral: 0 };
+    // Zero-shot returns: { labels: ["hypothesis"], scores: [0.85] }
+    // We interpret high score as entailment (premise supports hypothesis)
+    const score = result.scores?.[0] || 0;
     
-    if (Array.isArray(result)) {
-      for (const item of result) {
-        const label = item.label?.toLowerCase();
-        if (label === 'entailment') scores.entailment = item.score || 0;
-        else if (label === 'contradiction') scores.contradiction = item.score || 0;
-        else if (label === 'neutral') scores.neutral = item.score || 0;
-      }
+    // Map single score to NLI-like distribution
+    // High score = entailment, low score = contradiction, middle = neutral
+    let scores: { entailment: number; contradiction: number; neutral: number };
+    
+    if (score > 0.7) {
+      scores = { entailment: score, contradiction: (1 - score) * 0.3, neutral: (1 - score) * 0.7 };
+    } else if (score < 0.3) {
+      scores = { entailment: score, contradiction: (1 - score) * 0.7, neutral: (1 - score) * 0.3 };
+    } else {
+      scores = { entailment: score, contradiction: (1 - score) * 0.4, neutral: (1 - score) * 0.6 };
     }
     
     console.log(`[themeScoring] NLI: "${hypothesis.substring(0, 50)}..." → E:${(scores.entailment*100).toFixed(1)}% C:${(scores.contradiction*100).toFixed(1)}% N:${(scores.neutral*100).toFixed(1)}%`);

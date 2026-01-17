@@ -3,6 +3,7 @@ import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
 import { UnPrefix } from './UnPrefix';
+import { getApiBaseUrl } from '../utils/apiHelpers';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -241,7 +242,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     try {
       console.log('[ThemeGuessModal] Loading simple theme history for:', { theme, playerId });
       
-      const response = await fetch(`/api/theme-history-simple?player_id=${playerId}&theme=${encodeURIComponent(theme)}`);
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/theme-history-simple?player_id=${playerId}&theme=${encodeURIComponent(theme)}`);
       
       if (response.ok) {
         const data = await response.json();
