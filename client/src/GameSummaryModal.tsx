@@ -201,26 +201,28 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
 
   if (!open) return null;
 
-  // Generate share text with bonus round medals
+  // Generate share text with bonus round colored squares
   const generateShareText = (includeRank: boolean) => {
-    // Build the DEFINE row - first the guess status, then bonus round medals
+    // Build the DEFINE row - first the guess status, then bonus round squares
+    // 🟩 = correct, 🟥 = incorrect/miss, 🟧 = fuzzy
     const guessEmojis = guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜'));
     
-    // Add bonus round medals for remaining slots after guesses
+    // Add bonus round squares for remaining slots after guesses
+    // 🟨 = Gold (perfect), ⬜️ = Silver (good), 🟫 = Bronze (average), 🟥 = miss
     const remainingSlots = 6 - guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length;
-    const bonusMedals = bonusRoundResults.slice(0, remainingSlots).map(r => {
-      if (r.tier === 'perfect') return '🥇';
-      if (r.tier === 'good') return '🥈';
-      if (r.tier === 'average') return '🥉';
-      return '⬜';
+    const bonusSquares = bonusRoundResults.slice(0, remainingSlots).map(r => {
+      if (r.tier === 'perfect') return '🟨'; // Gold
+      if (r.tier === 'good') return '⬜️';   // Silver  
+      if (r.tier === 'average') return '🟫'; // Bronze
+      return '🟥'; // Miss
     });
     
-    // Pad with empty squares if needed
-    while (guessEmojis.length + bonusMedals.length < 6) {
-      bonusMedals.push('⬜');
+    // Pad with empty squares if needed (unused bonus attempts)
+    while (guessEmojis.length + bonusSquares.length < 6) {
+      bonusSquares.push('⬜');
     }
     
-    const allEmojis = [...guessEmojis.slice(0, guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length), ...bonusMedals];
+    const allEmojis = [...guessEmojis.slice(0, guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length), ...bonusSquares];
     
     // Check if bonus round was played
     const bonusRoundPlayed = bonusRoundResults.length > 0;

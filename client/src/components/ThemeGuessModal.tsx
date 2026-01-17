@@ -939,7 +939,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   </label>
                   
                   {/* Theme history display - show past guesses with scores */}
-                  {simpleHistory.length > 0 && (
+                  {simpleHistory.length > 0 ? (
                     <div style={{
                       backgroundColor: '#f0f4ff',
                       border: '1px solid #c7d2fe',
@@ -956,7 +956,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                         alignItems: 'center',
                         gap: '0.25rem'
                       }}>
-                        🧠 Your Previous Guesses:
+                        🧠 Your Previous Guesses This Week:
                       </div>
                       <div style={{
                         display: 'flex',
@@ -999,6 +999,22 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                         textAlign: 'center'
                       }}>
                         Use your previous guesses to narrow down the theme!
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      backgroundColor: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem',
+                      marginBottom: '1rem',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                        💡 Make your first theme guess for the week!
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                        Your guesses and scores will appear here
                       </div>
                     </div>
                   )}
