@@ -2,46 +2,88 @@
  * Admin Theme Test API
  * 
  * Allows admins to test theme similarity scoring without creating actual theme attempts.
- * Useful for debugging and refining theme design.
+ * Supports multiple scoring methods for comparison and debugging.
+ * 
+ * POST /api/admin/theme-test
+ * Body: { theme: string, guess: string, options?: { methods?: string[], templates?: object } }
+ * 
+ * Protected by admin auth via withAdminCors.
  */
 
-import { NextApiRequest, NextApiResponse } from 'next';
-import { isThemeGuessCorrect } from '../../../src/game/theme';
-import { requireAdminKey } from '../../../src/middleware/admin';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { withAdminCors } from '@/lib/withAdminAuth';
+import { testThemeScoring, type ThemeTestResult } from '@/src/utils/themeScoring';
 
 interface ThemeTestRequest {
   theme: string;
   guess: string;
+  options?: {
+    methods?: ('embedding' | 'nli' | 'hybrid')[];
+    themeTemplate?: string;
+    guessTemplate?: string;
+    words?: string[];
+  };
 }
 
 interface ThemeTestResponse {
+  // Primary result (using hybrid method by default)
   similarity: number;
   isMatch: boolean;
   method: string;
   confidence: number;
+  
+  // Detailed breakdown by method
+  details: {
+    embedding?: {
+      similarity: number;
+      isMatch: boolean;
+      model: string;
+      threshold: number;
+    };
+    nli?: {
+      entailment: number;
+      contradiction: number;
+      neutral: number;
+      isMatch: boolean;
+      model: string;
+      threshold: number;
+    };
+    hybrid?: {
+      finalScore: number;
+      isMatch: boolean;
+      embeddingWeight: number;
+      nliWeight: number;
+      strategy: string;
+    };
+  };
+  
+  // Debug info
+  debug: {
+    themeUsed: string;
+    guessUsed: string;
+    templatesUsed?: {
+      theme: string;
+      guess: string;
+    };
+    processingTimeMs: number;
+  };
+  
   error?: string;
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ThemeTestResponse | { error: string; details?: string }>
 ) {
-  // Admin authentication
-  const authResult = requireAdminKey(req);
-  if (!authResult.authorized) {
-    return res.status(401).json({ 
-      error: authResult.error || 'Unauthorized',
-      details: 'Admin authentication required' 
-    });
-  }
-
   // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const startTime = Date.now();
+
   try {
-    const { theme, guess }: ThemeTestRequest = req.body;
+    const { theme, guess, options }: ThemeTestRequest = req.body;
 
     // Validate inputs
     if (!theme || !guess) {
@@ -58,7 +100,10 @@ export default async function handler(
       });
     }
 
-    if (theme.trim().length === 0 || guess.trim().length === 0) {
+    const trimmedTheme = theme.trim();
+    const trimmedGuess = guess.trim();
+
+    if (trimmedTheme.length === 0 || trimmedGuess.length === 0) {
       return res.status(400).json({ 
         error: 'Empty inputs',
         details: 'Both "theme" and "guess" must be non-empty' 
@@ -66,22 +111,64 @@ export default async function handler(
     }
 
     console.log('[/api/admin/theme-test] Testing theme similarity:', {
-      theme: theme.trim(),
-      guess: guess.trim()
+      theme: trimmedTheme,
+      guess: trimmedGuess,
+      options
     });
 
-    // Test the theme matching using the same logic as actual guesses
-    const result = await isThemeGuessCorrect(guess.trim(), theme.trim());
+    // Run the theme scoring with all methods
+    const result = await testThemeScoring(trimmedGuess, trimmedTheme, {
+      methods: options?.methods || ['embedding', 'nli', 'hybrid'],
+      themeTemplate: options?.themeTemplate,
+      guessTemplate: options?.guessTemplate,
+      words: options?.words
+    });
+
+    const processingTimeMs = Date.now() - startTime;
 
     const response: ThemeTestResponse = {
-      similarity: result.similarity || 0,
-      isMatch: result.isCorrect,
-      method: result.method,
-      confidence: result.confidence,
-      ...(result.method === 'error' && { error: 'AI matching failed, using fallback logic' })
+      similarity: result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0,
+      isMatch: result.hybrid?.isMatch ?? result.embedding?.isMatch ?? false,
+      method: result.hybrid ? 'hybrid' : 'embedding',
+      confidence: Math.round((result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0) * 100),
+      details: {
+        embedding: result.embedding ? {
+          similarity: result.embedding.similarity,
+          isMatch: result.embedding.isMatch,
+          model: result.embedding.model,
+          threshold: result.embedding.threshold
+        } : undefined,
+        nli: result.nli ? {
+          entailment: result.nli.entailment,
+          contradiction: result.nli.contradiction,
+          neutral: result.nli.neutral,
+          isMatch: result.nli.isMatch,
+          model: result.nli.model,
+          threshold: result.nli.threshold
+        } : undefined,
+        hybrid: result.hybrid ? {
+          finalScore: result.hybrid.finalScore,
+          isMatch: result.hybrid.isMatch,
+          embeddingWeight: result.hybrid.embeddingWeight,
+          nliWeight: result.hybrid.nliWeight,
+          strategy: result.hybrid.strategy
+        } : undefined
+      },
+      debug: {
+        themeUsed: trimmedTheme,
+        guessUsed: trimmedGuess,
+        templatesUsed: result.templatesUsed,
+        processingTimeMs
+      },
+      ...(result.error && { error: result.error })
     };
 
-    console.log('[/api/admin/theme-test] Test result:', response);
+    console.log('[/api/admin/theme-test] Result:', {
+      isMatch: response.isMatch,
+      confidence: response.confidence,
+      method: response.method,
+      timeMs: processingTimeMs
+    });
 
     res.status(200).json(response);
 
@@ -93,3 +180,5 @@ export default async function handler(
     });
   }
 }
+
+export default withAdminCors(handler);
