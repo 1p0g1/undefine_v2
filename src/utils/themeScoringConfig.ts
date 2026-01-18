@@ -22,7 +22,9 @@
 // HUGGING FACE API CONFIGURATION
 // =============================================================================
 
-export const HF_API_BASE = 'https://api-inference.huggingface.co/models';
+// UPDATED: HuggingFace deprecated api-inference.huggingface.co on Jan 2026
+// New endpoint is router.huggingface.co
+export const HF_API_BASE = 'https://router.huggingface.co/hf-inference/models';
 
 // =============================================================================
 // MODEL CONFIGURATION
