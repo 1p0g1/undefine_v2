@@ -157,9 +157,10 @@ export const SPECIFICITY = {
   // Maximum content tokens for a guess to be considered "trivial"
   trivialGuessMaxContentTokens: 2,
   // Minimum keyword overlap for short guesses (below this = penalty)
-  minKeywordOverlapForShortGuess: 0.5,
+  // INCREASED from 0.5 to 0.6 to catch cases like "animal kingdom" (50% overlap)
+  minKeywordOverlapForShortGuess: 0.6,
   // Maximum penalty for trivial guesses missing concepts
-  maxSpecificityPenalty: 0.2,
+  maxSpecificityPenalty: 0.25,
 } as const;
 
 // =============================================================================

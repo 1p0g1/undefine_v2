@@ -1234,6 +1234,7 @@ export async function testThemeScoring(
     // =========================================================================
     // 4. EMBEDDING-ONLY MODE (no NLI - faster, lower cost)
     // Uses: embedding + keyword + specificity + negation
+    // IMPROVED: Stronger keyword-based penalties to reduce false positives
     // =========================================================================
     if (methods.includes('embeddingOnly') && result.embedding) {
       const embScore = result.embedding.similarity;
@@ -1245,24 +1246,40 @@ export async function testThemeScoring(
       let finalScore = embScore;
       
       // POLICY RULES (priority order):
+      // CRITICAL: Keyword overlap is key to detecting false positives like
+      // "animal kingdom" vs "groups of animals" (share "animal" but different concepts)
       
-      // 1. Negation/qualifier mismatch → severe penalty
+      // 1. Negation/qualifier mismatch → severe penalty (60% reduction)
       if (hasNegationMismatch) {
         strategy = 'negation_mismatch';
         finalScore = embScore * (1 - WEIGHTS.penalties.negationMismatch);
         console.log(`[themeScoring] Negation penalty: ${(embScore*100).toFixed(1)}% → ${(finalScore*100).toFixed(1)}%`);
       }
-      // 2. Keyword mismatch with high embedding → likely false positive
+      // 2. STRONG keyword mismatch (<30% overlap) with high embedding → likely false positive
       else if (keywordOverlap < THRESHOLDS.keywords.mismatchPenaltyThreshold && embScore > 0.7) {
-        strategy = 'keyword_mismatch';
+        strategy = 'keyword_mismatch_severe';
+        // Very severe penalty: 50% + (overlap * 50%)
+        // At 0% overlap: 50%, at 30% overlap: 65%
         finalScore = embScore * (0.5 + keywordOverlap * 0.5);
+        console.log(`[themeScoring] Severe keyword mismatch: ${(embScore*100).toFixed(1)}% → ${(finalScore*100).toFixed(1)}% (overlap: ${(keywordOverlap*100).toFixed(0)}%)`);
       } 
-      // 3. Trivial guess with missing concepts → penalty  
+      // 3. MODERATE keyword mismatch (30-70% overlap) with high embedding → graduated penalty
+      // This catches cases like "animal kingdom" (50% overlap) where embedding is misleadingly high
+      else if (keywordOverlap < 0.7 && embScore > 0.7) {
+        strategy = 'keyword_mismatch_moderate';
+        // Graduated penalty: (1 - missing_portion * 0.5)
+        // At 50% overlap (50% missing): 75% multiplier, At 70% overlap: 85% multiplier
+        const missingPortion = 1 - keywordOverlap;
+        const penaltyMultiplier = 1 - (missingPortion * 0.5);
+        finalScore = embScore * penaltyMultiplier;
+        console.log(`[themeScoring] Moderate keyword mismatch: ${(embScore*100).toFixed(1)}% → ${(finalScore*100).toFixed(1)}% (overlap: ${(keywordOverlap*100).toFixed(0)}%, penalty: ${((1-penaltyMultiplier)*100).toFixed(0)}%)`);
+      }
+      // 4. Trivial guess with missing concepts → penalty  
       else if (specificityPenalty > 0) {
         strategy = 'trivial_guess_penalty';
         finalScore = embScore * (1 - specificityPenalty);
       }
-      // 4. Moderate keyword penalty
+      // 5. Any remaining keyword penalty
       else if (result.keywords?.penalty && result.keywords.penalty > 0) {
         finalScore = embScore * (1 - result.keywords.penalty * 0.3);
       }
