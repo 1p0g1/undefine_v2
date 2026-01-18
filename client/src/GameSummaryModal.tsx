@@ -4,7 +4,7 @@ import { DefineBoxes, GuessStatus } from './components/DefineBoxes';
 import { LeaderboardEntry } from './api/types';
 import { createDefaultClueStatus } from '../../shared-types/src/clues';
 import { FirstGamePrompt } from './components/FirstGamePrompt';
-import { UnPrefix } from './components/UnPrefix';
+import { VaultLogo } from './components/VaultLogo';
 import { getPlayerId } from './utils/player';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
@@ -356,12 +356,14 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             transformOrigin: 'center'
           }}
         >
-          {/* Un· enhanced design with overlap effect */}
-          <UnPrefix 
-            scaled={true} 
+          {/* Vault Logo - shares state with main page vault */}
+          <VaultLogo 
+            scaled={true}
             onClick={handleOpenThemeModal} 
             themeGuessData={themeGuessData}
             gameComplete={true}
+            showUnText={true}
+            disableCelebrateAnimation={true}
           />
           <div style={{ 
             display: 'flex', 
