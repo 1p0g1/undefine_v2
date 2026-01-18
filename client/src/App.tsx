@@ -111,11 +111,29 @@ function App() {
   const [showThemeModal, setShowThemeModal] = useState(false);
 
   // Theme data state for UN diamond coloring
+  // Theme data state for UN diamond coloring - CACHED in localStorage for instant load
   const [themeGuessData, setThemeGuessData] = useState<{
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
-  } | undefined>(undefined);
+    highestConfidencePercentage?: number | null;
+  } | undefined>(() => {
+    // Initialize from localStorage for instant vault state on page load
+    try {
+      const cached = localStorage.getItem('themeGuessData');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Validate cached data has required fields
+        if (typeof parsed.hasGuessedToday === 'boolean') {
+          console.log('[App] Loaded cached themeGuessData:', parsed);
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.log('[App] Failed to parse cached themeGuessData');
+    }
+    return undefined;
+  });
 
   // Bonus round state (inline UI after winning early)
   const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
@@ -139,7 +157,7 @@ function App() {
     }
   }, []);
 
-  // Load theme data for UN diamond coloring
+  // Load theme data for UN diamond coloring - also caches to localStorage
   const loadThemeData = async () => {
     try {
       const playerId = getPlayerId();
@@ -147,11 +165,20 @@ function App() {
       
       const themeStatus = await apiClient.getThemeStatus(playerId);
       if (themeStatus && themeStatus.progress) {
-        setThemeGuessData({
+        const newThemeData = {
           hasGuessedToday: themeStatus.progress.hasGuessedToday,
           isCorrectGuess: themeStatus.progress.isCorrectGuess,
-          confidencePercentage: themeStatus.progress.confidencePercentage || null
-        });
+          confidencePercentage: themeStatus.progress.confidencePercentage || null,
+          highestConfidencePercentage: themeStatus.progress.highestConfidencePercentage || null
+        };
+        setThemeGuessData(newThemeData);
+        // Cache to localStorage for instant load on next visit
+        try {
+          localStorage.setItem('themeGuessData', JSON.stringify(newThemeData));
+          console.log('[App] Cached themeGuessData to localStorage');
+        } catch (e) {
+          console.log('[App] Failed to cache themeGuessData');
+        }
       }
     } catch (error) {
       console.log('[App] Failed to load theme data for UN diamond coloring:', error);
@@ -490,12 +517,20 @@ function App() {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null;
   }) => {
     setShowThemeModal(false);
     
     // Update theme data immediately if provided from modal
     if (updatedThemeData) {
       setThemeGuessData(updatedThemeData);
+      // Cache to localStorage for instant vault state
+      try {
+        localStorage.setItem('themeGuessData', JSON.stringify(updatedThemeData));
+        console.log('[App] Cached themeGuessData after modal close');
+      } catch (e) {
+        console.log('[App] Failed to cache themeGuessData');
+      }
     } else {
       // Fallback: reload theme data if no data provided
       loadThemeData();

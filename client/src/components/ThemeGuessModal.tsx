@@ -48,6 +48,7 @@ interface ThemeGuessModalProps {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null;
   }) => void;
 }
 
@@ -89,6 +90,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null;
   } | undefined>(undefined);
 
   // NEW: Simple theme history state
@@ -339,6 +341,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null;
   }) => {
     setGuess('');
     setError(null);
@@ -346,7 +349,12 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     
     const themeDataToReturn = overrideThemeData || themeGuessData;
     if (onThemeDataUpdate && themeDataToReturn) {
-      onThemeDataUpdate(themeDataToReturn);
+      // Include highestConfidencePercentage from themeStatus if available
+      const dataWithHighest = {
+        ...themeDataToReturn,
+        highestConfidencePercentage: themeStatus?.progress?.highestConfidencePercentage ?? themeDataToReturn.confidencePercentage
+      };
+      onThemeDataUpdate(dataWithHighest);
     }
     
     onClose();
