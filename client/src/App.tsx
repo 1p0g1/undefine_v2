@@ -521,7 +521,8 @@ function App() {
   // Bonus round completion handler (for inline UI)
   // FLOW: After bonus round → Show theme modal → Then leaderboard
   const handleBonusRoundComplete = (results: BonusGuessResult[]) => {
-    console.log('[App] Bonus round complete:', results);
+    console.log('[App] Bonus round complete with results:', results);
+    console.log('[App] Result tiers:', results.map(r => r.tier));
     setBonusRoundResults(results);
     setBonusRoundComplete(true);
     setPendingBonusRound(false);
@@ -1288,60 +1289,18 @@ function App() {
             </div>
           )}
 
-          {/* Bonus Round Unlock Prompt - inline on main page */}
+          {/* Bonus Round - inline on main page (consolidated into single component) */}
           {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
            pendingBonusRound && !celebrateDiamond && !bonusRoundComplete && (
-            <>
-              {/* Inline bonus round unlock message with proper pluralization */}
-              <div style={{
-                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                border: '2px solid #f59e0b',
-                borderRadius: '12px',
-                padding: '1rem',
-                marginBottom: '1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(90deg, #b45309, #d97706, #b45309)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  marginBottom: '0.5rem'
-                }}>
-                  🎯 BONUS ROUND UNLOCKED! 🎯
-                </div>
-                <div style={{
-                  fontSize: '1rem',
-                  color: '#92400e',
-                  fontWeight: 500
-                }}>
-                  You solved today's word in <strong>{gameState.guesses.length}</strong> guess{gameState.guesses.length !== 1 ? 'es' : ''}!
-                </div>
-                <div style={{
-                  fontSize: '1.1rem',
-                  color: '#78350f',
-                  fontWeight: 600,
-                  marginTop: '0.25rem'
-                }}>
-                  You have <span style={{ 
-                    color: '#d97706', 
-                    fontSize: '1.3rem'
-                  }}>{bonusAttempts}</span> bonus guess{bonusAttempts !== 1 ? 'es' : ''} to find dictionary neighbors!
-                </div>
-              </div>
-              
-              {/* The actual bonus round component */}
               <BonusRoundInline
                 wordId={gameState.wordId}
                 playerId={getPlayerId()}
                 targetWord={gameState.wordText}
                 remainingAttempts={bonusAttempts}
+                guessesUsed={gameState.guesses.length}
                 gameSessionId={gameState.gameId}
                 onComplete={handleBonusRoundComplete}
               />
-            </>
           )}
 
           {/* Bonus Round Results Summary */}

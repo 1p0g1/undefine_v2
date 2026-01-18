@@ -68,6 +68,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   gameDate,  // NEW: Original word date
   bonusRoundResults = [],  // Bonus round results for DEFINE boxes
 }) => {
+  // Debug logging for bonus results
+  console.log('[GameSummaryModal] bonusRoundResults:', bonusRoundResults, 'guessesUsed:', guessesUsed);
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   

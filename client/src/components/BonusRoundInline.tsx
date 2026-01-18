@@ -141,6 +141,7 @@ interface BonusRoundInlineProps {
   playerId: string;
   targetWord: string;
   remainingAttempts: number; // Number of unused guesses
+  guessesUsed: number; // Number of guesses to win the daily word (for intro message)
   gameSessionId?: string; // For persisting guesses to database
   onComplete?: (results: BonusGuessResult[]) => void;
 }
@@ -158,6 +159,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   playerId,
   targetWord,
   remainingAttempts,
+  guessesUsed,
   gameSessionId,
   onComplete
 }) => {
@@ -359,9 +361,33 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           <span style={styles.emoji}>✨</span>
         </div>
 
-        {/* Explanation */}
+        {/* Intro message - how they earned it */}
+        <div style={styles.introMessage}>
+          You solved today's word in <strong style={{ color: '#b8860b' }}>{guessesUsed}</strong> guess{guessesUsed !== 1 ? 'es' : ''}.
+          {' '}You have <strong style={{ color: '#b8860b' }}>{remainingAttempts}</strong> bonus guess{remainingAttempts !== 1 ? 'es' : ''} to identify dictionary neighbours.
+        </div>
+
+        {/* Explanation with animation hint */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} that feature{' '}
+          <span style={{ 
+            background: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 600,
+            animation: 'shimmerText 2s linear infinite',
+            backgroundSize: '200% auto'
+          }}>before</span>
+          {' '}or{' '}
+          <span style={{ 
+            background: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 600,
+            animation: 'shimmerText 2s linear infinite',
+            backgroundSize: '200% auto'
+          }}>after</span>
+          {' '}"<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
         </div>
 
         {/* Compact scoring legend */}
@@ -527,6 +553,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '1.4rem',
     fontWeight: 800,
     fontFamily: 'var(--font-primary)',
+  },
+  introMessage: {
+    fontSize: '0.95rem',
+    color: '#92400e',
+    fontWeight: 500,
+    marginBottom: '0.5rem',
+    lineHeight: 1.5,
   },
   explanation: {
     fontSize: '0.9rem',
