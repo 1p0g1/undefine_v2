@@ -84,6 +84,11 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   // Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
   
+  // Hover shake animation state (for Orange/Red vaults)
+  const [isHoverShaking, setIsHoverShaking] = useState(false);
+  const [hoverShakeFrameIndex, setHoverShakeFrameIndex] = useState(0);
+  const hoverShakeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Internal animation state (for modal animation)
   const [animationFrameIndex, setAnimationFrameIndex] = useState(0);
   const [internalAnimating, setInternalAnimating] = useState(false);
@@ -152,6 +157,10 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
+      }
+      if (hoverShakeTimerRef.current) {
+        clearTimeout(hoverShakeTimerRef.current);
+        hoverShakeTimerRef.current = null;
       }
     };
   }, [celebrateCompletion, onCelebrationComplete]);
@@ -223,6 +232,13 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       return currentAnimationSequence[animationFrameIndex]?.image || '/ClosedVault.png';
     }
     
+    // If hover shaking (Orange/Red states on PC hover)
+    if (isHoverShaking) {
+      const colorState = getVaultColorState();
+      const sequence = colorState === 'orange' ? ORANGE_SHAKE_SEQUENCE : RED_SHAKE_SEQUENCE;
+      return sequence[hoverShakeFrameIndex]?.image || (colorState === 'orange' ? '/Orange.png' : '/Red.png');
+    }
+    
     // Theme-based state for main page (persistent after guess)
     if (themeGuessData?.hasGuessedToday) {
       // Use highest confidence if available, otherwise current
@@ -242,7 +258,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     
     // Default: closed vault
     return '/ClosedVault.png';
-  }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence]);
+  }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence, isHoverShaking, hoverShakeFrameIndex, getVaultColorState]);
   
   // Size calculations:
   // - Main page: 70% larger than original (was ~3rem, now ~5rem)
@@ -351,9 +367,48 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     }
   };
 
+  // Determine current vault color state (for hover shake)
+  const getVaultColorState = useCallback((): 'closed' | 'green' | 'orange' | 'red' => {
+    if (!themeGuessData?.hasGuessedToday) return 'closed';
+    const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
+    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) return 'green';
+    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) return 'orange';
+    return 'red';
+  }, [themeGuessData]);
+
+  // Play hover shake animation for Orange/Red states
+  const playHoverShakeAnimation = useCallback((colorState: 'orange' | 'red') => {
+    if (isHoverShaking || internalAnimating || isCelebrating) return;
+    
+    const sequence = colorState === 'orange' ? ORANGE_SHAKE_SEQUENCE : RED_SHAKE_SEQUENCE;
+    setIsHoverShaking(true);
+    
+    let elapsed = 0;
+    sequence.forEach((frame, index) => {
+      setTimeout(() => {
+        setHoverShakeFrameIndex(index);
+      }, elapsed);
+      elapsed += frame.duration;
+    });
+    
+    const totalDuration = sequence.reduce((sum, f) => sum + f.duration, 0) + 100;
+    hoverShakeTimerRef.current = setTimeout(() => {
+      setIsHoverShaking(false);
+      setHoverShakeFrameIndex(0);
+      hoverShakeTimerRef.current = null;
+    }, totalDuration);
+  }, [isHoverShaking, internalAnimating, isCelebrating]);
+
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isCelebrating) return;
+    if (isCelebrating || internalAnimating) return;
     setShowTooltip(true);
+    
+    // Trigger hover shake for Orange/Red states on PC
+    const colorState = getVaultColorState();
+    if (colorState === 'orange' || colorState === 'red') {
+      playHoverShakeAnimation(colorState);
+    }
+    
     if (onClick) {
       e.currentTarget.style.transform = scaled ? 'scale(1.05)' : 'scale(1.08)';
     }
@@ -362,6 +417,15 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isCelebrating) return;
     setShowTooltip(false);
+    
+    // Clear any ongoing hover shake
+    if (hoverShakeTimerRef.current) {
+      clearTimeout(hoverShakeTimerRef.current);
+      hoverShakeTimerRef.current = null;
+      setIsHoverShaking(false);
+      setHoverShakeFrameIndex(0);
+    }
+    
     if (onClick) {
       e.currentTarget.style.transform = 'scale(1)';
     }

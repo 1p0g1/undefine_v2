@@ -3,7 +3,7 @@ import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
 import { UnPrefix } from './UnPrefix';
-import { VaultLogo, VAULT_UNLOCK_SEQUENCE } from './VaultLogo';
+import { VaultLogo, VAULT_UNLOCK_SEQUENCE, ORANGE_SHAKE_SEQUENCE, RED_SHAKE_SEQUENCE, SCORE_THRESHOLD_GREEN, SCORE_THRESHOLD_ORANGE } from './VaultLogo';
 
 interface ThemeStatus {
   currentTheme?: string | null;
@@ -114,6 +114,10 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [isPlayingVaultAnimation, setIsPlayingVaultAnimation] = useState(false);
   const [vaultAnimationFrame, setVaultAnimationFrame] = useState<string>('/ClosedVault.png');
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Test mode state for animation debugging
+  const [showTestPanel, setShowTestPanel] = useState(false);
+  const [testAnimationScore, setTestAnimationScore] = useState<number | null>(null);
 
   const playerId = getPlayerId();
 
@@ -148,6 +152,42 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     
     // Keep final state (OpenVault)
     setIsPlayingVaultAnimation(false);
+  }, []);
+
+  // Function to play animation for a specific score (for testing)
+  const playAnimationForScore = useCallback(async (score: number) => {
+    setIsPlayingVaultAnimation(true);
+    
+    // Choose sequence based on score
+    let sequence: typeof VAULT_UNLOCK_SEQUENCE;
+    if (score >= SCORE_THRESHOLD_GREEN) {
+      sequence = VAULT_UNLOCK_SEQUENCE;
+    } else if (score >= SCORE_THRESHOLD_ORANGE) {
+      sequence = ORANGE_SHAKE_SEQUENCE;
+    } else {
+      sequence = RED_SHAKE_SEQUENCE;
+    }
+    
+    // Play through the sequence
+    for (let i = 0; i < sequence.length; i++) {
+      const frame = sequence[i];
+      setVaultAnimationFrame(frame.image);
+      
+      if (frame.duration > 0) {
+        await new Promise(resolve => setTimeout(resolve, frame.duration));
+      }
+    }
+    
+    // Keep final state and update themeGuessData to persist the state
+    setIsPlayingVaultAnimation(false);
+    setTestAnimationScore(score);
+    
+    // Update themeGuessData to show persistent state
+    setThemeGuessData({
+      hasGuessedToday: true,
+      isCorrectGuess: score >= SCORE_THRESHOLD_GREEN,
+      confidencePercentage: score
+    });
   }, []);
 
   // Load theme data when modal opens
@@ -1132,6 +1172,164 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             )}
           </div>
         )}
+
+        {/* Animation Test Panel - Toggle visibility with button */}
+        <div style={{ 
+          marginTop: '1.5rem', 
+          paddingTop: '1rem',
+          borderTop: '1px dashed #e5e7eb'
+        }}>
+          <button
+            onClick={() => setShowTestPanel(!showTestPanel)}
+            style={{
+              background: 'none',
+              border: '1px dashed #9ca3af',
+              borderRadius: '0.5rem',
+              padding: '0.5rem 1rem',
+              fontSize: '0.75rem',
+              color: '#6b7280',
+              cursor: 'pointer',
+              width: '100%',
+              marginBottom: showTestPanel ? '1rem' : 0
+            }}
+          >
+            {showTestPanel ? '🔧 Hide Animation Test Panel' : '🔧 Show Animation Test Panel'}
+          </button>
+          
+          {showTestPanel && (
+            <div style={{
+              backgroundColor: '#f3f4f6',
+              border: '2px dashed #d1d5db',
+              borderRadius: '0.75rem',
+              padding: '1rem'
+            }}>
+              <div style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '0.75rem',
+                textAlign: 'center'
+              }}>
+                🧪 Animation Test Buttons
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem'
+              }}>
+                {/* Green/Correct Animation (80%+) */}
+                <button
+                  onClick={() => playAnimationForScore(85)}
+                  disabled={isPlayingVaultAnimation}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: isPlayingVaultAnimation ? '#9ca3af' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: isPlayingVaultAnimation ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  🟢 Test GREEN (85% - Vault Opens)
+                </button>
+                
+                {/* Orange Animation (70-79%) */}
+                <button
+                  onClick={() => playAnimationForScore(75)}
+                  disabled={isPlayingVaultAnimation}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: isPlayingVaultAnimation ? '#9ca3af' : '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: isPlayingVaultAnimation ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  🟠 Test ORANGE (75% - Shake Left/Right)
+                </button>
+                
+                {/* Red Animation (<70%) */}
+                <button
+                  onClick={() => playAnimationForScore(50)}
+                  disabled={isPlayingVaultAnimation}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: isPlayingVaultAnimation ? '#9ca3af' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: isPlayingVaultAnimation ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  🔴 Test RED (50% - Shake Left/Right)
+                </button>
+                
+                {/* Reset button */}
+                <button
+                  onClick={() => {
+                    setTestAnimationScore(null);
+                    setThemeGuessData(undefined);
+                    setVaultAnimationFrame('/ClosedVault.png');
+                  }}
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  🔄 Reset to Default (Closed Vault)
+                </button>
+              </div>
+              
+              {/* Current state display */}
+              <div style={{
+                marginTop: '1rem',
+                padding: '0.75rem',
+                backgroundColor: 'white',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                color: '#6b7280'
+              }}>
+                <div><strong>Current Test Score:</strong> {testAnimationScore !== null ? `${testAnimationScore}%` : 'None'}</div>
+                <div><strong>Vault State:</strong> {
+                  testAnimationScore === null ? 'Closed' :
+                  testAnimationScore >= SCORE_THRESHOLD_GREEN ? 'Open (Green)' :
+                  testAnimationScore >= SCORE_THRESHOLD_ORANGE ? 'Orange' : 'Red'
+                }</div>
+                <div><strong>themeGuessData:</strong> {JSON.stringify(themeGuessData || 'undefined')}</div>
+                <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: '#9ca3af' }}>
+                  💡 After triggering an animation, hover over the vault on the homepage to see the shake animation for Orange/Red states.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
           </div>
       </div>
     </>
