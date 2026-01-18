@@ -39,6 +39,15 @@ interface HybridDetail {
   strategy: string;
 }
 
+interface KeywordDetail {
+  overlap: number;
+  themeKeywords: string[];
+  guessKeywords: string[];
+  matchedKeywords: string[];
+  isMatch: boolean;
+  penalty: number;
+}
+
 interface ThemeTestResult {
   similarity: number;
   isMatch: boolean;
@@ -48,6 +57,7 @@ interface ThemeTestResult {
     embedding?: EmbeddingDetail;
     nli?: NLIDetail;
     hybrid?: HybridDetail;
+    keywords?: KeywordDetail;
   };
   debug: {
     themeUsed: string;
@@ -82,7 +92,7 @@ export const ThemeTestTool: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [themeTemplate, setThemeTemplate] = useState("What connects this week's words? {theme}");
   const [guessTemplate, setGuessTemplate] = useState("What connects this week's words? {guess}");
-  const [selectedMethods, setSelectedMethods] = useState<string[]>(['embedding', 'nli', 'hybrid']);
+  const [selectedMethods, setSelectedMethods] = useState<string[]>(['embedding', 'nli', 'hybrid', 'keywords']);
 
   // Load saved settings on mount
   useEffect(() => {
@@ -456,6 +466,38 @@ export const ThemeTestTool: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Keywords */}
+            {result.details.keywords && (
+              <div style={styles.methodCard}>
+                <div style={styles.methodCardHeader}>
+                  <span>🔑 Keyword Analysis</span>
+                  <span style={{
+                    color: result.details.keywords.isMatch ? '#10b981' : '#ef4444'
+                  }}>
+                    {(result.details.keywords.overlap * 100).toFixed(0)}% overlap
+                  </span>
+                </div>
+                <div style={styles.methodCardMeta}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <strong>Theme keywords:</strong> {result.details.keywords.themeKeywords.join(', ') || '(none)'}
+                  </div>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <strong>Guess keywords:</strong> {result.details.keywords.guessKeywords.join(', ') || '(none)'}
+                  </div>
+                  <div style={{ 
+                    color: result.details.keywords.matchedKeywords.length > 0 ? '#10b981' : '#ef4444' 
+                  }}>
+                    <strong>Matched:</strong> {result.details.keywords.matchedKeywords.join(', ') || '(none)'}
+                  </div>
+                  {result.details.keywords.penalty > 0 && (
+                    <div style={{ color: '#f59e0b', marginTop: '0.5rem' }}>
+                      ⚠️ Penalty applied: {(result.details.keywords.penalty * 100).toFixed(0)}% (missing key concepts)
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Debug Info */}
@@ -493,9 +535,16 @@ export const ThemeTestTool: React.FC = () => {
         </div>
 
         <div style={styles.infoSection}>
+          <h4 style={styles.infoSectionTitle}>🔑 Keywords (Fast, No API)</h4>
+          <p style={styles.infoText}>
+            Extracts key terms from theme and guess, checks overlap. Helps detect false positives where embedding sees similarity but meaning is different (e.g., "animal kingdom" vs "groups of animals").
+          </p>
+        </div>
+
+        <div style={styles.infoSection}>
           <h4 style={styles.infoSectionTitle}>⚡ Hybrid (Recommended)</h4>
           <p style={styles.infoText}>
-            Combines embedding and NLI scores with smart rules: high contradiction overrides embedding similarity; high entailment + decent embedding = pass.
+            Combines embedding, NLI, and keyword analysis with smart rules: high contradiction overrides; keyword mismatch applies penalty; high entailment + good embedding + keyword match = pass.
           </p>
         </div>
       </div>

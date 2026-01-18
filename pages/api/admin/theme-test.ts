@@ -18,7 +18,7 @@ interface ThemeTestRequest {
   theme: string;
   guess: string;
   options?: {
-    methods?: ('embedding' | 'nli' | 'hybrid')[];
+    methods?: ('embedding' | 'nli' | 'hybrid' | 'keywords')[];
     themeTemplate?: string;
     guessTemplate?: string;
     words?: string[];
@@ -54,6 +54,14 @@ interface ThemeTestResponse {
       embeddingWeight: number;
       nliWeight: number;
       strategy: string;
+    };
+    keywords?: {
+      overlap: number;
+      themeKeywords: string[];
+      guessKeywords: string[];
+      matchedKeywords: string[];
+      isMatch: boolean;
+      penalty: number;
     };
   };
   
@@ -118,7 +126,7 @@ async function handler(
 
     // Run the theme scoring with all methods
     const result = await testThemeScoring(trimmedGuess, trimmedTheme, {
-      methods: options?.methods || ['embedding', 'nli', 'hybrid'],
+      methods: options?.methods || ['embedding', 'nli', 'hybrid', 'keywords'],
       themeTemplate: options?.themeTemplate,
       guessTemplate: options?.guessTemplate,
       words: options?.words
@@ -152,6 +160,14 @@ async function handler(
           embeddingWeight: result.hybrid.embeddingWeight,
           nliWeight: result.hybrid.nliWeight,
           strategy: result.hybrid.strategy
+        } : undefined,
+        keywords: result.keywords ? {
+          overlap: result.keywords.overlap,
+          themeKeywords: result.keywords.themeKeywords,
+          guessKeywords: result.keywords.guessKeywords,
+          matchedKeywords: result.keywords.matchedKeywords,
+          isMatch: result.keywords.isMatch,
+          penalty: result.keywords.penalty
         } : undefined
       },
       debug: {

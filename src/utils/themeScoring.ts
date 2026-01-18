@@ -60,19 +60,30 @@ export interface HybridResult {
   strategy: string;
 }
 
+export interface KeywordResult {
+  overlap: number;           // % of theme keywords found in guess
+  themeKeywords: string[];   // Key terms extracted from theme
+  guessKeywords: string[];   // Key terms extracted from guess
+  matchedKeywords: string[]; // Keywords that matched
+  isMatch: boolean;          // Whether keyword overlap suggests a match
+  penalty: number;           // Penalty to apply if low overlap (0-1)
+}
+
 export interface ThemeTestResult {
   embedding?: EmbeddingResult;
   nli?: NLIResult;
   hybrid?: HybridResult;
+  keywords?: KeywordResult;   // NEW: Keyword overlap analysis
   templatesUsed?: {
     theme: string;
     guess: string;
   };
   error?: string;
+  processingTimeMs?: number;
 }
 
 export interface ThemeTestOptions {
-  methods?: ('embedding' | 'nli' | 'hybrid')[];
+  methods?: ('embedding' | 'nli' | 'hybrid' | 'keywords')[];
   themeTemplate?: string;
   guessTemplate?: string;
   words?: string[];
@@ -225,6 +236,104 @@ function applyTemplate(template: string, replacements: Record<string, string>): 
 }
 
 /**
+ * Common stop words to filter out from keyword extraction
+ */
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 
+  'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+  'may', 'might', 'must', 'that', 'this', 'these', 'those', 'what', 'which',
+  'who', 'whom', 'whose', 'when', 'where', 'why', 'how', 'all', 'each', 'every',
+  'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'not', 'only',
+  'own', 'same', 'so', 'than', 'too', 'very', 'can', 'just', 'words', 'word',
+  'things', 'thing', 'can', 'also', 'begin', 'beginning', 'begins'
+]);
+
+/**
+ * Extract meaningful keywords from text
+ * Filters out stop words and normalizes
+ */
+function extractKeywords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !STOP_WORDS.has(word))
+    .map(word => word.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Compute keyword overlap between theme and guess
+ * This helps detect false positives where embedding sees similarity
+ * but the actual meaning is different
+ * 
+ * Example:
+ * - Theme: "Groups of animals" → keywords: ["groups", "animals"]
+ * - Guess: "Animal kingdom" → keywords: ["animal", "kingdom"]
+ * - Overlap: "animals" matches "animal" (stemming) → 50%
+ * - Penalty: Missing "groups" which is key concept → suggest lower score
+ */
+function computeKeywordOverlap(theme: string, guess: string): KeywordResult {
+  const themeKeywords = extractKeywords(theme);
+  const guessKeywords = extractKeywords(guess);
+  
+  // Find matching keywords (with basic stemming)
+  const matchedKeywords: string[] = [];
+  
+  for (const tk of themeKeywords) {
+    const tkStem = stemWord(tk);
+    for (const gk of guessKeywords) {
+      const gkStem = stemWord(gk);
+      if (tkStem === gkStem || tk.includes(gk) || gk.includes(tk)) {
+        if (!matchedKeywords.includes(tk)) {
+          matchedKeywords.push(tk);
+        }
+        break;
+      }
+    }
+  }
+  
+  // Calculate overlap percentage
+  const overlap = themeKeywords.length > 0 
+    ? matchedKeywords.length / themeKeywords.length 
+    : 0;
+  
+  // Calculate penalty for missing key concepts
+  // If less than 50% of theme keywords matched, apply penalty
+  const penalty = overlap < 0.5 ? (0.5 - overlap) : 0;
+  
+  // Consider a match if at least 50% of theme keywords are present
+  const isMatch = overlap >= 0.5;
+  
+  console.log(`[themeScoring] Keywords: theme=${JSON.stringify(themeKeywords)}, guess=${JSON.stringify(guessKeywords)}, matched=${JSON.stringify(matchedKeywords)}, overlap=${(overlap*100).toFixed(1)}%`);
+  
+  return {
+    overlap,
+    themeKeywords,
+    guessKeywords,
+    matchedKeywords,
+    isMatch,
+    penalty
+  };
+}
+
+/**
+ * Basic word stemming (Porter-style light stemming)
+ */
+function stemWord(word: string): string {
+  return word
+    .replace(/ies$/, 'y')
+    .replace(/es$/, '')
+    .replace(/s$/, '')
+    .replace(/ing$/, '')
+    .replace(/ed$/, '')
+    .replace(/ly$/, '')
+    .replace(/ful$/, '')
+    .replace(/ness$/, '');
+}
+
+/**
  * Main test function - runs multiple scoring methods
  */
 export async function testThemeScoring(
@@ -232,8 +341,9 @@ export async function testThemeScoring(
   theme: string,
   options: ThemeTestOptions = {}
 ): Promise<ThemeTestResult> {
+  const startTime = Date.now();
   const {
-    methods = ['embedding', 'nli', 'hybrid'],
+    methods = ['embedding', 'nli', 'hybrid', 'keywords'],
     themeTemplate = DEFAULT_TEMPLATES.contextual_theme,
     guessTemplate = DEFAULT_TEMPLATES.contextual_guess,
     words = [],
@@ -256,6 +366,11 @@ export async function testThemeScoring(
   console.log(`[themeScoring] Testing: "${guess}" against "${theme}"`);
 
   try {
+    // 0. Keyword overlap analysis (fast, no API call)
+    if (methods.includes('keywords') || methods.includes('hybrid')) {
+      result.keywords = computeKeywordOverlap(theme, guess);
+    }
+
     // 1. Embedding similarity
     if (methods.includes('embedding') || methods.includes('hybrid')) {
       const similarity = await computeEmbeddingSimilarity(processedGuess, processedTheme);
@@ -288,16 +403,19 @@ export async function testThemeScoring(
       };
     }
 
-    // 3. Hybrid decision
+    // 3. Hybrid decision (now incorporates keyword overlap as penalty)
     if (methods.includes('hybrid') && result.embedding && result.nli) {
       // Strategy: 
       // - If NLI shows HIGH contradiction (>0.5), reject regardless of embedding
-      // - If NLI shows HIGH entailment (>0.7) AND embedding >0.6, accept
+      // - If keywords have LOW overlap (<50%), apply penalty
+      // - If NLI shows HIGH entailment (>0.7) AND embedding >0.6 AND keywords match, accept
       // - Otherwise, weighted combination
       
       const embScore = result.embedding.similarity;
       const nliEntail = result.nli.entailment;
       const nliContradict = result.nli.contradiction;
+      const keywordPenalty = result.keywords?.penalty ?? 0;
+      const keywordOverlap = result.keywords?.overlap ?? 1; // Default to 1 (no penalty) if not computed
       
       let strategy = 'weighted';
       let finalScore: number;
@@ -309,28 +427,35 @@ export async function testThemeScoring(
         finalScore = Math.min(embScore * 0.5, 1 - nliContradict);
         isMatch = false;
       }
-      // Acceptance rule: high entailment with decent embedding
-      else if (nliEntail > 0.7 && embScore > 0.6) {
+      // NEW: Keyword mismatch penalty - if embedding is high but keywords don't match
+      // This catches cases like "animal kingdom" scoring high for "groups of animals"
+      else if (embScore > 0.75 && keywordOverlap < 0.3) {
+        strategy = 'keyword_mismatch_penalty';
+        // Apply significant penalty for missing key concepts
+        finalScore = embScore * (0.5 + keywordOverlap * 0.5);
+        isMatch = finalScore >= effectiveThresholds.hybrid_final;
+        console.log(`[themeScoring] Keyword penalty applied: embedding=${(embScore*100).toFixed(1)}% reduced to ${(finalScore*100).toFixed(1)}%`);
+      }
+      // Acceptance rule: high entailment with decent embedding AND good keyword overlap
+      else if (nliEntail > 0.7 && embScore > 0.6 && keywordOverlap >= 0.5) {
         strategy = 'strong_entailment';
         finalScore = (embScore + nliEntail) / 2;
         isMatch = true;
       }
-      // Weighted combination (embedding 60%, NLI 40%)
+      // Weighted combination (embedding 60%, NLI 40%) with keyword penalty
       else {
         const embWeight = 0.6;
         const nliWeight = 0.4;
         // NLI contribution: entailment - contradiction (can be negative)
         const nliContribution = nliEntail - nliContradict * 0.5;
         finalScore = embScore * embWeight + Math.max(0, nliContribution) * nliWeight;
-        isMatch = finalScore >= effectiveThresholds.hybrid_final;
         
-        result.hybrid = {
-          finalScore,
-          isMatch,
-          embeddingWeight: embWeight,
-          nliWeight: nliWeight,
-          strategy
-        };
+        // Apply keyword penalty if overlap is low
+        if (keywordPenalty > 0) {
+          finalScore = finalScore * (1 - keywordPenalty * 0.3); // Max 15% reduction
+        }
+        
+        isMatch = finalScore >= effectiveThresholds.hybrid_final;
       }
       
       result.hybrid = {
@@ -341,13 +466,15 @@ export async function testThemeScoring(
         strategy
       };
       
-      console.log(`[themeScoring] Hybrid: ${(finalScore * 100).toFixed(1)}% (${strategy}) → ${isMatch ? 'MATCH' : 'NO MATCH'}`);
+      console.log(`[themeScoring] Hybrid: ${(finalScore * 100).toFixed(1)}% (${strategy}, keyword overlap: ${(keywordOverlap*100).toFixed(0)}%) → ${isMatch ? 'MATCH' : 'NO MATCH'}`);
     }
 
   } catch (error) {
     result.error = error instanceof Error ? error.message : 'Unknown error';
     console.error('[themeScoring] Error:', error);
   }
+  
+  result.processingTimeMs = Date.now() - startTime;
 
   return result;
 }
