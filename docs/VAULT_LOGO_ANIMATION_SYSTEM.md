@@ -10,13 +10,31 @@ The Vault Logo replaces the original "Un" diamond shape with a series of PNG ima
 
 All images are located in `client/public/` and are designed to be **exactly the same size and placement** so they can be swapped seamlessly without repositioning.
 
+### Primary Vault States (Green/Successful - 80%+)
+
 | Image | Filename | Purpose |
 |-------|----------|---------|
 | 🔒 Closed Vault | `ClosedVault.png` | Default state before theme is guessed |
 | ✨ Shine Key | `ShineKeyVault.png` | Transition frame showing key insertion/shine effect |
 | 🚪 Ajar Vault | `AjarVault.png` | Door beginning to open |
-| 🚪 Ajar Vault 2 | `AjarVault2.png` | Door further open |
-| 🔓 Open Vault | `OpenVault.png` | Final state after theme is correctly guessed |
+| 🚪 Ajar Vault 2 | `AjarVault2.png` | Door continues opening |
+| 🔓 Open Vault | `OpenVault.png` | Final state after theme is correctly guessed (80%+) |
+
+### Orange Vault States (Close - 70-79%)
+
+| Image | Filename | Purpose |
+|-------|----------|---------|
+| 🟠 Orange | `Orange.png` | Base orange state for "close but not quite" |
+| 🟠 Orange Left | `OrangeLeft.png` | Shake animation - tilted left |
+| 🟠 Orange Right | `OrangeRight.png` | Shake animation - tilted right |
+
+### Red Vault States (Incorrect - <70%)
+
+| Image | Filename | Purpose |
+|-------|----------|---------|
+| 🔴 Red | `Red.png` | Base red state for incorrect guess |
+| 🔴 Red Left | `RedLeft.png` | Shake animation - tilted left |
+| 🔴 Red Right | `RedRight.png` | Shake animation - tilted right |
 
 ## Current Placement (Pre-Implementation)
 
@@ -41,17 +59,30 @@ Component: <UnPrefix />
 
 ## State Machine
 
+### Score Thresholds
+
+| Score Range | Result | Animation | Persistent State |
+|-------------|--------|-----------|------------------|
+| **80%+** | ✅ Correct (Green) | Vault unlock sequence | `OpenVault.png` |
+| **70-79%** | 🟠 Close (Orange) | Orange shake sequence | `Orange.png` |
+| **<70%** | 🔴 Incorrect (Red) | Red shake sequence | `Red.png` |
+
 ### Main Page States
 
 | State | Image Shown | Condition |
 |-------|-------------|-----------|
 | **Pre-Guess** | `ClosedVault.png` | Theme not guessed yet |
-| **Post-Guess (Correct)** | `OpenVault.png` | Theme guessed correctly |
-| **Post-Guess (Incorrect)** | `ClosedVault.png` | Theme guessed but wrong (still locked) |
+| **Post-Guess (80%+)** | `OpenVault.png` | Theme guessed with 80%+ confidence |
+| **Post-Guess (70-79%)** | `Orange.png` | Close but not quite unlocked |
+| **Post-Guess (<70%)** | `Red.png` | Incorrect guess |
 
-### Theme Popup Animation Sequence
+**Note:** The main page always shows the **highest** score achieved that week, so if a player improves their score, the vault will update accordingly.
 
-When a player submits a **successful** theme guess, the following animation plays inside the theme popup modal:
+### Theme Popup Animation Sequences
+
+#### Green/Success Animation (80%+ Score)
+
+When a player submits a **successful** theme guess (80%+), the vault unlock animation plays:
 
 | Step | Duration | Image | Purpose |
 |------|----------|-------|---------|
@@ -64,9 +95,42 @@ When a player submits a **successful** theme guess, the following animation play
 
 **Total Animation Duration:** ~1.6 seconds
 
+#### Orange/Close Animation (70-79% Score)
+
+When a player submits a **close** theme guess (70-79%), the orange shake animation plays:
+
+| Step | Duration | Image | Purpose |
+|------|----------|-------|---------|
+| 1 | 200ms | `Orange.png` | Starting state |
+| 2 | 150ms | `OrangeLeft.png` | Shake left |
+| 3 | 150ms | `Orange.png` | Return to center |
+| 4 | 150ms | `OrangeRight.png` | Shake right |
+| 5 | Hold | `Orange.png` | Final state |
+
+**Total Animation Duration:** ~0.65 seconds
+
+#### Red/Incorrect Animation (<70% Score)
+
+When a player submits an **incorrect** theme guess (<70%), the red shake animation plays:
+
+| Step | Duration | Image | Purpose |
+|------|----------|-------|---------|
+| 1 | 200ms | `Red.png` | Starting state |
+| 2 | 150ms | `RedLeft.png` | Shake left |
+| 3 | 150ms | `Red.png` | Return to center |
+| 4 | 150ms | `RedRight.png` | Shake right |
+| 5 | Hold | `Red.png` | Final state |
+
+**Total Animation Duration:** ~0.65 seconds
+
 ### Animation Pseudocode
 
 ```typescript
+// Score thresholds
+const SCORE_THRESHOLD_GREEN = 80; // 80%+ = successful unlock
+const SCORE_THRESHOLD_ORANGE = 70; // 70-79% = close
+
+// Green unlock sequence (80%+)
 const VAULT_UNLOCK_SEQUENCE = [
   { image: 'ClosedVault.png', duration: 300 },
   { image: 'ShineKeyVault.png', duration: 400 },
@@ -76,14 +140,29 @@ const VAULT_UNLOCK_SEQUENCE = [
   { image: 'OpenVault.png', duration: 0 } // Final state, holds
 ];
 
-// Play animation on correct theme guess
-async function playVaultUnlockAnimation() {
-  for (const frame of VAULT_UNLOCK_SEQUENCE) {
-    setCurrentImage(frame.image);
-    if (frame.duration > 0) {
-      await delay(frame.duration);
-    }
-  }
+// Orange shake sequence (70-79%)
+const ORANGE_SHAKE_SEQUENCE = [
+  { image: 'Orange.png', duration: 200 },
+  { image: 'OrangeLeft.png', duration: 150 },
+  { image: 'Orange.png', duration: 150 },
+  { image: 'OrangeRight.png', duration: 150 },
+  { image: 'Orange.png', duration: 0 } // Final state
+];
+
+// Red shake sequence (<70%)
+const RED_SHAKE_SEQUENCE = [
+  { image: 'Red.png', duration: 200 },
+  { image: 'RedLeft.png', duration: 150 },
+  { image: 'Red.png', duration: 150 },
+  { image: 'RedRight.png', duration: 150 },
+  { image: 'Red.png', duration: 0 } // Final state
+];
+
+// Choose animation based on score
+function getAnimationSequence(score: number) {
+  if (score >= SCORE_THRESHOLD_GREEN) return VAULT_UNLOCK_SEQUENCE;
+  if (score >= SCORE_THRESHOLD_ORANGE) return ORANGE_SHAKE_SEQUENCE;
+  return RED_SHAKE_SEQUENCE;
 }
 ```
 
@@ -181,9 +260,16 @@ The VaultLogo component supports three size modes:
   font-style: italic;
   font-weight: 800;
   font-size: clamp(1.2rem, 3.5vw, 1.5rem); /* Matches UnPrefix normal */
-  color: #1a237e;
+  color: #1a237e; /* Dark blue for closed/orange/red states */
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
   pointer-events: none;
+  transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
+}
+
+/* WHITE "Un" text when vault is OPEN (unlocked state) for better legibility */
+.vault-logo.open .vault-label {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.4);
 }
 
 .vault-logo img {
@@ -192,6 +278,19 @@ The VaultLogo component supports three size modes:
   object-fit: contain;
 }
 ```
+
+## "Un" Text Color States
+
+The "Un" text overlay changes color based on the vault state for optimal legibility:
+
+| Vault State | Text Color | Text Shadow | Reason |
+|-------------|------------|-------------|--------|
+| Closed (default) | `#1a237e` (dark blue) | White glow | Good contrast against closed vault |
+| Orange (70-79%) | `#1a237e` (dark blue) | White glow | Good contrast against orange vault |
+| Red (<70%) | `#1a237e` (dark blue) | White glow | Good contrast against red vault |
+| **Open (80%+)** | `#ffffff` (white) | Dark shadow | **White for legibility** against the dark interior of the open vault |
+
+The color transition is animated with a 0.3s ease-in-out for smooth visual feedback.
 
 ## Future Considerations
 
@@ -221,4 +320,10 @@ The VaultLogo component supports three size modes:
 | Jan 2026 | Fixed "Un" text size/style to match UnPrefix (smaller, italic, 800 weight) |
 | Jan 2026 | Reduced gap between vault and "lock" text (removed interpunct) |
 | Jan 2026 | Fixed animation timing: visual changes (colors) now occur AFTER vault animation completes |
+| Jan 2026 | **Added Orange/Red vault images for <80% theme scores** |
+| Jan 2026 | **Orange shake animation for 70-79% scores (Orange → OrangeLeft → Orange → OrangeRight → Orange)** |
+| Jan 2026 | **Red shake animation for <70% scores (Red → RedLeft → Red → RedRight → Red)** |
+| Jan 2026 | **"Un" text now WHITE when vault is OPEN (unlocked) for better legibility** |
+| Jan 2026 | Added `animateForScore` and `onScoreAnimationComplete` props for score-based animations |
+| Jan 2026 | Main page vault now persists Orange.png or Red.png based on highest score |
 

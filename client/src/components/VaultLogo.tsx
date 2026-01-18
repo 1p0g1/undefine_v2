@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-// Vault unlock animation sequence
+// Vault unlock animation sequence (for 80%+ correct theme guesses)
 const VAULT_UNLOCK_SEQUENCE = [
   { image: '/ClosedVault.png', duration: 300 },
   { image: '/ShineKeyVault.png', duration: 400 },
@@ -9,6 +9,28 @@ const VAULT_UNLOCK_SEQUENCE = [
   { image: '/AjarVault2.png', duration: 350 },
   { image: '/OpenVault.png', duration: 0 } // Final state, holds
 ];
+
+// Orange shake animation (for 70-79% theme guesses - "close but not quite")
+const ORANGE_SHAKE_SEQUENCE = [
+  { image: '/Orange.png', duration: 200 },
+  { image: '/OrangeLeft.png', duration: 150 },
+  { image: '/Orange.png', duration: 150 },
+  { image: '/OrangeRight.png', duration: 150 },
+  { image: '/Orange.png', duration: 0 } // Final state
+];
+
+// Red shake animation (for <70% theme guesses - "incorrect")
+const RED_SHAKE_SEQUENCE = [
+  { image: '/Red.png', duration: 200 },
+  { image: '/RedLeft.png', duration: 150 },
+  { image: '/Red.png', duration: 150 },
+  { image: '/RedRight.png', duration: 150 },
+  { image: '/Red.png', duration: 0 } // Final state
+];
+
+// Score thresholds
+const SCORE_THRESHOLD_GREEN = 80; // 80%+ = successful unlock (green)
+const SCORE_THRESHOLD_ORANGE = 70; // 70-79% = close (orange)
 
 interface VaultLogoProps {
   scaled?: boolean; // For use in modals with transform scale (smaller)
@@ -27,6 +49,7 @@ interface VaultLogoProps {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null; // Best score this week
   };
   // For animation in theme modal (controlled externally)
   isAnimating?: boolean;
@@ -35,6 +58,9 @@ interface VaultLogoProps {
   onAnimationComplete?: () => void;
   // Toggle to show "Un" overlay text
   showUnText?: boolean;
+  // For theme modal: trigger animation based on score
+  animateForScore?: number | null;
+  onScoreAnimationComplete?: () => void;
 }
 
 export const VaultLogo: React.FC<VaultLogoProps> = ({
@@ -51,7 +77,9 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   isAnimating = false,
   currentAnimationFrame,
   onAnimationComplete,
-  showUnText = true
+  showUnText = true,
+  animateForScore,
+  onScoreAnimationComplete
 }) => {
   // Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
@@ -59,17 +87,22 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   // Internal animation state (for modal animation)
   const [animationFrameIndex, setAnimationFrameIndex] = useState(0);
   const [internalAnimating, setInternalAnimating] = useState(false);
+  const [currentAnimationSequence, setCurrentAnimationSequence] = useState(VAULT_UNLOCK_SEQUENCE);
   
   // Celebration state (for main page unlock animation)
   const [isCelebrating, setIsCelebrating] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const callbackFiredRef = useRef(false);
+  const scoreAnimationFiredRef = useRef<number | null>(null);
   
-  // Preload all images on mount
+  // Preload all images on mount (including Orange/Red variants)
   useEffect(() => {
-    VAULT_UNLOCK_SEQUENCE.forEach(frame => {
-      const img = new Image();
-      img.src = frame.image;
+    const allSequences = [VAULT_UNLOCK_SEQUENCE, ORANGE_SHAKE_SEQUENCE, RED_SHAKE_SEQUENCE];
+    allSequences.forEach(sequence => {
+      sequence.forEach(frame => {
+        const img = new Image();
+        img.src = frame.image;
+      });
     });
   }, []);
   
@@ -123,6 +156,56 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     };
   }, [celebrateCompletion, onCelebrationComplete]);
   
+  // Handle score-based animation (for theme modal feedback)
+  useEffect(() => {
+    if (animateForScore === null || animateForScore === undefined) return;
+    if (scoreAnimationFiredRef.current === animateForScore) return; // Already animated for this score
+    
+    console.log('[VaultLogo] Starting score animation for:', animateForScore);
+    scoreAnimationFiredRef.current = animateForScore;
+    setInternalAnimating(true);
+    
+    // Choose animation sequence based on score
+    let sequence: typeof VAULT_UNLOCK_SEQUENCE;
+    if (animateForScore >= SCORE_THRESHOLD_GREEN) {
+      sequence = VAULT_UNLOCK_SEQUENCE;
+    } else if (animateForScore >= SCORE_THRESHOLD_ORANGE) {
+      sequence = ORANGE_SHAKE_SEQUENCE;
+    } else {
+      sequence = RED_SHAKE_SEQUENCE;
+    }
+    
+    setCurrentAnimationSequence(sequence);
+    
+    // Clear any existing timers
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    // Play through the sequence
+    let elapsed = 0;
+    sequence.forEach((frame, index) => {
+      setTimeout(() => {
+        setAnimationFrameIndex(index);
+      }, elapsed);
+      elapsed += frame.duration;
+    });
+    
+    // Total animation time
+    const totalDuration = sequence.reduce((sum, f) => sum + f.duration, 0) + 200; // +200ms buffer
+    
+    timerRef.current = setTimeout(() => {
+      console.log('[VaultLogo] Score animation complete');
+      setInternalAnimating(false);
+      timerRef.current = null;
+      
+      if (onScoreAnimationComplete) {
+        onScoreAnimationComplete();
+      }
+    }, totalDuration);
+    
+  }, [animateForScore, onScoreAnimationComplete]);
+  
   // Determine which image to show
   const getCurrentImage = useCallback(() => {
     // If externally controlled animation (modal)
@@ -130,19 +213,36 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       return currentAnimationFrame;
     }
     
-    // If celebrating or internally animating
-    if (isCelebrating || internalAnimating) {
+    // If celebrating (main page unlock)
+    if (isCelebrating) {
       return VAULT_UNLOCK_SEQUENCE[animationFrameIndex]?.image || '/ClosedVault.png';
     }
     
-    // Theme-based state
-    if (themeGuessData?.hasGuessedToday && themeGuessData?.isCorrectGuess) {
-      return '/OpenVault.png';
+    // If internally animating (score-based animation in modal)
+    if (internalAnimating) {
+      return currentAnimationSequence[animationFrameIndex]?.image || '/ClosedVault.png';
+    }
+    
+    // Theme-based state for main page (persistent after guess)
+    if (themeGuessData?.hasGuessedToday) {
+      // Use highest confidence if available, otherwise current
+      const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
+      
+      if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) {
+        // Green/successful - open vault
+        return '/OpenVault.png';
+      } else if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) {
+        // Orange - close but not quite
+        return '/Orange.png';
+      } else {
+        // Red - incorrect
+        return '/Red.png';
+      }
     }
     
     // Default: closed vault
     return '/ClosedVault.png';
-  }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData]);
+  }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence]);
   
   // Size calculations:
   // - Main page: 70% larger than original (was ~3rem, now ~5rem)
@@ -220,6 +320,29 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     if (large) return 'clamp(1.8rem, 4.5vw, 2.4rem)'; // Larger for modal but still proportional
     if (scaled) return 'clamp(1.1rem, 3.2vw, 1.4rem)'; // Match UnPrefix scaled
     return 'clamp(1.2rem, 3.5vw, 1.5rem)'; // Match UnPrefix normal
+  };
+  
+  // Determine if vault is in "open" state (for white text)
+  const isVaultOpen = useCallback(() => {
+    const currentImage = getCurrentImage();
+    return currentImage === '/OpenVault.png';
+  }, [getCurrentImage]);
+  
+  // Get "Un" text color - WHITE when vault is open for legibility, dark blue otherwise
+  const getUnTextColor = () => {
+    if (isVaultOpen()) {
+      return '#ffffff'; // White text for open vault
+    }
+    return '#1a237e'; // Dark blue for closed/orange/red states
+  };
+  
+  // Get text shadow based on state
+  const getUnTextShadow = () => {
+    if (isVaultOpen()) {
+      // Darker shadow for white text on open vault
+      return '0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.4)';
+    }
+    return '0 0 6px rgba(255,255,255,0.85)';
   };
 
   const handleClick = () => {
@@ -327,11 +450,12 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
                 fontStyle: 'italic', // Match UnPrefix styling
                 fontWeight: 800, // Match UnPrefix fontWeight
                 fontSize: getUnTextSize(),
-                color: '#1a237e',
-                textShadow: '0 0 6px rgba(255,255,255,0.85)',
+                color: getUnTextColor(), // WHITE when vault is open, dark blue otherwise
+                textShadow: getUnTextShadow(),
                 pointerEvents: 'none',
                 userSelect: 'none',
-                lineHeight: 1
+                lineHeight: 1,
+                transition: 'color 0.3s ease-in-out, text-shadow 0.3s ease-in-out' // Smooth transition
               }}
             >
               Un
@@ -364,6 +488,12 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   );
 };
 
-// Export the animation sequence for use in ThemeGuessModal
-export { VAULT_UNLOCK_SEQUENCE };
+// Export the animation sequences for use in ThemeGuessModal
+export { 
+  VAULT_UNLOCK_SEQUENCE,
+  ORANGE_SHAKE_SEQUENCE,
+  RED_SHAKE_SEQUENCE,
+  SCORE_THRESHOLD_GREEN,
+  SCORE_THRESHOLD_ORANGE
+};
 
