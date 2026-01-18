@@ -100,6 +100,15 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   const callbackFiredRef = useRef(false);
   const scoreAnimationFiredRef = useRef<number | null>(null);
   
+  // Determine current vault color state (for hover shake) - MUST be defined before getCurrentImage
+  const getVaultColorState = useCallback((): 'closed' | 'green' | 'orange' | 'red' => {
+    if (!themeGuessData?.hasGuessedToday) return 'closed';
+    const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
+    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) return 'green';
+    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) return 'orange';
+    return 'red';
+  }, [themeGuessData]);
+
   // Preload all images on mount (including Orange/Red variants)
   useEffect(() => {
     const allSequences = [VAULT_UNLOCK_SEQUENCE, ORANGE_SHAKE_SEQUENCE, RED_SHAKE_SEQUENCE];
@@ -366,15 +375,6 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       onClick();
     }
   };
-
-  // Determine current vault color state (for hover shake)
-  const getVaultColorState = useCallback((): 'closed' | 'green' | 'orange' | 'red' => {
-    if (!themeGuessData?.hasGuessedToday) return 'closed';
-    const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
-    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) return 'green';
-    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) return 'orange';
-    return 'red';
-  }, [themeGuessData]);
 
   // Play hover shake animation for Orange/Red states
   const playHoverShakeAnimation = useCallback((colorState: 'orange' | 'red') => {
