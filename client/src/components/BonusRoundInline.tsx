@@ -144,6 +144,7 @@ interface BonusRoundInlineProps {
   guessesUsed: number; // Number of guesses to win the daily word (for intro message)
   gameSessionId?: string; // For persisting guesses to database
   onComplete?: (results: BonusGuessResult[]) => void;
+  onSkip?: () => void; // Called when user clicks close button to skip bonus round
 }
 
 // Tier display info
@@ -161,7 +162,8 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   remainingAttempts,
   guessesUsed,
   gameSessionId,
-  onComplete
+  onComplete,
+  onSkip
 }) => {
   const [currentAttempt, setCurrentAttempt] = useState(0);
   const [guess, setGuess] = useState('');
@@ -361,33 +363,25 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           <span style={styles.emoji}>✨</span>
         </div>
 
+        {/* Close button to skip bonus round */}
+        {onSkip && !userFinished && (
+          <button
+            onClick={onSkip}
+            style={styles.closeButton}
+            aria-label="Skip bonus round"
+          >
+            ×
+          </button>
+        )}
+
         {/* Intro message - how they earned it */}
         <div style={styles.introMessage}>
-          You solved today's word in <strong style={{ color: '#b8860b' }}>{guessesUsed}</strong> guess{guessesUsed !== 1 ? 'es' : ''}.
-          {' '}You have <strong style={{ color: '#b8860b' }}>{remainingAttempts}</strong> bonus guess{remainingAttempts !== 1 ? 'es' : ''} to identify dictionary neighbours.
+          Daily word solved in <strong style={{ color: '#b8860b' }}>{guessesUsed}</strong> guess{guessesUsed !== 1 ? 'es' : ''}, giving you <strong style={{ color: '#b8860b' }}>{remainingAttempts}</strong> guess{remainingAttempts !== 1 ? 'es' : ''} on the dictionary neighbours bonus round
         </div>
 
-        {/* Explanation with animation hint */}
+        {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} that feature{' '}
-          <span style={{ 
-            background: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 600,
-            animation: 'shimmerText 2s linear infinite',
-            backgroundSize: '200% auto'
-          }}>before</span>
-          {' '}or{' '}
-          <span style={{ 
-            background: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 600,
-            animation: 'shimmerText 2s linear infinite',
-            backgroundSize: '200% auto'
-          }}>after</span>
-          {' '}"<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} before or after "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
         </div>
 
         {/* Compact scoring legend */}
@@ -538,6 +532,27 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '1rem',
     textAlign: 'center',
     overflow: 'hidden',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: '0.5rem',
+    right: '0.5rem',
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    border: '2px solid #d97706',
+    background: 'rgba(255, 255, 255, 0.8)',
+    color: '#d97706',
+    fontSize: '1.25rem',
+    lineHeight: '1',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    fontWeight: 600,
+    transition: 'all 0.2s ease',
+    zIndex: 10,
   },
   header: {
     display: 'flex',

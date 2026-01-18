@@ -471,6 +471,11 @@ function App() {
 
   // Theme modal handlers
   const handleThemeClick = () => {
+    // Don't open theme modal if bonus round is pending - user must complete or skip it first
+    if (pendingBonusRound && !bonusRoundComplete) {
+      console.log('[App] Theme click ignored - bonus round is active');
+      return;
+    }
     setShowThemeModal(true);
     setShowSummary(false); // Close summary modal when opening theme modal
   };
@@ -534,6 +539,20 @@ function App() {
       setTimeout(() => {
         setShowThemeModal(true);
       }, 1500);
+    }
+  };
+
+  // Bonus round skip handler - user chose to close without completing
+  const handleBonusRoundSkip = () => {
+    console.log('[App] Bonus round skipped by user');
+    setBonusRoundResults([]); // No results since they skipped
+    setBonusRoundComplete(true); // Mark as complete so it doesn't show again
+    setPendingBonusRound(false);
+    
+    // Proceed to theme modal
+    if (pendingSummaryAfterTheme) {
+      console.log('[App] Bonus round skipped, now showing theme modal');
+      setShowThemeModal(true);
     }
   };
 
@@ -1300,6 +1319,7 @@ function App() {
                 guessesUsed={gameState.guesses.length}
                 gameSessionId={gameState.gameId}
                 onComplete={handleBonusRoundComplete}
+                onSkip={handleBonusRoundSkip}
               />
           )}
 
