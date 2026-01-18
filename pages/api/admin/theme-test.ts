@@ -18,7 +18,7 @@ interface ThemeTestRequest {
   theme: string;
   guess: string;
   options?: {
-    methods?: ('embedding' | 'nli' | 'hybrid' | 'keywords')[];
+    methods?: ('embedding' | 'paraphrase' | 'nli' | 'hybrid' | 'keywords' | 'embeddingOnly' | 'length')[];
     themeTemplate?: string;
     guessTemplate?: string;
     words?: string[];
@@ -40,6 +40,12 @@ interface ThemeTestResponse {
       model: string;
       threshold: number;
     };
+    paraphrase?: {
+      similarity: number;
+      isMatch: boolean;
+      model: string;
+      threshold: number;
+    };
     nli?: {
       entailment: number;
       contradiction: number;
@@ -47,6 +53,9 @@ interface ThemeTestResponse {
       isMatch: boolean;
       model: string;
       threshold: number;
+      // Bidirectional NLI details
+      forward?: { entailment: number; contradiction: number; neutral: number };
+      reverse?: { entailment: number; contradiction: number; neutral: number };
     };
     hybrid?: {
       finalScore: number;
@@ -57,11 +66,45 @@ interface ThemeTestResponse {
     };
     keywords?: {
       overlap: number;
+      weightedOverlap?: number;
       themeKeywords: string[];
       guessKeywords: string[];
       matchedKeywords: string[];
+      matchDetails?: Array<{
+        themeKeyword: string;
+        guessToken: string;
+        matchType: string;
+        score: number;
+      }>;
+      hasSynonymMatches?: boolean;
       isMatch: boolean;
       penalty: number;
+    };
+    lengthPenalty?: {
+      themeLengthWords: number;
+      guessLengthWords: number;
+      ratio: number;
+      penalty: number;
+      isShort: boolean;
+    };
+    specificity?: {
+      themeContentTokens: string[];
+      guessContentTokens: string[];
+      themeContentTokenCount: number;
+      guessContentTokenCount: number;
+      isTrivialGuess: boolean;
+      penaltyApplied: number;
+      reason: string;
+    };
+    negation?: {
+      guessHasNegation: boolean;
+      themeHasNegation: boolean;
+      guessHasQualifier: boolean;
+      themeHasQualifier: boolean;
+      shouldPenalise: boolean;
+      reason?: string;
+      matchedNegations?: string[];
+      matchedQualifiers?: string[];
     };
   };
   
@@ -72,6 +115,13 @@ interface ThemeTestResponse {
     templatesUsed?: {
       theme: string;
       guess: string;
+    };
+    // NEW: Explicit raw vs processed inputs
+    inputsUsed?: {
+      rawTheme: string;
+      rawGuess: string;
+      processedTheme: string;
+      processedGuess: string;
     };
     processingTimeMs: number;
   };
@@ -124,9 +174,9 @@ async function handler(
       options
     });
 
-    // Run the theme scoring with all methods
+    // Run the theme scoring with requested methods (default to recommended embeddingOnly approach)
     const result = await testThemeScoring(trimmedGuess, trimmedTheme, {
-      methods: options?.methods || ['embedding', 'nli', 'hybrid', 'keywords'],
+      methods: options?.methods || ['embedding', 'keywords', 'length', 'embeddingOnly'],
       themeTemplate: options?.themeTemplate,
       guessTemplate: options?.guessTemplate,
       words: options?.words
@@ -146,13 +196,22 @@ async function handler(
           model: result.embedding.model,
           threshold: result.embedding.threshold
         } : undefined,
+        paraphrase: result.paraphrase ? {
+          similarity: result.paraphrase.similarity,
+          isMatch: result.paraphrase.isMatch,
+          model: result.paraphrase.model,
+          threshold: result.paraphrase.threshold
+        } : undefined,
         nli: result.nli ? {
           entailment: result.nli.entailment,
           contradiction: result.nli.contradiction,
           neutral: result.nli.neutral,
           isMatch: result.nli.isMatch,
           model: result.nli.model,
-          threshold: result.nli.threshold
+          threshold: result.nli.threshold,
+          // Include bidirectional details if available
+          forward: result.nli.forward,
+          reverse: result.nli.reverse
         } : undefined,
         hybrid: result.hybrid ? {
           finalScore: result.hybrid.finalScore,
@@ -163,17 +222,47 @@ async function handler(
         } : undefined,
         keywords: result.keywords ? {
           overlap: result.keywords.overlap,
+          weightedOverlap: result.keywords.weightedOverlap,
           themeKeywords: result.keywords.themeKeywords,
           guessKeywords: result.keywords.guessKeywords,
           matchedKeywords: result.keywords.matchedKeywords,
+          matchDetails: result.keywords.matchDetails,
+          hasSynonymMatches: result.keywords.hasSynonymMatches,
           isMatch: result.keywords.isMatch,
           penalty: result.keywords.penalty
+        } : undefined,
+        lengthPenalty: result.lengthPenalty ? {
+          themeLengthWords: result.lengthPenalty.themeLengthWords,
+          guessLengthWords: result.lengthPenalty.guessLengthWords,
+          ratio: result.lengthPenalty.ratio,
+          penalty: result.lengthPenalty.penalty,
+          isShort: result.lengthPenalty.isShort
+        } : undefined,
+        specificity: result.specificity ? {
+          themeContentTokens: result.specificity.themeContentTokens,
+          guessContentTokens: result.specificity.guessContentTokens,
+          themeContentTokenCount: result.specificity.themeContentTokenCount,
+          guessContentTokenCount: result.specificity.guessContentTokenCount,
+          isTrivialGuess: result.specificity.isTrivialGuess,
+          penaltyApplied: result.specificity.penaltyApplied,
+          reason: result.specificity.reason
+        } : undefined,
+        negation: result.negation ? {
+          guessHasNegation: result.negation.guessHasNegation,
+          themeHasNegation: result.negation.themeHasNegation,
+          guessHasQualifier: result.negation.guessHasQualifier,
+          themeHasQualifier: result.negation.themeHasQualifier,
+          shouldPenalise: result.negation.shouldPenalise,
+          reason: result.negation.reason,
+          matchedNegations: result.negation.matchedNegations,
+          matchedQualifiers: result.negation.matchedQualifiers
         } : undefined
       },
       debug: {
         themeUsed: trimmedTheme,
         guessUsed: trimmedGuess,
         templatesUsed: result.templatesUsed,
+        inputsUsed: result.inputsUsed,
         processingTimeMs
       },
       ...(result.error && { error: result.error })

@@ -22,6 +22,12 @@ interface EmbeddingDetail {
   threshold: number;
 }
 
+interface NLITriplet {
+  entailment: number;
+  contradiction: number;
+  neutral: number;
+}
+
 interface NLIDetail {
   entailment: number;
   contradiction: number;
@@ -29,6 +35,8 @@ interface NLIDetail {
   isMatch: boolean;
   model: string;
   threshold: number;
+  forward?: NLITriplet;
+  reverse?: NLITriplet;
 }
 
 interface HybridDetail {
@@ -39,13 +47,59 @@ interface HybridDetail {
   strategy: string;
 }
 
+interface KeywordMatchDetail {
+  themeKeyword: string;
+  guessToken: string;
+  matchType: 'exact' | 'stem' | 'synonym' | 'substring' | 'none';
+  score: number;
+}
+
 interface KeywordDetail {
   overlap: number;
+  weightedOverlap?: number;
   themeKeywords: string[];
   guessKeywords: string[];
   matchedKeywords: string[];
+  matchDetails?: KeywordMatchDetail[];
+  hasSynonymMatches?: boolean;
   isMatch: boolean;
   penalty: number;
+}
+
+interface ParaphraseDetail {
+  similarity: number;
+  isMatch: boolean;
+  model: string;
+  threshold: number;
+}
+
+interface LengthPenaltyDetail {
+  themeLengthWords: number;
+  guessLengthWords: number;
+  ratio: number;
+  penalty: number;
+  isShort: boolean;
+}
+
+interface SpecificityDetail {
+  themeContentTokens: string[];
+  guessContentTokens: string[];
+  themeContentTokenCount: number;
+  guessContentTokenCount: number;
+  isTrivialGuess: boolean;
+  penaltyApplied: number;
+  reason: string;
+}
+
+interface NegationDetail {
+  guessHasNegation: boolean;
+  themeHasNegation: boolean;
+  guessHasQualifier: boolean;
+  themeHasQualifier: boolean;
+  shouldPenalise: boolean;
+  reason?: string;
+  matchedNegations?: string[];
+  matchedQualifiers?: string[];
 }
 
 interface ThemeTestResult {
@@ -55,9 +109,13 @@ interface ThemeTestResult {
   confidence: number;
   details: {
     embedding?: EmbeddingDetail;
+    paraphrase?: ParaphraseDetail;
     nli?: NLIDetail;
     hybrid?: HybridDetail;
     keywords?: KeywordDetail;
+    lengthPenalty?: LengthPenaltyDetail;
+    specificity?: SpecificityDetail;
+    negation?: NegationDetail;
   };
   debug: {
     themeUsed: string;
@@ -65,6 +123,12 @@ interface ThemeTestResult {
     templatesUsed?: {
       theme: string;
       guess: string;
+    };
+    inputsUsed?: {
+      rawTheme: string;
+      rawGuess: string;
+      processedTheme: string;
+      processedGuess: string;
     };
     processingTimeMs: number;
   };
@@ -92,7 +156,7 @@ export const ThemeTestTool: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [themeTemplate, setThemeTemplate] = useState("What connects this week's words? {theme}");
   const [guessTemplate, setGuessTemplate] = useState("What connects this week's words? {guess}");
-  const [selectedMethods, setSelectedMethods] = useState<string[]>(['embedding', 'nli', 'hybrid', 'keywords']);
+  const [selectedMethods, setSelectedMethods] = useState<string[]>(['embedding', 'keywords', 'embeddingOnly']);
 
   // Load saved settings on mount
   useEffect(() => {
@@ -263,7 +327,7 @@ export const ThemeTestTool: React.FC = () => {
         <div style={styles.methodSection}>
           <label style={styles.label}>Scoring Methods</label>
           <div style={styles.methodButtons}>
-            {['embedding', 'nli', 'hybrid'].map(method => (
+            {['embedding', 'paraphrase', 'keywords', 'length', 'nli', 'hybrid', 'embeddingOnly'].map(method => (
               <button
                 key={method}
                 onClick={() => toggleMethod(method)}
@@ -274,10 +338,17 @@ export const ThemeTestTool: React.FC = () => {
                 disabled={loading}
               >
                 {method === 'embedding' && '📊 Embedding'}
+                {method === 'paraphrase' && '🔄 Paraphrase'}
+                {method === 'keywords' && '🔑 Keywords'}
+                {method === 'length' && '📏 Length'}
                 {method === 'nli' && '🧠 NLI'}
-                {method === 'hybrid' && '⚡ Hybrid'}
+                {method === 'hybrid' && '⚡ Hybrid+NLI'}
+                {method === 'embeddingOnly' && '✨ EmbOnly (Rec.)'}
               </button>
             ))}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>
+            💡 <strong>Recommended:</strong> Use "EmbOnly" (Embedding + Keywords + Length, no NLI) per roadmap
           </div>
         </div>
 
@@ -417,15 +488,67 @@ export const ThemeTestTool: React.FC = () => {
               </div>
             )}
 
-            {/* NLI */}
+            {/* Paraphrase */}
+            {result.details.paraphrase && (
+              <div style={styles.methodCard}>
+                <div style={styles.methodCardHeader}>
+                  <span>🔄 Paraphrase Model</span>
+                  <span style={{
+                    color: result.details.paraphrase.isMatch ? '#10b981' : '#ef4444'
+                  }}>
+                    {(result.details.paraphrase.similarity * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div style={styles.methodCardMeta}>
+                  Model: {result.details.paraphrase.model}
+                  <br />
+                  Threshold: {(result.details.paraphrase.threshold * 100)}%
+                  <br />
+                  <em style={{ color: '#6366f1', fontSize: '0.75rem' }}>
+                    Better for "same meaning" detection vs related concepts
+                  </em>
+                </div>
+              </div>
+            )}
+
+            {/* Length Penalty */}
+            {result.details.lengthPenalty && (
+              <div style={styles.methodCard}>
+                <div style={styles.methodCardHeader}>
+                  <span>📏 Length Analysis</span>
+                  <span style={{
+                    color: result.details.lengthPenalty.isShort ? '#f59e0b' : '#10b981'
+                  }}>
+                    {result.details.lengthPenalty.isShort ? 'Short' : 'OK'}
+                  </span>
+                </div>
+                <div style={styles.methodCardMeta}>
+                  Theme: {result.details.lengthPenalty.themeLengthWords} words
+                  <br />
+                  Guess: {result.details.lengthPenalty.guessLengthWords} words
+                  <br />
+                  Ratio: {(result.details.lengthPenalty.ratio * 100).toFixed(0)}%
+                  {result.details.lengthPenalty.penalty > 0 && (
+                    <>
+                      <br />
+                      <span style={{ color: '#f59e0b' }}>
+                        ⚠️ Penalty: {(result.details.lengthPenalty.penalty * 100).toFixed(0)}% reduction
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* NLI - with bidirectional details */}
             {result.details.nli && (
               <div style={styles.methodCard}>
                 <div style={styles.methodCardHeader}>
-                  <span>🧠 NLI Entailment</span>
+                  <span>🧠 NLI (Bidirectional)</span>
                   <span style={{
                     color: result.details.nli.isMatch ? '#10b981' : '#ef4444'
                   }}>
-                    {result.details.nli.isMatch ? 'Pass' : 'Fail'}
+                    {result.details.nli.isMatch ? '✓ Pass' : '✗ Fail'}
                   </span>
                 </div>
                 <div style={styles.nliScores}>
@@ -442,6 +565,26 @@ export const ThemeTestTool: React.FC = () => {
                     <strong>{(result.details.nli.neutral * 100).toFixed(1)}%</strong>
                   </div>
                 </div>
+                
+                {/* Bidirectional breakdown */}
+                {(result.details.nli.forward || result.details.nli.reverse) && (
+                  <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#f9fafb', borderRadius: '0.25rem' }}>
+                    <strong>Bidirectional:</strong>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+                      {result.details.nli.forward && (
+                        <div>
+                          <span style={{ fontWeight: 600 }}>Fwd (G→T):</span> E:{(result.details.nli.forward.entailment * 100).toFixed(0)}% C:{(result.details.nli.forward.contradiction * 100).toFixed(0)}%
+                        </div>
+                      )}
+                      {result.details.nli.reverse && (
+                        <div>
+                          <span style={{ fontWeight: 600 }}>Rev (T→G):</span> E:{(result.details.nli.reverse.entailment * 100).toFixed(0)}% C:{(result.details.nli.reverse.contradiction * 100).toFixed(0)}%
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 <div style={styles.methodCardMeta}>
                   Model: {result.details.nli.model}
                 </div>
@@ -467,15 +610,18 @@ export const ThemeTestTool: React.FC = () => {
               </div>
             )}
 
-            {/* Keywords */}
+            {/* Keywords - now with weighted matching */}
             {result.details.keywords && (
               <div style={styles.methodCard}>
                 <div style={styles.methodCardHeader}>
-                  <span>🔑 Keyword Analysis</span>
+                  <span>🔑 Keyword Analysis (Weighted)</span>
                   <span style={{
                     color: result.details.keywords.isMatch ? '#10b981' : '#ef4444'
                   }}>
-                    {(result.details.keywords.overlap * 100).toFixed(0)}% overlap
+                    {result.details.keywords.weightedOverlap !== undefined 
+                      ? `${(result.details.keywords.weightedOverlap * 100).toFixed(0)}% weighted`
+                      : `${(result.details.keywords.overlap * 100).toFixed(0)}% overlap`}
+                    {result.details.keywords.hasSynonymMatches && ' (has synonyms)'}
                   </span>
                 </div>
                 <div style={styles.methodCardMeta}>
@@ -485,6 +631,29 @@ export const ThemeTestTool: React.FC = () => {
                   <div style={{ marginBottom: '0.5rem' }}>
                     <strong>Guess keywords:</strong> {result.details.keywords.guessKeywords.join(', ') || '(none)'}
                   </div>
+                  
+                  {/* Match details with type and score */}
+                  {result.details.keywords.matchDetails && result.details.keywords.matchDetails.length > 0 && (
+                    <div style={{ marginBottom: '0.5rem', fontSize: '0.75rem' }}>
+                      <strong>Match details:</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                        {result.details.keywords.matchDetails.map((md, i) => (
+                          <span key={i} style={{
+                            padding: '0.15rem 0.4rem',
+                            borderRadius: '0.25rem',
+                            backgroundColor: md.matchType === 'none' ? '#fecaca' : 
+                              md.matchType === 'exact' ? '#bbf7d0' :
+                              md.matchType === 'stem' ? '#bfdbfe' :
+                              md.matchType === 'synonym' ? '#fde68a' : '#e5e7eb',
+                            fontSize: '0.7rem'
+                          }}>
+                            {md.themeKeyword} → {md.matchType === 'none' ? '✗' : `${md.matchType} (${(md.score * 100).toFixed(0)}%)`}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ 
                     color: result.details.keywords.matchedKeywords.length > 0 ? '#10b981' : '#ef4444' 
                   }}>
@@ -495,6 +664,91 @@ export const ThemeTestTool: React.FC = () => {
                       ⚠️ Penalty applied: {(result.details.keywords.penalty * 100).toFixed(0)}% (missing key concepts)
                     </div>
                   )}
+                  <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+                    Weights: exact=1.0, stem=0.9, synonym=0.6, substring=0.3
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Negation Detection */}
+            {result.details.negation && (
+              <div style={styles.methodCard}>
+                <div style={styles.methodCardHeader}>
+                  <span>🚫 Negation/Qualifier Detection (Regex)</span>
+                  <span style={{
+                    color: result.details.negation.shouldPenalise ? '#ef4444' : '#10b981'
+                  }}>
+                    {result.details.negation.shouldPenalise ? '⚠️ Mismatch → 60% Penalty' : '✓ OK'}
+                  </span>
+                </div>
+                <div style={styles.methodCardMeta}>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
+                    <div>
+                      <strong>Theme:</strong>{' '}
+                      {result.details.negation.themeHasNegation && <span style={{ color: '#ef4444' }}>has negation </span>}
+                      {result.details.negation.themeHasQualifier && <span style={{ color: '#f59e0b' }}>has qualifier </span>}
+                      {!result.details.negation.themeHasNegation && !result.details.negation.themeHasQualifier && <span style={{ color: '#10b981' }}>none</span>}
+                    </div>
+                    <div>
+                      <strong>Guess:</strong>{' '}
+                      {result.details.negation.guessHasNegation && <span style={{ color: '#ef4444' }}>has negation </span>}
+                      {result.details.negation.guessHasQualifier && <span style={{ color: '#f59e0b' }}>has qualifier </span>}
+                      {!result.details.negation.guessHasNegation && !result.details.negation.guessHasQualifier && <span style={{ color: '#10b981' }}>none</span>}
+                    </div>
+                  </div>
+                  {result.details.negation.shouldPenalise && result.details.negation.reason && (
+                    <div style={{ color: '#ef4444', fontWeight: 500, marginBottom: '0.5rem' }}>
+                      ⚠️ {result.details.negation.reason}
+                    </div>
+                  )}
+                  {result.details.negation.matchedQualifiers && result.details.negation.matchedQualifiers.length > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                      <strong>Matched qualifier patterns:</strong> {result.details.negation.matchedQualifiers.join(', ')}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+                    Uses word boundaries (\b) to avoid false positives like "notice" → "not".
+                    <br />Detects: "not", "without", "never", "no", "non-", "begin with", "starts with", "ends in", etc.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Specificity / Triviality Detection */}
+            {result.details.specificity && (
+              <div style={styles.methodCard}>
+                <div style={styles.methodCardHeader}>
+                  <span>📏 Specificity (Triviality Gate)</span>
+                  <span style={{
+                    color: result.details.specificity.penaltyApplied > 0 ? '#ef4444' : '#10b981'
+                  }}>
+                    {result.details.specificity.penaltyApplied > 0 
+                      ? `⚠️ ${(result.details.specificity.penaltyApplied * 100).toFixed(0)}% Penalty` 
+                      : '✓ OK'}
+                  </span>
+                </div>
+                <div style={styles.methodCardMeta}>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
+                    <div>
+                      <strong>Theme tokens:</strong> {result.details.specificity.themeContentTokenCount} ({result.details.specificity.themeContentTokens.join(', ')})
+                    </div>
+                    <div>
+                      <strong>Guess tokens:</strong> {result.details.specificity.guessContentTokenCount} ({result.details.specificity.guessContentTokens.join(', ')})
+                    </div>
+                  </div>
+                  <div style={{ 
+                    color: result.details.specificity.isTrivialGuess ? '#f59e0b' : '#10b981',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {result.details.specificity.isTrivialGuess ? '⚠️ Trivial guess (≤2 content tokens)' : '✓ Non-trivial guess'}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    Reason: {result.details.specificity.reason}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+                    Only penalizes guesses that are BOTH trivial AND missing key concepts
+                  </div>
                 </div>
               </div>
             )}
@@ -542,9 +796,48 @@ export const ThemeTestTool: React.FC = () => {
         </div>
 
         <div style={styles.infoSection}>
-          <h4 style={styles.infoSectionTitle}>⚡ Hybrid (Recommended)</h4>
+          <h4 style={styles.infoSectionTitle}>⚡ Hybrid (Uses NLI - Not Recommended)</h4>
           <p style={styles.infoText}>
-            Combines embedding, NLI, and keyword analysis with smart rules: high contradiction overrides; keyword mismatch applies penalty; high entailment + good embedding + keyword match = pass.
+            Combines embedding, NLI, and keyword analysis with smart rules. However, NLI often gives unreliable results for theme matching use cases.
+          </p>
+        </div>
+
+        <div style={styles.infoSection}>
+          <h4 style={styles.infoSectionTitle}>🔄 Paraphrase (sentence-transformers/paraphrase-MiniLM-L6-v2)</h4>
+          <p style={styles.infoText}>
+            Specialised for detecting same-meaning phrases vs merely related concepts. Better at distinguishing "groups of animals" from "animal kingdom".
+          </p>
+        </div>
+
+        <div style={styles.infoSection}>
+          <h4 style={styles.infoSectionTitle}>📏 Length (Fast, No API)</h4>
+          <p style={styles.infoText}>
+            Penalises guesses that are significantly shorter than the theme. Catches cases like "animals" vs "groups of animals" where brevity suggests incomplete understanding.
+          </p>
+        </div>
+
+        <div style={styles.infoSection}>
+          <h4 style={styles.infoSectionTitle}>✨ EmbeddingOnly (RECOMMENDED)</h4>
+          <p style={styles.infoText}>
+            <strong>Best for production use.</strong> Combines Embedding + Keywords + Length penalties without NLI. Per the roadmap, this avoids NLI's unreliability while still catching false positives through keyword overlap and length analysis.
+          </p>
+        </div>
+
+        {/* Roadmap Reference */}
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          background: '#e8eaf6',
+          borderRadius: '8px',
+          border: '1px solid #c5cae9'
+        }}>
+          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1a237e' }}>
+            📋 Improvement Roadmap Summary
+          </h4>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#374151', lineHeight: 1.6 }}>
+            <strong>Phase 1 (Current):</strong> Remove NLI from production, rely on Embedding + Keyword overlap + Length penalty.<br/>
+            <strong>Phase 2 (Future):</strong> Add paraphrase model for same-meaning detection, negation handling.<br/>
+            <strong>Phase 3 (Future):</strong> Custom fine-tuned model or LLM-based judge for ultimate accuracy.
           </p>
         </div>
       </div>
