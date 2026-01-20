@@ -270,20 +270,21 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence, isHoverShaking, hoverShakeFrameIndex, getVaultColorState]);
   
   // Size calculations:
-  // - Main page: 70% larger than original (was ~3rem, now ~5rem)
-  // - Scaled (small modals): slightly smaller
+  // Size calculations:
+  // - Main page: Enlarged for better visibility
+  // - Scaled (small modals): Proportionally smaller
   // - Large (theme modal animation showcase): 2-3x larger for dramatic effect
   const getSize = () => {
     if (large) {
-      // Theme modal showcase - 2.5x larger for animation glory
-      return 'clamp(7rem, 18vw, 9rem)';
+      // Theme modal showcase - large for animation glory
+      return 'clamp(8rem, 20vw, 10rem)';
     }
     if (scaled) {
-      // Small modal usage
-      return 'clamp(4rem, 10vw, 5rem)';
+      // Small modal usage (leaderboard header)
+      return 'clamp(4.5rem, 11vw, 5.5rem)';
     }
-    // Main page - 70% larger than original, keeping center aligned
-    return 'clamp(4.5rem, 12vw, 5.5rem)';
+    // Main page - ~15% larger for better visibility
+    return 'clamp(5.2rem, 13vw, 6.2rem)';
   };
   const baseSize = getSize();
   
