@@ -12,6 +12,7 @@ import { StatsPanel } from './components/StatsPanel';
 import { DictionarySearch } from './components/DictionarySearch';
 import { ThemeWizard } from './components/ThemeWizard';
 import { ThemeTestTool } from './components/ThemeTestTool';
+import { WordsSearch } from './components/WordsSearch';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -53,6 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   
   // Modal states
   const [showDictionarySearch, setShowDictionarySearch] = useState(false);
+  const [showWordsSearch, setShowWordsSearch] = useState(false);
   const [showThemeWizard, setShowThemeWizard] = useState(false);
   const [showThemeTestTool, setShowThemeTestTool] = useState(false);
   const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
@@ -244,6 +246,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </button>
             <button 
               style={styles.actionBtn}
+              onClick={() => setShowWordsSearch(!showWordsSearch)}
+            >
+              🔍 {showWordsSearch ? 'Hide' : 'Show'} Words Search
+            </button>
+            <button 
+              style={styles.actionBtn}
               onClick={() => {
                 const nextEmpty = weeks.flatMap(w => w.days).find(d => !d.hasWord && d.date >= today);
                 if (nextEmpty) {
@@ -263,6 +271,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </button>
           </div>
         </div>
+
+        {/* Words Search Tool */}
+        {showWordsSearch && (
+          <div style={styles.wordsSearchSection}>
+            <WordsSearch 
+              onSelectWord={(word) => {
+                // Open editor for selected word
+                if (word.date) {
+                  setEditorDate(word.date);
+                  setEditorWord(word as any);
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* Theme Test Tool */}
         {showThemeTestTool && (
@@ -476,6 +499,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   themeTestSection: {
     marginTop: '1.5rem',
+  },
+  wordsSearchSection: {
+    marginTop: '1rem',
+    marginBottom: '1rem',
   },
 };
 
