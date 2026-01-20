@@ -241,11 +241,17 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       return currentAnimationSequence[animationFrameIndex]?.image || '/ClosedVault.png';
     }
     
-    // If hover shaking (Orange/Red states on PC hover)
+    // If hover animating (Orange/Red shake or Green unlock on PC hover)
     if (isHoverShaking) {
       const colorState = getVaultColorState();
-      const sequence = colorState === 'orange' ? ORANGE_SHAKE_SEQUENCE : RED_SHAKE_SEQUENCE;
-      return sequence[hoverShakeFrameIndex]?.image || (colorState === 'orange' ? '/Orange.png' : '/Red.png');
+      if (colorState === 'green') {
+        // Green hover plays the unlock sequence
+        return VAULT_UNLOCK_SEQUENCE[hoverShakeFrameIndex]?.image || '/OpenVault.png';
+      } else {
+        // Orange/Red play their shake sequences
+        const sequence = colorState === 'orange' ? ORANGE_SHAKE_SEQUENCE : RED_SHAKE_SEQUENCE;
+        return sequence[hoverShakeFrameIndex]?.image || (colorState === 'orange' ? '/Orange.png' : '/Red.png');
+      }
     }
     
     // Theme-based state for main page (persistent after guess)
@@ -270,21 +276,21 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence, isHoverShaking, hoverShakeFrameIndex, getVaultColorState]);
   
   // Size calculations:
-  // Size calculations:
-  // - Main page: Enlarged for better visibility
-  // - Scaled (small modals): Proportionally smaller
+  // Size calculations (original sizes):
+  // - Main page: 70% larger than original diamond (~5rem)
+  // - Scaled (small modals): slightly smaller
   // - Large (theme modal animation showcase): 2-3x larger for dramatic effect
   const getSize = () => {
     if (large) {
-      // Theme modal showcase - large for animation glory
-      return 'clamp(8rem, 20vw, 10rem)';
+      // Theme modal showcase - 2.5x larger for animation glory
+      return 'clamp(7rem, 18vw, 9rem)';
     }
     if (scaled) {
-      // Small modal usage (leaderboard header)
-      return 'clamp(4.5rem, 11vw, 5.5rem)';
+      // Small modal usage
+      return 'clamp(4rem, 10vw, 5rem)';
     }
-    // Main page - ~15% larger for better visibility
-    return 'clamp(5.2rem, 13vw, 6.2rem)';
+    // Main page - 70% larger than original, keeping center aligned
+    return 'clamp(4.5rem, 12vw, 5.5rem)';
   };
   const baseSize = getSize();
   
@@ -399,15 +405,41 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       hoverShakeTimerRef.current = null;
     }, totalDuration);
   }, [isHoverShaking, internalAnimating, isCelebrating]);
+  
+  // Play hover unlock animation for Green (open vault) state
+  // Replays the opening sequence on hover for consistency with other states
+  const playHoverUnlockAnimation = useCallback(() => {
+    if (isHoverShaking || internalAnimating || isCelebrating) return;
+    
+    setIsHoverShaking(true);
+    
+    let elapsed = 0;
+    VAULT_UNLOCK_SEQUENCE.forEach((frame, index) => {
+      setTimeout(() => {
+        setHoverShakeFrameIndex(index);
+      }, elapsed);
+      elapsed += frame.duration;
+    });
+    
+    const totalDuration = VAULT_UNLOCK_SEQUENCE.reduce((sum, f) => sum + f.duration, 0) + 100;
+    hoverShakeTimerRef.current = setTimeout(() => {
+      setIsHoverShaking(false);
+      setHoverShakeFrameIndex(0);
+      hoverShakeTimerRef.current = null;
+    }, totalDuration);
+  }, [isHoverShaking, internalAnimating, isCelebrating]);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isCelebrating || internalAnimating) return;
     setShowTooltip(true);
     
-    // Trigger hover shake for Orange/Red states on PC
+    // Trigger hover animation based on vault color state
     const colorState = getVaultColorState();
     if (colorState === 'orange' || colorState === 'red') {
       playHoverShakeAnimation(colorState);
+    } else if (colorState === 'green') {
+      // Play unlock animation on hover for open vault
+      playHoverUnlockAnimation();
     }
     
     if (onClick) {
