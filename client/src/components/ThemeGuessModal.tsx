@@ -67,6 +67,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showingResult, setShowingResult] = useState(false); // NEW: Show result before closing
+  const [showScoringInfo, setShowScoringInfo] = useState(false); // Click-to-show scoring breakdown
   const [lastGuessResult, setLastGuessResult] = useState<{
     guess: string;
     isCorrect: boolean;
@@ -688,25 +689,57 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                         gap: '0.5rem'
                       }}>
                         <span>Similarity: {lastGuessResult.fuzzyMatch.confidence}%</span>
-                        {/* Score breakdown tooltip */}
-                        <span 
-                          title={`How we score:\n• AI semantic comparison (${lastGuessResult.fuzzyMatch.method === 'exact' ? 'exact match!' : 'similarity check'})\n• Keyword overlap analysis\n• Length & specificity check\n\n80%+ = Theme unlocked 🎉\n70-79% = Close! Try again\n<70% = Keep guessing`}
+                        {/* Score breakdown tooltip - click/tap to show */}
+                        <button 
+                          onClick={() => setShowScoringInfo(!showScoringInfo)}
                           style={{
-                            cursor: 'help',
+                            cursor: 'pointer',
                             fontSize: '0.8rem',
-                            color: '#9ca3af',
+                            color: showScoringInfo ? '#1a237e' : '#9ca3af',
                             borderRadius: '50%',
-                            border: '1px solid #d1d5db',
+                            border: `1px solid ${showScoringInfo ? '#1a237e' : '#d1d5db'}`,
+                            backgroundColor: showScoringInfo ? '#e0e7ff' : 'transparent',
                             width: '18px',
                             height: '18px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            padding: 0,
+                            transition: 'all 0.2s ease'
                           }}
+                          aria-label="Show scoring breakdown"
                         >
                           ?
-                        </span>
+                        </button>
                       </div>
+                      
+                      {/* Expandable scoring info */}
+                      {showScoringInfo && (
+                        <div style={{
+                          backgroundColor: '#f0f4ff',
+                          border: '1px solid #c7d2fe',
+                          borderRadius: '0.5rem',
+                          padding: '0.75rem',
+                          marginBottom: '0.5rem',
+                          fontSize: '0.8rem',
+                          textAlign: 'left',
+                          color: '#374151'
+                        }}>
+                          <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#1a237e' }}>
+                            🔬 How we score themes:
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
+                            <li>AI semantic comparison ({lastGuessResult.fuzzyMatch.method === 'exact' ? 'exact match!' : 'meaning similarity'})</li>
+                            <li>Keyword overlap (key concepts must match)</li>
+                            <li>Specificity check (short guesses penalised if missing key ideas)</li>
+                          </ul>
+                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #c7d2fe' }}>
+                            <strong>80%+</strong> = Theme unlocked 🎉<br/>
+                            <strong>70-79%</strong> = Close! Try again<br/>
+                            <strong>&lt;70%</strong> = Keep guessing
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                   
