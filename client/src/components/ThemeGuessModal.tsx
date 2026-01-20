@@ -658,7 +658,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   </div>
                   
                   {/* Show similarity score if available from fresh guess */}
-                  {lastGuessResult && lastGuessResult.fuzzyMatch && (
+                      {lastGuessResult && lastGuessResult.fuzzyMatch && (
                     <>
                       {/* Similarity Score Bar */}
                       <div style={{
@@ -681,9 +681,31 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       <div style={{
                         fontSize: '0.9rem',
                         color: '#6b7280',
-                        marginBottom: '0.5rem'
+                        marginBottom: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
                       }}>
-                        Similarity: {lastGuessResult.fuzzyMatch.confidence}%
+                        <span>Similarity: {lastGuessResult.fuzzyMatch.confidence}%</span>
+                        {/* Score breakdown tooltip */}
+                        <span 
+                          title={`How we score:\n• AI semantic comparison (${lastGuessResult.fuzzyMatch.method === 'exact' ? 'exact match!' : 'similarity check'})\n• Keyword overlap analysis\n• Length & specificity check\n\n80%+ = Theme unlocked 🎉\n70-79% = Close! Try again\n<70% = Keep guessing`}
+                          style={{
+                            cursor: 'help',
+                            fontSize: '0.8rem',
+                            color: '#9ca3af',
+                            borderRadius: '50%',
+                            border: '1px solid #d1d5db',
+                            width: '18px',
+                            height: '18px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          ?
+                        </span>
                       </div>
                     </>
                   )}

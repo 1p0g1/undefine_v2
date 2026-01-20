@@ -363,12 +363,23 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           <span style={styles.emoji}>✨</span>
         </div>
 
-        {/* Close button to skip bonus round */}
-        {onSkip && !userFinished && (
+        {/* Close button - skips if not started, finishes with results if complete */}
+        {!userFinished && (
           <button
-            onClick={onSkip}
+            onClick={() => {
+              // If bonus round is complete (all guesses used), finalize with results
+              // This ensures results aren't lost when user closes after completing
+              if (isComplete && results.length > 0) {
+                console.log('[BonusRound] Close clicked after completion, finalizing with results');
+                handleContinue(); // Pass results to onComplete
+              } else if (onSkip) {
+                // If not complete, skip (clears results)
+                console.log('[BonusRound] Close clicked before completion, skipping');
+                onSkip();
+              }
+            }}
             style={styles.closeButton}
-            aria-label="Skip bonus round"
+            aria-label={isComplete ? "Finish bonus round" : "Skip bonus round"}
           >
             ×
           </button>
