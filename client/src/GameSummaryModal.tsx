@@ -451,59 +451,6 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           </div>
         </div>
         
-        {/* Word Success Message and Theme Prompt - positioned between DEFINE boxes and ranking */}
-        {/* FIXED: Only show theme CTA for players who won (have a playerRank) */}
-        {playerRank && (
-          <div
-            style={{
-              backgroundColor: '#f0fdf4',
-              border: '2px solid #16a34a',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-              marginBottom: '1.5rem',
-              textAlign: 'center',
-              fontFamily: 'var(--font-primary)',
-            }}
-          >
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: '#16a34a',
-              marginBottom: '0.5rem',
-              fontWeight: 600
-            }}>
-              ✅ You guessed today's word "{word}"
-            </div>
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: '#1a237e',
-              marginBottom: '0.5rem',
-              fontWeight: 600
-            }}>
-              Now guess the{' '}
-              <span 
-                onClick={handleOpenThemeModal}
-                style={{
-                  color: '#1a237e',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textDecorationStyle: 'dotted'
-                }}
-              >
-                THEME
-              </span>{' '}
-              of the week
-            </div>
-            <div style={{ 
-              fontSize: '0.8rem', 
-              color: '#64748b',
-              lineHeight: '1.4'
-            }}>
-              Can you figure out what connects this week's words?
-            </div>
-          </div>
-        )}
-        
         <div
           style={{
             textAlign: 'center',

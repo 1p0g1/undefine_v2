@@ -234,22 +234,26 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           )
         )}
 
-        {/* Tooltip */}
+        {/* Tooltip - clean, nearly transparent style */}
         {showTooltip && (
           <div style={{
             position: 'absolute',
             bottom: '100%',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: '#1f2937',
+            backgroundColor: 'rgba(26, 35, 126, 0.9)',
+            backdropFilter: 'blur(4px)',
             color: 'white',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
-            fontSize: '0.8rem',
+            padding: '0.4rem 0.75rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            fontFamily: 'var(--font-primary)',
             whiteSpace: 'nowrap',
             marginBottom: '0.5rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-            zIndex: 10
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            zIndex: 10,
+            letterSpacing: '0.01em'
           }}>
             Your current streak
           </div>
