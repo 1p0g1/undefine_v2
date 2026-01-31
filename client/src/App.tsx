@@ -213,32 +213,44 @@ function App() {
   const loadDailyLeaderboard = async () => {
     try {
       const baseUrl = getApiBaseUrl() || '';
-      const leaderboardRes = await fetch(`${baseUrl}/api/daily-leaderboard`);
-      if (leaderboardRes.ok) {
-        const leaderboardData = await leaderboardRes.json();
-        console.log('[App] Daily leaderboard data:', leaderboardData);
-        if (leaderboardData.totalPlayers > 0) {
-          setDailySolversCount(leaderboardData.totalPlayers);
-        }
-        if (leaderboardData.entries && leaderboardData.entries.length > 0) {
-          // Format time helper
-          const formatTime = (seconds: number): string => {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-          };
-          
-          const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
-            rank: entry.rank,
-            displayName: entry.displayName,
-            guesses: entry.guesses,
-            time: formatTime(entry.timeSeconds || 0)
-          }));
-          setMiniLeaderboard(top3);
-        }
+      const apiUrl = `${baseUrl}/api/daily-leaderboard`;
+      console.log('[App] Fetching daily leaderboard from:', apiUrl);
+      
+      const leaderboardRes = await fetch(apiUrl);
+      console.log('[App] Daily leaderboard response status:', leaderboardRes.status);
+      
+      if (!leaderboardRes.ok) {
+        console.error('[App] Daily leaderboard fetch failed with status:', leaderboardRes.status);
+        return;
+      }
+      
+      const leaderboardData = await leaderboardRes.json();
+      console.log('[App] Daily leaderboard data:', leaderboardData);
+      
+      // Always update totalPlayers (even if 0 initially)
+      setDailySolversCount(leaderboardData.totalPlayers || 0);
+      
+      if (leaderboardData.entries && leaderboardData.entries.length > 0) {
+        // Format time helper
+        const formatTime = (seconds: number): string => {
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+        
+        const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
+          rank: entry.rank,
+          displayName: entry.displayName,
+          guesses: entry.guesses,
+          time: formatTime(entry.timeSeconds || 0)
+        }));
+        console.log('[App] Setting miniLeaderboard:', top3);
+        setMiniLeaderboard(top3);
+      } else {
+        console.log('[App] No leaderboard entries yet');
       }
     } catch (e) {
-      console.log('[App] Failed to fetch daily leaderboard:', e);
+      console.error('[App] Failed to fetch daily leaderboard:', e);
     }
   };
 
