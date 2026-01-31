@@ -43,6 +43,7 @@ interface GameSummaryModalProps {
   isArchivePlay?: boolean;  // NEW: Archive play flag
   gameDate?: string;  // NEW: Original word date
   bonusRoundResults?: BonusGuessResult[];  // Bonus round results for DEFINE boxes
+  isGameComplete?: boolean;  // Whether the game has been completed
 }
 
 export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
@@ -67,6 +68,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   isArchivePlay = false,  // NEW: Archive play flag
   gameDate,  // NEW: Original word date
   bonusRoundResults = [],  // Bonus round results for DEFINE boxes
+  isGameComplete = true,  // Default to true for backwards compatibility
 }) => {
   // Debug logging for bonus results
   console.log('[GameSummaryModal] bonusRoundResults:', bonusRoundResults, 'guessesUsed:', guessesUsed);
@@ -515,11 +517,13 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           <div style={{ marginBottom: 2 }}>
             {playerRank ? (
               <>Today you ranked <span style={{ fontWeight: 700 }}>#{playerRank}</span></>
-            ) : (
+            ) : isGameComplete ? (
               <>Today you didn't rank <span style={{ fontSize: '1.2rem' }}>:(</span></>
+            ) : (
+              <>Today's Leaderboard</>
             )}
           </div>
-          {!playerRank && (
+          {!playerRank && isGameComplete && (
             <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
               Better luck tomorrow!
             </div>
@@ -560,8 +564,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             </div>
           )}
           
-          {/* Streak encouragement for non-winners ONLY (no rank means they lost) */}
-          {!playerRank && (
+          {/* Streak encouragement for non-winners ONLY (no rank means they lost) - only show if game is complete */}
+          {!playerRank && isGameComplete && (
             <div style={{ 
               backgroundColor: '#f9fafb', 
               border: '2px solid #e5e7eb',

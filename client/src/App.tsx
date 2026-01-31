@@ -280,9 +280,12 @@ function App() {
   }, [startArchiveGame]);
 
   useEffect(() => {
-    console.log('[App] Initial mount useEffect - loading theme and leaderboard data');
+    console.log('[App] ===== INITIAL MOUNT useEffect RUNNING =====');
+    console.log('[App] About to call loadThemeData()');
     loadThemeData();
+    console.log('[App] About to call loadDailyLeaderboard()');
     loadDailyLeaderboard();
+    console.log('[App] Finished initial mount setup');
   }, []);
 
   useEffect(() => {
@@ -1527,6 +1530,7 @@ function App() {
         isArchivePlay={gameState.isArchivePlay}
         gameDate={gameState.gameDate}
         bonusRoundResults={bonusRoundResults}
+        isGameComplete={gameState.isComplete}
       />
       {/* Settings Modal */}
       <SettingsModal
