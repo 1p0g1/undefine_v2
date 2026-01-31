@@ -515,8 +515,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             </div>
           )}
           
-          {/* Streak encouragement for non-winners */}
-          {(!playerRank || (playerStats?.currentStreak === 0)) && (
+          {/* Streak encouragement for non-winners ONLY (no rank means they lost) */}
+          {!playerRank && (
             <div style={{ 
               backgroundColor: '#f9fafb', 
               border: '2px solid #e5e7eb',

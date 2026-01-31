@@ -322,10 +322,10 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
       <div style={{
         backgroundColor: 'white',
         borderRadius: '1rem',
-        padding: '2rem',
-        maxWidth: '500px',
+        padding: '1.25rem',
+        maxWidth: '400px',
         width: '100%',
-        maxHeight: '90vh',
+        maxHeight: '85vh',
         overflow: 'auto',
         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
         fontFamily: 'Libre Baskerville, Georgia, Times, serif'
@@ -335,17 +335,17 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1.5rem',
-          borderBottom: '2px solid #e5e7eb',
-          paddingBottom: '1rem'
+          marginBottom: '1rem',
+          borderBottom: '1px solid #e5e7eb',
+          paddingBottom: '0.75rem'
         }}>
           <h2 style={{
-            fontSize: '1.5rem',
+            fontSize: '1.25rem',
             fontWeight: 700,
             color: '#1a237e',
             margin: 0
           }}>
-            Your Play History
+            Play History
           </h2>
           <button
             onClick={onClose}
@@ -362,12 +362,12 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
           </button>
         </div>
 
-        {/* Month Navigation */}
+        {/* Month Navigation - Compact */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1rem'
+          marginBottom: '0.75rem'
         }}>
           <button
             onClick={() => navigateMonth('prev')}
@@ -375,22 +375,24 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               background: 'none',
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              padding: '0.5rem 0.75rem',
+              padding: '0.4rem 0.6rem',
               cursor: 'pointer',
-              fontSize: '0.9rem',
-              color: '#374151'
+              fontSize: '1rem',
+              color: '#374151',
+              lineHeight: 1
             }}
+            aria-label="Previous month"
           >
-            ← Previous
+            ←
           </button>
-          <h3 style={{
-            fontSize: '1.2rem',
-            fontWeight: 600,
-            margin: 0,
-            color: '#1a237e'
+          <span style={{
+            fontSize: '1rem',
+            fontWeight: 500,
+            color: '#374151',
+            fontFamily: 'var(--font-primary)'
           }}>
             {monthNames[month]} {year}
-          </h3>
+          </span>
           <button
             onClick={() => navigateMonth('next')}
             disabled={new Date(year, month + 1) > new Date()}
@@ -398,14 +400,16 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               background: 'none',
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              padding: '0.5rem 0.75rem',
+              padding: '0.4rem 0.6rem',
               cursor: new Date(year, month + 1) > new Date() ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem',
+              fontSize: '1rem',
               color: new Date(year, month + 1) > new Date() ? '#9ca3af' : '#374151',
-              opacity: new Date(year, month + 1) > new Date() ? 0.5 : 1
+              opacity: new Date(year, month + 1) > new Date() ? 0.5 : 1,
+              lineHeight: 1
             }}
+            aria-label="Next month"
           >
-            Next →
+            →
           </button>
         </div>
 
@@ -443,47 +447,36 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
           )}
         </div>
 
-        {/* Legend */}
+        {/* Legend - Compact */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          padding: '1rem',
+          justifyContent: 'center',
+          gap: '1rem',
+          padding: '0.75rem',
           backgroundColor: '#f9fafb',
           borderRadius: '0.5rem',
-          fontSize: '0.85rem',
-          color: '#374151'
+          fontSize: '0.8rem',
+          color: '#374151',
+          flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>✅</span>
-              <span>Won</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>❌</span>
-              <span>Lost (click to retry)</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ 
-                width: '16px', 
-                height: '16px', 
-                border: '2px solid #3b82f6', 
-                borderRadius: '3px',
-                backgroundColor: '#eff6ff'
-              }} />
-              <span>Available (click to play)</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span>✅</span>
+            <span>Won</span>
           </div>
-          {onSelectArchiveDate && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span>❌</span>
+            <span>Lost</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <div style={{ 
-              textAlign: 'center', 
-              fontSize: '0.8rem', 
-              color: '#6b7280',
-              fontStyle: 'italic'
-            }}>
-              Click any blue-bordered date to play from the archive!
-            </div>
-          )}
+              width: '14px', 
+              height: '14px', 
+              border: '2px solid #3b82f6', 
+              borderRadius: '3px',
+              backgroundColor: '#eff6ff'
+            }} />
+            <span>Available</span>
+          </div>
         </div>
 
         {loading && (

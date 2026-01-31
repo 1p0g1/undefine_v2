@@ -1126,7 +1126,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                         padding: '0.75rem',
                         borderRadius: '0.5rem',
                       border: '2px solid #e5e7eb',
-                        fontSize: '1rem',
+                        fontSize: '16px', // Prevents iOS zoom on focus
                       boxSizing: 'border-box'
                     }}
                     disabled={isSubmitting}

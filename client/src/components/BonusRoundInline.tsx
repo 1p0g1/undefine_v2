@@ -339,7 +339,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} near "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary. They can come before or after alphabetically.
         </div>
 
         {/* Compact scoring legend */}
@@ -553,7 +553,7 @@ const styles: Record<string, React.CSSProperties> = {
   input: {
     flex: 1,
     padding: '0.625rem 0.875rem',
-    fontSize: '1rem',
+    fontSize: '16px', // Prevents iOS zoom on focus
     border: '2px solid #f59e0b',
     borderRadius: '8px',
     outline: 'none',
