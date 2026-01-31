@@ -122,7 +122,23 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   
   // Handle celebration animation (main page)
   useEffect(() => {
-    if (disableCelebrateAnimation) return;
+    // Even if animation is disabled, we still need to call the callback
+    if (disableCelebrateAnimation) {
+      if (celebrateCompletion && !callbackFiredRef.current) {
+        console.log('[VaultLogo] Animation disabled, calling callback immediately');
+        callbackFiredRef.current = true;
+        // Small delay to allow UI to update
+        setTimeout(() => {
+          if (onCelebrationComplete) {
+            onCelebrationComplete();
+          }
+        }, 100);
+      }
+      if (!celebrateCompletion && callbackFiredRef.current) {
+        callbackFiredRef.current = false;
+      }
+      return;
+    }
 
     if (celebrateCompletion && !callbackFiredRef.current) {
       console.log('[VaultLogo] Starting celebration animation');
