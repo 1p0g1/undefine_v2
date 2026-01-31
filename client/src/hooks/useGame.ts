@@ -54,22 +54,60 @@ const useGame = () => {
   const [scoreDetails, setScoreDetails] = useState<ScoreResult | null>(null);
 
   // Function to fetch leaderboard data
+  // Falls back to frontend API if wordId is not available
   const fetchLeaderboard = useCallback(async () => {
-    if (!gameState.wordId) return;
     setIsLeaderboardLoading(true);
     setLeaderboardError(null);
+    
     try {
       const playerId = getPlayerId();
-      const data: LeaderboardResponse = await apiClient.getLeaderboard(gameState.wordId, playerId);
       
-      // Convert API response to shared type format
-      const convertedLeaderboard: LeaderboardEntry[] = data.leaderboard.map(entry => ({
-        ...entry,
-        was_top_10: entry.rank <= 10
-      }));
-      
-      setLeaderboardData(convertedLeaderboard);
-      setPlayerRank(data.playerRank);
+      // If we have a wordId, use the backend API
+      if (gameState.wordId) {
+        console.log('[Game] Fetching leaderboard with wordId:', gameState.wordId);
+        const data: LeaderboardResponse = await apiClient.getLeaderboard(gameState.wordId, playerId);
+        
+        // Convert API response to shared type format
+        const convertedLeaderboard: LeaderboardEntry[] = data.leaderboard.map(entry => ({
+          ...entry,
+          was_top_10: entry.rank <= 10
+        }));
+        
+        setLeaderboardData(convertedLeaderboard);
+        setPlayerRank(data.playerRank);
+      } else {
+        // Fallback: Use frontend API which doesn't require wordId
+        console.log('[Game] No wordId available, using frontend daily-leaderboard API');
+        const response = await fetch('/api/daily-leaderboard');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('[Game] Frontend daily-leaderboard data:', data);
+        
+        if (data.entries && data.entries.length > 0) {
+          // Convert to LeaderboardEntry format
+          const convertedLeaderboard: LeaderboardEntry[] = data.entries.map((entry: any) => ({
+            rank: entry.rank,
+            display_name: entry.displayName,
+            guesses_used: entry.guesses,
+            best_time: entry.timeSeconds,
+            player_id: entry.playerId,
+            was_top_10: entry.rank <= 10
+          }));
+          
+          setLeaderboardData(convertedLeaderboard);
+          
+          // Try to find player's rank if they're in the list
+          const playerEntry = convertedLeaderboard.find(e => e.player_id === playerId);
+          setPlayerRank(playerEntry ? playerEntry.rank : null);
+        } else {
+          setLeaderboardData([]);
+          setPlayerRank(null);
+        }
+      }
     } catch (error) {
       console.error('[Game] Failed to fetch leaderboard:', error);
       setLeaderboardError('Failed to load leaderboard. Please try again.');

@@ -144,33 +144,30 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         }
         style={{
           backgroundColor: colors.backgroundColor,
-          border: `3px solid ${colors.borderColor}`,
+          border: `2px solid ${colors.borderColor}`,  // Match TimerBadge border
           borderRadius: '2rem',
-          padding: 'clamp(0.35rem, 1.2vw, 0.5rem) clamp(0.65rem, 2.5vw, 1rem)',
+          padding: 'clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.75rem, 3vw, 1.2rem)',  // Match TimerBadge padding
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'Libre Baskerville, Georgia, Times, serif',
-          fontSize: 'clamp(0.8rem, 2.3vw, 1rem)',
-          fontWeight: 700,
+          fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)',  // Match TimerBadge font
+          fontWeight: 600,  // Match TimerBadge
           color: colors.textColor,
-          textShadow: '0 1px 3px rgba(0,0,0,0.2)',
-          // Updated glow effect like Un diamond
-          boxShadow: `0 4px 12px ${colors.glowColor}26, 0 0 0 1px ${colors.glowColor}1A`,
+          // Match TimerBadge shadow style
+          boxShadow: '0 3px 12px rgba(26, 35, 126, 0.2)',
           fontVariantNumeric: 'tabular-nums',
           letterSpacing: '0.02em',
-          minWidth: 'clamp(4rem, 10vw, 5rem)',
+          minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',  // Match TimerBadge minWidth
           textAlign: 'center',
-          gap: '0.15rem',
+          gap: '0.1rem',
           position: 'relative',
           overflow: 'hidden',
-          cursor: 'pointer', // Changed to pointer for clickability
+          cursor: 'pointer',
           userSelect: 'none',
-          transition: 'all 0.2s ease-in-out', // Smooth transitions like Un diamond
-          // Subtle pulse for active streaks
+          transition: 'all 0.2s ease-in-out',
           animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
-          // Hover effect
           transform: showTooltip ? 'scale(1.05)' : 'scale(1)',
           opacity: displayStreak === 0 ? 0.8 : 1
         }}
