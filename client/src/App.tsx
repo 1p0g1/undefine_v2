@@ -110,6 +110,9 @@ function App() {
   // Theme modal state
   const [showThemeModal, setShowThemeModal] = useState(false);
 
+  // Theme solvers count for intro text
+  const [weeklyThemeSolvers, setWeeklyThemeSolvers] = useState<number>(0);
+
   // Theme data state for UN diamond coloring
   // Theme data state for UN diamond coloring - CACHED in localStorage for instant load
   const [themeGuessData, setThemeGuessData] = useState<{
@@ -169,7 +172,7 @@ function App() {
           hasGuessedToday: themeStatus.progress.hasGuessedToday,
           isCorrectGuess: themeStatus.progress.isCorrectGuess,
           confidencePercentage: themeStatus.progress.confidencePercentage || null,
-          highestConfidencePercentage: themeStatus.progress.highestConfidencePercentage || null
+          highestConfidencePercentage: (themeStatus.progress as any).highestConfidencePercentage || null
         };
         setThemeGuessData(newThemeData);
         // Cache to localStorage for instant load on next visit
@@ -179,6 +182,16 @@ function App() {
         } catch (e) {
           console.log('[App] Failed to cache themeGuessData');
         }
+      }
+      
+      // Also fetch weekly theme solvers count
+      try {
+        const themeStats = await (apiClient as any).getWeeklyThemeSolvers();
+        if (themeStats && typeof themeStats.solversCount === 'number') {
+          setWeeklyThemeSolvers(themeStats.solversCount);
+        }
+      } catch (e) {
+        console.log('[App] Failed to fetch weekly theme solvers:', e);
       }
     } catch (error) {
       console.log('[App] Failed to load theme data for UN diamond coloring:', error);
@@ -731,7 +744,7 @@ function App() {
         >
           {/* Game Description - New tagline */}
           <div style={{ 
-            marginBottom: '1.25rem',
+            marginBottom: '0.5rem',
             fontSize: 'clamp(1rem, 3vw, 1.2rem)',
             fontWeight: '600',
             lineHeight: '1.4',
@@ -741,6 +754,35 @@ function App() {
             backgroundClip: 'text'
           }}>
             Can you unlock the theme that connects this week's secret words?
+          </div>
+          
+          {/* Weekly theme solvers count with glowing effect */}
+          <div 
+            className="theme-solvers-glow"
+            style={{ 
+              marginBottom: '1.25rem',
+              fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
+              fontWeight: '600',
+              color: '#1a237e',
+              textAlign: 'center',
+              padding: '0.5rem 1rem',
+              background: 'linear-gradient(135deg, rgba(26, 35, 126, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
+              borderRadius: '0.5rem',
+              animation: 'subtleGlow 3s ease-in-out infinite'
+            }}
+          >
+            <span style={{ 
+              fontWeight: '700',
+              background: 'linear-gradient(90deg, #1a237e 0%, #3b82f6 50%, #1a237e 100%)',
+              backgroundSize: '200% auto',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              animation: 'shimmerText 3s linear infinite'
+            }}>
+              {weeklyThemeSolvers}
+            </span>
+            {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved the theme this week
           </div>
 
           {/* Game Modes in Boxes - REORDERED: This Week first, Today second */}
@@ -770,31 +812,31 @@ function App() {
                 gap: '0.5rem'
               }}>
                 This week:
-                {/* Inline Un diamond */}
-                <div
-                  style={{
-                    width: 'clamp(1.6rem, 4.5vw, 1.9rem)',
-                    height: 'clamp(1.6rem, 4.5vw, 1.9rem)',
-                    border: '2px solid #059669',
-                    borderRadius: '0.3rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                {/* Vault door icon with Un· text */}
+                <div style={{ 
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <img 
+                    src="/ClosedVault.png" 
+                    alt="Vault" 
+                    style={{ 
+                      width: 'clamp(1.8rem, 5vw, 2.2rem)',
+                      height: 'clamp(1.8rem, 5vw, 2.2rem)',
+                      objectFit: 'contain'
+                    }} 
+                  />
+                  <span style={{
+                    position: 'absolute',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: 'clamp(0.7rem, 2.2vw, 0.8rem)',
+                    fontSize: 'clamp(0.5rem, 1.5vw, 0.6rem)',
                     color: '#059669',
-                    backgroundColor: 'white',
-                    transform: 'rotate(45deg)',
-                    flexShrink: 0,
                     fontStyle: 'italic',
-                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.1)'
-                  }}
-                >
-                  <span style={{ 
-                    transform: 'rotate(-45deg) translateX(-0.05em)',
-                    lineHeight: '1',
-                    marginLeft: '0.1em'
+                    textShadow: '0 0 2px white, 0 0 2px white'
                   }}>
                     Un·
                   </span>
@@ -828,16 +870,18 @@ function App() {
                     
                     const day = nextMonday.getDate();
                     const month = nextMonday.toLocaleString('default', { month: 'long' });
+                    const dayNames = ['Sun', 'Mon', 'Tues', 'Weds', 'Thurs', 'Fri', 'Sat'];
+                    const dayName = dayNames[nextMonday.getDay()];
                     const getOrdinal = (n: number) => {
                       const s = ["th", "st", "nd", "rd"];
                       const v = n % 100;
                       return n + (s[(v - 20) % 10] || s[v] || s[0]);
                     };
                     
-                    return `Monday ${getOrdinal(day)} ${month}`;
+                    return `${dayName} ${getOrdinal(day)} ${month}`;
                   })()}
                 </span>
-                , guess the theme that connects this week's words
+                , guess what connects this week's words
               </div>
             </div>
 
@@ -929,18 +973,6 @@ function App() {
             maxWidth: '600px'
           }}
         >
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-              color: '#6b7280',
-              textAlign: 'center',
-              fontStyle: 'italic',
-              fontWeight: '500'
-            }}
-          >
-            Your time starts when you click 'Ready'
-          </div>
           <button
             onClick={handleStartGame}
             style={{
@@ -1237,7 +1269,7 @@ function App() {
               {/* The actual bonus round component */}
               <BonusRoundInline
                 wordId={gameState.wordId}
-                playerId={getPlayerId()}
+                playerId={getPlayerId() || ''}
                 targetWord={gameState.wordText}
                 remainingAttempts={bonusAttempts}
                 gameSessionId={gameState.gameId}
@@ -1442,6 +1474,20 @@ function App() {
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
+        }
+        
+        @keyframes subtleGlow {
+          0%, 100% {
+            box-shadow: 0 0 8px rgba(26, 35, 126, 0.15), 0 0 16px rgba(59, 130, 246, 0.1);
+          }
+          50% {
+            box-shadow: 0 0 12px rgba(26, 35, 126, 0.25), 0 0 24px rgba(59, 130, 246, 0.15);
+          }
+        }
+        
+        @keyframes shimmerText {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
       `}</style>
     </div>

@@ -480,4 +480,28 @@ export const apiClient = {
       }),
     });
   },
+
+  /**
+   * Get count of players who have solved this week's theme
+   * @returns Promise with the solvers count
+   */
+  async getWeeklyThemeSolvers(): Promise<{
+    solversCount: number;
+    currentTheme?: string;
+  }> {
+    try {
+      const response = await fetchFromApi<{
+        solversCount?: number;
+        correctGuessCount?: number;
+        currentTheme?: string;
+      }>('/api/theme-status?stats_only=true');
+      return {
+        solversCount: response.solversCount || response.correctGuessCount || 0,
+        currentTheme: response.currentTheme
+      };
+    } catch (error) {
+      console.log('[apiClient] Failed to get weekly theme solvers:', error);
+      return { solversCount: 0 };
+    }
+  },
 };
