@@ -23,6 +23,7 @@ import { ThemeGuessModal } from './components/ThemeGuessModal';
 import { BonusRoundInline, BonusGuessResult } from './components/BonusRoundInline';
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
+import { getApiBaseUrl } from './utils/apiHelpers';
 
 function App() {
   const {
@@ -202,39 +203,42 @@ function App() {
       } catch (e) {
         console.log('[App] Failed to fetch weekly theme solvers:', e);
       }
-      
-      // Fetch daily leaderboard for mini preview
-      try {
-        const baseUrl = window.location.origin;
-        const leaderboardRes = await fetch(`${baseUrl}/api/daily-leaderboard`);
-        if (leaderboardRes.ok) {
-          const leaderboardData = await leaderboardRes.json();
-          if (leaderboardData.totalPlayers > 0) {
-            setDailySolversCount(leaderboardData.totalPlayers);
-          }
-          if (leaderboardData.entries && leaderboardData.entries.length > 0) {
-            // Format time helper
-            const formatTime = (seconds: number): string => {
-              const mins = Math.floor(seconds / 60);
-              const secs = seconds % 60;
-              return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-            
-            const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
-              rank: entry.rank,
-              displayName: entry.displayName,
-              guesses: entry.guesses,
-              time: formatTime(entry.timeSeconds || 0)
-            }));
-            setMiniLeaderboard(top3);
-          }
-        }
-      } catch (e) {
-        console.log('[App] Failed to fetch daily leaderboard:', e);
-      }
     } catch (error) {
       console.log('[App] Failed to load theme data for UN diamond coloring:', error);
       // Don't show error for this background load
+    }
+  };
+  
+  // Load daily leaderboard for intro page - independent of playerId
+  const loadDailyLeaderboard = async () => {
+    try {
+      const baseUrl = getApiBaseUrl() || '';
+      const leaderboardRes = await fetch(`${baseUrl}/api/daily-leaderboard`);
+      if (leaderboardRes.ok) {
+        const leaderboardData = await leaderboardRes.json();
+        console.log('[App] Daily leaderboard data:', leaderboardData);
+        if (leaderboardData.totalPlayers > 0) {
+          setDailySolversCount(leaderboardData.totalPlayers);
+        }
+        if (leaderboardData.entries && leaderboardData.entries.length > 0) {
+          // Format time helper
+          const formatTime = (seconds: number): string => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+          };
+          
+          const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
+            rank: entry.rank,
+            displayName: entry.displayName,
+            guesses: entry.guesses,
+            time: formatTime(entry.timeSeconds || 0)
+          }));
+          setMiniLeaderboard(top3);
+        }
+      }
+    } catch (e) {
+      console.log('[App] Failed to fetch daily leaderboard:', e);
     }
   };
 
@@ -265,6 +269,7 @@ function App() {
 
   useEffect(() => {
     loadThemeData();
+    loadDailyLeaderboard(); // Fetch intro page leaderboard
   }, []);
 
   useEffect(() => {
