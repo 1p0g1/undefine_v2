@@ -203,9 +203,35 @@ function App() {
         console.log('[App] Failed to fetch weekly theme solvers:', e);
       }
       
-      // Fetch daily leaderboard for mini preview - needs wordId from gameState
-      // This will be populated when game loads, so skip for now
-      // The mini leaderboard will be set elsewhere when we have wordId
+      // Fetch daily leaderboard for mini preview
+      try {
+        const baseUrl = window.location.origin;
+        const leaderboardRes = await fetch(`${baseUrl}/api/daily-leaderboard`);
+        if (leaderboardRes.ok) {
+          const leaderboardData = await leaderboardRes.json();
+          if (leaderboardData.totalPlayers > 0) {
+            setDailySolversCount(leaderboardData.totalPlayers);
+          }
+          if (leaderboardData.entries && leaderboardData.entries.length > 0) {
+            // Format time helper
+            const formatTime = (seconds: number): string => {
+              const mins = Math.floor(seconds / 60);
+              const secs = seconds % 60;
+              return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
+              rank: entry.rank,
+              displayName: entry.displayName,
+              guesses: entry.guesses,
+              time: formatTime(entry.timeSeconds || 0)
+            }));
+            setMiniLeaderboard(top3);
+          }
+        }
+      } catch (e) {
+        console.log('[App] Failed to fetch daily leaderboard:', e);
+      }
     } catch (error) {
       console.log('[App] Failed to load theme data for UN diamond coloring:', error);
       // Don't show error for this background load
@@ -1386,7 +1412,6 @@ function App() {
                 remainingAttempts={bonusAttempts}
                 gameSessionId={gameState.gameId}
                 onComplete={handleBonusRoundComplete}
-                onClose={handleBonusRoundComplete}
               />
             </>
           )}
