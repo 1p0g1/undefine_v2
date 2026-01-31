@@ -112,6 +112,15 @@ function App() {
 
   // Theme solvers count for intro text
   const [weeklyThemeSolvers, setWeeklyThemeSolvers] = useState<number>(0);
+  
+  // Daily solvers count and mini leaderboard for intro
+  const [dailySolversCount, setDailySolversCount] = useState<number>(0);
+  const [miniLeaderboard, setMiniLeaderboard] = useState<Array<{
+    rank: number;
+    displayName: string;
+    guesses: number;
+    time: string;
+  }>>([]);
 
   // Theme data state for UN diamond coloring
   // Theme data state for UN diamond coloring - CACHED in localStorage for instant load
@@ -193,6 +202,10 @@ function App() {
       } catch (e) {
         console.log('[App] Failed to fetch weekly theme solvers:', e);
       }
+      
+      // Fetch daily leaderboard for mini preview - needs wordId from gameState
+      // This will be populated when game loads, so skip for now
+      // The mini leaderboard will be set elsewhere when we have wordId
     } catch (error) {
       console.log('[App] Failed to load theme data for UN diamond coloring:', error);
       // Don't show error for this background load
@@ -744,7 +757,7 @@ function App() {
         >
           {/* Game Description - New tagline */}
           <div style={{ 
-            marginBottom: '0.5rem',
+            marginBottom: '1.25rem',
             fontSize: 'clamp(1rem, 3vw, 1.2rem)',
             fontWeight: '600',
             lineHeight: '1.4',
@@ -754,35 +767,6 @@ function App() {
             backgroundClip: 'text'
           }}>
             Can you unlock the theme that connects this week's secret words?
-          </div>
-          
-          {/* Weekly theme solvers count with glowing effect */}
-          <div 
-            className="theme-solvers-glow"
-            style={{ 
-              marginBottom: '1.25rem',
-              fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
-              fontWeight: '600',
-              color: '#1a237e',
-              textAlign: 'center',
-              padding: '0.5rem 1rem',
-              background: 'linear-gradient(135deg, rgba(26, 35, 126, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
-              borderRadius: '0.5rem',
-              animation: 'subtleGlow 3s ease-in-out infinite'
-            }}
-          >
-            <span style={{ 
-              fontWeight: '700',
-              background: 'linear-gradient(90deg, #1a237e 0%, #3b82f6 50%, #1a237e 100%)',
-              backgroundSize: '200% auto',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              animation: 'shimmerText 3s linear infinite'
-            }}>
-              {weeklyThemeSolvers}
-            </span>
-            {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved the theme this week
           </div>
 
           {/* Game Modes in Boxes - REORDERED: This Week first, Today second */}
@@ -809,23 +793,24 @@ function App() {
                 marginBottom: '0.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.25rem'
               }}>
                 This week:
-                {/* Vault door icon with Un· text */}
+                {/* Vault door icon with Un· text - LARGER and closer */}
                 <div style={{ 
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  marginLeft: '0.25rem'
                 }}>
                   <img 
                     src="/ClosedVault.png" 
                     alt="Vault" 
                     style={{ 
-                      width: 'clamp(1.8rem, 5vw, 2.2rem)',
-                      height: 'clamp(1.8rem, 5vw, 2.2rem)',
+                      width: 'clamp(2.2rem, 6vw, 2.8rem)',
+                      height: 'clamp(2.2rem, 6vw, 2.8rem)',
                       objectFit: 'contain'
                     }} 
                   />
@@ -833,19 +818,19 @@ function App() {
                     position: 'absolute',
                     fontFamily: 'var(--font-primary)',
                     fontWeight: 800,
-                    fontSize: 'clamp(0.5rem, 1.5vw, 0.6rem)',
+                    fontSize: 'clamp(0.6rem, 1.8vw, 0.75rem)',
                     color: '#059669',
                     fontStyle: 'italic',
-                    textShadow: '0 0 2px white, 0 0 2px white'
+                    textShadow: '0 0 3px white, 0 0 3px white'
                   }}>
                     Un·
                   </span>
                 </div>
                 <span style={{
                   fontStyle: 'italic',
-                  fontSize: '0.95em',
+                  fontSize: '1em',
                   color: '#059669',
-                  marginLeft: '-0.25rem'
+                  marginLeft: '-0.1rem'
                 }}>
                   lock
                 </span>
@@ -882,6 +867,35 @@ function App() {
                   })()}
                 </span>
                 , guess what connects this week's words
+              </div>
+              
+              {/* Player count with glowing effect - inside the box */}
+              <div 
+                className="theme-solvers-glow"
+                style={{ 
+                  marginTop: '0.75rem',
+                  fontSize: 'clamp(0.8rem, 2.2vw, 0.9rem)',
+                  fontWeight: '600',
+                  color: '#059669',
+                  textAlign: 'center',
+                  padding: '0.4rem 0.75rem',
+                  background: 'rgba(5, 150, 105, 0.08)',
+                  borderRadius: '0.375rem',
+                  animation: 'subtleGlow 3s ease-in-out infinite'
+                }}
+              >
+                <span style={{ 
+                  fontWeight: '700',
+                  background: 'linear-gradient(90deg, #059669 0%, #34d399 50%, #059669 100%)',
+                  backgroundSize: '200% auto',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'shimmerText 3s linear infinite'
+                }}>
+                  {weeklyThemeSolvers}
+                </span>
+                {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved the theme this week
               </div>
             </div>
 
@@ -936,25 +950,123 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div style={{ color: '#374151', fontSize: '0.85em', marginBottom: '0.4rem' }}>
-                Un·define today's word in 6 guesses. Clues revealed after each guess:
+              <div style={{ color: '#374151', fontSize: '0.85em', marginBottom: '0.5rem' }}>
+                Guess today's word in 6 guesses or less. Clues revealed after each guess:
               </div>
-              <ol style={{ 
-                margin: '0', 
-                padding: '0 0 0 1.8rem', 
-                fontSize: '0.7em',
-                lineHeight: '1.35',
+              
+              {/* Single column clue list with boxes */}
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem',
+                fontSize: '0.8em',
                 color: '#374151',
-                columns: 2,
-                columnGap: '0.5rem'
+                marginBottom: '0.75rem'
               }}>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>D</strong>efinition</span></li>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>E</strong>quivalents</span></li>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>F</strong>irst Letter</span></li>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>I</strong>n a Sentence</span></li>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>N</strong>umber of Letters</span></li>
-                <li><span style={{ color: 'var(--color-primary)' }}><strong>E</strong>tymology</span></li>
-              </ol>
+                {[
+                  { letter: 'D', label: 'efinition' },
+                  { letter: 'E', label: 'quivalents' },
+                  { letter: 'F', label: 'irst Letter' },
+                  { letter: 'I', label: 'n a Sentence' },
+                  { letter: 'N', label: 'umber of Letters' },
+                  { letter: 'E', label: 'tymology' }
+                ].map((clue, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ color: '#9ca3af', fontSize: '0.85em', width: '1rem' }}>{idx + 1}.</span>
+                    <div style={{
+                      width: '1.4rem',
+                      height: '1.4rem',
+                      border: '2px solid var(--color-primary)',
+                      borderRadius: '0.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'white',
+                      flexShrink: 0
+                    }}>
+                      {clue.letter}
+                    </div>
+                    <span style={{ color: 'var(--color-primary)' }}>{clue.label}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Daily solvers count + mini leaderboard */}
+              {(dailySolversCount > 0 || miniLeaderboard.length > 0) && (
+                <div style={{
+                  borderTop: '1px solid #e0e4ff',
+                  paddingTop: '0.75rem',
+                  marginTop: '0.5rem'
+                }}>
+                  {dailySolversCount > 0 && (
+                    <div style={{ 
+                      fontSize: '0.85em',
+                      fontWeight: '600',
+                      color: 'var(--color-primary)',
+                      marginBottom: miniLeaderboard.length > 0 ? '0.5rem' : 0
+                    }}>
+                      {dailySolversCount} player{dailySolversCount !== 1 ? 's' : ''} solved today's word
+                    </div>
+                  )}
+                  
+                  {/* Mini leaderboard - top 3 only */}
+                  {miniLeaderboard.length > 0 && (
+                    <div style={{
+                      background: 'rgba(26, 35, 126, 0.03)',
+                      borderRadius: '0.375rem',
+                      padding: '0.5rem',
+                      fontSize: '0.75em'
+                    }}>
+                      <div style={{ 
+                        fontWeight: '600', 
+                        color: '#6b7280',
+                        marginBottom: '0.35rem',
+                        fontSize: '0.9em'
+                      }}>
+                        Top Scorers:
+                      </div>
+                      {miniLeaderboard.map((entry) => (
+                        <div 
+                          key={entry.rank}
+                          style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.2rem 0',
+                            borderBottom: entry.rank < miniLeaderboard.length ? '1px solid rgba(26, 35, 126, 0.08)' : 'none'
+                          }}
+                        >
+                          <span style={{ 
+                            fontSize: '1rem',
+                            width: '1.2rem'
+                          }}>
+                            {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
+                          </span>
+                          <span style={{ 
+                            flex: 1,
+                            fontWeight: 600,
+                            color: '#374151',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {entry.displayName}
+                          </span>
+                          <span style={{ 
+                            color: '#6b7280',
+                            fontSize: '0.9em'
+                          }}>
+                            {entry.guesses} guess{entry.guesses !== 1 ? 'es' : ''} • {entry.time}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1274,6 +1386,7 @@ function App() {
                 remainingAttempts={bonusAttempts}
                 gameSessionId={gameState.gameId}
                 onComplete={handleBonusRoundComplete}
+                onClose={handleBonusRoundComplete}
               />
             </>
           )}

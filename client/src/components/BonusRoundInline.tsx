@@ -85,7 +85,7 @@ const BONUS_ROUND_STYLES = `
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: saturate(0.8);
     z-index: 50;
-    pointer-events: none;
+    cursor: pointer;
   }
 
   .bonus-round-container {
@@ -143,6 +143,7 @@ interface BonusRoundInlineProps {
   remainingAttempts: number; // Number of unused guesses
   gameSessionId?: string; // For persisting guesses to database
   onComplete?: (results: BonusGuessResult[]) => void;
+  onClose?: (results: BonusGuessResult[]) => void; // Close handler for clicking outside or X button
 }
 
 // Tier display info
@@ -159,7 +160,8 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   targetWord,
   remainingAttempts,
   gameSessionId,
-  onComplete
+  onComplete,
+  onClose
 }) => {
   const [currentAttempt, setCurrentAttempt] = useState(0);
   const [guess, setGuess] = useState('');
@@ -269,8 +271,8 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
     }
   }, [guess, wordId, playerId, currentAttempt, remainingAttempts, isSubmitting, isComplete, results, onComplete]);
 
-  const handleContinue = useCallback(async () => {
-    // Finalize bonus score before completing
+  const handleClose = useCallback(async () => {
+    // Finalize bonus score before closing
     if (gameSessionId && results.length > 0) {
       try {
         const baseUrl = getApiBaseUrl();
@@ -294,7 +296,10 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
     if (onComplete) {
       onComplete(results);
     }
-  }, [results, onComplete, gameSessionId, playerId, wordId]);
+    if (onClose) {
+      onClose(results);
+    }
+  }, [results, onComplete, onClose, gameSessionId, playerId, wordId]);
 
   const fetchNearbyWords = useCallback(async () => {
     if (nearbyWords || loadingNearby) return;
@@ -320,10 +325,18 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
   return (
     <>
-      {/* Subtle page overlay - dims and desaturates background */}
-      {!userFinished && <div className="bonus-round-overlay" />}
+      {/* Subtle page overlay - dims and desaturates background, clickable to close */}
+      {!userFinished && <div className="bonus-round-overlay" onClick={handleClose} />}
       
       <div className="bonus-round-container" style={styles.container}>
+        {/* Close button */}
+        <button 
+          onClick={handleClose}
+          style={styles.closeButton}
+          aria-label="Close bonus round"
+        >
+          ✕
+        </button>
         {/* Floating sparkles - subtle ambient motion */}
         <div className="bonus-sparkle" style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
         <div className="bonus-sparkle" style={{ top: '20%', right: '8%', animationDelay: '1s' }} />
@@ -399,9 +412,9 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             )}
           </>
         ) : !userFinished ? (
-        // Complete state - show results and action buttons
+        // Complete state - show results with integrated answers toggle
         <div style={styles.completeSection}>
-          {/* Summary */}
+          {/* Summary box with integrated answers toggle */}
           <div style={styles.summaryBox}>
             <div style={styles.summaryTitle}>🎯 Your Results</div>
             <div style={styles.summaryStats}>
@@ -410,48 +423,48 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
               <span style={styles.statBronze}>🥉 {results.filter(r => r.tier === 'average').length}</span>
               <span style={styles.statMiss}>❌ {results.filter(r => r.tier === 'miss').length}</span>
             </div>
+            
+            {/* Integrated answers toggle */}
+            <button 
+              onClick={fetchNearbyWords} 
+              style={styles.answersToggle}
+              disabled={loadingNearby}
+            >
+              {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Answers' : '📖 See Answers'}
+            </button>
           </div>
 
-          {/* Nearby words toggle */}
-          <button 
-            onClick={fetchNearbyWords} 
-            style={styles.nearbyButton}
-            disabled={loadingNearby}
-          >
-            {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Nearby Words' : '📖 Show Nearby Words (Answers)'}
-          </button>
-
-          {/* Nearby words display */}
+          {/* Scrollable nearby words list */}
           {showNearbyWords && nearbyWords && (
-            <>
-              <div style={styles.nearbySection}>
-                <div style={styles.nearbyColumn}>
-                  <div style={styles.nearbyHeader}>⬆️ Words Above</div>
-                  {nearbyWords.above.map((word, idx) => (
-                    <div key={`above-${idx}`} style={styles.nearbyWord}>
-                      <span style={styles.nearbyRank}>-{nearbyWords.above.length - idx}</span>
-                      <span>{word}</span>
-                    </div>
-                  ))}
+            <div style={styles.nearbyScrollContainer}>
+              <div style={styles.nearbyScrollList}>
+                {/* Words above (reversed so closest to target is at bottom) */}
+                {[...nearbyWords.above].reverse().map((word, idx) => (
+                  <div key={`above-${idx}`} style={styles.nearbyListItem}>
+                    <span style={styles.nearbyListRank}>-{nearbyWords.above.length - idx}</span>
+                    <span style={styles.nearbyListWord}>{word}</span>
+                  </div>
+                ))}
+                
+                {/* Target word - highlighted */}
+                <div style={styles.targetWordHighlight}>
+                  <span style={styles.targetWordStar}>★</span>
+                  <span style={styles.targetWordText}>{targetWord.toUpperCase()}</span>
+                  <span style={styles.targetWordStar}>★</span>
                 </div>
-                <div style={styles.nearbyCenter}>
-                  <div style={styles.targetWordLabel}>Today's Word</div>
-                  <div style={styles.targetWordBox}>{targetWord}</div>
-                </div>
-                <div style={styles.nearbyColumn}>
-                  <div style={styles.nearbyHeader}>⬇️ Words Below</div>
-                  {nearbyWords.below.map((word, idx) => (
-                    <div key={`below-${idx}`} style={styles.nearbyWord}>
-                      <span style={styles.nearbyRank}>+{idx + 1}</span>
-                      <span>{word}</span>
-                    </div>
-                  ))}
-                </div>
+                
+                {/* Words below */}
+                {nearbyWords.below.map((word, idx) => (
+                  <div key={`below-${idx}`} style={styles.nearbyListItem}>
+                    <span style={styles.nearbyListRank}>+{idx + 1}</span>
+                    <span style={styles.nearbyListWord}>{word}</span>
+                  </div>
+                ))}
               </div>
+              
               {/* Dictionary attribution */}
               <div style={styles.dictionaryAttribution}>
-                📚 Dictionary from{' '}
-                <a 
+                📚 <a 
                   href="https://www.gutenberg.org/files/669/669-h/669-h.htm" 
                   target="_blank" 
                   rel="noopener noreferrer"
@@ -459,15 +472,12 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                 >
                   Project Gutenberg's OPTED
                 </a>
-                {' '}• British/American spellings normalized
               </div>
-            </>
+            </div>
           )}
-
-          {/* Continue button - leads to theme guess */}
-          <button onClick={handleContinue} style={styles.continueButton}>
-            <span style={styles.unlockIcon}>🔓</span> Un·lock the theme of the week
-          </button>
+          
+          {/* Tap anywhere or X to close hint */}
+          <div style={styles.closeHint}>Tap outside or ✕ to close</div>
         </div>
         ) : null}
       </div>
@@ -486,6 +496,23 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '1rem',
     textAlign: 'center',
     overflow: 'hidden',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: '0.5rem',
+    right: '0.5rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    border: '1px solid #fbbf24',
+    borderRadius: '50%',
+    width: '28px',
+    height: '28px',
+    fontSize: '1rem',
+    color: '#92400e',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   header: {
     display: 'flex',
@@ -600,6 +627,17 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '1rem',
     fontSize: '1.1rem',
     fontWeight: 600,
+    marginBottom: '0.75rem',
+  },
+  answersToggle: {
+    padding: '0.5rem 1rem',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    background: '#fff',
+    color: '#065f46',
+    border: '1px solid #10b981',
+    borderRadius: '6px',
+    cursor: 'pointer',
   },
   statGold: {
     color: '#b8860b',
@@ -613,104 +651,77 @@ const styles: Record<string, React.CSSProperties> = {
   statMiss: {
     color: '#dc2626',
   },
-  nearbyButton: {
-    padding: '0.625rem 1rem',
-    fontSize: '0.9rem',
-    fontWeight: 500,
-    background: '#fef3c7',
-    color: '#92400e',
-    border: '2px solid #f59e0b',
-    borderRadius: '8px',
-    cursor: 'pointer',
-  },
-  nearbySection: {
-    display: 'grid',
-    gridTemplateColumns: '1fr auto 1fr',
-    gap: '0.5rem',
-    background: '#fffbeb',
-    border: '1px solid #fcd34d',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    fontSize: '0.8rem',
-    textAlign: 'left',
-  },
-  nearbyColumn: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem',
-  },
-  nearbyHeader: {
-    fontWeight: 600,
-    color: '#92400e',
-    marginBottom: '0.25rem',
-    textAlign: 'center',
-    fontSize: '0.85rem',
-  },
-  nearbyWord: {
-    display: 'flex',
-    gap: '0.5rem',
-    padding: '0.2rem 0.4rem',
-    background: '#fff',
-    borderRadius: '4px',
-    border: '1px solid #fde68a',
-  },
-  nearbyRank: {
-    color: '#9ca3af',
-    fontSize: '0.75rem',
-    minWidth: '24px',
-  },
-  nearbyCenter: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 0.5rem',
-  },
-  targetWordLabel: {
-    fontSize: '0.7rem',
-    color: '#6b7280',
-    marginBottom: '0.25rem',
-  },
-  targetWordBox: {
-    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-    color: '#fff',
-    fontWeight: 700,
-    padding: '0.5rem 0.75rem',
-    borderRadius: '6px',
-    textTransform: 'uppercase',
-    fontSize: '0.9rem',
-  },
-  continueButton: {
-    padding: '0.875rem 1.5rem',
-    fontSize: '1rem',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    width: '100%',
-    marginTop: '0.5rem',
-  },
-  unlockIcon: {
-    fontSize: '1.1rem',
-  },
   dictionaryAttribution: {
     fontSize: '0.7rem',
     color: '#78716c',
     textAlign: 'center' as const,
     marginTop: '0.5rem',
-    marginBottom: '0.5rem',
     lineHeight: 1.4,
     fontStyle: 'italic',
   },
   attributionLink: {
     color: '#059669',
     textDecoration: 'underline',
+  },
+  nearbyScrollContainer: {
+    marginTop: '0.75rem',
+    background: '#fffbeb',
+    border: '1px solid #fcd34d',
+    borderRadius: '8px',
+    padding: '0.5rem',
+  },
+  nearbyScrollList: {
+    maxHeight: '200px',
+    overflowY: 'auto' as const,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.25rem',
+  },
+  nearbyListItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.35rem 0.5rem',
+    background: '#fff',
+    borderRadius: '4px',
+    border: '1px solid #fde68a',
+    fontSize: '0.85rem',
+  },
+  nearbyListRank: {
+    color: '#9ca3af',
+    fontSize: '0.75rem',
+    minWidth: '28px',
+    textAlign: 'right' as const,
+  },
+  nearbyListWord: {
+    flex: 1,
+    textAlign: 'left' as const,
+    color: '#374151',
+  },
+  targetWordHighlight: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem',
+    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+    borderRadius: '6px',
+    margin: '0.25rem 0',
+  },
+  targetWordText: {
+    fontWeight: 700,
+    color: '#fff',
+    fontSize: '0.95rem',
+  },
+  targetWordStar: {
+    color: '#fff',
+    fontSize: '0.8rem',
+  },
+  closeHint: {
+    fontSize: '0.75rem',
+    color: '#9ca3af',
+    marginTop: '0.75rem',
+    fontStyle: 'italic',
   },
 };
 
