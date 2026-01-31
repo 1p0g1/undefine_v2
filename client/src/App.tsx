@@ -280,8 +280,9 @@ function App() {
   }, [startArchiveGame]);
 
   useEffect(() => {
+    console.log('[App] Initial mount useEffect - loading theme and leaderboard data');
     loadThemeData();
-    loadDailyLeaderboard(); // Fetch intro page leaderboard
+    loadDailyLeaderboard();
   }, []);
 
   useEffect(() => {
@@ -466,7 +467,7 @@ function App() {
     setCanReopenSummary(false);
   };
 
-  // Handler to show leaderboard modal (View Results)
+  // Handler to show leaderboard modal (View Results) - now accessible before game completion
   const showLeaderboardModal = useCallback(async () => {
     console.log('[App] showLeaderboardModal called with state:', {
       wordId: gameState.wordId,
@@ -479,15 +480,8 @@ function App() {
     
     if (!gameState.wordId) return;
     
-    // Only show modal if game was actually completed (current session or restored)
-    if (!gameState.isComplete) {
-      console.log('[App] Attempted to show leaderboard modal for incomplete game - preventing');
-      setToastMessage('Complete today\'s word to see results!');
-      setShowToast(true);
-      return;
-    }
-    
-    console.log('[App] Showing leaderboard modal for completed game');
+    // Allow viewing leaderboard at any time
+    console.log('[App] Showing leaderboard modal');
     setShowSummary(true);
     setCanReopenSummary(false);
     
