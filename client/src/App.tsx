@@ -1364,61 +1364,17 @@ function App() {
             </div>
           )}
 
-          {/* Bonus Round Unlock Prompt - inline on main page */}
+          {/* Bonus Round - inline on main page (component has its own header) */}
           {gameState.isComplete && gameState.isWon && bonusAttempts > 0 && 
            pendingBonusRound && !celebrateDiamond && !bonusRoundComplete && (
-            <>
-              {/* Inline bonus round unlock message with proper pluralization */}
-              <div style={{
-                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                border: '2px solid #f59e0b',
-                borderRadius: '12px',
-                padding: '1rem',
-                marginBottom: '1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(90deg, #b45309, #d97706, #b45309)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  marginBottom: '0.5rem'
-                }}>
-                  🎯 BONUS ROUND UNLOCKED! 🎯
-                </div>
-                <div style={{
-                  fontSize: '1rem',
-                  color: '#92400e',
-                  fontWeight: 500,
-                  marginBottom: '0.5rem'
-                }}>
-                  Daily game solved in <strong>{gameState.guesses.length}</strong> guess{gameState.guesses.length !== 1 ? 'es' : ''}.
-                </div>
-                <div style={{
-                  fontSize: '0.95rem',
-                  color: '#78350f',
-                  fontWeight: 500,
-                  lineHeight: 1.4
-                }}>
-                  Guess <span style={{ 
-                    color: '#d97706', 
-                    fontWeight: 700
-                  }}>{bonusAttempts}</span> word{bonusAttempts !== 1 ? 's' : ''} closest to "<strong>{gameState.wordText}</strong>" in the dictionary, they can come before or after alphabetically.
-                </div>
-              </div>
-              
-              {/* The actual bonus round component */}
-              <BonusRoundInline
-                wordId={gameState.wordId}
-                playerId={getPlayerId() || ''}
-                targetWord={gameState.wordText}
-                remainingAttempts={bonusAttempts}
-                gameSessionId={gameState.gameId}
-                onComplete={handleBonusRoundComplete}
-              />
-            </>
+            <BonusRoundInline
+              wordId={gameState.wordId}
+              playerId={getPlayerId() || ''}
+              targetWord={gameState.wordText}
+              remainingAttempts={bonusAttempts}
+              gameSessionId={gameState.gameId}
+              onComplete={handleBonusRoundComplete}
+            />
           )}
 
           {/* Bonus Round Results Summary */}

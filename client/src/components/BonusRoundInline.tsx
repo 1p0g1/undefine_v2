@@ -475,9 +475,6 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
               </div>
             </div>
           )}
-          
-          {/* Tap anywhere or X to close hint */}
-          <div style={styles.closeHint}>Tap outside or ✕ to close</div>
         </div>
         ) : null}
       </div>
@@ -716,12 +713,6 @@ const styles: Record<string, React.CSSProperties> = {
   targetWordStar: {
     color: '#fff',
     fontSize: '0.8rem',
-  },
-  closeHint: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    marginTop: '0.75rem',
-    fontStyle: 'italic',
   },
 };
 

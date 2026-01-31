@@ -519,12 +519,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               <>Today you didn't rank <span style={{ fontSize: '1.2rem' }}>:(</span></>
             )}
           </div>
-          {playerRank ? (
-            <div>
-              Guesses: <span style={{ fontWeight: 700 }}>{guessesUsed}/6</span>, Fuzzy:{' '}
-              <span style={{ fontWeight: 700 }}>{fuzzyMatches}/6</span>
-            </div>
-          ) : (
+          {!playerRank && (
             <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
               Better luck tomorrow!
             </div>
