@@ -145,8 +145,8 @@ async function computeThemeSemanticSimilarity(
 
 /**
  * Enhanced theme matching with multi-tier approach
- * Based on test results and cost optimization
- * Now includes contextual prompting for better AI understanding
+ * UPDATED: Now applies keyword overlap and specificity penalties
+ * to match the Theme Test Lab scoring (Phase 1 roadmap)
  */
 export async function matchThemeWithFuzzy(
   guess: string, 
@@ -167,17 +167,63 @@ export async function matchThemeWithFuzzy(
   
   // AI semantic similarity matching with contextual prompting
   try {
-    const similarity = await computeThemeSemanticSimilarity(guess, theme);
-    const isMatch = similarity >= THEME_SIMILARITY_THRESHOLD;
+    const rawSimilarity = await computeThemeSemanticSimilarity(guess, theme);
+    
+    // PHASE 1 ENHANCEMENT: Apply keyword and specificity penalties
+    // This matches the Theme Test Lab scoring
+    let finalScore = rawSimilarity;
+    let strategy = 'embedding_only';
+    
+    // Compute keyword overlap (same logic as themeScoring.ts)
+    const themeKeywords = extractKeywordsSimple(normalizedTheme);
+    const guessKeywords = extractKeywordsSimple(normalizedGuess);
+    
+    let matchedCount = 0;
+    for (const tk of themeKeywords) {
+      for (const gk of guessKeywords) {
+        if (tk === gk || stemWord(tk) === stemWord(gk)) {
+          matchedCount++;
+          break;
+        }
+      }
+    }
+    const keywordOverlap = themeKeywords.length > 0 ? matchedCount / themeKeywords.length : 1;
+    
+    // Apply graduated keyword penalty (same as themeScoring.ts)
+    if (keywordOverlap < 0.3 && rawSimilarity > 0.7) {
+      // Severe penalty for very low overlap with high embedding
+      strategy = 'keyword_mismatch_severe';
+      finalScore = rawSimilarity * (0.5 + keywordOverlap * 0.5);
+    } else if (keywordOverlap < 0.7 && rawSimilarity > 0.7) {
+      // Moderate penalty for medium-low overlap
+      strategy = 'keyword_mismatch_moderate';
+      const missingPortion = 1 - keywordOverlap;
+      finalScore = rawSimilarity * (1 - missingPortion * 0.5);
+    }
+    
+    // Apply specificity penalty for trivial guesses missing concepts
+    const guessContentTokens = guessKeywords.length;
+    const isTrivialGuess = guessContentTokens <= 2;
+    
+    if (isTrivialGuess && keywordOverlap < 0.5) {
+      strategy = 'trivial_guess_penalty';
+      const severityFactor = 0.5 - keywordOverlap;
+      const specificityPenalty = Math.min(severityFactor * 0.5, 0.25);
+      finalScore = finalScore * (1 - specificityPenalty);
+    }
+    
+    const isMatch = finalScore >= THEME_SIMILARITY_THRESHOLD;
+    
+    console.log(`[matchThemeWithFuzzy] "${guess}" vs "${theme}": raw=${Math.round(rawSimilarity*100)}%, final=${Math.round(finalScore*100)}%, kwOverlap=${Math.round(keywordOverlap*100)}%, strategy=${strategy}`);
     
     // Log usage for cost monitoring
     await logSemanticUsage('theme');
     
     return {
-      similarity,
+      similarity: finalScore,
       isMatch,
       method: 'semantic',
-      confidence: Math.round(similarity * 100)
+      confidence: Math.round(finalScore * 100)
     };
     
   } catch (error) {
@@ -189,6 +235,37 @@ export async function matchThemeWithFuzzy(
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+}
+
+/**
+ * Simple keyword extraction for production scoring
+ * Matches themeScoring.ts logic but lightweight
+ */
+function extractKeywordsSimple(text: string): string[] {
+  const STOP_WORDS = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
+    'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+    'that', 'this', 'these', 'those', 'what', 'which', 'who', 'can', 'just',
+    'words', 'word', 'things', 'thing', 'describe', 'connect', 'theme', 'week'
+  ]);
+  
+  return text.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+}
+
+/**
+ * Simple word stemming for keyword matching
+ */
+function stemWord(word: string): string {
+  const w = word.toLowerCase();
+  if (w.endsWith('ing')) return w.slice(0, -3);
+  if (w.endsWith('ed')) return w.slice(0, -2);
+  if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  if (w.endsWith('ly')) return w.slice(0, -2);
+  return w;
 }
 
 

@@ -32,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isEditing, setIsEditing] = useState(!currentDisplayName); // Auto-edit if no name set
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,11 +42,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setNickname(currentDisplayName || '');
       setError(null);
       setSuccess(false);
-      // Focus the input after a brief delay to ensure modal is rendered
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 100);
+      setIsEditing(!currentDisplayName); // Only auto-edit if no name set
+      
+      // Focus the input after a brief delay if editing
+      if (!currentDisplayName) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        }, 100);
+      }
     }
   }, [open, currentDisplayName]);
 
@@ -123,6 +128,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       // Success!
       setSuccess(true);
+      setIsEditing(false);
       onNicknameUpdate(data.display_name);
       
       // Store the new nickname in localStorage for caching
@@ -146,7 +152,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setNickname(currentDisplayName || '');
     setError(null);
     setSuccess(false);
+    setIsEditing(false);
     onClose();
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setError(null);
+    setSuccess(false);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 100);
+  };
+
+  const handleCancelEdit = () => {
+    setNickname(currentDisplayName || '');
+    setError(null);
+    setIsEditing(false);
   };
 
   if (!open) return null;
@@ -369,7 +392,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Nickname Section */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label
-            htmlFor="nickname-input"
             style={{
               display: 'block',
               fontWeight: 600,
@@ -381,50 +403,100 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             Display Name
           </label>
           
-          <input
-            ref={inputRef}
-            id="nickname-input"
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="Enter your nickname..."
-            maxLength={20}
-            disabled={isLoading}
-            style={{
-              width: '100%',
+          {!isEditing && currentDisplayName ? (
+            // Display mode: Show name with edit button
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
               padding: '0.75rem',
+              background: '#f9fafb',
               borderRadius: '0.5rem',
-              border: `2px solid ${error ? '#ef4444' : '#e5e7eb'}`,
-              fontSize: '1rem',
-              fontFamily: 'inherit',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              backgroundColor: isLoading ? '#f9fafb' : 'white',
-              color: 'var(--color-primary, #1a237e)',
-            }}
-            onFocus={(e) => {
-              if (!error) {
-                e.target.style.borderColor = 'var(--color-primary, #1a237e)';
-              }
-            }}
-            onBlur={(e) => {
-              if (!error) {
-                e.target.style.borderColor = '#e5e7eb';
-              }
-            }}
-          />
+              border: '2px solid #e5e7eb',
+            }}>
+              <div style={{
+                flex: 1,
+                fontSize: '1rem',
+                fontWeight: 500,
+                color: 'var(--color-primary, #1a237e)',
+              }}>
+                {currentDisplayName}
+              </div>
+              <button
+                onClick={handleEditClick}
+                disabled={isLoading}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  background: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f3f4f6';
+                  e.currentTarget.style.borderColor = '#9ca3af';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                }}
+              >
+                ✏️ Edit
+              </button>
+            </div>
+          ) : (
+            // Edit mode: Show input
+            <>
+              <input
+                ref={inputRef}
+                id="nickname-input"
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Enter your nickname..."
+                maxLength={20}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '0.5rem',
+                  border: `2px solid ${error ? '#ef4444' : '#e5e7eb'}`,
+                  fontSize: '1rem',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: isLoading ? '#f9fafb' : 'white',
+                  color: 'var(--color-primary, #1a237e)',
+                }}
+                onFocus={(e) => {
+                  if (!error) {
+                    e.target.style.borderColor = 'var(--color-primary, #1a237e)';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!error) {
+                    e.target.style.borderColor = '#e5e7eb';
+                  }
+                }}
+              />
 
-          {/* Character count */}
-          <div
-            style={{
-              textAlign: 'right',
-              fontSize: '0.75rem',
-              marginTop: '0.25rem',
-              color: nickname.length > 20 ? '#ef4444' : '#6b7280',
-            }}
-          >
-            {nickname.length}/20
-          </div>
+              {/* Character count */}
+              <div
+                style={{
+                  textAlign: 'right',
+                  fontSize: '0.75rem',
+                  marginTop: '0.25rem',
+                  color: nickname.length > 20 ? '#ef4444' : '#6b7280',
+                }}
+              >
+                {nickname.length}/20
+              </div>
+            </>
+          )}
         </div>
 
         {/* Error Message */}
@@ -461,85 +533,56 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         )}
 
-        {/* Preview */}
-        {trimmedNickname && !validationError && (
+        {/* Action Buttons - Only show when editing */}
+        {isEditing && (
           <div
             style={{
-              backgroundColor: '#f8fafc',
-              padding: '1rem',
-              borderRadius: '0.5rem',
-              marginBottom: '1.5rem',
-              border: '1px solid #e2e8f0',
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'flex-end',
             }}
           >
-            <div
+            {currentDisplayName && (
+              <button
+                onClick={handleCancelEdit}
+                disabled={isLoading}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: '2px solid #e5e7eb',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                  opacity: isLoading ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </button>
+            )}
+            
+            <button
+              onClick={handleSave}
+              disabled={!canSave || success}
               style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '0.5rem',
+                border: '2px solid var(--color-primary, #1a237e)',
+                backgroundColor: canSave && !success ? 'var(--color-primary, #1a237e)' : '#f3f4f6',
+                color: canSave && !success ? 'white' : '#9ca3af',
+                cursor: canSave && !success ? 'pointer' : 'not-allowed',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                marginBottom: '0.5rem',
-                color: 'var(--color-primary, #1a237e)',
+                transition: 'all 0.2s',
+                minWidth: '80px',
               }}
             >
-              Leaderboard Preview:
-            </div>
-            <div
-              style={{
-                fontSize: '0.875rem',
-                color: '#4b5563',
-                fontFamily: 'monospace',
-              }}
-            >
-              🥇 {trimmedNickname} - 02:34 - 3 guesses
-            </div>
+              {isLoading ? '...' : success ? '✓' : 'Save'}
+            </button>
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.75rem',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <button
-            onClick={handleCancel}
-            disabled={isLoading}
-            style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              border: '2px solid #e5e7eb',
-              backgroundColor: 'white',
-              color: '#374151',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              transition: 'all 0.2s',
-              opacity: isLoading ? 0.5 : 1,
-            }}
-          >
-            Cancel
-          </button>
-          
-          <button
-            onClick={handleSave}
-            disabled={!canSave || success}
-            style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              border: '2px solid var(--color-primary, #1a237e)',
-              backgroundColor: canSave && !success ? 'var(--color-primary, #1a237e)' : '#f3f4f6',
-              color: canSave && !success ? 'white' : '#9ca3af',
-              cursor: canSave && !success ? 'pointer' : 'not-allowed',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              transition: 'all 0.2s',
-              minWidth: '80px',
-            }}
-          >
-            {isLoading ? '...' : success ? '✓' : 'Save'}
-          </button>
-        </div>
       </div>
     </div>,
     document.body

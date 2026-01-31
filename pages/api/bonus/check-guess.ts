@@ -287,6 +287,31 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
         console.error('[bonus/check-guess] Failed to save guess:', insertError);
       } else {
         console.log('[bonus/check-guess] Saved bonus guess to database');
+        
+        // LIVE UPDATE: Also update game_sessions.bonus_results so UI syncs immediately
+        // This ensures partial bonus round results show on homepage/leaderboard
+        const { data: allGuesses } = await supabase
+          .from('bonus_round_guesses')
+          .select('tier')
+          .eq('game_session_id', gameSessionId)
+          .eq('player_id', playerId)
+          .order('attempt_number', { ascending: true });
+        
+        if (allGuesses && allGuesses.length > 0) {
+          // Build the bonus_results JSON array (same format as used in leaderboard)
+          const bonusResults = allGuesses.map(g => g.tier || 'miss');
+          
+          const { error: updateError } = await supabase
+            .from('game_sessions')
+            .update({ bonus_results: bonusResults })
+            .eq('id', gameSessionId);
+          
+          if (updateError) {
+            console.error('[bonus/check-guess] Failed to update game_sessions.bonus_results:', updateError);
+          } else {
+            console.log('[bonus/check-guess] Live updated bonus_results:', bonusResults);
+          }
+        }
       }
     }
 

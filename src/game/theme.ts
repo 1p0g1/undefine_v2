@@ -509,16 +509,27 @@ export async function getThemeProgress(
       console.error('[getThemeProgress] Weekly attempts error:', attemptsError);
     }
 
-    // Find the most recent attempt, prioritizing correct answers
+    // Find the BEST attempt for the week (highest confidence) for diamond coloring
+    // But also track the most recent attempt for display purposes
     let mostRecentAttempt = null;
+    let highestScoringAttempt = null;
+    
     if (weeklyAttempts && weeklyAttempts.length > 0) {
       // First check if there's any correct guess this week
       const correctAttempt = weeklyAttempts.find(attempt => attempt.is_correct);
       if (correctAttempt) {
         mostRecentAttempt = correctAttempt;
+        highestScoringAttempt = correctAttempt;
       } else {
-        // If no correct guess, use the most recent attempt
+        // No correct guess - use most recent for display
         mostRecentAttempt = weeklyAttempts[0];
+        
+        // Find the HIGHEST scoring attempt for diamond color (not most recent)
+        highestScoringAttempt = weeklyAttempts.reduce((best, current) => {
+          const bestScore = best?.confidence_percentage ?? 0;
+          const currentScore = current?.confidence_percentage ?? 0;
+          return currentScore > bestScore ? current : best;
+        }, weeklyAttempts[0]);
       }
     }
 
@@ -546,11 +557,12 @@ export async function getThemeProgress(
       themeGuess: mostRecentAttempt?.guess || null,
       canGuessTheme: hasWonWordThisWeek && !todayAttempt,
       hasGuessedToday: !!todayAttempt,
-      isCorrectGuess: mostRecentAttempt?.is_correct || false,
-      // Include similarity data if available
-      similarityScore: mostRecentAttempt?.similarity_score || null,
-      confidencePercentage: mostRecentAttempt?.confidence_percentage || null,
-      matchingMethod: mostRecentAttempt?.matching_method || null
+      isCorrectGuess: highestScoringAttempt?.is_correct || false,
+      // Include similarity data from HIGHEST scoring attempt for diamond coloring
+      // This ensures the diamond shows their best score for the week, not the most recent
+      similarityScore: highestScoringAttempt?.similarity_score || null,
+      confidencePercentage: highestScoringAttempt?.confidence_percentage || null,
+      matchingMethod: highestScoringAttempt?.matching_method || null
     };
   } catch (error) {
     console.error('[getThemeProgress] Error:', error);

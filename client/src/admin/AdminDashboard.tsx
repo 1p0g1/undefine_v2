@@ -9,6 +9,10 @@ import { adminApi, WeekInfo, DayInfo, WordResponse, clearAdminKey } from './api/
 import { WeekCalendar } from './components/WeekCalendar';
 import { WordEditor } from './components/WordEditor';
 import { StatsPanel } from './components/StatsPanel';
+import { DictionarySearch } from './components/DictionarySearch';
+import { ThemeWizard } from './components/ThemeWizard';
+import { ThemeTestTool } from './components/ThemeTestTool';
+import { WordsSearch } from './components/WordsSearch';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -47,6 +51,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Editor state
   const [editorDate, setEditorDate] = useState<string | null>(null);
   const [editorWord, setEditorWord] = useState<WordResponse | null>(null);
+  
+  // Modal states
+  const [showDictionarySearch, setShowDictionarySearch] = useState(false);
+  const [showWordsSearch, setShowWordsSearch] = useState(false);
+  const [showThemeWizard, setShowThemeWizard] = useState(false);
+  const [showThemeTestTool, setShowThemeTestTool] = useState(false);
+  const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -205,26 +216,83 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         <div style={styles.quickActions}>
           <h3 style={styles.sectionTitle}>Quick Actions</h3>
           <div style={styles.actionButtons}>
+            {/* Primary action - Theme wizard */}
+            <button 
+              style={styles.primaryActionBtn}
+              onClick={() => {
+                // Find next empty Monday
+                const emptyWeek = weeks.find(w => !w.days.some(d => d.hasWord));
+                if (emptyWeek) {
+                  setWizardStartDate(emptyWeek.weekStart);
+                  setShowThemeWizard(true);
+                } else {
+                  // If no empty week, use next week
+                  const nextWeek = new Date();
+                  nextWeek.setDate(nextWeek.getDate() + (8 - nextWeek.getDay()) % 7);
+                  setWizardStartDate(nextWeek.toISOString().split('T')[0]);
+                  setShowThemeWizard(true);
+                }
+              }}
+            >
+              🎯 Submit New Theme & Words
+            </button>
+            
+            {/* Secondary actions */}
+            <button 
+              style={styles.actionBtn}
+              onClick={() => setShowDictionarySearch(true)}
+            >
+              📖 Search Dictionary
+            </button>
+            <button 
+              style={styles.actionBtn}
+              onClick={() => setShowWordsSearch(!showWordsSearch)}
+            >
+              🔍 {showWordsSearch ? 'Hide' : 'Show'} Words Search
+            </button>
             <button 
               style={styles.actionBtn}
               onClick={() => {
                 const nextEmpty = weeks.flatMap(w => w.days).find(d => !d.hasWord && d.date >= today);
-                if (nextEmpty) handleDayClick(nextEmpty.date, null);
+                if (nextEmpty) {
+                  handleDayClick(nextEmpty.date, null);
+                } else {
+                  alert('No empty days found in the visible range!');
+                }
               }}
             >
-              📝 Add Next Missing Word
+              📝 Add Single Word
             </button>
             <button 
               style={styles.actionBtn}
-              onClick={() => {
-                const noTheme = weeks.flatMap(w => w.days).find(d => d.hasWord && !d.theme && d.date >= today);
-                if (noTheme) handleDayClick(noTheme.date, noTheme);
-              }}
+              onClick={() => setShowThemeTestTool(!showThemeTestTool)}
             >
-              🏷️ Add Theme to Untagged
+              🧪 {showThemeTestTool ? 'Hide' : 'Show'} Theme Test Lab
             </button>
           </div>
         </div>
+
+        {/* Words Search Tool */}
+        {showWordsSearch && (
+          <div style={styles.wordsSearchSection}>
+            <WordsSearch 
+              onSelectWord={(word) => {
+                // Open editor for selected word
+                if (word.date) {
+                  setEditorDate(word.date);
+                  setEditorWord(word as any);
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Theme Test Tool */}
+        {showThemeTestTool && (
+          <div style={styles.themeTestSection}>
+            <ThemeTestTool />
+          </div>
+        )}
       </main>
 
       {/* Word Editor Modal */}
@@ -235,6 +303,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           existingThemes={stats.uniqueThemes}
           onSave={handleEditorSave}
           onClose={handleEditorClose}
+        />
+      )}
+
+      {/* Dictionary Search Modal */}
+      {showDictionarySearch && (
+        <DictionarySearch
+          onClose={() => setShowDictionarySearch(false)}
+          onSelectWord={(word) => {
+            setShowDictionarySearch(false);
+            // You could auto-fill a word editor here if needed
+          }}
+        />
+      )}
+
+      {/* Theme Wizard Modal */}
+      {showThemeWizard && wizardStartDate && (
+        <ThemeWizard
+          startDate={wizardStartDate}
+          existingThemes={stats.uniqueThemes}
+          onClose={() => {
+            setShowThemeWizard(false);
+            setWizardStartDate(null);
+          }}
+          onSave={() => {
+            setShowThemeWizard(false);
+            setWizardStartDate(null);
+            loadData();
+          }}
         />
       )}
     </div>
@@ -390,7 +486,24 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     cursor: 'pointer',
   },
+  primaryActionBtn: {
+    padding: '0.875rem 1.5rem',
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(26, 35, 126, 0.3)',
+  },
+  themeTestSection: {
+    marginTop: '1.5rem',
+  },
+  wordsSearchSection: {
+    marginTop: '1rem',
+    marginBottom: '1rem',
+  },
 };
 
 export default AdminDashboard;
-

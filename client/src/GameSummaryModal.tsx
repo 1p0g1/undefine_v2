@@ -68,6 +68,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   gameDate,  // NEW: Original word date
   bonusRoundResults = [],  // Bonus round results for DEFINE boxes
 }) => {
+  // Debug logging for bonus results
+  console.log('[GameSummaryModal] bonusRoundResults:', bonusRoundResults, 'guessesUsed:', guessesUsed);
   const [copied, setCopied] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   
@@ -201,8 +203,44 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
 
   if (!open) return null;
 
+  // Generate share text with bonus round colored squares and theme lock status
+  const generateShareText = () => {
+    // Build the DEFINE row - first the guess status, then bonus round squares
+    // 🟩 = correct, 🟥 = incorrect/miss, 🟧 = fuzzy
+    const actualGuesses = guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy');
+    const guessEmojis = actualGuesses.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜'));
+    
+    // Add bonus round squares for remaining slots after guesses
+    // 🟨 = Gold (perfect), ⬜️ = Silver (good), 🟫 = Bronze (average), 🟥 = miss
+    const remainingSlots = 6 - actualGuesses.length;
+    const bonusSquares = bonusRoundResults.slice(0, remainingSlots).map(r => {
+      if (r.tier === 'perfect') return '🟨'; // Gold
+      if (r.tier === 'good') return '⬜️';   // Silver  
+      if (r.tier === 'average') return '🟫'; // Bronze
+      return '🟥'; // Miss
+    });
+    
+    // Pad with empty squares if needed (unused bonus attempts)
+    while (guessEmojis.length + bonusSquares.length < 6) {
+      bonusSquares.push('⬜');
+    }
+    
+    const allEmojis = [...guessEmojis, ...bonusSquares];
+    
+    // Check if bonus round was played
+    const bonusRoundPlayed = bonusRoundResults.length > 0;
+    const bonusLine = bonusRoundPlayed ? '\n✨ Bonus Round Unlocked ✨' : '';
+    
+    // Theme lock status: 🔓 if 80%+ theme score, 🔒 otherwise
+    const themeConfidence = themeGuessData?.confidencePercentage || 0;
+    const themeLockEmoji = themeConfidence >= 80 ? '🔓' : '🔒';
+    const themeLine = themeGuessData?.hasGuessedToday ? `\n${themeLockEmoji} Theme ${themeConfidence}%` : '';
+    
+    return `I ranked #${playerRank || '?'} in today's Un·Define!${bonusLine}${themeLine}\n${allEmojis.join('')}\n${time}\nhttps://undefine-v2-front.vercel.app`;
+  };
+
   const handleCopy = () => {
-    const summary = `UN·DEFINE ${date}\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
+    const summary = generateShareText();
     navigator.clipboard.writeText(summary);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -215,7 +253,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   };
 
   const handleShare = () => {
-    const shareText = `I ranked #${playerRank || '?'} in today's Un·Define!\n${guessStatus.map(s => (s === 'correct' ? '🟩' : s === 'incorrect' ? '🟥' : s === 'fuzzy' ? '🟧' : '⬜')).join('')}\n${time}\nundefine-v2-front.vercel.app`;
+    const shareText = generateShareText();
     navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -370,6 +408,14 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',
             flex: '0 0 auto'
           }}>
+          {(() => {
+            // Use guessesUsed prop when available; fall back to guessStatus for safety
+            const guessCount = guessesUsed > 0 
+              ? guessesUsed 
+              : guessStatus.filter(s => s === 'correct' || s === 'incorrect' || s === 'fuzzy').length;
+            const safeGuessCount = Math.max(guessCount, 0);
+            
+            return (
             <DefineBoxes
               gameState={{
                 gameId: '',
@@ -383,7 +429,9 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                   number_of_letters: '',
                   etymology: ''
                 },
-                guesses: [],
+                // CRITICAL: Pass actual guess count so bonus results align correctly
+                // Bonus results start AFTER the winning guess box
+                guesses: Array(safeGuessCount).fill(''),
                 revealedClues: [],
                 clueStatus: createDefaultClueStatus(),
                 isComplete: true,
@@ -396,6 +444,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               onBoxClick={() => {}}
               bonusResults={bonusRoundResults.map(r => r.tier || null)}
             />
+            );
+          })()}
           </div>
         </div>
         
@@ -481,7 +531,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           )}
           
           {/* Streak Celebration - show when on a winning streak */}
-          {playerStats?.currentStreak && playerStats.currentStreak >= 1 && playerRank && (
+          {playerStats?.currentStreak !== undefined && playerStats.currentStreak >= 1 && playerRank && (
             <div style={{ 
               backgroundColor: playerStats.currentStreak === 1 ? '#f3f4f6' : '#fef3c7', 
               border: `2px solid ${playerStats.currentStreak === 1 ? '#d1d5db' : '#fbbf24'}`,
@@ -752,7 +802,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                           );
                         })()}
                         
-                        {/* DEFINE boxes */}
+                        {/* DEFINE boxes - Debug: log data for each row */}
+                        {console.log('[Leaderboard Row]', entry.player_name, 'guesses_used:', entry.guesses_used, 'fuzzy_matches:', entry.fuzzy_matches, 'bonus_results:', entry.bonus_results)}
                         <div style={{
                           display: 'flex',
                           gap: '2px'
@@ -946,31 +997,6 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               minHeight: 48,
               fontSize: 16,
               fontFamily: 'var(--font-primary)',
-              background: '#fff',
-              color: 'var(--color-primary)',
-              border: '2px solid var(--color-primary)',
-              borderRadius: 10,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              fontWeight: 700,
-            }}
-          >
-            <span role="img" aria-label="Share" style={{ fontSize: 18 }}>
-              📢
-            </span>{' '}
-            Share Your Rank
-          </button>
-          <button
-            className="gs-modal-copy"
-            onClick={handleCopy}
-            style={{
-              width: '100%',
-              minHeight: 48,
-              fontSize: 16,
-              fontFamily: 'var(--font-primary)',
               background: 'var(--color-primary)',
               color: '#fff',
               border: 'none',
@@ -986,7 +1012,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             <span role="img" aria-label="Copy" style={{ fontSize: 18 }}>
               📋
             </span>{' '}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? 'Copied!' : 'Share Daily Rank'}
           </button>
           <button
             className="gs-modal-play"

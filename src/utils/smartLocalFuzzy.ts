@@ -69,7 +69,37 @@ export function smartLocalFuzzyMatch(guess: string, target: string): LocalFuzzyR
     };
   }
   
-  // 2. Common misspellings (instant recognition)
+  // 2. NEW: Target word contained in guess (e.g., "hammerhead" contains "hammer")
+  // This catches cases like typing the word with extra letters (derivatives, compound words)
+  if (normalizedGuess.includes(normalizedTarget) && normalizedTarget.length >= 3) {
+    // Calculate how much of the guess is the target
+    const overlapRatio = normalizedTarget.length / normalizedGuess.length;
+    // Accept if the target is at least 50% of the guess (to avoid "it" matching "iteration")
+    if (overlapRatio >= 0.5) {
+      return {
+        isFuzzy: true,
+        confidence: Math.round(overlapRatio * 100),
+        method: 'letter_pattern',
+        explanation: `Contains the target word "${normalizedTarget}"`
+      };
+    }
+  }
+  
+  // 2b. Guess contained in target (e.g., "ham" typed when target is "hammer")
+  // Less confident - they might have stopped typing early
+  if (normalizedTarget.includes(normalizedGuess) && normalizedGuess.length >= 4) {
+    const overlapRatio = normalizedGuess.length / normalizedTarget.length;
+    if (overlapRatio >= 0.6) {
+      return {
+        isFuzzy: true,
+        confidence: Math.round(overlapRatio * 100),
+        method: 'letter_pattern',
+        explanation: `Partial match - typed "${normalizedGuess}" (missing letters)`
+      };
+    }
+  }
+  
+  // 3. Common misspellings (instant recognition)
   for (const [correct, misspellings] of Object.entries(COMMON_MISSPELLINGS)) {
     if (normalizedTarget === correct && misspellings.includes(normalizedGuess)) {
       return {

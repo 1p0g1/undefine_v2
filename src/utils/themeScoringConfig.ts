@@ -1,164 +1,125 @@
 /**
  * Theme Scoring Configuration
- * ===========================
+ * ============================
  * 
- * Centralized configuration for the theme scoring module.
- * All thresholds, weights, and model settings in one place.
+ * Centralized configuration for theme guess scoring.
+ * All parameters are configurable here - no magic numbers scattered in code.
  * 
- * Design principles:
- * - Versioned for tracking changes
- * - All magic numbers externalized
- * - Future-ready for database override (Supabase)
- * - Lean: only essential settings, no over-engineering
+ * This config is designed to be:
+ * - Single source of truth (no duplicated defaults)
+ * - JSON-serializable (for future DB override support)
+ * - Validated on load
  * 
- * ARCHITECTURE NOTE:
- * -----------------
- * This config supports both PROCESSED inputs (for semantic scoring)
- * and RAW inputs (for keyword/negation detection).
+ * ARCHITECTURE: Signals + Policy separation
+ * - signals: embedding, nli, keywords, negation, specificity
+ * - policy: how signals combine and what overrides exist
  * 
- * PROCESSED: Templates applied, used for embedding/NLI
- * RAW: Original user text, used for keyword overlap, negation, specificity
- * 
- * @see docs/THEME_SCORING_IMPROVEMENT_ROADMAP.md
+ * @see src/utils/themeScoring.ts for usage
+ * @see docs/THEME_SCORING_IMPROVEMENT_ROADMAP.md for design decisions
  */
 
 // =============================================================================
-// VERSION INFO
+// HUGGING FACE API CONFIGURATION
 // =============================================================================
 
-export const CONFIG_VERSION = '1.0.0';
-export const CONFIG_UPDATED_AT = '2026-01-18T00:00:00Z';
+// UPDATED: HuggingFace deprecated api-inference.huggingface.co on Jan 2026
+// New endpoint is router.huggingface.co
+export const HF_API_BASE = 'https://router.huggingface.co/hf-inference/models';
 
 // =============================================================================
 // MODEL CONFIGURATION
 // =============================================================================
 
-export interface ModelConfig {
-  embedding: string;
-  paraphrase: string;
-  nli: {
-    default: string;
-    options: string[];
-  };
-}
-
-export const MODELS: ModelConfig = {
-  // Sentence embedding model - good for semantic similarity
+export const MODELS = {
+  // Primary embedding model for semantic similarity
   embedding: 'sentence-transformers/all-MiniLM-L6-v2',
   
-  // Paraphrase model - better at same-meaning detection
+  // Paraphrase model - better for same-meaning detection
   paraphrase: 'sentence-transformers/paraphrase-MiniLM-L6-v2',
   
-  // NLI models for entailment checking
+  // NLI models (TRUE 3-way sentence-pair classification)
   nli: {
-    // Default: smaller, faster, MNLI-compatible
+    // Default: DistilBART (faster, cheaper, good accuracy)
     default: 'valhalla/distilbart-mnli-12-1',
-    // Alternative options for testing
+    // Options for admin lab comparison
     options: [
-      'valhalla/distilbart-mnli-12-1',      // Fast, good accuracy
-      'facebook/bart-large-mnli',            // More accurate, slower
-    ]
+      'valhalla/distilbart-mnli-12-1',     // Fast, good accuracy
+      'facebook/bart-large-mnli',           // More accurate but slower
+      'microsoft/deberta-v3-base-mnli',     // Alternative
+    ],
+    // Use bidirectional NLI for equivalence checking
+    bidirectional: true,
   }
-};
-
-// Hugging Face API base URL
-export const HF_API_BASE = 'https://router.huggingface.co/hf-inference/models';
+} as const;
 
 // =============================================================================
 // THRESHOLD CONFIGURATION
 // =============================================================================
 
-export interface ThresholdConfig {
-  embedding: number;
-  paraphrase: number;
-  nli: {
-    entailmentMin: number;      // Must exceed this for strong match
-    contradictionMax: number;   // Must be below this to pass
-    strongEntailment: number;   // Threshold for "definitely correct"
-  };
-  hybrid: {
-    finalMin: number;           // Combined score threshold
-  };
-  keywords: {
-    overlapMin: number;         // Minimum overlap to consider a match
-    overlapPenaltyStart: number; // Start penalizing below this
-    mismatchPenaltyThreshold: number; // When to apply keyword mismatch penalty
-  };
-}
-
-export const THRESHOLDS: ThresholdConfig = {
-  // Embedding similarity threshold (0-1)
+export const THRESHOLDS = {
+  // Embedding similarity threshold
   embedding: 0.78,
-  
-  // Paraphrase similarity threshold
-  paraphrase: 0.78,
   
   // NLI thresholds
   nli: {
-    entailmentMin: 0.5,        // >50% entailment to pass
-    contradictionMax: 0.3,     // <30% contradiction to pass
-    strongEntailment: 0.7,     // >70% for high-confidence match
+    // Minimum combined bidirectional entailment to consider a match
+    entailmentMin: 0.4,
+    // Maximum contradiction before rejecting (even with high embedding)
+    contradictionMax: 0.5,
+    // Strong entailment threshold for automatic acceptance
+    strongEntailment: 0.7,
+    // Very high contradiction threshold for override (must be > contradictionMax)
+    contradictionOverrideMin: 0.75,
   },
   
-  // Hybrid scoring thresholds
+  // Hybrid decision thresholds
   hybrid: {
-    finalMin: 0.65,            // Combined score must exceed this
+    // Minimum final score for a match
+    finalMin: 0.78,
+    // Embedding threshold below which we rely more on NLI
+    embeddingMinForNliBoost: 0.7,
   },
   
   // Keyword overlap thresholds
   keywords: {
-    overlapMin: 0.5,           // 50%+ keywords must match
-    overlapPenaltyStart: 0.5,  // Start penalizing below 50%
-    mismatchPenaltyThreshold: 0.3, // Apply strong penalty below 30%
-  }
-};
+    // Minimum weighted overlap to consider a match
+    overlapMin: 0.4,
+    // Overlap below this triggers penalty when embedding is high (false positive detection)
+    mismatchPenaltyThreshold: 0.3,
+    // Overlap below this starts applying graduated penalty
+    overlapPenaltyStart: 0.5,
+  },
+} as const;
 
 // =============================================================================
 // WEIGHT CONFIGURATION
 // =============================================================================
 
-export interface WeightConfig {
+export const WEIGHTS = {
+  // Hybrid method weights (must sum to 1.0)
   hybrid: {
-    embedding: number;
-    nli: number;
-  };
-  keywordMatching: {
-    exact: number;
-    stem: number;
-    synonym: number;
-    substring: number;
-  };
-  penalties: {
-    keywordMismatch: number;    // Max penalty for missing keywords
-    lengthShort: number;        // Max penalty for too-short guesses
-    negationMismatch: number;   // Penalty for negation/qualifier mismatch
-    contradictionOverride: number; // Multiplier when contradiction is high
-  };
-}
-
-export const WEIGHTS: WeightConfig = {
-  // Hybrid scoring weights
-  hybrid: {
-    embedding: 0.6,  // 60% weight on embedding
-    nli: 0.4,        // 40% weight on NLI
+    embedding: 0.6,
+    nli: 0.4,
   },
   
-  // Keyword matching weights (for weighted overlap calculation)
+  // Keyword matching weights (for weighted overlap scoring)
   keywordMatching: {
-    exact: 1.0,      // Exact word match
-    stem: 0.9,       // Stemmed match (animals → animal)
-    synonym: 0.6,    // Synonym match (group → plural)
-    substring: 0.3,  // Partial match (animal in animals)
+    exact: 1.0,      // "animals" = "animals"
+    stem: 0.9,       // "animals" → "animal" matches "animal"
+    synonym: 0.6,    // "group" ↔ "plural" via synonym dictionary
+    substring: 0.3,  // "animal" in "animals" - partial match
   },
   
-  // Penalty magnitudes
+  // Penalty weights
   penalties: {
-    keywordMismatch: 0.5,      // Up to 50% reduction
-    lengthShort: 0.25,         // Up to 25% reduction for short guesses
-    negationMismatch: 0.6,     // 60% reduction for negation mismatch
-    contradictionOverride: 0.5, // Reduce to 50% when contradiction high
-  }
-};
+    // Negation/qualifier mismatch penalty (severe - 60% reduction)
+    negationMismatch: 0.6,
+    // Contradiction override penalty
+    contradictionOverride: 0.3,
+    // Keyword mismatch penalty multiplier
+    keywordMismatch: 0.5,
+  },
+} as const;
 
 // =============================================================================
 // NETWORK CONFIGURATION
@@ -174,164 +135,112 @@ export interface NetworkConfig {
 }
 
 export const NETWORK: NetworkConfig = {
-  timeoutMs: 15000,            // 15 second timeout per request
-  maxRetries: 4,               // Max 4 retry attempts
-  baseDelayMs: 500,            // Start with 500ms delay
-  maxDelayMs: 8000,            // Cap at 8 seconds
-  jitterMs: 200,               // Add 0-200ms random jitter
-  retryOnStatuses: [502, 503, 504], // Retry on these HTTP statuses
+  // Request timeout in milliseconds
+  timeoutMs: 10000,
+  // Maximum retry attempts (bounded, not recursive!)
+  maxRetries: 3,
+  // Base delay for exponential backoff
+  baseDelayMs: 1000,
+  // Maximum delay cap
+  maxDelayMs: 5000,
+  // Random jitter range (0-250ms)
+  jitterMs: 250,
+  // HTTP status codes that trigger retry
+  retryOnStatuses: [502, 503, 504, 429],
 };
 
 // =============================================================================
-// SPECIFICITY/TRIVIALITY GATING
+// SPECIFICITY / TRIVIALITY CONFIGURATION
 // =============================================================================
 
-export interface SpecificityConfig {
-  trivialGuessMaxContentTokens: number;  // Below this = trivial
-  minKeywordOverlapForShortGuess: number; // Short guesses need good overlap
-  maxSpecificityPenalty: number;          // Cap on penalty
-}
-
-export const SPECIFICITY: SpecificityConfig = {
-  trivialGuessMaxContentTokens: 2,    // 1-2 content words = trivial
-  minKeywordOverlapForShortGuess: 0.5, // Short guesses need 50%+ overlap
-  maxSpecificityPenalty: 0.25,         // Max 25% penalty
-};
+export const SPECIFICITY = {
+  // Maximum content tokens for a guess to be considered "trivial"
+  trivialGuessMaxContentTokens: 2,
+  // Minimum keyword overlap for short guesses (below this = penalty)
+  // INCREASED from 0.5 to 0.6 to catch cases like "animal kingdom" (50% overlap)
+  minKeywordOverlapForShortGuess: 0.6,
+  // Maximum penalty for trivial guesses missing concepts
+  maxSpecificityPenalty: 0.25,
+} as const;
 
 // =============================================================================
 // TEMPLATE CONFIGURATION
 // =============================================================================
 
-export interface TemplateConfig {
-  theme: string;
-  guess: string;
-  contextualTheme: string;
-  contextualGuess: string;
-  nliPremise: string;
-  nliHypothesis: string;
-}
-
-export const TEMPLATES: TemplateConfig = {
-  // Basic templates
-  theme: "The theme connecting these words is: {theme}",
-  guess: "The theme connecting these words is: {guess}",
+export const TEMPLATES = {
+  // Basic templates (just wrap the text)
+  theme: '{theme}',
+  guess: '{guess}',
   
-  // Contextual templates (recommended for embedding)
+  // Contextual templates (add semantic context for better embedding)
   contextualTheme: "What connects this week's words? {theme}",
   contextualGuess: "What connects this week's words? {guess}",
   
-  // NLI-specific templates
-  nliPremise: "The theme connecting these words is: {theme}",
-  nliHypothesis: "The theme connecting these words is: {guess}",
-};
+  // NLI-specific templates (clearer premise/hypothesis framing)
+  nliPremise: 'The theme connecting these words is: {theme}',
+  nliHypothesis: 'The theme connecting these words is: {guess}',
+} as const;
 
 // =============================================================================
-// SYNONYM DICTIONARY (TIGHTENED)
+// SYNONYM DICTIONARY
 // =============================================================================
 
 /**
- * Synonym dictionary for keyword matching.
+ * Tight, symmetric, domain-relevant synonyms for keyword matching.
+ * Used for detecting paraphrases like "group" ↔ "plural"
  * 
- * Design decisions:
- * - Keep it minimal to avoid false positives
- * - Focus on theme-specific vocabulary
- * - Removed overly broad synonyms (e.g., "object" for "noun")
+ * IMPORTANT: Keep this tight - too broad leads to false positives!
  */
 export const SYNONYMS: Record<string, string[]> = {
-  // Grammar/linguistic terms
-  'group': ['plural', 'collective', 'collection'],
+  // Animal/nature terms
+  'group': ['plural', 'collective', 'collection', 'set'],
   'plural': ['group', 'collective', 'multiple'],
-  'noun': ['substantive'],
-  'verb': ['action'],
-  'adjective': ['describing', 'modifier'],
-  'speech': ['grammar', 'grammatical', 'linguistic'],
-  'part': ['component', 'element', 'role', 'function'],
-  'dual': ['both', 'double', 'two'],
-  
-  // Common theme concepts
-  'meaning': ['definition', 'sense'],
-  'stress': ['emphasis', 'accent', 'pronunciation'],
-  'change': ['shift', 'alter', 'vary'],
-  'sound': ['phonetic', 'pronunciation', 'audio'],
-  'letter': ['character', 'symbol'],
-  'spelling': ['orthography', 'written'],
-  
-  // Category terms
   'animal': ['creature', 'beast', 'fauna'],
-  'food': ['edible', 'cuisine', 'meal'],
-  'color': ['colour', 'hue', 'shade'],
-  'place': ['location', 'area', 'region'],
-  'time': ['period', 'duration', 'era'],
+  'collective': ['group', 'plural', 'set'],
+  
+  // Grammar/language terms
+  'noun': ['substantive', 'naming'],
+  'verb': ['action', 'doing'],
+  'adjective': ['descriptor', 'modifier'],
+  'speech': ['grammar', 'grammatical', 'linguistic'],
+  'part': ['component', 'role', 'function'],
+  
+  // Relationship terms
+  'dual': ['both', 'double', 'two', 'multiple'],
+  'both': ['dual', 'double', 'two'],
+  
+  // Semantic terms
+  'meaning': ['definition', 'sense', 'interpretation'],
+  'stress': ['emphasis', 'accent', 'pronunciation'],
+  'change': ['shift', 'alter', 'vary', 'different'],
+  
+  // Common theme patterns
+  'words': ['terms', 'vocabulary'],
+  'names': ['nouns', 'terms', 'labels'],
 };
 
 // =============================================================================
-// SCORING PROFILES (FUTURE-READY)
-// =============================================================================
-
-/**
- * Scoring profiles for different theme types.
- * Currently just default, but structure supports future expansion.
- * 
- * Future: Could override thresholds per theme type
- * e.g., "phonetic" themes need different handling than "semantic"
- */
-export type ScoringProfile = 'default' | 'property' | 'phonetic' | 'category';
-
-export interface ProfileOverrides {
-  thresholds?: Partial<ThresholdConfig>;
-  weights?: Partial<WeightConfig>;
-}
-
-export const PROFILES: Record<ScoringProfile, ProfileOverrides> = {
-  default: {},
-  property: {
-    // Property themes (like "words that are both nouns and verbs")
-    // Need stricter keyword matching
-    weights: {
-      penalties: {
-        keywordMismatch: 0.6, // Higher penalty for missing keywords
-        lengthShort: 0.25,
-        negationMismatch: 0.7, // Very strict on negation
-        contradictionOverride: 0.4,
-      }
-    } as Partial<WeightConfig>
-  },
-  phonetic: {
-    // Phonetic themes (like "words that rhyme with...")
-    // Embedding is less useful, qualifier detection is key
-  },
-  category: {
-    // Category themes (like "types of animals")
-    // Standard settings work well
-  }
-};
-
-// =============================================================================
-// CONFIG ACCESSOR
+// FULL CONFIG TYPE AND GETTER
 // =============================================================================
 
 export interface ThemeScoringConfig {
-  version: string;
-  updatedAt: string;
-  models: ModelConfig;
-  thresholds: ThresholdConfig;
-  weights: WeightConfig;
+  hfApiBase: string;
+  models: typeof MODELS;
+  thresholds: typeof THRESHOLDS;
+  weights: typeof WEIGHTS;
   network: NetworkConfig;
-  specificity: SpecificityConfig;
-  templates: TemplateConfig;
-  synonyms: Record<string, string[]>;
+  specificity: typeof SPECIFICITY;
+  templates: typeof TEMPLATES;
+  synonyms: typeof SYNONYMS;
 }
 
 /**
- * Get the current theme scoring configuration.
- * 
- * Future: This could load overrides from Supabase
- * For now, returns the static config.
+ * Get the complete theme scoring configuration.
+ * In future, this could load overrides from DB.
  */
 export function getThemeScoringConfig(): ThemeScoringConfig {
   return {
-    version: CONFIG_VERSION,
-    updatedAt: CONFIG_UPDATED_AT,
+    hfApiBase: HF_API_BASE,
     models: MODELS,
     thresholds: THRESHOLDS,
     weights: WEIGHTS,
@@ -343,48 +252,32 @@ export function getThemeScoringConfig(): ThemeScoringConfig {
 }
 
 /**
- * Resolve effective config with profile overrides.
- * 
- * @param profile - The scoring profile to use
- * @returns Merged config with profile overrides applied
+ * Validate the config (lightweight validation)
+ * Throws if config is invalid
  */
-export function resolveConfigWithProfile(profile: ScoringProfile = 'default'): ThemeScoringConfig {
-  const baseConfig = getThemeScoringConfig();
-  const overrides = PROFILES[profile];
-  
-  if (!overrides || Object.keys(overrides).length === 0) {
-    return baseConfig;
+export function validateConfig(config: ThemeScoringConfig): void {
+  // Check weights sum to ~1.0
+  const hybridSum = config.weights.hybrid.embedding + config.weights.hybrid.nli;
+  if (Math.abs(hybridSum - 1.0) > 0.01) {
+    throw new Error(`Hybrid weights must sum to 1.0, got ${hybridSum}`);
   }
   
-  return {
-    ...baseConfig,
-    thresholds: { ...baseConfig.thresholds, ...overrides.thresholds },
-    weights: { ...baseConfig.weights, ...overrides.weights },
-  };
+  // Check thresholds are in valid ranges
+  if (config.thresholds.embedding < 0 || config.thresholds.embedding > 1) {
+    throw new Error('Embedding threshold must be between 0 and 1');
+  }
+  
+  // Check NLI thresholds make sense
+  if (config.thresholds.nli.contradictionOverrideMin <= config.thresholds.nli.contradictionMax) {
+    throw new Error('contradictionOverrideMin must be greater than contradictionMax');
+  }
+  
+  console.log('[themeScoringConfig] Configuration validated successfully');
 }
 
-// =============================================================================
-// FUTURE: DATABASE OVERRIDE SUPPORT (STUB)
-// =============================================================================
-
-/**
- * TODO: Load config overrides from Supabase
- * 
- * Table schema suggestion:
- * CREATE TABLE theme_scoring_config (
- *   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- *   version TEXT NOT NULL,
- *   config JSONB NOT NULL,
- *   active BOOLEAN DEFAULT FALSE,
- *   created_at TIMESTAMPTZ DEFAULT NOW(),
- *   notes TEXT
- * );
- * 
- * This allows A/B testing different configs without code deploys.
- */
-export async function loadConfigFromDatabase(): Promise<ThemeScoringConfig | null> {
-  // Stub - returns null, falls back to static config
-  // Future: query Supabase for active config
-  console.log('[themeScoringConfig] Database config loading not yet implemented');
-  return null;
+// Validate on module load (development check)
+try {
+  validateConfig(getThemeScoringConfig());
+} catch (error) {
+  console.error('[themeScoringConfig] INVALID CONFIG:', error);
 }
