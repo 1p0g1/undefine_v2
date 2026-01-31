@@ -213,10 +213,11 @@ function App() {
   };
   
   // Load daily leaderboard for intro page - independent of playerId
+  // NOTE: Uses relative URL because this endpoint is in the FRONTEND deployment (pages/api/)
   const loadDailyLeaderboard = async () => {
     try {
-      const baseUrl = getApiBaseUrl() || '';
-      const apiUrl = `${baseUrl}/api/daily-leaderboard`;
+      // Use relative URL - this endpoint is in the same deployment as the frontend
+      const apiUrl = '/api/daily-leaderboard';
       console.log('[App] Fetching daily leaderboard from:', apiUrl);
       
       const leaderboardRes = await fetch(apiUrl);
