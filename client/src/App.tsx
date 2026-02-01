@@ -641,14 +641,9 @@ function App() {
     setBonusRoundComplete(true);
     setPendingBonusRound(false);
     
-    // After bonus round, show theme modal (then theme modal will trigger leaderboard on close)
-    if (pendingSummaryAfterTheme) {
-      console.log('[App] Bonus round done, now showing theme modal');
-      // Small delay to let bonus results display before showing theme modal
-      setTimeout(() => {
-        setShowThemeModal(true);
-      }, 1500);
-    }
+    // Theme modal no longer auto-opens after bonus round
+    // Instead, the "Un" diamond pulsates with twist animation to attract clicks
+    console.log('[App] Bonus round done - diamond will animate to attract theme guess click');
   };
 
   // Calculate bonus attempts (unused guesses) - only for early wins

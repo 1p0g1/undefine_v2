@@ -282,17 +282,27 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       {/* CSS keyframes for animations */}
       <style>
         {`
-          /* Pulsate animation - neutral glow to indicate interactivity without color change */
+          /* Pulsate with twist animation - eye-catching to encourage interaction */
           @keyframes pulsate {
             0%, 100% {
               opacity: 1;
-              box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3), 0 0 0 2px rgba(100, 116, 139, 0.2);
+              box-shadow: 0 4px 12px rgba(26, 35, 126, 0.35), 0 0 0 2px rgba(26, 35, 126, 0.2);
               transform: rotate(45deg) scale(1);
             }
+            25% {
+              opacity: 0.95;
+              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
+              transform: rotate(50deg) scale(1.04);
+            }
             50% {
-              opacity: 0.85;
-              box-shadow: 0 8px 24px rgba(100, 116, 139, 0.5), 0 0 0 3px rgba(100, 116, 139, 0.35);
-              transform: rotate(45deg) scale(1.03);
+              opacity: 0.9;
+              box-shadow: 0 8px 24px rgba(26, 35, 126, 0.55), 0 0 0 4px rgba(26, 35, 126, 0.35);
+              transform: rotate(45deg) scale(1.08);
+            }
+            75% {
+              opacity: 0.95;
+              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
+              transform: rotate(40deg) scale(1.04);
             }
           }
           
