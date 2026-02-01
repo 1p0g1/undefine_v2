@@ -83,6 +83,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
     };
   }, [celebrateCompletion, onCelebrationComplete]); // Removed isCelebrating from deps!
   
+  const TOOLTIP_OFFSET_REM = 0.35;
+  
   // Make UN diamond slightly larger than DEFINE boxes but more mobile-friendly
   const baseSize = scaled ? 'clamp(2.6rem, 7vw, 3.0rem)' : 'clamp(2.8rem, 7.5vw, 3.2rem)';
   
@@ -524,7 +526,7 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       {showTooltip && onClick && !isCelebrating && (
         <div style={{
           position: 'absolute',
-          bottom: 'calc(100% + 0.6rem)',
+          bottom: `calc(100% + ${TOOLTIP_OFFSET_REM}rem)`,
           left: '50%',
           transform: 'translateX(-50%)',
           backgroundColor: 'rgba(26, 35, 126, 0.9)',

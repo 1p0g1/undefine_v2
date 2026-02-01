@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
 import { getThemeFeedbackMessage, getSimilarityBarColor, getSimilarityBarWidth, getUnDiamondColor } from '../utils/themeMessages';
-import { UnPrefix } from './UnPrefix';
 import { VaultLogo, VAULT_UNLOCK_SEQUENCE, ORANGE_SHAKE_SEQUENCE, RED_SHAKE_SEQUENCE, SCORE_THRESHOLD_GREEN, SCORE_THRESHOLD_ORANGE } from './VaultLogo';
 
 interface ThemeStatus {
@@ -18,6 +17,7 @@ interface ThemeStatus {
     // Similarity tracking data
     similarityScore?: number | null;
     confidencePercentage?: number | null;
+    highestConfidencePercentage?: number | null;
     matchingMethod?: string | null;
   };
   weeklyThemedWords: Array<{
@@ -120,6 +120,11 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   // Test mode state for animation debugging
   const [showTestPanel, setShowTestPanel] = useState(false);
   const [testAnimationScore, setTestAnimationScore] = useState<number | null>(null);
+
+  const LOCK_TEXT_FONT_SIZE = 'clamp(2rem, 6.5vw, 3.2rem)';
+  const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
+  const HEADER_LINE_GAP_REM = 0.1;
+  const SUBHEAD_FONT_SIZE = 'clamp(1.35rem, 3.5vw, 1.6rem)';
 
   const playerId = getPlayerId();
 
@@ -458,6 +463,10 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       0%, 100% { box-shadow: 0 0 30px rgba(26, 35, 126, 0.15), 0 0 60px rgba(59, 130, 246, 0.1); }
       50% { box-shadow: 0 0 40px rgba(26, 35, 126, 0.25), 0 0 80px rgba(59, 130, 246, 0.15); }
     }
+    @keyframes semanticShimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
     @keyframes thinkingPulse {
       0%, 100% { opacity: 0.3; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(1.05); }
@@ -486,8 +495,19 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       z-index: -1;
       animation: thinkingPulse 4s ease-in-out infinite;
     }
+    .theme-semantic-shimmer {
+      background: linear-gradient(90deg, #1a237e 0%, #3b82f6 35%, #1a237e 70%, #0f172a 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: semanticShimmer 2.6s linear infinite;
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(26, 35, 126, 0.35);
+    }
     @media (prefers-reduced-motion: reduce) {
       .theme-modal-cerebral, .theme-modal-cerebral::before { animation: none !important; }
+      .theme-semantic-shimmer { animation: none !important; }
     }
   `;
 
@@ -549,7 +569,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.25rem', // Reduced gap since no interpunct
-              marginBottom: '0.5rem'
+              marginBottom: `${HEADER_LINE_GAP_REM}rem`
             }}>
               <VaultLogo 
                 large={true}
@@ -561,14 +581,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               />
               <span style={{
                 fontStyle: 'italic',
-                fontSize: 'clamp(2.5rem, 8vw, 4rem)',
+                fontSize: LOCK_TEXT_FONT_SIZE,
                 fontWeight: '700',
                 fontFamily: 'var(--font-primary)',
                 color: themeGuessData?.hasGuessedToday 
                   ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
                   : '#1a237e',
-                marginLeft: '-0.75rem', // More negative margin since no interpunct
-                letterSpacing: '-0.02em'
+                marginLeft: LOCK_TEXT_MARGIN_LEFT,
+                letterSpacing: '-0.02em',
+                lineHeight: 1
               }}>
                 lock
               </span>
@@ -576,13 +597,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             
             {/* Theme of the Week line */}
             <div style={{
-              fontSize: '1.1rem',
+              fontSize: SUBHEAD_FONT_SIZE,
               fontWeight: 'bold',
               color: themeGuessData?.hasGuessedToday 
                 ? getUnDiamondColor(themeGuessData.confidencePercentage, themeGuessData.isCorrectGuess)
-                : '#1a237e'
+                : '#1a237e',
+              marginTop: `${HEADER_LINE_GAP_REM}rem`,
+              lineHeight: 1.1
             }}>
-              Theme of the Week
+              the Theme of the Week
             </div>
             
             {/* Instructions */}
@@ -597,23 +620,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             }}>
               This week's words are connected by a theme.
               {'\n\n'}
-              You have one theme guess per day.
+              You have one guess per day, which will be marked on a{' '}
+              <span className="theme-semantic-shimmer">semantic similarity</span>{' '}
+              percentage to the secret theme.
               {'\n\n'}
-              Your % score represents how close your answer is{' '}
-              <span style={{
-                color: '#1a237e',
-                fontWeight: 700,
-                textShadow: '0 0 6px rgba(26, 35, 126, 0.35)'
-              }}>
-                semantically
-              </span>{' '}
-              to the theme of the week.
-              {'\n\n'}
-              A winning answer has a similarity of 80%+.
+              A winning answer has a similarity of at least 80%. Can you solve it?
             </div>
           </div>
           <button
-            onClick={handleClose}
+            onClick={() => handleClose()}
             style={{
               background: 'none',
               border: 'none',

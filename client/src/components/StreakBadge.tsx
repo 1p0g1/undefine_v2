@@ -18,6 +18,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
 }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const BASE_BADGE_BORDER_COLOR = '#1a237e';
+  const BASE_BADGE_SHADOW = '0 3px 12px rgba(26, 35, 126, 0.2)';
 
   // 🔧 TEMPORARY DEBUG: Log all props to see what we're getting
   console.log('[StreakBadge] Props received:', {
@@ -144,7 +146,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         }
         style={{
           backgroundColor: colors.backgroundColor,
-          border: `2px solid ${colors.borderColor}`,  // Match TimerBadge border
+          border: `2px solid ${BASE_BADGE_BORDER_COLOR}`,  // Match TimerBadge border
           borderRadius: '2rem',
           padding: '0 clamp(0.75rem, 3vw, 1.2rem)',  // Match TimerBadge padding
           height: 'clamp(2.6rem, 8vw, 3.1rem)', // Match TimerBadge height
@@ -156,8 +158,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)',  // Match TimerBadge font
           fontWeight: 600,  // Match TimerBadge
           color: colors.textColor,
-          // Match TimerBadge shadow style
-          boxShadow: '0 3px 12px rgba(26, 35, 126, 0.2)',
+          // Match TimerBadge shadow style with streak accent
+          boxShadow: `${BASE_BADGE_SHADOW}, 0 0 0 1px ${colors.borderColor}33`,
           fontVariantNumeric: 'tabular-nums',
           letterSpacing: '0.02em',
           minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',  // Match TimerBadge minWidth
@@ -169,9 +171,9 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           userSelect: 'none',
           transition: 'all 0.2s ease-in-out',
           animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
-          transform: showTooltip ? 'scale(1.05)' : 'scale(1)',
           opacity: displayStreak === 0 ? 0.8 : 1,
-          lineHeight: 1
+          lineHeight: 1,
+          boxSizing: 'border-box'
         }}
       >
         {/* Background sparkle effect for high streaks */}

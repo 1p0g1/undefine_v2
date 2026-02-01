@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './DefineBoxes.css';
 import { GameSessionState } from '../../../shared-types/src/game';
 import { ShortClueKey, createDefaultClueStatus, CLUE_KEY_MAP } from '../../../shared-types/src/clues';
@@ -31,6 +31,9 @@ const DEFINE_HINTS: Record<string, string> = {
   'E2': 'Etymology: Guess to reveal hints'
 };
 
+const HINT_HIDE_DELAY_MS = 2000;
+const HINT_TOOLTIP_OFFSET_REM = 0.35;
+
 interface DefineBoxesProps {
   gameState: GameSessionState;
   revealedClues: ShortClueKey[];
@@ -52,15 +55,28 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
   const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
   const [showHint, setShowHint] = useState<string | null>(null);
   const [hintTimer, setHintTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hintAnchorLeft, setHintAnchorLeft] = useState<number | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  const handleBoxHover = (letter: string) => {
+  const handleBoxHover = (letter: string, hoveredElement: HTMLDivElement) => {
     if (hintTimer) clearTimeout(hintTimer);
     setShowHint(DEFINE_HINTS[letter]);
+    
+    const wrapperElement = wrapperRef.current;
+    if (wrapperElement) {
+      const wrapperRect = wrapperElement.getBoundingClientRect();
+      const hoveredRect = hoveredElement.getBoundingClientRect();
+      const hoveredCenterX = hoveredRect.left + hoveredRect.width / 2;
+      setHintAnchorLeft(hoveredCenterX - wrapperRect.left);
+    } else {
+      setHintAnchorLeft(null);
+    }
     
     // Hide hint after 2 seconds
     const timer = setTimeout(() => {
       setShowHint(null);
-    }, 2000);
+      setHintAnchorLeft(null);
+    }, HINT_HIDE_DELAY_MS);
     setHintTimer(timer);
   };
 
@@ -76,7 +92,10 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
   const isGameComplete = gameState.isComplete;
 
   return (
-    <div className="define-boxes-wrapper" style={{ 
+    <div
+      ref={wrapperRef}
+      className="define-boxes-wrapper"
+      style={{ 
       display: 'flex', 
       flexDirection: 'column',
       alignItems: 'center',
@@ -129,10 +148,11 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           return (
             <div
               key={`${letter}-${index}`}
-              onMouseEnter={() => handleBoxHover(clueKey)}
+              onMouseEnter={(event) => handleBoxHover(clueKey, event.currentTarget)}
               onMouseLeave={() => {
                 if (hintTimer) clearTimeout(hintTimer);
                 setShowHint(null);
+                setHintAnchorLeft(null);
               }}
               onClick={() => {
                 // Removed click functionality - hover hints are sufficient
@@ -167,8 +187,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
         <div 
           style={{
             position: 'absolute',
-            bottom: 'calc(100% + 0.6rem)',
-            left: '50%',
+            bottom: `calc(100% + ${HINT_TOOLTIP_OFFSET_REM}rem)`,
+            left: hintAnchorLeft !== null ? `${hintAnchorLeft}px` : '50%',
             transform: 'translateX(-50%)',
             fontSize: '0.75rem',
             color: 'white',

@@ -83,6 +83,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
 }) => {
   // Hover state for tooltip
   const [showTooltip, setShowTooltip] = useState(false);
+  const TOOLTIP_OFFSET_REM = 0.35;
   
   // Hover shake animation state (for Orange/Red vaults)
   const [isHoverShaking, setIsHoverShaking] = useState(false);
@@ -580,7 +581,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
         {showTooltip && onClick && !isCelebrating && (
           <div style={{
             position: 'absolute',
-            bottom: 'calc(100% + 0.6rem)',
+            bottom: `calc(100% + ${TOOLTIP_OFFSET_REM}rem)`,
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: 'rgba(26, 35, 126, 0.9)',

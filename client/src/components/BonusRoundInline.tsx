@@ -328,6 +328,18 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
     }
   }, [wordId, nearbyWords, loadingNearby]);
 
+  const handleAnswersToggle = useCallback(() => {
+    if (showNearbyWords) {
+      setShowNearbyWords(false);
+      return;
+    }
+    if (nearbyWords) {
+      setShowNearbyWords(true);
+      return;
+    }
+    fetchNearbyWords();
+  }, [showNearbyWords, nearbyWords, fetchNearbyWords]);
+
   if (remainingAttempts <= 0) return null;
 
   return (
@@ -433,7 +445,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             
             {/* Integrated answers toggle */}
             <button 
-              onClick={fetchNearbyWords} 
+              onClick={handleAnswersToggle} 
               style={styles.answersToggle}
               disabled={loadingNearby}
             >
@@ -446,7 +458,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             <div style={styles.nearbyScrollContainer}>
               <div style={styles.nearbyScrollList}>
                 {/* Words above (reversed so closest to target is at bottom) */}
-                {[...nearbyWords.above].reverse().map((word, idx) => (
+                {nearbyWords.above.map((word, idx) => (
                   <div key={`above-${idx}`} style={styles.nearbyListItem}>
                     <span style={styles.nearbyListRank}>-{nearbyWords.above.length - idx}</span>
                     <span style={styles.nearbyListWord}>{word}</span>
@@ -467,6 +479,12 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                     <span style={styles.nearbyListWord}>{word}</span>
                   </div>
                 ))}
+
+                {nearbyWords.above.length === 0 && nearbyWords.below.length === 0 && (
+                  <div style={styles.nearbyEmptyState}>
+                    No nearby words found yet for this entry.
+                  </div>
+                )}
               </div>
               
               {/* Dictionary attribution */}
@@ -720,6 +738,13 @@ const styles: Record<string, React.CSSProperties> = {
   targetWordStar: {
     color: '#fff',
     fontSize: '0.8rem',
+  },
+  nearbyEmptyState: {
+    padding: '0.75rem',
+    fontSize: '0.8rem',
+    color: '#6b7280',
+    textAlign: 'center' as const,
+    fontStyle: 'italic',
   },
 };
 

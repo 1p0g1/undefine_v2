@@ -228,10 +228,20 @@ function App() {
       const leaderboardData = await leaderboardRes.json();
       console.log('[App] Daily leaderboard data:', leaderboardData);
       
-      // Always update totalPlayers (even if 0 initially)
-      setDailySolversCount(leaderboardData.totalPlayers || 0);
+      const rawTotalPlayers = leaderboardData?.totalPlayers ?? leaderboardData?.data?.totalPlayers ?? 0;
+      const normalizedTotalPlayers = typeof rawTotalPlayers === 'number'
+        ? rawTotalPlayers
+        : Number(rawTotalPlayers || 0);
+      const rawEntries = Array.isArray(leaderboardData?.entries)
+        ? leaderboardData.entries
+        : Array.isArray(leaderboardData?.data?.entries)
+          ? leaderboardData.data.entries
+          : [];
       
-      if (leaderboardData.entries && leaderboardData.entries.length > 0) {
+      // Always update totalPlayers (even if 0 initially)
+      setDailySolversCount(normalizedTotalPlayers);
+      
+      if (rawEntries.length > 0) {
         // Format time helper
         const formatTime = (seconds: number): string => {
           const mins = Math.floor(seconds / 60);
@@ -239,16 +249,24 @@ function App() {
           return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         };
         
-        const top3 = leaderboardData.entries.slice(0, 3).map((entry: any, idx: number) => ({
-          rank: entry.rank || idx + 1,
-          displayName: entry.displayName,
-          guesses: entry.guesses,
-          time: formatTime(entry.timeSeconds || 0)
-        }));
+        const top3 = rawEntries.slice(0, 3).map((entry: any, idx: number) => {
+          const fallbackPlayerId = entry?.playerId || entry?.player_id || '';
+          const fallbackPlayerLabel = fallbackPlayerId
+            ? `Player ${String(fallbackPlayerId).slice(-4)}`
+            : 'Player';
+
+          return {
+            rank: entry?.rank ?? idx + 1,
+            displayName: entry?.displayName || entry?.display_name || entry?.name || fallbackPlayerLabel,
+            guesses: entry?.guesses ?? entry?.guesses_used ?? 0,
+            time: formatTime(entry?.timeSeconds ?? entry?.best_time ?? entry?.completion_time_seconds ?? 0)
+          };
+        });
         console.log('[App] Setting miniLeaderboard:', top3);
         setMiniLeaderboard(top3);
       } else {
         console.log('[App] No leaderboard entries yet');
+        setMiniLeaderboard([]);
       }
     } catch (e) {
       console.error('[App] Failed to fetch daily leaderboard:', e);
@@ -1408,49 +1426,65 @@ function App() {
             </div>
           )}
           
-          {visibleClues.map((clue) => {
-            // Get the full label for the clue heading
-            const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
-            const clueLabel = CLUE_LABELS[clueKey];
-            
-            // Only highlight clues after game completion, and only the winning clue
-            let wasWinningClue = false;
-            if (gameState.isComplete && gameState.isWon) {
-              const winningGuessNumber = gameState.guesses.length;
-              const clueLetters = ['D', 'E', 'F', 'I', 'N', 'E2'];
-              const winningClueKey = clueLetters[winningGuessNumber - 1];
-              wasWinningClue = clue.key === winningClueKey;
-            }
-            
-            return (
-              <div className="hint-row" key={clue.key}>
-                <div className="hint-letter" style={{
-                  fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
-                  backgroundColor: wasWinningClue ? '#22c55e' : undefined,
-                  color: wasWinningClue ? '#fff' : undefined
-                }}>{clue.key === 'E2' ? 'E' : clue.key}</div>
-                <div className="hint-box" style={{
-                  backgroundColor: wasWinningClue ? '#f0fdf4' : '#fff',
-                  borderColor: wasWinningClue ? '#d1fae5' : 'var(--color-primary)',
-                  transition: 'background-color 0.2s ease'
-                }}>
-                  <div className="hint-title" style={{
-                    fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)',
-                    opacity: 0.6,
-                    marginBottom: '0.25rem',
+          {/* Dictionary-style hints container */}
+          <div className="dictionary-hints" style={{
+            background: '#fff',
+            border: '1px solid var(--color-primary)',
+            borderRadius: '0.5rem',
+            padding: '0.75rem 1rem',
+            boxSizing: 'border-box'
+          }}>
+            {visibleClues.map((clue, idx) => {
+              // Get the full label for the clue heading
+              const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
+              const clueLabel = CLUE_LABELS[clueKey];
+              
+              // Only highlight clues after game completion, and only the winning clue
+              let wasWinningClue = false;
+              if (gameState.isComplete && gameState.isWon) {
+                const winningGuessNumber = gameState.guesses.length;
+                const clueLetters = ['D', 'E', 'F', 'I', 'N', 'E2'];
+                const winningClueKey = clueLetters[winningGuessNumber - 1];
+                wasWinningClue = clue.key === winningClueKey;
+              }
+              
+              const isLastClue = idx === visibleClues.length - 1;
+              
+              return (
+                <div 
+                  className="dictionary-hint-entry" 
+                  key={clue.key}
+                  style={{
+                    paddingBottom: isLastClue ? 0 : '0.6rem',
+                    marginBottom: isLastClue ? 0 : '0.6rem',
+                    borderBottom: isLastClue ? 'none' : '1px solid rgba(26, 35, 126, 0.1)',
+                    backgroundColor: wasWinningClue ? '#f0fdf4' : 'transparent',
+                    borderRadius: wasWinningClue ? '0.25rem' : 0,
+                    padding: wasWinningClue ? '0.5rem' : undefined,
+                    margin: wasWinningClue ? '-0.25rem -0.5rem 0.6rem -0.5rem' : undefined,
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  {/* Section label - dictionary style */}
+                  <div style={{
+                    fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
+                    fontWeight: 600,
+                    textTransform: 'lowercase',
+                    fontStyle: 'italic',
+                    color: wasWinningClue ? '#166534' : '#6b7280',
+                    marginBottom: '0.15rem',
                     fontFamily: 'var(--font-primary)',
-                    letterSpacing: '0.03em'
+                    letterSpacing: '0.01em'
                   }}>
-                    {clueLabel}
+                    {clueLabel.toLowerCase()}
                   </div>
-                  <div className="hint-text" style={{
-                    fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                  {/* Hint content */}
+                  <div style={{
+                    fontSize: 'clamp(0.95rem, 2.8vw, 1.1rem)',
                     lineHeight: '1.5',
-                    fontWeight: 500,
-                    color: 'var(--color-primary)'
+                    fontWeight: 400,
+                    color: 'var(--color-primary)',
+                    fontFamily: 'var(--font-primary)'
                   }}>
                     {clueKey === 'in_a_sentence' ? (
                       <SentenceWithLogo text={clue.value} />
@@ -1459,9 +1493,9 @@ function App() {
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
       {/* Guess Input Form */}

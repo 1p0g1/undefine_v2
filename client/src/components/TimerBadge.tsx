@@ -33,7 +33,8 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
         letterSpacing: '0.02em',
         minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',
         textAlign: 'center',
-        lineHeight: 1
+        lineHeight: 1,
+        boxSizing: 'border-box'
       }}
     >
       {formatTime(seconds)}

@@ -524,7 +524,21 @@ h6 {
   color: var(--color-primary);
 }
 
-/* Hint row layout and style */
+/* Dictionary-style hints layout */
+.dictionary-hints {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+}
+
+.dictionary-hint-entry {
+  width: 100%;
+}
+
+/* Legacy hint row layout (kept for backwards compatibility) */
 .hint-row {
   display: flex;
   align-items: flex-start;
