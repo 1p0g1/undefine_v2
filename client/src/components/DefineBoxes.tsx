@@ -108,7 +108,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      {/* No gap - boxes touching for seamless integrated look */}
+      {/* Zero gap - boxes touching for tight integrated look */}
       <div style={{ display: 'flex', gap: '0' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
@@ -153,8 +153,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           // Handle special case for second E
           const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
 
-          // Enlarged box size for better visibility
-          const boxSize = 'clamp(3.2rem, 8.5vw, 4rem)';
+          // Box size optimized for mobile - must fit 6 boxes in ~85vw
+          const boxSize = 'clamp(2.5rem, 12vw, 3.2rem)';
           
           return (
             <div
@@ -177,20 +177,19 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 zIndex: 1
               }}
             >
-              {/* Inner colored content - sized to fit INSIDE the frame's transparent window */}
-              {/* Adjusted to match frame position (frame top: 16%) */}
+              {/* Inner colored content - centered within the frame's transparent window */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '32%',
-                  left: '13%',
-                  right: '13%',
-                  bottom: '0%',
-                  borderRadius: '0.15rem',
+                  top: '15%',
+                  left: '15%',
+                  right: '15%',
+                  bottom: '15%',
+                  borderRadius: '0.1rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'clamp(1.2rem, 3.5vw, 1.6rem)',
+                  fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
                   fontWeight: 700,
                   color: textColor,
                   backgroundColor: bonusColors ? undefined : backgroundColor,
@@ -203,14 +202,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - nudged down 16% from top */}
+              {/* BoxCover frame overlay - moved down significantly to center letter */}
               <img
                 src="/BoxCover.png"
                 alt=""
                 draggable={false}
                 style={{
                   position: 'absolute',
-                  top: '16%',
+                  top: '12%',
                   left: 0,
                   width: '100%',
                   height: '100%',
