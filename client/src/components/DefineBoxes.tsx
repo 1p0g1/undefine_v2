@@ -106,12 +106,10 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'relative',
-      // Extra padding to accommodate frame overflow
-      padding: '0.3rem'
+      position: 'relative'
     }}>
-      {/* Reduced gap since frames provide visual separation */}
-      <div style={{ display: 'flex', gap: '0.1rem' }}>
+      {/* Small gap - frames are self-contained */}
+      <div style={{ display: 'flex', gap: '0.15rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -154,10 +152,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           // Handle special case for second E
           const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
 
-          // Box size for consistent calculations
-          const boxSize = 'clamp(2.4rem, 6.5vw, 2.8rem)';
-          // Frame overlay extends slightly beyond the box
-          const frameOverflow = '15%';
+          // Box container size - this defines the overall space each box takes
+          const boxSize = 'clamp(2.6rem, 7vw, 3.2rem)';
           
           return (
             <div
@@ -180,19 +176,20 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 zIndex: 1
               }}
             >
-              {/* Inner colored box - the content that shows through the frame */}
+              {/* Inner colored box - sized to fit INSIDE the frame's transparent window */}
+              {/* The frame has thick borders, so inner content is ~55% of total frame size */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '12%',
-                  left: '12%',
-                  right: '12%',
-                  bottom: '12%',
-                  borderRadius: '0.2rem',
+                  top: '18%',
+                  left: '18%',
+                  right: '18%',
+                  bottom: '18%',
+                  borderRadius: '0.15rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'clamp(1.1rem, 3.2vw, 1.35rem)',
+                  fontSize: 'clamp(1rem, 3vw, 1.3rem)',
                   fontWeight: 700,
                   color: textColor,
                   backgroundColor: bonusColors ? undefined : backgroundColor,
@@ -205,20 +202,19 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - sits on top with transparent center */}
+              {/* BoxCover frame overlay - covers entire box area */}
               <img
                 src="/BoxCover.png"
                 alt=""
                 draggable={false}
                 style={{
                   position: 'absolute',
-                  top: `-${frameOverflow}`,
-                  left: `-${frameOverflow}`,
-                  width: `calc(100% + ${frameOverflow} * 2)`,
-                  height: `calc(100% + ${frameOverflow} * 2)`,
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
                   pointerEvents: 'none',
-                  zIndex: 2,
-                  objectFit: 'contain'
+                  zIndex: 2
                 }}
               />
             </div>
