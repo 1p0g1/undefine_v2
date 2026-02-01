@@ -152,9 +152,6 @@ function App() {
   const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
   const [bonusRoundComplete, setBonusRoundComplete] = useState(false);
   
-  // Rolodex-style hint expansion state
-  const [expandedHint, setExpandedHint] = useState<string | null>(null);
-  
   // NEW: Celebration animation state for post-game ceremony
   const [celebrateDiamond, setCelebrateDiamond] = useState(false);
   // NEW: Track if bonus round should show after theme guess
@@ -686,8 +683,8 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center',
         gap: '0.75rem',
-        marginBottom: '1rem',
-        paddingTop: '0.5rem'
+        marginBottom: '0.25rem',
+        paddingTop: '0.25rem'
       }}>
         <TimerBadge seconds={timer} />
           <InfoDiamond onClick={() => setShowRules(true)} />
@@ -745,12 +742,11 @@ function App() {
           gap: 'clamp(0.1rem, 0.4vw, 0.2rem)',
           width: '100%',
           maxWidth: '100vw',
-          marginTop: 'clamp(0.5rem, 2vw, 1rem)',
-          marginBottom: '0.3rem',
+          marginTop: '0',
+          marginBottom: '0.15rem',
           position: 'relative',
           padding: '0 clamp(0.2rem, 1vw, 0.4rem)',
           boxSizing: 'border-box',
-          // Ensure it fits on mobile
           minWidth: 0
         }}
       >
@@ -1348,22 +1344,20 @@ function App() {
           </div>
         </div>
       )}
-      {/* Past Guesses below DEFINE row - compact spacing */}
+      {/* Past Guesses below DEFINE row - tight spacing */}
       {gameStarted && gameState.guesses.length > 0 && (
         <div className="past-guesses" style={{
           fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          margin: '0.15rem 0 0 0',
+          margin: '0',
           color: '#6b7280'
         }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
-      {/* Clues Section - Rolodex style */}
+      {/* Clues Section */}
       {gameStarted && (
         <div className="hint-blocks" style={{ 
           width: '100%', 
           maxWidth: 420, 
-          margin: '0.75rem auto 0 auto',
-          gap: 0,
-          position: 'relative'
+          margin: '0.5rem auto 0 auto'
         }}>
           {/* Show word reveal when game is complete */}
           {gameState.isComplete && (
@@ -1414,7 +1408,7 @@ function App() {
             </div>
           )}
           
-          {visibleClues.map((clue, index) => {
+          {visibleClues.map((clue) => {
             // Get the full label for the clue heading
             const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
             const clueLabel = CLUE_LABELS[clueKey];
@@ -1428,24 +1422,8 @@ function App() {
               wasWinningClue = clue.key === winningClueKey;
             }
             
-            const isExpanded = expandedHint === clue.key;
-            const isAnyExpanded = expandedHint !== null;
-            
             return (
-              <div 
-                className="hint-row" 
-                key={clue.key}
-                onClick={() => setExpandedHint(isExpanded ? null : clue.key)}
-                style={{
-                  marginTop: index === 0 ? 0 : '-8px',
-                  position: 'relative',
-                  zIndex: isExpanded ? 20 : (10 - index),
-                  transform: isExpanded ? 'scale(1.02)' : (isAnyExpanded && !isExpanded ? 'scale(0.98)' : 'scale(1)'),
-                  opacity: isAnyExpanded && !isExpanded ? 0.7 : 1,
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer'
-                }}
-              >
+              <div className="hint-row" key={clue.key}>
                 <div className="hint-letter" style={{
                   fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
                   backgroundColor: wasWinningClue ? '#22c55e' : undefined,
@@ -1454,10 +1432,7 @@ function App() {
                 <div className="hint-box" style={{
                   backgroundColor: wasWinningClue ? '#f0fdf4' : '#fff',
                   borderColor: wasWinningClue ? '#d1fae5' : 'var(--color-primary)',
-                  transition: 'all 0.2s ease',
-                  boxShadow: isExpanded ? '0 4px 12px rgba(0,0,0,0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
-                  maxHeight: isExpanded ? 'none' : '60px',
-                  overflow: isExpanded ? 'visible' : 'hidden'
+                  transition: 'background-color 0.2s ease'
                 }}>
                   <div className="hint-title" style={{
                     fontSize: 'clamp(0.625rem, 1.8vw, 0.75rem)',
@@ -1465,7 +1440,7 @@ function App() {
                     textTransform: 'uppercase',
                     color: 'var(--color-primary)',
                     opacity: 0.6,
-                    marginBottom: isExpanded ? '0.25rem' : '0.1rem',
+                    marginBottom: '0.25rem',
                     fontFamily: 'var(--font-primary)',
                     letterSpacing: '0.03em'
                   }}>
@@ -1473,12 +1448,9 @@ function App() {
                   </div>
                   <div className="hint-text" style={{
                     fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                    lineHeight: isExpanded ? '1.5' : '1.2',
+                    lineHeight: '1.5',
                     fontWeight: 500,
-                    color: 'var(--color-primary)',
-                    overflow: isExpanded ? 'visible' : 'hidden',
-                    textOverflow: isExpanded ? 'clip' : 'ellipsis',
-                    whiteSpace: isExpanded ? 'normal' : 'nowrap'
+                    color: 'var(--color-primary)'
                   }}>
                     {clueKey === 'in_a_sentence' ? (
                       <SentenceWithLogo text={clue.value} />

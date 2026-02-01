@@ -188,47 +188,41 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           />
         )}
         
-        {/* Main streak display */}
+        {/* Main streak display - just zzz emoji for 0 streak */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: '0.3rem',
           fontSize: '1em'
         }}>
-          <span style={{ fontSize: '1.1em' }}>
-            {emoji}
-          </span>
-          <span style={{ 
-            fontWeight: 800,
-            letterSpacing: '0.02em'
-          }}>
-            {displayStreak}
-          </span>
+          {displayStreak === 0 ? (
+            <span style={{ fontSize: '1.1em' }}>💤</span>
+          ) : (
+            <>
+              <span style={{ fontSize: '1.1em' }}>
+                {emoji}
+              </span>
+              <span style={{ 
+                fontWeight: 800,
+                letterSpacing: '0.02em'
+              }}>
+                {displayStreak}
+              </span>
+            </>
+          )}
         </div>
 
-        {/* Highest streak display (smaller text) OR motivational message for 0 streak */}
-        {displayStreak === 0 ? (
+        {/* Highest streak display - only for non-zero streaks */}
+        {displayStreak > 0 && highestStreak && highestStreak > displayStreak && (
           <div style={{
-            fontSize: 'clamp(0.6rem, 1.6vw, 0.7rem)',
+            fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
             fontWeight: 500,
-            color: 'rgba(107, 114, 128, 0.9)',
+            color: `${colors.textColor}CC`,
             letterSpacing: '0.01em',
             lineHeight: '1'
           }}>
-            Start now!
+            Best: {highestStreak}
           </div>
-        ) : (
-          highestStreak && highestStreak > displayStreak && (
-            <div style={{
-              fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
-              fontWeight: 500,
-              color: `${colors.textColor}CC`, // Add transparency to the text color
-              letterSpacing: '0.01em',
-              lineHeight: '1'
-            }}>
-              Best: {highestStreak}
-            </div>
-          )
         )}
 
         {/* Tooltip - clean, nearly transparent style */}
@@ -252,7 +246,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
             zIndex: 10,
             letterSpacing: '0.01em'
           }}>
-            Your current streak
+            Streak Counter
           </div>
         )}
 
