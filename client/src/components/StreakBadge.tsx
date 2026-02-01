@@ -5,31 +5,21 @@ interface StreakBadgeProps {
   streak: number;
   highestStreak?: number;
   lastWinDate?: string | null;
-  playerId?: string; // Add playerId for calendar modal
-  onSelectArchiveDate?: (date: string) => void; // NEW: Callback for archive play
+  playerId?: string;
+  onSelectArchiveDate?: (date: string) => void;
 }
 
 export const StreakBadge: React.FC<StreakBadgeProps> = ({ 
   streak, 
   highestStreak, 
   lastWinDate,
-  playerId = 'default-player', // fallback value
-  onSelectArchiveDate // NEW: Archive play callback
+  playerId = 'default-player',
+  onSelectArchiveDate
 }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const BASE_BADGE_BORDER_COLOR = '#1a237e';
-  const BASE_BADGE_SHADOW = '0 3px 12px rgba(26, 35, 126, 0.2)';
 
-  // 🔧 TEMPORARY DEBUG: Log all props to see what we're getting
-  console.log('[StreakBadge] Props received:', {
-    streak,
-    highestStreak,
-    lastWinDate,
-    playerId
-  });
-
-  // Calculate if streak is active (won today or yesterday) - STRICT consecutive system
+  // Calculate if streak is active (won today or yesterday)
   const isActiveStreak = () => {
     if (!lastWinDate || streak === 0) return false;
     
@@ -37,103 +27,89 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - lastWin.getTime()) / (1000 * 60 * 60 * 24));
     
-    console.log('[StreakBadge] Streak analysis:', {
-      lastWinDate,
-      daysDiff,
-      streak,
-      wouldBeActive: daysDiff <= 1
-    });
-    
-    return daysDiff <= 1; // Active only if won today or yesterday (strict consecutive)
+    return daysDiff <= 1;
   };
 
   const activeStreak = isActiveStreak();
-  
-  // 🚨 CRITICAL FIX: Always show database streak value, don't hide based on UI rules
-  // The database triggers handle the strict consecutive logic correctly
-  const displayStreak = streak; // Show actual database value
-  
-  console.log('[StreakBadge] Display decision:', {
-    activeStreak,
-    databaseStreak: streak,
-    displayStreak,
-    reasoning: 'Showing database value directly'
-  });
-  
-  // Updated color system with firey glow effects
-  const getStreakColors = (s: number, isActive: boolean) => {
-    if (s === 0) {
-      return { 
-        backgroundColor: '#f8f9ff',
-        borderColor: '#6b7280',
-        textColor: '#6b7280',
-        glowColor: '#6b7280'
-      };
-    }
-    
-    // Use firey red-orange/yellow glow for active streaks (distinct from fuzzy orange #d97706)
-    if (isActive) {
-      if (s >= 20) {
-        return {
-          backgroundColor: '#fef7ec', // Light orange background
-          borderColor: '#dc2626', // Deep red for diamond-level streaks
-          textColor: '#dc2626',
-          glowColor: '#dc2626'
-        };
-      }
-      if (s >= 10) {
-        return {
-          backgroundColor: '#fef7e6', // Light gold background (keep this one)
-          borderColor: '#f59e0b', // Amber/gold (keep this one)
-          textColor: '#f59e0b',
-          glowColor: '#f59e0b'
-        };
-      }
-      if (s >= 3) {
-        return {
-          backgroundColor: '#fef2f2', // Light red background
-          borderColor: '#ef4444', // Red-orange for solid streaks
-          textColor: '#ef4444',
-          glowColor: '#ef4444'
-        };
-      }
-      // Starting active streak - softer red-orange
-      return {
-        backgroundColor: '#fff7ed',
-        borderColor: '#fb923c', // Soft orange (distinct from fuzzy #d97706)
-        textColor: '#fb923c',
-        glowColor: '#fb923c'
-      };
-    }
-    
-    // Inactive/dormant - muted colors but still show the number
-    return {
-      backgroundColor: '#f8f9ff',
-      borderColor: '#9ca3af',
-      textColor: '#9ca3af',
-      glowColor: '#9ca3af'
-    };
+  const displayStreak = streak;
+
+  // Fire intensity based on streak level
+  const getFireIntensity = (s: number, isActive: boolean) => {
+    if (!isActive || s === 0) return 'none';
+    if (s >= 20) return 'inferno';   // 🔥🔥🔥 Maximum flames
+    if (s >= 10) return 'blazing';   // 🔥🔥 Strong flames
+    if (s >= 5) return 'burning';    // 🔥 Medium flames
+    if (s >= 3) return 'warming';    // Subtle glow
+    return 'ember';                  // Very subtle
   };
 
-  // Emoji for streaks
-  const getStreakEmoji = (s: number) => {
-    if (s === 0) return '💤'; // Sleeping/inactive
-    if (s >= 20) return '💎'; // Diamond
-    if (s >= 10) return '⭐'; // Gold star  
-    if (s >= 6) return '🔥'; // Fire
-    if (s >= 3) return '⚡'; // Lightning
-    if (s >= 1) return '🔥'; // Fire for all active streaks
-    return '💤'; // Sleeping fallback
+  const fireIntensity = getFireIntensity(displayStreak, activeStreak);
+  
+  // Get fire colors based on intensity
+  const getFireColors = () => {
+    switch (fireIntensity) {
+      case 'inferno':
+        return { primary: '#dc2626', secondary: '#f97316', glow: 'rgba(220, 38, 38, 0.6)' };
+      case 'blazing':
+        return { primary: '#f59e0b', secondary: '#fbbf24', glow: 'rgba(245, 158, 11, 0.5)' };
+      case 'burning':
+        return { primary: '#f97316', secondary: '#fb923c', glow: 'rgba(249, 115, 22, 0.4)' };
+      case 'warming':
+        return { primary: '#fb923c', secondary: '#fdba74', glow: 'rgba(251, 146, 60, 0.3)' };
+      case 'ember':
+        return { primary: '#fdba74', secondary: '#fed7aa', glow: 'rgba(253, 186, 116, 0.2)' };
+      default:
+        return { primary: '#1a237e', secondary: '#1a237e', glow: 'transparent' };
+    }
   };
 
-  const colors = getStreakColors(displayStreak, activeStreak);
-  const emoji = getStreakEmoji(displayStreak);
-
-  // Special milestone display for 10+ (only for active streaks)
-  const isMilestone = displayStreak >= 10 && activeStreak;
+  const fireColors = getFireColors();
+  const hasFireEffect = fireIntensity !== 'none';
   
   return (
     <>
+      <style>{`
+        @keyframes flicker {
+          0%, 100% { 
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+          25% { 
+            opacity: 0.9;
+            transform: scale(1.02) translateY(-1px);
+          }
+          50% { 
+            opacity: 1;
+            transform: scale(0.98) translateY(0);
+          }
+          75% { 
+            opacity: 0.95;
+            transform: scale(1.01) translateY(-0.5px);
+          }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { 
+            box-shadow: 0 0 8px var(--glow-color), 0 3px 12px rgba(26, 35, 126, 0.2);
+          }
+          50% { 
+            box-shadow: 0 0 16px var(--glow-color), 0 0 24px var(--glow-color), 0 3px 12px rgba(26, 35, 126, 0.2);
+          }
+        }
+        
+        @keyframes flame-dance {
+          0%, 100% { 
+            text-shadow: 0 0 4px var(--flame-primary), 0 0 8px var(--flame-secondary);
+          }
+          33% { 
+            text-shadow: 0 -2px 6px var(--flame-primary), 0 -4px 12px var(--flame-secondary);
+          }
+          66% { 
+            text-shadow: 0 -1px 5px var(--flame-primary), 0 -2px 10px var(--flame-secondary);
+          }
+        }
+      `}</style>
+      
       <div 
         className="streak-badge"
         onClick={() => setShowCalendar(true)}
@@ -141,74 +117,73 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
         onMouseLeave={() => setShowTooltip(false)}
         aria-label={
           displayStreak === 0 
-            ? "No active streak - start building!" 
-            : `Current streak: ${displayStreak} games${highestStreak ? `, personal best: ${highestStreak}` : ''}`
+            ? "No active streak" 
+            : `Streak: ${displayStreak}${highestStreak && highestStreak > displayStreak ? ` (best: ${highestStreak})` : ''}`
         }
         style={{
-          backgroundColor: colors.backgroundColor,
-          border: `2px solid ${BASE_BADGE_BORDER_COLOR}`,  // Match TimerBadge border
+          // Match TimerBadge exactly
+          background: '#faf7f2',
+          border: '2px solid #1a237e',
           borderRadius: '2rem',
-          padding: '0 clamp(0.75rem, 3vw, 1.2rem)',  // Match TimerBadge padding
-          height: 'clamp(2.6rem, 8vw, 3.1rem)', // Match TimerBadge height
+          padding: '0 clamp(0.75rem, 3vw, 1.2rem)',
+          height: 'clamp(2.6rem, 8vw, 3.1rem)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'Libre Baskerville, Georgia, Times, serif',
-          fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)',  // Match TimerBadge font
-          fontWeight: 600,  // Match TimerBadge
-          color: colors.textColor,
-          // Match TimerBadge shadow style with streak accent
-          boxShadow: `${BASE_BADGE_SHADOW}, 0 0 0 1px ${colors.borderColor}33`,
+          fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)',
+          fontWeight: 600,
+          color: hasFireEffect ? fireColors.primary : '#1a237e',
+          boxShadow: hasFireEffect 
+            ? `0 0 12px ${fireColors.glow}, 0 3px 12px rgba(26, 35, 126, 0.2)`
+            : '0 3px 12px rgba(26, 35, 126, 0.2)',
           fontVariantNumeric: 'tabular-nums',
           letterSpacing: '0.02em',
-          minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',  // Match TimerBadge minWidth
+          minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',
           textAlign: 'center',
-          gap: '0.1rem',
           position: 'relative',
-          overflow: 'hidden',
           cursor: 'pointer',
           userSelect: 'none',
-          transition: 'all 0.2s ease-in-out',
-          animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
-          opacity: displayStreak === 0 ? 0.8 : 1,
+          transition: 'all 0.3s ease-in-out',
           lineHeight: 1,
-          boxSizing: 'border-box'
-        }}
+          boxSizing: 'border-box',
+          // CSS custom properties for animations
+          '--glow-color': fireColors.glow,
+          '--flame-primary': fireColors.primary,
+          '--flame-secondary': fireColors.secondary,
+          animation: hasFireEffect ? 'pulse-glow 2s ease-in-out infinite' : undefined
+        } as React.CSSProperties}
       >
-        {/* Background sparkle effect for high streaks */}
-        {displayStreak >= 15 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.1) 49%, rgba(255,255,255,0.1) 51%, transparent 52%)',
-              animation: 'sparkle 3s linear infinite',
-              pointerEvents: 'none'
-            }}
-          />
-        )}
-        
-        {/* Main streak display - just zzz emoji for 0 streak */}
+        {/* Main streak display */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '0.3rem',
-          fontSize: '1em'
+          gap: '0.25rem',
+          animation: hasFireEffect ? 'flicker 1.5s ease-in-out infinite' : undefined
         }}>
           {displayStreak === 0 ? (
-            <span style={{ fontSize: '1.1em' }}>💤</span>
+            <span style={{ 
+              fontSize: '1.1em',
+              opacity: 0.6
+            }}>
+              💤
+            </span>
           ) : (
             <>
-              <span style={{ fontSize: '1.1em' }}>
-                {emoji}
+              <span style={{ 
+                fontSize: '1.1em',
+                animation: hasFireEffect ? 'flame-dance 0.8s ease-in-out infinite' : undefined,
+                filter: hasFireEffect ? 'drop-shadow(0 0 2px rgba(0,0,0,0.3))' : undefined
+              }}>
+                🔥
               </span>
               <span style={{ 
-                fontWeight: 800,
-                letterSpacing: '0.02em'
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                color: hasFireEffect ? fireColors.primary : '#1a237e',
+                textShadow: hasFireEffect 
+                  ? `0 0 4px ${fireColors.secondary}` 
+                  : undefined
               }}>
                 {displayStreak}
               </span>
@@ -216,24 +191,11 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           )}
         </div>
 
-        {/* Highest streak display - only for non-zero streaks */}
-        {displayStreak > 0 && highestStreak && highestStreak > displayStreak && (
-          <div style={{
-            fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
-            fontWeight: 500,
-            color: `${colors.textColor}CC`,
-            letterSpacing: '0.01em',
-            lineHeight: '1'
-          }}>
-            Best: {highestStreak}
-          </div>
-        )}
-
-        {/* Tooltip - clean, consistent style */}
+        {/* Tooltip */}
         {showTooltip && (
           <div style={{
             position: 'absolute',
-            bottom: 'calc(100% + 0.6rem)',
+            bottom: 'calc(100% + 0.35rem)',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: 'rgba(26, 35, 126, 0.9)',
@@ -250,21 +212,12 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
             letterSpacing: '0.01em',
             pointerEvents: 'none'
           }}>
-            Streak Counter
+            {displayStreak === 0 
+              ? 'Start your streak!' 
+              : `${displayStreak} day streak${highestStreak && highestStreak > displayStreak ? ` • Best: ${highestStreak}` : ''}`
+            }
           </div>
         )}
-
-        <style>{`
-          @keyframes subtle-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-          }
-          
-          @keyframes sparkle {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-        `}</style>
       </div>
 
       {/* Calendar Modal */}
@@ -276,4 +229,4 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
       />
     </>
   );
-}; 
+};

@@ -1362,14 +1362,7 @@ function App() {
           </div>
         </div>
       )}
-      {/* Past Guesses below DEFINE row - tight spacing */}
-      {gameStarted && gameState.guesses.length > 0 && (
-        <div className="past-guesses" style={{
-          fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          margin: '-0.1rem 0 0 0',
-          color: '#6b7280'
-        }}>Past guesses: {gameState.guesses.join(', ')}</div>
-      )}
+      {/* Past guesses removed - now shown inline with hints */}
       {/* Clues Section */}
       {gameStarted && (
         <div className="hint-blocks" style={{ 
@@ -1404,27 +1397,7 @@ function App() {
             />
           )}
 
-          {/* Bonus Round Results Summary */}
-          {bonusRoundComplete && bonusRoundResults.length > 0 && (
-            <div style={{
-              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-              border: '2px solid #22c55e',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              marginTop: '0.5rem',
-              marginBottom: '0.5rem',
-              textAlign: 'center',
-            }}>
-              <div style={{ fontWeight: 600, color: '#166534', marginBottom: '0.25rem' }}>
-                🎯 Bonus Round Complete!
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#15803d' }}>
-                {bonusRoundResults.filter(r => r.tier === 'perfect').length} Gold,{' '}
-                {bonusRoundResults.filter(r => r.tier === 'good').length} Silver,{' '}
-                {bonusRoundResults.filter(r => r.tier === 'average').length} Bronze
-              </div>
-            </div>
-          )}
+          {/* Bonus Round Results Summary removed - results shown in DEFINE boxes */}
           
           {/* Dictionary-style hints container */}
           <div className="dictionary-hints" style={{
@@ -1438,6 +1411,9 @@ function App() {
               // Get the full label for the clue heading
               const clueKey = CLUE_KEY_MAP[clue.key as keyof typeof CLUE_KEY_MAP];
               const clueLabel = CLUE_LABELS[clueKey];
+              
+              // The guess that revealed this clue (idx corresponds to guess number)
+              const guessForThisClue = gameState.guesses[idx];
               
               // Only highlight clues after game completion, and only the winning clue
               let wasWinningClue = false;
@@ -1462,7 +1438,8 @@ function App() {
                     borderRadius: wasWinningClue ? '0.25rem' : 0,
                     padding: wasWinningClue ? '0.5rem' : undefined,
                     margin: wasWinningClue ? '-0.25rem -0.5rem 0.6rem -0.5rem' : undefined,
-                    transition: 'background-color 0.2s ease'
+                    transition: 'background-color 0.2s ease',
+                    position: 'relative'
                   }}
                 >
                   {/* Section label - dictionary style */}
@@ -1478,18 +1455,41 @@ function App() {
                   }}>
                     {clueLabel.toLowerCase()}
                   </div>
-                  {/* Hint content */}
+                  {/* Hint content with inline guess */}
                   <div style={{
-                    fontSize: 'clamp(0.95rem, 2.8vw, 1.1rem)',
-                    lineHeight: '1.5',
-                    fontWeight: 400,
-                    color: 'var(--color-primary)',
-                    fontFamily: 'var(--font-primary)'
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-end',
+                    gap: '0.5rem'
                   }}>
-                    {clueKey === 'in_a_sentence' ? (
-                      <SentenceWithLogo text={clue.value} />
-                    ) : (
-                      clue.value
+                    <div style={{
+                      fontSize: 'clamp(0.95rem, 2.8vw, 1.1rem)',
+                      lineHeight: '1.5',
+                      fontWeight: 400,
+                      color: 'var(--color-primary)',
+                      fontFamily: 'var(--font-primary)',
+                      flex: 1
+                    }}>
+                      {clueKey === 'in_a_sentence' ? (
+                        <SentenceWithLogo text={clue.value} />
+                      ) : (
+                        clue.value
+                      )}
+                    </div>
+                    {/* Guess that revealed this clue - bottom right */}
+                    {guessForThisClue && (
+                      <div style={{
+                        fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
+                        color: wasWinningClue ? '#166534' : '#9ca3af',
+                        fontStyle: 'italic',
+                        fontFamily: 'var(--font-primary)',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        paddingLeft: '0.5rem',
+                        borderLeft: '1px solid rgba(156, 163, 175, 0.3)'
+                      }}>
+                        {wasWinningClue ? '✓ ' : ''}{guessForThisClue}
+                      </div>
                     )}
                   </div>
                 </div>
