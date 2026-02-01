@@ -108,8 +108,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      {/* Minimal spacing - boxes close together for integrated look */}
-      <div style={{ display: 'flex', gap: '0.1rem' }}>
+      {/* No gap - boxes touching for seamless integrated look */}
+      <div style={{ display: 'flex', gap: '0' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -178,14 +178,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
               }}
             >
               {/* Inner colored content - sized to fit INSIDE the frame's transparent window */}
-              {/* Adjusted: top 23% (moved down 8%), left/right 15%, bottom 7% to match frame window */}
+              {/* Adjusted to match frame position (frame top: 16%) */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '20%',
+                  top: '32%',
                   left: '13%',
                   right: '13%',
-                  bottom: '12%',
+                  bottom: '0%',
                   borderRadius: '0.15rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -203,14 +203,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - nudged down 8% from center */}
+              {/* BoxCover frame overlay - nudged down 16% from top */}
               <img
                 src="/BoxCover.png"
                 alt=""
                 draggable={false}
                 style={{
                   position: 'absolute',
-                  top: '4%',
+                  top: '16%',
                   left: 0,
                   width: '100%',
                   height: '100%',
