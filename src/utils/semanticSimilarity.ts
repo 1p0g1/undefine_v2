@@ -1,22 +1,24 @@
 /**
  * Semantic Similarity Utility for Un•Define Theme Fuzzy Matching
  * 
- * UPDATED: January 2025 - Migrated to new Hugging Face Inference Providers API
- * Uses new router.huggingface.co/hf-inference endpoint (old api-inference deprecated)
+ * UPDATED: February 2025 - Now delegates to themeScoring.ts with embeddingOnly mode
+ * This ensures production scoring matches the admin Theme Lab exactly.
  * 
- * Based on test results from 2025-01-08:
- * - Best performing model for theme matching (75% accuracy)
- * - Optimal threshold: 85% for theme matching
- * - Cost: ~$3/month for 1000 users (theme matching only)
+ * The embeddingOnly mode uses:
+ * - Embedding similarity (sentence-transformers/all-MiniLM-L6-v2)
+ * - Keyword overlap with weighted matching (exact/stem/synonym/substring)
+ * - Specificity/triviality gating
+ * - Negation/qualifier detection
+ * - NO NLI (faster, lower cost)
+ * 
+ * @see src/utils/themeScoring.ts for the full implementation
+ * @see docs/THEME_MATCHING_IMPROVEMENT_PLAN.md for design decisions
  */
 
-// Model selection based on test results
-// Testing the gold standard MiniLM model for technical term matching
-const HF_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
-const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
+import { testThemeScoring, THRESHOLDS } from './themeScoring';
 
-// Thresholds based on real test data
-const THEME_SIMILARITY_THRESHOLD = 0.78; // Lowered to accept valid synonyms (85% was too strict for true synonyms scoring 75-82%)
+// Re-export threshold for backward compatibility
+const THEME_SIMILARITY_THRESHOLD = THRESHOLDS.embedding;
 const WORD_SIMILARITY_THRESHOLD = 0.75;  // 75% for future word matching
 
 export interface SemanticSimilarityResult {
@@ -34,119 +36,12 @@ export interface UsageStats {
 }
 
 /**
- * Compute semantic similarity between two texts using Hugging Face API
- */
-export async function computeSemanticSimilarity(
-  text1: string, 
-  text2: string
-): Promise<number> {
-  const apiKey = process.env.HF_API_KEY;
-  
-  if (!apiKey) {
-    console.error('HF_API_KEY environment variable not set');
-    return 0;
-  }
-  
-  try {
-    const response = await fetch(HF_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: {
-          source_sentence: text1.toLowerCase().trim(),
-          sentences: [text2.toLowerCase().trim()]
-        }
-      })
-    });
-    
-    if (!response.ok) {
-      if (response.status === 503) {
-        console.warn('HF model loading, retrying in 5 seconds...');
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        return computeSemanticSimilarity(text1, text2); // Retry once
-      }
-      
-      // Log more details for debugging the new API
-      const errorText = await response.text();
-      console.error(`HF API Error: ${response.status} - ${errorText}`);
-      throw new Error(`HF API Error: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    return result[0] || 0;
-    
-  } catch (error) {
-    console.error('Semantic similarity error:', error);
-    return 0; // Fallback to no match
-  }
-}
-
-/**
- * Compute semantic similarity with contextual prompting for theme matching
- * Adds context to improve AI understanding of the matching task
- */
-async function computeThemeSemanticSimilarity(
-  guess: string, 
-  theme: string
-): Promise<number> {
-  const apiKey = process.env.HF_API_KEY;
-  
-  if (!apiKey) {
-    console.error('HF_API_KEY environment variable not set');
-    return 0;
-  }
-  
-  // Add contextual framing to improve semantic matching
-  // Frame BOTH as answers to the same implicit question players are answering
-  // This creates symmetric comparison: both are responses to "What connects the words?"
-  const contextualGuess = `What connects this week's words? ${guess.toLowerCase().trim()}`;
-  const contextualTheme = `What connects this week's words? ${theme.toLowerCase().trim()}`;
-  
-  try {
-    const response = await fetch(HF_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: {
-          source_sentence: contextualGuess,
-          sentences: [contextualTheme]
-        }
-      })
-    });
-    
-    if (!response.ok) {
-      if (response.status === 503) {
-        console.warn('HF model loading, retrying in 5 seconds...');
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        return computeThemeSemanticSimilarity(guess, theme); // Retry once
-      }
-      
-      // Log more details for debugging the new API
-      const errorText = await response.text();
-      console.error(`HF API Error: ${response.status} - ${errorText}`);
-      throw new Error(`HF API Error: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    console.log(`[Theme Matching] "${guess}" → "${theme}": ${Math.round((result[0] || 0) * 100)}% (Phase 1.5: implicit connection framing)`);
-    return result[0] || 0;
-    
-  } catch (error) {
-    console.error('Contextual semantic similarity error:', error);
-    return 0; // Fallback to no match
-  }
-}
-
-/**
- * Enhanced theme matching with multi-tier approach
- * UPDATED: Now applies keyword overlap and specificity penalties
- * to match the Theme Test Lab scoring (Phase 1 roadmap)
+ * Enhanced theme matching - delegates to themeScoring.ts with embeddingOnly mode
+ * 
+ * This ensures production scoring EXACTLY matches the admin Theme Lab.
+ * Uses: Embedding + Keywords + Specificity + Negation (no NLI)
+ * 
+ * @see testThemeScoring in themeScoring.ts for full implementation
  */
 export async function matchThemeWithFuzzy(
   guess: string, 
@@ -165,72 +60,19 @@ export async function matchThemeWithFuzzy(
     };
   }
   
-  // AI semantic similarity matching with contextual prompting
+  // Use the full themeScoring module with embeddingOnly mode
+  // This matches EXACTLY what the admin Theme Lab uses
   try {
-    const rawSimilarity = await computeThemeSemanticSimilarity(guess, theme);
+    const result = await testThemeScoring(guess, theme, {
+      methods: ['embedding', 'keywords', 'length', 'embeddingOnly']
+    });
     
-    // PHASE 1 ENHANCEMENT: Apply keyword and specificity penalties
-    // This matches the Theme Test Lab scoring
-    let finalScore = rawSimilarity;
-    let strategy = 'embedding_only';
+    // Extract the hybrid result (embeddingOnly stores its result there)
+    const finalScore = result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0;
+    const isMatch = result.hybrid?.isMatch ?? result.embedding?.isMatch ?? false;
+    const strategy = result.hybrid?.strategy ?? 'embedding_only';
     
-    // Compute keyword overlap using weighted matching (matches themeScoring.ts logic)
-    const themeKeywords = extractKeywordsSimple(normalizedTheme);
-    const guessKeywords = extractKeywordsSimple(normalizedGuess);
-    
-    // Calculate weighted overlap - each theme keyword gets its best match score
-    let totalMatchScore = 0;
-    const matchDetails: Array<{ tk: string; gk: string; score: number }> = [];
-    
-    for (const tk of themeKeywords) {
-      let bestScore = 0;
-      let bestGuess = '';
-      for (const gk of guessKeywords) {
-        const score = keywordMatchScore(tk, gk);
-        if (score > bestScore) {
-          bestScore = score;
-          bestGuess = gk;
-        }
-      }
-      if (bestScore > 0) {
-        totalMatchScore += bestScore;
-        matchDetails.push({ tk, gk: bestGuess, score: bestScore });
-      }
-    }
-    
-    // Weighted overlap considers match quality, not just count
-    const keywordOverlap = themeKeywords.length > 0 ? totalMatchScore / themeKeywords.length : 1;
-    
-    console.log(`[Keyword Analysis] theme=[${themeKeywords.join(', ')}] guess=[${guessKeywords.join(', ')}] matches:`, 
-      matchDetails.length > 0 ? matchDetails.map(m => `${m.tk}→${m.gk}(${Math.round(m.score*100)}%)`).join(', ') : 'none',
-      `overlap=${Math.round(keywordOverlap*100)}%`);
-    
-    // Apply graduated keyword penalty (same as themeScoring.ts)
-    if (keywordOverlap < 0.3 && rawSimilarity > 0.7) {
-      // Severe penalty for very low overlap with high embedding
-      strategy = 'keyword_mismatch_severe';
-      finalScore = rawSimilarity * (0.5 + keywordOverlap * 0.5);
-    } else if (keywordOverlap < 0.7 && rawSimilarity > 0.7) {
-      // Moderate penalty for medium-low overlap
-      strategy = 'keyword_mismatch_moderate';
-      const missingPortion = 1 - keywordOverlap;
-      finalScore = rawSimilarity * (1 - missingPortion * 0.5);
-    }
-    
-    // Apply specificity penalty for trivial guesses missing concepts
-    const guessContentTokens = guessKeywords.length;
-    const isTrivialGuess = guessContentTokens <= 2;
-    
-    if (isTrivialGuess && keywordOverlap < 0.5) {
-      strategy = 'trivial_guess_penalty';
-      const severityFactor = 0.5 - keywordOverlap;
-      const specificityPenalty = Math.min(severityFactor * 0.5, 0.25);
-      finalScore = finalScore * (1 - specificityPenalty);
-    }
-    
-    const isMatch = finalScore >= THEME_SIMILARITY_THRESHOLD;
-    
-    console.log(`[matchThemeWithFuzzy] "${guess}" vs "${theme}": raw=${Math.round(rawSimilarity*100)}%, final=${Math.round(finalScore*100)}%, kwOverlap=${Math.round(keywordOverlap*100)}%, strategy=${strategy}`);
+    console.log(`[matchThemeWithFuzzy] "${guess}" vs "${theme}": final=${Math.round(finalScore*100)}%, strategy=${strategy}, match=${isMatch}`);
     
     // Log usage for cost monitoring
     await logSemanticUsage('theme');
@@ -243,6 +85,7 @@ export async function matchThemeWithFuzzy(
     };
     
   } catch (error) {
+    console.error('[matchThemeWithFuzzy] Error:', error);
     return {
       similarity: 0,
       isMatch: false,
@@ -254,91 +97,6 @@ export async function matchThemeWithFuzzy(
 }
 
 /**
- * Simple keyword extraction for production scoring
- * Matches themeScoring.ts logic but lightweight
- */
-function extractKeywordsSimple(text: string): string[] {
-  const STOP_WORDS = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
-    'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be', 'been', 'being',
-    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
-    'that', 'this', 'these', 'those', 'what', 'which', 'who', 'can', 'just',
-    'words', 'word', 'things', 'thing', 'describe', 'connect', 'theme', 'week'
-  ]);
-  
-  return text.toLowerCase()
-    .replace(/[^\w\s]/g, '')
-    .split(/\s+/)
-    .filter(w => w.length > 2 && !STOP_WORDS.has(w));
-}
-
-/**
- * Simple word stemming for keyword matching
- */
-function stemWord(word: string): string {
-  const w = word.toLowerCase();
-  if (w.endsWith('ing')) return w.slice(0, -3);
-  if (w.endsWith('ed')) return w.slice(0, -2);
-  if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
-  if (w.endsWith('ly')) return w.slice(0, -2);
-  return w;
-}
-
-/**
- * Semantic synonyms for keyword matching
- * These are conceptually related words that should match
- */
-const KEYWORD_SYNONYMS: Record<string, string[]> = {
-  // Structure/arrangement concepts
-  'pattern': ['formation', 'structure', 'arrangement', 'design', 'layout'],
-  'formation': ['pattern', 'structure', 'arrangement', 'configuration'],
-  'structure': ['pattern', 'formation', 'arrangement', 'organization'],
-  
-  // Direction/movement concepts  
-  'back': ['backward', 'backwards', 'reverse', 'rear'],
-  'backward': ['back', 'backwards', 'reverse'],
-  'backwards': ['back', 'backward', 'reverse'],
-  'forward': ['forwards', 'front', 'ahead'],
-  
-  // Creation concepts
-  'create': ['make', 'form', 'build', 'construct', 'produce'],
-  'form': ['create', 'make', 'shape', 'formation'],
-  'build': ['create', 'construct', 'make'],
-  
-  // Language concepts
-  'word': ['term', 'expression', 'phrase'],
-  'language': ['speech', 'tongue', 'linguistic'],
-};
-
-/**
- * Check if two keywords match using multiple strategies
- * Returns a match score (0-1) based on match quality
- */
-function keywordMatchScore(themeKeyword: string, guessKeyword: string): number {
-  const tk = themeKeyword.toLowerCase();
-  const gk = guessKeyword.toLowerCase();
-  
-  // Exact match
-  if (tk === gk) return 1.0;
-  
-  // Stem match
-  if (stemWord(tk) === stemWord(gk)) return 0.9;
-  
-  // Synonym match
-  const tkSynonyms = KEYWORD_SYNONYMS[tk] || [];
-  const gkSynonyms = KEYWORD_SYNONYMS[gk] || [];
-  if (tkSynonyms.includes(gk) || gkSynonyms.includes(tk)) return 0.8;
-  
-  // Substring match (one contains the other)
-  if (tk.length >= 3 && gk.length >= 3) {
-    if (gk.includes(tk) || tk.includes(gk)) return 0.3;
-  }
-  
-  return 0;
-}
-
-
-/**
  * Log semantic API usage for cost monitoring
  */
 async function logSemanticUsage(type: 'theme' | 'word'): Promise<void> {
@@ -346,16 +104,6 @@ async function logSemanticUsage(type: 'theme' | 'word'): Promise<void> {
     // This would integrate with your Supabase usage tracking
     // For now, just log to console
     console.log(`[Semantic API] ${type} matching request at ${new Date().toISOString()}`);
-    
-    // TODO: Implement actual usage tracking
-    // await supabase.from('api_usage_logs').insert({
-    //   service: 'huggingface',
-    //   endpoint: 'semantic-similarity',
-    //   type,
-    //   timestamp: new Date().toISOString(),
-    //   cost: 0.0001
-    // });
-    
   } catch (error) {
     console.error('Usage logging error:', error);
   }
@@ -366,7 +114,6 @@ async function logSemanticUsage(type: 'theme' | 'word'): Promise<void> {
  */
 export async function getSemanticUsageStats(): Promise<UsageStats> {
   // TODO: Implement actual usage tracking from database
-  // For now, return placeholder
   return {
     requestsThisMonth: 0,
     estimatedCost: 0,
@@ -409,13 +156,12 @@ export function stringSimilarity(str1: string, str2: string): number {
  * Development/testing utilities
  */
 export const DEV_UTILS = {
-  MODEL: HF_MODEL,
   THEME_THRESHOLD: THEME_SIMILARITY_THRESHOLD,
   WORD_THRESHOLD: WORD_SIMILARITY_THRESHOLD,
   
-  // Test with sample data
-  async testSimilarity(text1: string, text2: string): Promise<void> {
-    const similarity = await computeSemanticSimilarity(text1, text2);
-    console.log(`"${text1}" → "${text2}": ${Math.round(similarity * 100)}%`);
+  // Test theme matching with full scoring
+  async testThemeMatch(guess: string, theme: string): Promise<void> {
+    const result = await matchThemeWithFuzzy(guess, theme);
+    console.log(`"${guess}" → "${theme}": ${result.confidence}% (${result.method}) - ${result.isMatch ? 'MATCH' : 'NO MATCH'}`);
   }
-}; 
+};
