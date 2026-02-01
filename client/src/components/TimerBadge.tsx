@@ -19,7 +19,8 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
         background: '#faf7f2',
         border: '2px solid #1a237e',
         borderRadius: '2rem',
-        padding: 'clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.75rem, 3vw, 1.2rem)',
+        padding: '0 clamp(0.75rem, 3vw, 1.2rem)',
+        height: 'clamp(2.6rem, 8vw, 3.1rem)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -31,7 +32,8 @@ export const TimerBadge: React.FC<TimerBadgeProps> = ({ seconds }) => {
         fontVariantNumeric: 'tabular-nums',
         letterSpacing: '0.02em',
         minWidth: 'clamp(4.5rem, 12vw, 5.5rem)',
-        textAlign: 'center'
+        textAlign: 'center',
+        lineHeight: 1
       }}
     >
       {formatTime(seconds)}

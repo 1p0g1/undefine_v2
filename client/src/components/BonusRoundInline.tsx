@@ -170,6 +170,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showNearbyWords, setShowNearbyWords] = useState(false);
   const [nearbyWords, setNearbyWords] = useState<{ above: string[]; below: string[] } | null>(null);
+  const [nearbyTargetWord, setNearbyTargetWord] = useState<string | null>(null);
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [userFinished, setUserFinished] = useState(false);
   const [lastResultSuccess, setLastResultSuccess] = useState(false); // For success animation
@@ -306,14 +307,20 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
     
     setLoadingNearby(true);
     try {
-      const baseUrl = getApiBaseUrl();
+      const baseUrl = getApiBaseUrl() || 'https://undefine-v2-back.vercel.app';
       const response = await fetch(`${baseUrl}/api/bonus/nearby-words?wordId=${wordId}`);
       const data = await response.json();
       
-      if (data.above && data.below) {
+      if (data && Array.isArray(data.above) && Array.isArray(data.below)) {
         setNearbyWords({ above: data.above, below: data.below });
+        setNearbyTargetWord(data.targetWord || targetWord);
         setShowNearbyWords(true);
+        return;
       }
+
+      setNearbyWords({ above: [], below: [] });
+      setNearbyTargetWord(targetWord);
+      setShowNearbyWords(true);
     } catch (error) {
       console.error('[BonusRound] Error fetching nearby words:', error);
     } finally {
@@ -449,7 +456,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                 {/* Target word - highlighted */}
                 <div style={styles.targetWordHighlight}>
                   <span style={styles.targetWordStar}>★</span>
-                  <span style={styles.targetWordText}>{targetWord.toUpperCase()}</span>
+                  <span style={styles.targetWordText}>{(nearbyTargetWord || targetWord).toUpperCase()}</span>
                   <span style={styles.targetWordStar}>★</span>
                 </div>
                 

@@ -44,12 +44,24 @@ async function handler(
       .eq('date', today)
       .single();
 
-    if (wordError || !wordData) {
-      console.log('[/api/daily-leaderboard] No word found for today:', today);
-      return res.status(200).json({ entries: [], totalPlayers: 0 });
-    }
+    let wordId = wordData?.id;
 
-    const wordId = wordData.id;
+    if (wordError || !wordId) {
+      console.log('[/api/daily-leaderboard] No word found for today, falling back to most recent word:', today);
+      const { data: fallbackWord, error: fallbackError } = await supabase
+        .from('words')
+        .select('id, date')
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fallbackError || !fallbackWord?.id) {
+        console.log('[/api/daily-leaderboard] No fallback word found');
+        return res.status(200).json({ entries: [], totalPlayers: 0 });
+      }
+
+      wordId = fallbackWord.id;
+    }
 
     // Get leaderboard entries from leaderboard_summary
     const { data: entries, error: entriesError } = await supabase
@@ -65,7 +77,54 @@ async function handler(
     }
 
     if (!entries || entries.length === 0) {
-      return res.status(200).json({ entries: [], totalPlayers: 0, wordId });
+      // Fallback: derive leaderboard from scores if summary is empty
+      const { data: scoreEntries, error: scoreError } = await supabase
+        .from('scores')
+        .select('player_id, guesses_used, completion_time_seconds')
+        .eq('word_id', wordId)
+        .eq('correct', true)
+        .order('completion_time_seconds', { ascending: true })
+        .order('guesses_used', { ascending: true })
+        .limit(10);
+
+      if (scoreError) {
+        console.error('[/api/daily-leaderboard] Error fetching score fallback:', scoreError);
+        return res.status(200).json({ entries: [], totalPlayers: 0, wordId });
+      }
+
+      if (!scoreEntries || scoreEntries.length === 0) {
+        return res.status(200).json({ entries: [], totalPlayers: 0, wordId });
+      }
+
+      const { count: scoreCount } = await supabase
+        .from('scores')
+        .select('*', { count: 'exact', head: true })
+        .eq('word_id', wordId)
+        .eq('correct', true);
+
+      const scorePlayerIds = scoreEntries.map(e => e.player_id);
+      const { data: scorePlayersData } = await supabase
+        .from('players')
+        .select('id, display_name')
+        .in('id', scorePlayerIds);
+
+      const scorePlayerNames = new Map(
+        scorePlayersData?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []
+      );
+
+      const fallbackEntries: DailyLeaderboardEntry[] = scoreEntries.map((entry, index) => ({
+        rank: index + 1,
+        displayName: scorePlayerNames.get(entry.player_id) || `Player ${entry.player_id.slice(-4)}`,
+        guesses: entry.guesses_used || 0,
+        timeSeconds: entry.completion_time_seconds || 0,
+        playerId: entry.player_id
+      }));
+
+      return res.status(200).json({
+        entries: fallbackEntries,
+        totalPlayers: scoreCount || fallbackEntries.length,
+        wordId
+      });
     }
 
     // Get total count

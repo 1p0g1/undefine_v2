@@ -580,18 +580,22 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
         {showTooltip && onClick && !isCelebrating && (
           <div style={{
             position: 'absolute',
-            top: '-2.5rem',
+            bottom: 'calc(100% + 0.6rem)',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: '#1a237e',
+            backgroundColor: 'rgba(26, 35, 126, 0.9)',
+            backdropFilter: 'blur(4px)',
             color: 'white',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: '600',
+            padding: '0.4rem 0.75rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            fontFamily: 'var(--font-primary)',
             whiteSpace: 'nowrap',
             zIndex: 1000,
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            letterSpacing: '0.01em',
+            pointerEvents: 'none'
           }}>
             Theme of the week
           </div>

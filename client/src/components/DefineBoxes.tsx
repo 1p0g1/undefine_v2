@@ -167,23 +167,25 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
         <div 
           style={{
             position: 'absolute',
-            top: '100%',
+            bottom: 'calc(100% + 0.6rem)',
             left: '50%',
             transform: 'translateX(-50%)',
-            marginTop: '0.25rem',
-            fontSize: 'clamp(0.875rem, 2.2vw, 1rem)',
-            color: 'var(--color-primary)',
+            fontSize: '0.75rem',
+            color: 'white',
             fontFamily: 'var(--font-primary)',
-            opacity: 0.9,
+            fontWeight: 500,
+            opacity: 0.95,
             transition: 'opacity 0.2s ease',
             textAlign: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '0.25rem 0.5rem',
-            borderRadius: '0.25rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid rgba(26, 35, 126, 0.1)',
+            backgroundColor: 'rgba(26, 35, 126, 0.9)',
+            backdropFilter: 'blur(4px)',
+            padding: '0.4rem 0.75rem',
+            borderRadius: '0.375rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             whiteSpace: 'nowrap',
-            zIndex: 10
+            letterSpacing: '0.01em',
+            zIndex: 1000,
+            pointerEvents: 'none'
           }}
         >
           {showHint}

@@ -56,12 +56,12 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
         </span>
       </span>
 
-      {/* Tooltip - clean, nearly transparent style */}
+      {/* Tooltip - clean, consistent style */}
       {showTooltip && (
         <span
           style={{
             position: 'absolute',
-            bottom: 'calc(100% + 0.75rem)',
+            bottom: 'calc(100% + 0.6rem)',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: 'rgba(26, 35, 126, 0.9)',
@@ -75,7 +75,8 @@ export const InfoDiamond: React.FC<InfoDiamondProps> = ({ onClick }) => {
             whiteSpace: 'nowrap',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             zIndex: 1000,
-            letterSpacing: '0.01em'
+            letterSpacing: '0.01em',
+            pointerEvents: 'none'
           }}
         >
           How to Play

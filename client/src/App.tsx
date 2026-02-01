@@ -210,14 +210,14 @@ function App() {
   };
   
   // Load daily leaderboard for intro page - independent of playerId
-  // NOTE: Uses relative URL because this endpoint is in the FRONTEND deployment (pages/api/)
+  // NOTE: This endpoint lives in the BACKEND deployment (Next.js API)
   const loadDailyLeaderboard = async () => {
     try {
-      // Use relative URL - this endpoint is in the same deployment as the frontend
-      const apiUrl = '/api/daily-leaderboard';
+      const apiBaseUrl = getApiBaseUrl() || 'https://undefine-v2-back.vercel.app';
+      const apiUrl = `${apiBaseUrl}/api/daily-leaderboard`;
       console.log('[App] Fetching daily leaderboard from:', apiUrl);
       
-      const leaderboardRes = await fetch(apiUrl);
+      const leaderboardRes = await fetch(apiUrl, { cache: 'no-store' });
       console.log('[App] Daily leaderboard response status:', leaderboardRes.status);
       
       if (!leaderboardRes.ok) {
@@ -239,8 +239,8 @@ function App() {
           return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         };
         
-        const top3 = leaderboardData.entries.slice(0, 3).map((entry: any) => ({
-          rank: entry.rank,
+        const top3 = leaderboardData.entries.slice(0, 3).map((entry: any, idx: number) => ({
+          rank: entry.rank || idx + 1,
           displayName: entry.displayName,
           guesses: entry.guesses,
           time: formatTime(entry.timeSeconds || 0)
@@ -683,8 +683,8 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center',
         gap: '0.75rem',
-        marginBottom: '0.25rem',
-        paddingTop: '0.25rem'
+        marginBottom: '0',
+        paddingTop: '0'
       }}>
         <TimerBadge seconds={timer} />
           <InfoDiamond onClick={() => setShowRules(true)} />
@@ -743,7 +743,7 @@ function App() {
           width: '100%',
           maxWidth: '100vw',
           marginTop: '0',
-          marginBottom: '0.15rem',
+          marginBottom: '0',
           position: 'relative',
           padding: '0 clamp(0.2rem, 1vw, 0.4rem)',
           boxSizing: 'border-box',
@@ -833,7 +833,7 @@ function App() {
                 marginBottom: '0.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.25rem'
+                gap: '0.05rem'
               }}>
                 This week:
                 {/* Vault door icon with Un· text - LARGER and closer */}
@@ -843,14 +843,14 @@ function App() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  marginLeft: '0.25rem'
+                  marginLeft: '0'
                 }}>
                   <img 
                     src="/ClosedVault.png" 
                     alt="Vault" 
                     style={{ 
-                      width: 'clamp(2.2rem, 6vw, 2.8rem)',
-                      height: 'clamp(2.2rem, 6vw, 2.8rem)',
+                      width: 'clamp(2.35rem, 6.5vw, 3rem)',
+                      height: 'clamp(2.35rem, 6.5vw, 3rem)',
                       objectFit: 'contain'
                     }} 
                   />
@@ -870,7 +870,7 @@ function App() {
                   fontStyle: 'italic',
                   fontSize: '1em',
                   color: '#059669',
-                  marginLeft: '-0.1rem'
+                  marginLeft: '-0.4rem'
                 }}>
                   lock
                 </span>
@@ -1348,7 +1348,7 @@ function App() {
       {gameStarted && gameState.guesses.length > 0 && (
         <div className="past-guesses" style={{
           fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-          margin: '0',
+          margin: '-0.1rem 0 0 0',
           color: '#6b7280'
         }}>Past guesses: {gameState.guesses.join(', ')}</div>
       )}
@@ -1357,7 +1357,7 @@ function App() {
         <div className="hint-blocks" style={{ 
           width: '100%', 
           maxWidth: 420, 
-          margin: '0.5rem auto 0 auto'
+          margin: '0.35rem auto 0 auto'
         }}>
           {/* Show word reveal when game is complete */}
           {gameState.isComplete && (

@@ -590,11 +590,26 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               fontSize: '0.85rem',
               color: '#6b7280',
               textAlign: 'center',
-              lineHeight: '1.5',
+              lineHeight: '1.6',
               fontFamily: 'var(--font-primary)',
-              marginTop: '0.25rem'
+              marginTop: '0.25rem',
+              whiteSpace: 'pre-line'
             }}>
-              All of this week's words are connected by a theme, you have one theme guess per day. Answers are reviewed for semantic similarity and scored by %. A winning answer has a similarity of 80%+.
+              This week's words are connected by a theme.
+              {'\n\n'}
+              You have one theme guess per day.
+              {'\n\n'}
+              Your % score represents how close your answer is{' '}
+              <span style={{
+                color: '#1a237e',
+                fontWeight: 700,
+                textShadow: '0 0 6px rgba(26, 35, 126, 0.35)'
+              }}>
+                semantically
+              </span>{' '}
+              to the theme of the week.
+              {'\n\n'}
+              A winning answer has a similarity of 80%+.
             </div>
           </div>
           <button

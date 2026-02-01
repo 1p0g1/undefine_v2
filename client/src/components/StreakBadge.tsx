@@ -146,7 +146,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           backgroundColor: colors.backgroundColor,
           border: `2px solid ${colors.borderColor}`,  // Match TimerBadge border
           borderRadius: '2rem',
-          padding: 'clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.75rem, 3vw, 1.2rem)',  // Match TimerBadge padding
+          padding: '0 clamp(0.75rem, 3vw, 1.2rem)',  // Match TimerBadge padding
+          height: 'clamp(2.6rem, 8vw, 3.1rem)', // Match TimerBadge height
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -169,7 +170,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           transition: 'all 0.2s ease-in-out',
           animation: isMilestone ? 'subtle-pulse 2s ease-in-out infinite' : undefined,
           transform: showTooltip ? 'scale(1.05)' : 'scale(1)',
-          opacity: displayStreak === 0 ? 0.8 : 1
+          opacity: displayStreak === 0 ? 0.8 : 1,
+          lineHeight: 1
         }}
       >
         {/* Background sparkle effect for high streaks */}
@@ -225,11 +227,11 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           </div>
         )}
 
-        {/* Tooltip - clean, nearly transparent style */}
+        {/* Tooltip - clean, consistent style */}
         {showTooltip && (
           <div style={{
             position: 'absolute',
-            bottom: '100%',
+            bottom: 'calc(100% + 0.6rem)',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: 'rgba(26, 35, 126, 0.9)',
@@ -241,10 +243,10 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
             fontWeight: 500,
             fontFamily: 'var(--font-primary)',
             whiteSpace: 'nowrap',
-            marginBottom: '0.5rem',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            zIndex: 10,
-            letterSpacing: '0.01em'
+            zIndex: 1000,
+            letterSpacing: '0.01em',
+            pointerEvents: 'none'
           }}>
             Streak Counter
           </div>
