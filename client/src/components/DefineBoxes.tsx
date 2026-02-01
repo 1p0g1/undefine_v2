@@ -179,14 +179,14 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 marginLeft: index === 0 ? '0' : '-0.35rem'
               }}
             >
-              {/* Inner colored content - centered within the frame's transparent window */}
+              {/* Inner colored content - positioned to show through frame window */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '15%',
+                  top: '18%',
                   left: '15%',
                   right: '15%',
-                  bottom: '15%',
+                  bottom: '18%',
                   borderRadius: '0.1rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -204,20 +204,20 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - moved down significantly to center letter */}
+              {/* BoxCover frame overlay - positioned to wrap around the colored box */}
               <img
                 src="/BoxCover.png"
                 alt=""
                 draggable={false}
                 style={{
                   position: 'absolute',
-                  top: '12%',
+                  top: 0,
                   left: 0,
                   width: '100%',
                   height: '100%',
                   pointerEvents: 'none',
                   zIndex: 2,
-                  objectFit: 'contain'
+                  objectFit: 'fill'
                 }}
               />
             </div>
