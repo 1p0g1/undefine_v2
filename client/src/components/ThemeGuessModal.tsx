@@ -605,26 +605,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               marginTop: `${HEADER_LINE_GAP_REM}rem`,
               lineHeight: 1.1
             }}>
-              the Theme of the Week
+              Theme of the Week
             </div>
             
             {/* Instructions */}
             <div style={{
-              fontSize: '0.85rem',
+              fontSize: '1.05rem',
               color: '#6b7280',
               textAlign: 'center',
-              lineHeight: '1.6',
+              lineHeight: '1.65',
               fontFamily: 'var(--font-primary)',
-              marginTop: '0.25rem',
+              marginTop: '0.35rem',
               whiteSpace: 'pre-line'
             }}>
-              This week's words are connected by a theme.
-              {'\n\n'}
-              You have one guess per day, which will be marked on a{' '}
+              What theme or topic connects this week's words? You have one guess per day. Use your{' '}
               <span className="theme-semantic-shimmer">semantic similarity</span>{' '}
-              percentage to the secret theme.
+              percentage as a clue to unlock the secret theme.
               {'\n\n'}
-              A winning answer has a similarity of at least 80%. Can you solve it?
+              A winning answer has a similarity of at least 80%.
             </div>
           </div>
           <button

@@ -86,10 +86,10 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
     };
   }, [hintTimer]);
 
-  // Preload the BoxCover frame image
+  // Preload the BoxCover frame image (v=2 cache-bust for updated asset)
   useEffect(() => {
     const img = new Image();
-    img.src = '/BoxCover.png';
+    img.src = '/BoxCover.png?v=2';
   }, []);
 
   // Calculate which boxes are for guesses vs bonus round
@@ -206,7 +206,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
               
               {/* BoxCover frame overlay - positioned to wrap around the colored box */}
               <img
-                src="/BoxCover.png"
+                src="/BoxCover.png?v=2"
                 alt=""
                 draggable={false}
                 style={{
