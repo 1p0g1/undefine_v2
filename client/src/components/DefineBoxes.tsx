@@ -108,8 +108,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      {/* Zero gap - boxes touching for tight integrated look */}
-      <div style={{ display: 'flex', gap: '0' }}>
+      {/* Boxes with negative margin to overlap slightly for tighter look */}
+      <div style={{ display: 'flex' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -174,7 +174,9 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 position: 'relative',
                 cursor: isRevealed ? 'pointer' : 'default',
                 animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
-                zIndex: 1
+                zIndex: 1,
+                // Negative margin to pull boxes closer (overlapping slightly)
+                marginLeft: index === 0 ? '0' : '-0.35rem'
               }}
             >
               {/* Inner colored content - centered within the frame's transparent window */}
