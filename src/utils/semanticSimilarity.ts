@@ -174,20 +174,36 @@ export async function matchThemeWithFuzzy(
     let finalScore = rawSimilarity;
     let strategy = 'embedding_only';
     
-    // Compute keyword overlap (same logic as themeScoring.ts)
+    // Compute keyword overlap using weighted matching (matches themeScoring.ts logic)
     const themeKeywords = extractKeywordsSimple(normalizedTheme);
     const guessKeywords = extractKeywordsSimple(normalizedGuess);
     
-    let matchedCount = 0;
+    // Calculate weighted overlap - each theme keyword gets its best match score
+    let totalMatchScore = 0;
+    const matchDetails: Array<{ tk: string; gk: string; score: number }> = [];
+    
     for (const tk of themeKeywords) {
+      let bestScore = 0;
+      let bestGuess = '';
       for (const gk of guessKeywords) {
-        if (tk === gk || stemWord(tk) === stemWord(gk)) {
-          matchedCount++;
-          break;
+        const score = keywordMatchScore(tk, gk);
+        if (score > bestScore) {
+          bestScore = score;
+          bestGuess = gk;
         }
       }
+      if (bestScore > 0) {
+        totalMatchScore += bestScore;
+        matchDetails.push({ tk, gk: bestGuess, score: bestScore });
+      }
     }
-    const keywordOverlap = themeKeywords.length > 0 ? matchedCount / themeKeywords.length : 1;
+    
+    // Weighted overlap considers match quality, not just count
+    const keywordOverlap = themeKeywords.length > 0 ? totalMatchScore / themeKeywords.length : 1;
+    
+    console.log(`[Keyword Analysis] theme=[${themeKeywords.join(', ')}] guess=[${guessKeywords.join(', ')}] matches:`, 
+      matchDetails.length > 0 ? matchDetails.map(m => `${m.tk}→${m.gk}(${Math.round(m.score*100)}%)`).join(', ') : 'none',
+      `overlap=${Math.round(keywordOverlap*100)}%`);
     
     // Apply graduated keyword penalty (same as themeScoring.ts)
     if (keywordOverlap < 0.3 && rawSimilarity > 0.7) {
@@ -266,6 +282,59 @@ function stemWord(word: string): string {
   if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
   if (w.endsWith('ly')) return w.slice(0, -2);
   return w;
+}
+
+/**
+ * Semantic synonyms for keyword matching
+ * These are conceptually related words that should match
+ */
+const KEYWORD_SYNONYMS: Record<string, string[]> = {
+  // Structure/arrangement concepts
+  'pattern': ['formation', 'structure', 'arrangement', 'design', 'layout'],
+  'formation': ['pattern', 'structure', 'arrangement', 'configuration'],
+  'structure': ['pattern', 'formation', 'arrangement', 'organization'],
+  
+  // Direction/movement concepts  
+  'back': ['backward', 'backwards', 'reverse', 'rear'],
+  'backward': ['back', 'backwards', 'reverse'],
+  'backwards': ['back', 'backward', 'reverse'],
+  'forward': ['forwards', 'front', 'ahead'],
+  
+  // Creation concepts
+  'create': ['make', 'form', 'build', 'construct', 'produce'],
+  'form': ['create', 'make', 'shape', 'formation'],
+  'build': ['create', 'construct', 'make'],
+  
+  // Language concepts
+  'word': ['term', 'expression', 'phrase'],
+  'language': ['speech', 'tongue', 'linguistic'],
+};
+
+/**
+ * Check if two keywords match using multiple strategies
+ * Returns a match score (0-1) based on match quality
+ */
+function keywordMatchScore(themeKeyword: string, guessKeyword: string): number {
+  const tk = themeKeyword.toLowerCase();
+  const gk = guessKeyword.toLowerCase();
+  
+  // Exact match
+  if (tk === gk) return 1.0;
+  
+  // Stem match
+  if (stemWord(tk) === stemWord(gk)) return 0.9;
+  
+  // Synonym match
+  const tkSynonyms = KEYWORD_SYNONYMS[tk] || [];
+  const gkSynonyms = KEYWORD_SYNONYMS[gk] || [];
+  if (tkSynonyms.includes(gk) || gkSynonyms.includes(tk)) return 0.8;
+  
+  // Substring match (one contains the other)
+  if (tk.length >= 3 && gk.length >= 3) {
+    if (gk.includes(tk) || tk.includes(gk)) return 0.3;
+  }
+  
+  return 0;
 }
 
 
