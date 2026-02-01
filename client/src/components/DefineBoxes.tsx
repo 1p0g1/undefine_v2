@@ -126,7 +126,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           const bonusColors = bonusTier ? BONUS_TIER_COLORS[bonusTier] : null;
 
           // Determine colors - bonus round takes precedence for remaining boxes
-          let backgroundColor = '#fff';
+          // Default background is cream color (#fef6e9)
+          let backgroundColor = '#fef6e9';
           let borderColor = 'var(--color-primary, #1a237e)';
           let textColor = 'var(--color-primary, #1a237e)';
           let backgroundStyle: React.CSSProperties = {};
@@ -146,7 +147,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
             backgroundColor = '#ff9800';
             textColor = '#fff';
           } else if (isActive) {
-            backgroundColor = '#e8eaf6';
+            backgroundColor = '#fef6e9'; // Keep cream color when active
           }
 
           // Handle special case for second E
@@ -176,19 +177,20 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 zIndex: 1
               }}
             >
-              {/* Inner colored content - shows through frame's transparent center */}
+              {/* Inner colored content - sized to fit INSIDE the frame's transparent window */}
+              {/* The frame has ~15% thick borders on each side, so inner is ~70% centered */}
               <div
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  borderRadius: '0.35rem',
+                  top: '15%',
+                  left: '15%',
+                  right: '15%',
+                  bottom: '15%',
+                  borderRadius: '0.2rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'clamp(1.2rem, 3.5vw, 1.5rem)',
+                  fontSize: 'clamp(1.1rem, 3.2vw, 1.4rem)',
                   fontWeight: 700,
                   color: textColor,
                   backgroundColor: bonusColors ? undefined : backgroundColor,
