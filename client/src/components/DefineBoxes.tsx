@@ -86,6 +86,12 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
     };
   }, [hintTimer]);
 
+  // Preload the BoxCover frame image
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/BoxCover.png';
+  }, []);
+
   // Calculate which boxes are for guesses vs bonus round
   const guessCount = gameState.guesses?.length || 0;
   const isGameWon = gameState.isWon;
@@ -100,9 +106,12 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'relative'
+      position: 'relative',
+      // Extra padding to accommodate frame overflow
+      padding: '0.3rem'
     }}>
-      <div style={{ display: 'flex', gap: '0.25rem' }}>
+      {/* Reduced gap since frames provide visual separation */}
+      <div style={{ display: 'flex', gap: '0.1rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -145,6 +154,11 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           // Handle special case for second E
           const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
 
+          // Box size for consistent calculations
+          const boxSize = 'clamp(2.4rem, 6.5vw, 2.8rem)';
+          // Frame overlay extends slightly beyond the box
+          const frameOverflow = '15%';
+          
           return (
             <div
               key={`${letter}-${index}`}
@@ -158,27 +172,55 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 // Removed click functionality - hover hints are sufficient
               }}
               style={{
-                width: 'clamp(2.4rem, 6.5vw, 2.8rem)',
-                height: 'clamp(2.4rem, 6.5vw, 2.8rem)',
-                border: `2px solid ${borderColor}`,
-                borderRadius: '0.4rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 'clamp(1.3rem, 3.8vw, 1.6rem)',
-                fontWeight: 700,
-                color: textColor,
-                backgroundColor: bonusColors ? undefined : backgroundColor,
-                cursor: isRevealed ? 'pointer' : 'default',
-                transition: 'all 0.3s ease',
-                animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
-                fontFamily: 'var(--font-primary)',
+                width: boxSize,
+                height: boxSize,
                 position: 'relative',
-                zIndex: 1,
-                ...backgroundStyle
+                cursor: isRevealed ? 'pointer' : 'default',
+                animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
+                zIndex: 1
               }}
             >
-              {letter}
+              {/* Inner colored box - the content that shows through the frame */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '12%',
+                  left: '12%',
+                  right: '12%',
+                  bottom: '12%',
+                  borderRadius: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 'clamp(1.1rem, 3.2vw, 1.35rem)',
+                  fontWeight: 700,
+                  color: textColor,
+                  backgroundColor: bonusColors ? undefined : backgroundColor,
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'var(--font-primary)',
+                  zIndex: 1,
+                  ...backgroundStyle
+                }}
+              >
+                {letter}
+              </div>
+              
+              {/* BoxCover frame overlay - sits on top with transparent center */}
+              <img
+                src="/BoxCover.png"
+                alt=""
+                draggable={false}
+                style={{
+                  position: 'absolute',
+                  top: `-${frameOverflow}`,
+                  left: `-${frameOverflow}`,
+                  width: `calc(100% + ${frameOverflow} * 2)`,
+                  height: `calc(100% + ${frameOverflow} * 2)`,
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                  objectFit: 'contain'
+                }}
+              />
             </div>
           );
         })}
