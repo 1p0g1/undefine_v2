@@ -108,8 +108,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      {/* Small gap - frames are self-contained */}
-      <div style={{ display: 'flex', gap: '0.15rem' }}>
+      {/* Original spacing restored - frame overlays extend beyond */}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -152,8 +152,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
           // Handle special case for second E
           const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
 
-          // Box container size - this defines the overall space each box takes
-          const boxSize = 'clamp(2.6rem, 7vw, 3.2rem)';
+          // Original box size - same as before the frame overlay was added
+          const boxSize = 'clamp(2.4rem, 6.5vw, 2.8rem)';
           
           return (
             <div
@@ -176,20 +176,20 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 zIndex: 1
               }}
             >
-              {/* Inner colored box - sized to fit INSIDE the frame's transparent window */}
-              {/* The frame has thick borders, so inner content is ~55% of total frame size */}
+              {/* Original box styling - full size with border and rounded corners */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '18%',
-                  left: '18%',
-                  right: '18%',
-                  bottom: '18%',
-                  borderRadius: '0.15rem',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  border: `2px solid ${borderColor}`,
+                  borderRadius: '0.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'clamp(1rem, 3vw, 1.3rem)',
+                  fontSize: 'clamp(1.1rem, 3.2vw, 1.35rem)',
                   fontWeight: 700,
                   color: textColor,
                   backgroundColor: bonusColors ? undefined : backgroundColor,
@@ -202,17 +202,18 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - covers entire box area */}
+              {/* BoxCover frame overlay - larger than box, centered on top */}
               <img
                 src="/BoxCover.png"
                 alt=""
                 draggable={false}
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '150%',
+                  height: '150%',
                   pointerEvents: 'none',
                   zIndex: 2
                 }}
