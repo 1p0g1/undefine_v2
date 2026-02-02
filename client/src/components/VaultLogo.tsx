@@ -52,10 +52,7 @@ interface VaultLogoProps {
     highestConfidencePercentage?: number | null; // Best score this week
   };
   // For animation in theme modal (controlled externally)
-  isAnimating?: boolean;
   currentAnimationFrame?: string;
-  // Callback when modal animation completes
-  onAnimationComplete?: () => void;
   // Toggle to show "Un" overlay text
   showUnText?: boolean;
   // For theme modal: trigger animation based on score
@@ -74,9 +71,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   onCelebrationComplete,
   bonusRoundActive = false,
   themeGuessData,
-  isAnimating = false,
   currentAnimationFrame,
-  onAnimationComplete,
   showUnText = true,
   animateForScore,
   onScoreAnimationComplete
@@ -323,7 +318,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       return 'vaultNudge 3s ease-in-out infinite';
     }
     if (shouldPulsate) {
-      return 'vaultPulsate 2s ease-in-out infinite';
+      return 'themeCtaPulse 2s ease-in-out infinite';
     }
     return 'none';
   };
@@ -336,7 +331,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     return '-0.8rem';
   };
 
-  const containerStyle: React.CSSProperties = {
+  const containerStyle = {
     width: baseSize,
     height: baseSize,
     display: 'flex',
@@ -351,8 +346,9 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     cursor: onClick ? 'pointer' : 'default',
     animation: getAnimation(),
     transition: 'transform 0.2s ease-in-out',
-    backgroundColor: 'transparent'
-  };
+    backgroundColor: 'transparent',
+    '--cta-rotation': '0deg'
+  } as React.CSSProperties;
   
   const imageStyle: React.CSSProperties = {
     width: '100%',
@@ -486,14 +482,30 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       {/* CSS keyframes for animations */}
       <style>
         {`
-          @keyframes vaultPulsate {
+          @keyframes themeCtaPulse {
             0%, 100% {
-              transform: scale(1);
+              opacity: 1;
+              box-shadow: 0 4px 12px rgba(26, 35, 126, 0.35), 0 0 0 2px rgba(26, 35, 126, 0.2);
+              transform: rotate(var(--cta-rotation, 0deg)) scale(1);
               filter: brightness(1);
             }
+            25% {
+              opacity: 0.95;
+              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
+              transform: rotate(calc(var(--cta-rotation, 0deg) + 5deg)) scale(1.04);
+              filter: brightness(1.08);
+            }
             50% {
-              transform: scale(1.05);
-              filter: brightness(1.1);
+              opacity: 0.9;
+              box-shadow: 0 8px 24px rgba(26, 35, 126, 0.55), 0 0 0 4px rgba(26, 35, 126, 0.35);
+              transform: rotate(var(--cta-rotation, 0deg)) scale(1.08);
+              filter: brightness(1.12);
+            }
+            75% {
+              opacity: 0.95;
+              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
+              transform: rotate(calc(var(--cta-rotation, 0deg) - 5deg)) scale(1.04);
+              filter: brightness(1.08);
             }
           }
           
