@@ -1375,15 +1375,31 @@ function App() {
         }}>
           {/* Show word reveal when game is complete */}
           {gameState.isComplete && (
-            <div style={{
-              textAlign: 'center',
-              fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)',
-              color: gameState.isWon ? '#22c55e' : '#ef4444',
-              fontWeight: 700,
-              marginBottom: 'calc(0.75rem - 5px)',
-              padding: '0'
-            }}>
-              The word was: {gameState.wordText}
+            <div style={{ textAlign: 'center', marginBottom: 'calc(0.75rem - 5px)' }}>
+              <div style={{
+                fontSize: 'clamp(1.125rem, 3.5vw, 1.25rem)',
+                color: gameState.isWon ? '#22c55e' : '#ef4444',
+                fontWeight: 700,
+                padding: '0'
+              }}>
+                The word was: {gameState.wordText}
+              </div>
+
+              {/* Key reward - only for successful solves */}
+              {gameState.isWon && (
+                <div style={{ marginTop: '0.45rem' }}>
+                  <img
+                    src="/Key.png"
+                    alt=""
+                    draggable={false}
+                    style={{
+                      width: 'clamp(3.2rem, 18vw, 4.2rem)',
+                      height: 'auto',
+                      display: 'inline-block'
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1402,12 +1418,12 @@ function App() {
 
           {/* Bonus Round Results Summary removed - results shown in DEFINE boxes */}
           
-          {/* Dictionary-style hints container */}
+          {/* Hint entries - individual boxed cards */}
           <div className="dictionary-hints" style={{
-            background: '#fff',
-            border: '1px solid var(--color-primary)',
-            borderRadius: '0.5rem',
-            padding: '0.75rem 1rem',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 0,
+            padding: 0,
             boxSizing: 'border-box'
           }}>
             {visibleClues.map((clue, idx) => {
@@ -1435,16 +1451,19 @@ function App() {
                   className="dictionary-hint-entry" 
                   key={clue.key}
                   style={{
-                    paddingBottom: isLastClue ? 0 : '0.85rem',
                     marginBottom: isLastClue ? 0 : '0.85rem',
-                    borderBottom: isLastClue ? 'none' : '1px solid rgba(26, 35, 126, 0.1)',
-                    backgroundColor: wasWinningClue ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
-                    borderRadius: wasWinningClue ? '0.35rem' : 0,
-                    padding: wasWinningClue ? '0.6rem 0.75rem' : undefined,
+                    backgroundColor: wasWinningClue ? 'rgba(34, 197, 94, 0.06)' : '#fff',
+                    borderRadius: '0.6rem',
+                    padding: '0.75rem 0.9rem',
+                    border: wasWinningClue
+                      ? '1px solid rgba(34, 197, 94, 0.28)'
+                      : '1px solid rgba(26, 35, 126, 0.14)',
                     transition: 'background-color 0.2s ease',
                     position: 'relative',
                     overflow: 'hidden',
-                    outline: wasWinningClue ? '1px solid rgba(34, 197, 94, 0.25)' : undefined
+                    boxShadow: wasWinningClue
+                      ? '0 6px 18px rgba(34, 197, 94, 0.10)'
+                      : '0 6px 18px rgba(26, 35, 126, 0.06)'
                   }}
                 >
                   {/* Section label - dictionary style */}
