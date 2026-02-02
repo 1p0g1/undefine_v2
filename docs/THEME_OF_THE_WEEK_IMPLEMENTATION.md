@@ -89,6 +89,7 @@ ALTER TABLE words ADD COLUMN theme TEXT;
 - Returns current theme and player progress
 - Includes daily status (already guessed, can guess, etc.)
 - Shows completion progress across themed words
+- Feeds the **daily key** state and **weekly vault** UI (see `docs/GAME_LOGIC_AND_RULES.md` → **Theme Key & Vault Flow**)
 
 ##### `GET /api/theme-stats`
 - Returns comprehensive player statistics

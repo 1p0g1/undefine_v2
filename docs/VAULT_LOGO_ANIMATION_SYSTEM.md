@@ -89,9 +89,11 @@ Component: <UnPrefix />
 
 ### Key Overlay Logic
 
+- **Placement**: The key is a separate element shown between the word reveal and the first hint (never over the vault).
 - **Visibility**: Key appears only after the daily word is correctly solved.
 - **Pre-Guess**: Use `Key.png` until the player submits a theme guess.
 - **Post-Guess**: Key color follows the same score thresholds as the vault animation.
+- **Daily Reset**: The key resets each day; the vault remains a weekly status indicator.
 - **Interaction**: Clicking the key (or vault) opens the theme modal.
 
 ### Theme Popup Animation Sequences

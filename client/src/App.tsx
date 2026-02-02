@@ -153,6 +153,11 @@ function App() {
     }
     return undefined;
   });
+  const [dailyThemeGuessData, setDailyThemeGuessData] = useState<{
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+  } | undefined>(undefined);
 
   // Bonus round state (inline UI after winning early)
   const [bonusRoundResults, setBonusRoundResults] = useState<BonusGuessResult[]>([]);
@@ -191,6 +196,11 @@ function App() {
           highestConfidencePercentage: (themeStatus.progress as any).highestConfidencePercentage || null
         };
         setThemeGuessData(newThemeData);
+        setDailyThemeGuessData({
+          hasGuessedToday: themeStatus.progress.hasGuessedToday,
+          isCorrectGuess: themeStatus.progress.isCorrectGuess,
+          confidencePercentage: themeStatus.progress.confidencePercentage || null
+        });
         // Cache to localStorage for instant load on next visit
         try {
           localStorage.setItem('themeGuessData', JSON.stringify(newThemeData));
@@ -312,6 +322,12 @@ function App() {
     loadDailyLeaderboard();
     console.log('[App] Finished initial mount setup');
   }, []);
+
+  useEffect(() => {
+    if (gameState.isArchivePlay) return;
+    setDailyThemeGuessData(undefined);
+    loadThemeData();
+  }, [gameState.gameDate, gameState.isArchivePlay]);
 
   useEffect(() => {
     startNewGame();
@@ -618,6 +634,11 @@ function App() {
     // Update theme data immediately if provided from modal
     if (updatedThemeData) {
       setThemeGuessData(updatedThemeData);
+      setDailyThemeGuessData({
+        hasGuessedToday: updatedThemeData.hasGuessedToday,
+        isCorrectGuess: updatedThemeData.isCorrectGuess,
+        confidencePercentage: updatedThemeData.confidencePercentage
+      });
       // Cache to localStorage for instant vault state
       try {
         localStorage.setItem('themeGuessData', JSON.stringify(updatedThemeData));
@@ -661,10 +682,9 @@ function App() {
     : 0;
   const shouldShowThemeKey = gameState.isWon && !gameState.isArchivePlay;
   const themeKeyImage = getThemeKeyImage({
-    hasGuessedToday: themeGuessData?.hasGuessedToday,
-    isCorrectGuess: themeGuessData?.isCorrectGuess,
-    confidencePercentage: themeGuessData?.confidencePercentage ?? null,
-    highestConfidencePercentage: themeGuessData?.highestConfidencePercentage ?? null
+    hasGuessedToday: dailyThemeGuessData?.hasGuessedToday,
+    isCorrectGuess: dailyThemeGuessData?.isCorrectGuess,
+    confidencePercentage: dailyThemeGuessData?.confidencePercentage ?? null
   });
 
   return (

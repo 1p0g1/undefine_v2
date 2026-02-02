@@ -127,6 +127,12 @@ interface ThemeGuessResponse {
 - **Guess Eligibility**: Must complete at least one themed word
 - **Reveal Condition**: Only correct guesses reveal the actual theme
 
+### **Daily Key + Weekly Vault**
+- **Daily Key** appears only after the daily word is solved.
+- **Key color** reflects the daily theme guess result.
+- **Vault door** reflects the player’s weekly theme outcome across days.
+- See `docs/GAME_LOGIC_AND_RULES.md` → **Theme Key & Vault Flow**
+
 ### **Semantic Matching**
 ```typescript
 // Fuzzy matching hierarchy (server/theme.ts)

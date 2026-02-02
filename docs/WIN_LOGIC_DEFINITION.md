@@ -9,6 +9,7 @@
 1. **Completion = Win**: If a player successfully guesses the word, they "win" that day's game
 2. **Ranking ≠ Winning**: Ranking only shows relative performance among winners
 3. **All Ranked Players Won**: Anyone appearing in `leaderboard_summary` completed the word
+4. **Theme Guessing Is Separate**: Theme guesses do not affect word-win status (see `docs/GAME_LOGIC_AND_RULES.md` → **Theme Key & Vault Flow**)
 
 ### **Examples**
 

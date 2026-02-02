@@ -559,7 +559,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
-            gap: '0.6rem',
+            gap: '0.3rem',
             flex: '1',
             textAlign: 'center'
           }}>
@@ -594,10 +594,23 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </span>
             </div>
             
+            {/* Instructions */}
+            <div style={{
+              fontSize: '1.2rem',
+              color: '#6b7280',
+              textAlign: 'center',
+              lineHeight: '1.7',
+              fontFamily: 'var(--font-primary)',
+              marginTop: '0.1rem',
+              fontWeight: 600
+            }}>
+              Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
+            </div>
+
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              marginTop: '0.35rem'
+              marginTop: '0.1rem'
             }}>
               <img
                 src={themeKeyImage}
@@ -610,19 +623,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 }}
                 draggable={false}
               />
-            </div>
-
-            {/* Instructions */}
-            <div style={{
-              fontSize: '1.2rem',
-              color: '#6b7280',
-              textAlign: 'center',
-              lineHeight: '1.7',
-              fontFamily: 'var(--font-primary)',
-              marginTop: '0.5rem',
-              fontWeight: 600
-            }}>
-              Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
             </div>
           </div>
           <button

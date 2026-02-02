@@ -497,6 +497,7 @@ All tables have RLS enabled with policies:
 2. AI calculates similarity → `confidence_percentage` and `similarity_score` stored
 3. Frontend uses confidence to show UN diamond color
 4. `matching_method` records how match was determined ('exact', 'synonym', 'semantic')
+5. Daily key + weekly vault UI flows are documented in `docs/GAME_LOGIC_AND_RULES.md` → **Theme Key & Vault Flow**
 
 ---
 

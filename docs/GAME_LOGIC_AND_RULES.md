@@ -55,6 +55,25 @@ const message = didWin
 
 ---
 
+## 🔑 **THEME KEY & VAULT FLOW**
+
+### **Daily Key Rule**
+1. **No Key While Playing**: The key is hidden until the daily word is solved.
+2. **Word Win Grants a Key**: After a correct daily word guess, `Key.png` appears between the word reveal and the first hint.
+3. **Theme Guess Spends the Key**: Submitting a theme guess updates the key color for that day:
+   - **Green** (80%+) / **Orange** (70-79%) / **Red** (<70%)
+
+### **Weekly Vault Rule**
+- The vault door reflects the **player’s weekly theme status** and persists across days.
+- The **key resets daily**, while the vault remains a weekly summary of theme outcome.
+
+### **Theme Guess + Key Interaction**
+- **Theme guess is separate from the word win**.
+- The daily key exists only on days the word is solved.
+- The vault remains visible regardless of key state.
+
+---
+
 ## 📊 **SCORING SYSTEM**
 
 ### **Current Formula** (December 2024)

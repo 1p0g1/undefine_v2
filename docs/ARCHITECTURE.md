@@ -179,6 +179,9 @@ export default withCors(async function handler(req, res) {
      - Inserts row into scores table
     - Updates player_streaks (streaks)
      - Full game round finalization
+  - Theme Key + Vault Flow (game-state UI):
+    - Daily key appears after word win; vault door reflects weekly theme status
+    - See `docs/GAME_LOGIC_AND_RULES.md` → **Theme Key & Vault Flow**
 
 ### Database Schema
 
