@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { getSimilarityBarColor, getUnDiamondColor } from '../utils/themeMessages';
+import { getSimilarityBarColor, getUnDiamondColor, getThemeKeyImage } from '../utils/themeMessages';
 import { VaultLogo, VAULT_UNLOCK_SEQUENCE, ORANGE_SHAKE_SEQUENCE, RED_SHAKE_SEQUENCE, SCORE_THRESHOLD_GREEN, SCORE_THRESHOLD_ORANGE } from './VaultLogo';
 
 interface ThemeStatus {
@@ -113,8 +113,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const LOCK_TEXT_FONT_SIZE = 'clamp(2rem, 6.5vw, 3.2rem)';
   const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
   const HEADER_LINE_GAP_REM = 0.1;
+  const KEY_REVEAL_DELAY_MS = 250;
+  const KEY_IMAGE_SIZE = 'clamp(3.2rem, 10vw, 4.4rem)';
 
   const playerId = getPlayerId();
+  const [showScoringTooltip, setShowScoringTooltip] = useState(false);
+  const [themeKeyImage, setThemeKeyImage] = useState<string>(
+    getThemeKeyImage({ hasGuessedToday: false })
+  );
 
   // Cleanup animation timeouts on unmount
   useEffect(() => {
@@ -124,6 +130,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    setThemeKeyImage(getThemeKeyImage({
+      hasGuessedToday: themeGuessData?.hasGuessedToday,
+      isCorrectGuess: themeGuessData?.isCorrectGuess,
+      confidencePercentage: themeGuessData?.confidencePercentage ?? null,
+      highestConfidencePercentage: themeGuessData?.highestConfidencePercentage ?? null
+    }));
+  }, [themeGuessData]);
 
   // Function to play vault unlock animation
   const playVaultUnlockAnimation = useCallback(async () => {
@@ -409,14 +424,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // CRITICAL: For correct guesses, play animation FIRST, then update visual states
       // This creates suspense and makes the reveal more impactful
       if (response.isCorrect) {
+        setThemeKeyImage(getThemeKeyImage({
+          hasGuessedToday: true,
+          isCorrectGuess: response.isCorrect,
+          confidencePercentage: response.fuzzyMatch?.confidence || null
+        }));
+        await new Promise(resolve => setTimeout(resolve, KEY_REVEAL_DELAY_MS));
         // Play vault unlock animation BEFORE showing colors/results
         await playVaultUnlockAnimation();
         
         // NOW update theme data (triggers color changes)
         setThemeGuessData(updatedThemeData);
         if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
-        
       } else {
+        setThemeKeyImage(getThemeKeyImage({
+          hasGuessedToday: true,
+          isCorrectGuess: response.isCorrect,
+          confidencePercentage: response.fuzzyMatch?.confidence || null
+        }));
         // For incorrect guesses, update immediately (no animation)
         setThemeGuessData(updatedThemeData);
         if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
@@ -565,10 +590,28 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 letterSpacing: '-0.02em',
                 lineHeight: 1
               }}>
-                Unlock
+                lock the theme of the week
               </span>
             </div>
             
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '0.35rem'
+            }}>
+              <img
+                src={themeKeyImage}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  width: KEY_IMAGE_SIZE,
+                  height: KEY_IMAGE_SIZE,
+                  objectFit: 'contain'
+                }}
+                draggable={false}
+              />
+            </div>
+
             {/* Instructions */}
             <div style={{
               fontSize: '1.05rem',
@@ -629,14 +672,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 padding: '1rem',
                 marginBottom: '1rem'
               }}>
-                <h3 style={{ 
-                  margin: '0 0 0.75rem 0', 
-                  fontSize: '0.95rem', 
-                  fontWeight: '600',
-                  color: '#065f46'
-                }}>
-                  This week's words
-                </h3>
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
@@ -691,9 +726,57 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   marginBottom: '0.5rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.25rem'
+                  gap: '0.25rem',
+                  position: 'relative'
                 }}>
-                  🧠 Your Previous Guesses:
+                  <span>🧠 Your Previous Guesses:</span>
+                  <button
+                    type="button"
+                    aria-label="Theme scoring details"
+                    onMouseEnter={() => setShowScoringTooltip(true)}
+                    onMouseLeave={() => setShowScoringTooltip(false)}
+                    onFocus={() => setShowScoringTooltip(true)}
+                    onBlur={() => setShowScoringTooltip(false)}
+                    style={{
+                      all: 'unset',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '1.1rem',
+                      height: '1.1rem',
+                      borderRadius: '999px',
+                      border: '1px solid #c7d2fe',
+                      color: '#4338ca',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      backgroundColor: '#eef2ff',
+                      lineHeight: 1
+                    }}
+                  >
+                    ?
+                  </button>
+                  {showScoringTooltip && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 0.45rem)',
+                      right: 0,
+                      backgroundColor: 'rgba(26, 35, 126, 0.95)',
+                      color: '#fff',
+                      padding: '0.5rem 0.65rem',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.72rem',
+                      lineHeight: 1.4,
+                      boxShadow: '0 6px 20px rgba(15, 23, 42, 0.25)',
+                      width: '14rem',
+                      zIndex: 5
+                    }}>
+                      0-69% = Red (incorrect/far)<br />
+                      70-85% = Orange (very close)<br />
+                      85%+ = Green (effectively correct)<br />
+                      Correct guesses always show green
+                    </div>
+                  )}
                 </div>
                 <div style={{
                   display: 'flex',

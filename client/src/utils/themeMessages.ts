@@ -143,6 +143,38 @@ export function getUnDiamondColor(confidence: number | null, isCorrect: boolean)
   return '#059669'; // Green for 85%+
 }
 
+const THEME_KEY_SCORE_THRESHOLD_GREEN = 80;
+const THEME_KEY_SCORE_THRESHOLD_ORANGE = 70;
+const THEME_KEY_IMAGE_DEFAULT = '/Key.png';
+const THEME_KEY_IMAGE_GREEN = '/GreenKey.png';
+const THEME_KEY_IMAGE_ORANGE = '/OrangeKey.png';
+const THEME_KEY_IMAGE_RED = '/RedKey.png';
+
+interface ThemeKeyState {
+  hasGuessedToday?: boolean;
+  isCorrectGuess?: boolean;
+  confidencePercentage?: number | null;
+  highestConfidencePercentage?: number | null;
+}
+
+export function getThemeKeyImage({
+  hasGuessedToday,
+  isCorrectGuess,
+  confidencePercentage,
+  highestConfidencePercentage
+}: ThemeKeyState): string {
+  if (!hasGuessedToday) return THEME_KEY_IMAGE_DEFAULT;
+  if (isCorrectGuess) return THEME_KEY_IMAGE_GREEN;
+
+  const effectiveConfidence = highestConfidencePercentage ?? confidencePercentage;
+  if (effectiveConfidence === null || effectiveConfidence === undefined) {
+    return THEME_KEY_IMAGE_DEFAULT;
+  }
+  if (effectiveConfidence >= THEME_KEY_SCORE_THRESHOLD_GREEN) return THEME_KEY_IMAGE_GREEN;
+  if (effectiveConfidence >= THEME_KEY_SCORE_THRESHOLD_ORANGE) return THEME_KEY_IMAGE_ORANGE;
+  return THEME_KEY_IMAGE_RED;
+}
+
 /**
  * Get similarity bar color with override for correct answers
  * This ensures correct answers are always green regardless of confidence

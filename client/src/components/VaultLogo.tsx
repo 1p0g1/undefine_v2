@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { getThemeKeyImage } from '../utils/themeMessages';
 
 // Vault unlock animation sequence (for 80%+ correct theme guesses)
 const VAULT_UNLOCK_SEQUENCE = [
@@ -55,6 +56,8 @@ interface VaultLogoProps {
   currentAnimationFrame?: string;
   // Toggle to show "Un" overlay text
   showUnText?: boolean;
+  // Show key overlay for theme access
+  showKey?: boolean;
   // For theme modal: trigger animation based on score
   animateForScore?: number | null;
   onScoreAnimationComplete?: () => void;
@@ -73,6 +76,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   themeGuessData,
   currentAnimationFrame,
   showUnText = true,
+  showKey = false,
   animateForScore,
   onScoreAnimationComplete
 }) => {
@@ -360,6 +364,25 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
     transition: 'opacity 0.1s ease-in-out'
   };
 
+  const keyImage = showKey
+    ? getThemeKeyImage({
+        hasGuessedToday: themeGuessData?.hasGuessedToday,
+        isCorrectGuess: themeGuessData?.isCorrectGuess,
+        confidencePercentage: themeGuessData?.confidencePercentage ?? null,
+        highestConfidencePercentage: themeGuessData?.highestConfidencePercentage ?? null
+      })
+    : null;
+
+  const keyImageStyle: React.CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    pointerEvents: 'none',
+    zIndex: 2
+  };
+
   // Match original UnPrefix text sizes - smaller, proportional to original diamond
   const getUnTextSize = () => {
     if (large) return 'clamp(1.8rem, 4.5vw, 2.4rem)'; // Larger for modal but still proportional
@@ -485,27 +508,23 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
           @keyframes themeCtaPulse {
             0%, 100% {
               opacity: 1;
-              box-shadow: 0 4px 12px rgba(26, 35, 126, 0.35), 0 0 0 2px rgba(26, 35, 126, 0.2);
               transform: rotate(var(--cta-rotation, 0deg)) scale(1);
-              filter: brightness(1);
+              filter: brightness(1) drop-shadow(0 4px 10px rgba(26, 35, 126, 0.35));
             }
             25% {
               opacity: 0.95;
-              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
               transform: rotate(calc(var(--cta-rotation, 0deg) + 5deg)) scale(1.04);
-              filter: brightness(1.08);
+              filter: brightness(1.08) drop-shadow(0 6px 16px rgba(26, 35, 126, 0.45));
             }
             50% {
               opacity: 0.9;
-              box-shadow: 0 8px 24px rgba(26, 35, 126, 0.55), 0 0 0 4px rgba(26, 35, 126, 0.35);
               transform: rotate(var(--cta-rotation, 0deg)) scale(1.08);
-              filter: brightness(1.12);
+              filter: brightness(1.12) drop-shadow(0 8px 20px rgba(26, 35, 126, 0.55));
             }
             75% {
               opacity: 0.95;
-              box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45), 0 0 0 3px rgba(26, 35, 126, 0.3);
               transform: rotate(calc(var(--cta-rotation, 0deg) - 5deg)) scale(1.04);
-              filter: brightness(1.08);
+              filter: brightness(1.08) drop-shadow(0 6px 16px rgba(26, 35, 126, 0.45));
             }
           }
           
@@ -564,6 +583,15 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
             style={imageStyle}
             draggable={false}
           />
+          {keyImage && (
+            <img
+              src={keyImage}
+              alt=""
+              aria-hidden="true"
+              style={keyImageStyle}
+              draggable={false}
+            />
+          )}
           {showUnText && (
             <span
               style={{
@@ -581,6 +609,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
                 pointerEvents: 'none',
                 userSelect: 'none',
                 lineHeight: 1,
+                zIndex: 3,
                 transition: 'color 0.3s ease-in-out, text-shadow 0.3s ease-in-out' // Smooth transition
               }}
             >

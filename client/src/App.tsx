@@ -658,6 +658,7 @@ function App() {
   const bonusAttempts = gameState.isWon && gameState.guesses 
     ? Math.max(0, 6 - gameState.guesses.length) 
     : 0;
+  const shouldShowThemeKey = gameState.isWon && !gameState.isArchivePlay;
 
   return (
     <div
@@ -777,6 +778,7 @@ function App() {
             onClick={handleThemeClick} 
             themeGuessData={themeGuessData}
             gameComplete={gameState.isComplete}
+            showKey={shouldShowThemeKey}
             celebrateCompletion={celebrateDiamond}
             onCelebrationComplete={handleCelebrationComplete}
             bonusRoundActive={pendingBonusRound && !celebrateDiamond && !bonusRoundComplete}

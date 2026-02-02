@@ -20,6 +20,15 @@ All images are located in `client/public/` and are designed to be **exactly the 
 | 🚪 Ajar Vault 2 | `AjarVault2.png` | Door continues opening |
 | 🔓 Open Vault | `OpenVault.png` | Final state after theme is correctly guessed (80%+) |
 
+### Key Overlay States (Theme Access + Reveal)
+
+| Image | Filename | Purpose |
+|-------|----------|---------|
+| 🔑 Default Key | `Key.png` | Theme access key before any theme guess |
+| 🟢 Green Key | `GreenKey.png` | Correct/80%+ key reveal |
+| 🟠 Orange Key | `OrangeKey.png` | Close (70-79%) key reveal |
+| 🔴 Red Key | `RedKey.png` | Incorrect (<70%) key reveal |
+
 ### Orange Vault States (Close - 70-79%)
 
 | Image | Filename | Purpose |
@@ -78,6 +87,13 @@ Component: <UnPrefix />
 
 **Note:** The main page always shows the **highest** score achieved that week, so if a player improves their score, the vault will update accordingly.
 
+### Key Overlay Logic
+
+- **Visibility**: Key appears only after the daily word is correctly solved.
+- **Pre-Guess**: Use `Key.png` until the player submits a theme guess.
+- **Post-Guess**: Key color follows the same score thresholds as the vault animation.
+- **Interaction**: Clicking the key (or vault) opens the theme modal.
+
 ### Theme Popup Animation Sequences
 
 #### Green/Success Animation (80%+ Score)
@@ -94,6 +110,13 @@ When a player submits a **successful** theme guess (80%+), the vault unlock anim
 | 6 | Hold | `OpenVault.png` | Final open state |
 
 **Total Animation Duration:** ~1.6 seconds
+
+#### Key Reveal Order (Theme Modal)
+
+When a theme guess is submitted, the key updates **before** any vault-door animation:
+1. **Key update** to `GreenKey.png`, `OrangeKey.png`, or `RedKey.png` based on score.
+2. **Vault animation** plays only for the green success path.
+
 
 #### Orange/Close Animation (70-79% Score)
 
