@@ -24,6 +24,7 @@ import { BonusRoundInline, BonusGuessResult } from './components/BonusRoundInlin
 import { apiClient } from './api/client';
 import { usePlayer } from './hooks/usePlayer';
 import { getApiBaseUrl } from './utils/apiHelpers';
+import { getThemeKeyImage } from './utils/themeMessages';
 
 function App() {
   const {
@@ -659,6 +660,12 @@ function App() {
     ? Math.max(0, 6 - gameState.guesses.length) 
     : 0;
   const shouldShowThemeKey = gameState.isWon && !gameState.isArchivePlay;
+  const themeKeyImage = getThemeKeyImage({
+    hasGuessedToday: themeGuessData?.hasGuessedToday,
+    isCorrectGuess: themeGuessData?.isCorrectGuess,
+    confidencePercentage: themeGuessData?.confidencePercentage ?? null,
+    highestConfidencePercentage: themeGuessData?.highestConfidencePercentage ?? null
+  });
 
   return (
     <div
@@ -778,7 +785,6 @@ function App() {
             onClick={handleThemeClick} 
             themeGuessData={themeGuessData}
             gameComplete={gameState.isComplete}
-            showKey={shouldShowThemeKey}
             celebrateCompletion={celebrateDiamond}
             onCelebrationComplete={handleCelebrationComplete}
             bonusRoundActive={pendingBonusRound && !celebrateDiamond && !bonusRoundComplete}
@@ -1388,18 +1394,31 @@ function App() {
               </div>
 
               {/* Key reward - only for successful solves */}
-              {gameState.isWon && (
+              {shouldShowThemeKey && (
                 <div style={{ marginTop: '0.45rem' }}>
-                  <img
-                    src="/Key.png"
-                    alt=""
-                    draggable={false}
+                  <button
+                    type="button"
+                    onClick={handleThemeClick}
+                    aria-label="Open theme guess"
                     style={{
-                      width: 'clamp(3.2rem, 18vw, 4.2rem)',
-                      height: 'auto',
-                      display: 'inline-block'
+                      all: 'unset',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
-                  />
+                  >
+                    <img
+                      src={themeKeyImage}
+                      alt=""
+                      draggable={false}
+                      style={{
+                        width: 'clamp(3.2rem, 18vw, 4.2rem)',
+                        height: 'auto',
+                        display: 'inline-block'
+                      }}
+                    />
+                  </button>
                 </div>
               )}
             </div>

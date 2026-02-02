@@ -114,7 +114,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
   const HEADER_LINE_GAP_REM = 0.1;
   const KEY_REVEAL_DELAY_MS = 250;
-  const KEY_IMAGE_SIZE = 'clamp(3.2rem, 10vw, 4.4rem)';
+  const KEY_IMAGE_SIZE = 'clamp(6.4rem, 20vw, 8.8rem)';
 
   const playerId = getPlayerId();
   const [showScoringTooltip, setShowScoringTooltip] = useState(false);
@@ -590,7 +590,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 letterSpacing: '-0.02em',
                 lineHeight: 1
               }}>
-                lock the theme of the week
+                lock
               </span>
             </div>
             
@@ -614,14 +614,15 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
 
             {/* Instructions */}
             <div style={{
-              fontSize: '1.05rem',
+              fontSize: '1.2rem',
               color: '#6b7280',
               textAlign: 'center',
-              lineHeight: '1.65',
+              lineHeight: '1.7',
               fontFamily: 'var(--font-primary)',
-              marginTop: '0.35rem'
+              marginTop: '0.5rem',
+              fontWeight: 600
             }}>
-              What <span className="theme-semantic-shimmer">theme</span> connects this week's words?
+              Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
             </div>
           </div>
           <button
