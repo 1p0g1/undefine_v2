@@ -18,6 +18,41 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{
+    entry: DictionaryEntry;
+    neighbours: { before: DictionaryEntry | null; after: DictionaryEntry | null } | null;
+  } | null>(null);
+  const [externalCheck, setExternalCheck] = useState<{
+    status: 'idle' | 'loading' | 'found' | 'not_found' | 'error';
+    definition?: string;
+  }>({ status: 'idle' });
+
+  const checkExternalDictionary = useCallback(async (raw: string) => {
+    const word = raw.trim().toLowerCase();
+    if (!word) return;
+
+    setExternalCheck({ status: 'loading' });
+    try {
+      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        setExternalCheck({ status: 'not_found' });
+        return;
+      }
+
+      const data = await response.json();
+      const firstMeaning = data?.[0]?.meanings?.[0];
+      const firstDef = firstMeaning?.definitions?.[0]?.definition;
+
+      setExternalCheck({
+        status: 'found',
+        definition: typeof firstDef === 'string' ? firstDef : undefined
+      });
+    } catch (e) {
+      console.error('External dictionary check failed:', e);
+      setExternalCheck({ status: 'error' });
+    }
+  }, []);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
@@ -25,10 +60,16 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
     setLoading(true);
     setError(null);
     setSearched(true);
+    setSelected(null);
+    setExternalCheck({ status: 'idle' });
 
     try {
       const response = await adminApi.searchDictionary(query.trim(), 50);
       setResults(response.results);
+      if (!response.results || response.results.length === 0) {
+        // Helpful fallback: check dictionaryapi.dev for existence when our internal dictionary misses
+        await checkExternalDictionary(query);
+      }
     } catch (err) {
       console.error('Dictionary search failed:', err);
       setError(err instanceof Error ? err.message : 'Search failed');
@@ -36,7 +77,27 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [query, checkExternalDictionary]);
+
+  const handleSelectEntry = useCallback(async (entry: DictionaryEntry) => {
+    // Toggle off if already selected
+    if (selected?.entry?.id === entry.id) {
+      setSelected(null);
+      return;
+    }
+
+    setSelected({ entry, neighbours: null });
+    try {
+      const response = await adminApi.lookupWord(entry.normalized_word);
+      setSelected({
+        entry: response.results?.[0] || entry,
+        neighbours: response.neighbours || null
+      });
+    } catch (e) {
+      console.error('Dictionary lookup failed:', e);
+      setSelected({ entry, neighbours: null });
+    }
+  }, [selected]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -96,6 +157,37 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
               <div style={styles.noResultsHint}>
                 Try a different spelling or check if it's a common word
               </div>
+              <div style={{ marginTop: '1.25rem', fontSize: '0.95rem', color: '#374151' }}>
+                {externalCheck.status === 'loading' && (
+                  <div>Checking `dictionaryapi.dev`…</div>
+                )}
+                {externalCheck.status === 'found' && (
+                  <div>
+                    Found on external dictionary: <strong>{query.trim()}</strong>
+                    {externalCheck.definition ? (
+                      <div style={{ marginTop: '0.5rem', color: '#6b7280', fontSize: '0.9rem', lineHeight: 1.4 }}>
+                        {externalCheck.definition}
+                      </div>
+                    ) : null}
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <a
+                        href={`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query.trim().toLowerCase())}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: '#1a237e', fontWeight: 600 }}
+                      >
+                        Open external record
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {externalCheck.status === 'not_found' && (
+                  <div>No external record found.</div>
+                )}
+                {externalCheck.status === 'error' && (
+                  <div>External check failed.</div>
+                )}
+              </div>
             </div>
           )}
 
@@ -106,7 +198,14 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
               </div>
               <div style={styles.resultsList}>
                 {results.map((entry) => (
-                  <div key={entry.id} style={styles.resultItem}>
+                  <div
+                    key={entry.id}
+                    style={{
+                      ...styles.resultItem,
+                      borderColor: selected?.entry?.id === entry.id ? 'rgba(26, 35, 126, 0.35)' : (styles.resultItem.border as any)
+                    }}
+                    onClick={() => handleSelectEntry(entry)}
+                  >
                     <div style={styles.resultWord}>
                       <strong>{entry.word}</strong>
                       {entry.part_of_speech && (
@@ -125,6 +224,50 @@ export const DictionarySearch: React.FC<DictionarySearchProps> = ({ onClose }) =
                     <div style={styles.resultMeta}>
                       {entry.number_of_letters} letters • Lex rank: {entry.lex_rank}
                     </div>
+
+                    {selected?.entry?.id === entry.id && (
+                      <div style={{
+                        marginTop: '0.9rem',
+                        paddingTop: '0.75rem',
+                        borderTop: '1px dashed rgba(26, 35, 126, 0.18)'
+                      }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1a237e', marginBottom: '0.5rem' }}>
+                          Neighbours (lex_rank)
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                          <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.6rem' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.2rem' }}>Before</div>
+                            <div style={{ fontWeight: 700, color: '#111827' }}>
+                              {selected.neighbours?.before?.word || '—'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {selected.neighbours?.before?.lex_rank ? `#${selected.neighbours.before.lex_rank}` : ''}
+                            </div>
+                          </div>
+                          <div style={{ background: '#eef2ff', border: '1px solid rgba(26, 35, 126, 0.25)', borderRadius: '8px', padding: '0.6rem' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.2rem' }}>Current</div>
+                            <div style={{ fontWeight: 800, color: '#1a237e' }}>
+                              {selected.entry.word}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              #{selected.entry.lex_rank}
+                            </div>
+                          </div>
+                          <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.6rem' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.2rem' }}>After</div>
+                            <div style={{ fontWeight: 700, color: '#111827' }}>
+                              {selected.neighbours?.after?.word || '—'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {selected.neighbours?.after?.lex_rank ? `#${selected.neighbours.after.lex_rank}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: '0.6rem', fontSize: '0.8rem', color: '#6b7280' }}>
+                          Tip: click this row again to collapse.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

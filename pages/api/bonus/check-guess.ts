@@ -55,6 +55,7 @@ interface BonusGuessResponse {
   error?: string;
   message?: string;
   isEstimated?: boolean; // True if lex_rank was estimated (word not in dictionary)
+  validationSource?: 'internal' | 'external';
 }
 
 /**
@@ -67,6 +68,30 @@ function normalizeWord(word: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/[^a-z]/g, ''); // Remove non-alpha
+}
+
+/**
+ * External dictionary existence check (fallback for internal dictionary coverage gaps).
+ * Source: dictionaryapi.dev
+ * Example: https://api.dictionaryapi.dev/api/v2/entries/en/semantic
+ */
+async function externalDictionaryExists(normalizedWord: string): Promise<boolean> {
+  const word = normalizeWord(normalizedWord);
+  if (!word) return false;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+  try {
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+    const response = await fetch(url, { method: 'GET', signal: controller.signal });
+    return response.ok;
+  } catch (error) {
+    console.warn('[bonus/check-guess] External dictionary check failed:', error);
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -249,14 +274,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
     }
 
     // Get the guessed word's lex_rank - MUST be a real dictionary word
-    const guessResult = await getWordLexRank(guess);
+    let guessResult = await getWordLexRank(guess);
+    let validationSource: 'internal' | 'external' = 'internal';
+
     if (!guessResult) {
-      // Word not in dictionary - reject it (no made-up words allowed)
-      return res.status(400).json({
-        valid: false,
-        error: 'not_in_dictionary',
-        message: `"${guess}" is not in our dictionary. Try a real word!`
-      });
+      // Fallback: If our internal dictionary is missing a real word, verify externally.
+      const normalized = normalizeWord(guess);
+      const existsExternally = await externalDictionaryExists(normalized);
+
+      if (!existsExternally) {
+        // Word not in dictionary - reject it (no made-up words allowed)
+        return res.status(400).json({
+          valid: false,
+          error: 'not_in_dictionary',
+          message: `"${guess}" is not in our dictionary. Try a real word!`
+        });
+      }
+
+      // Real word (externally verified), but missing internally → estimate lex_rank
+      validationSource = 'external';
+      const estimated = await estimateWordLexRank(guess);
+      guessResult = estimated;
     }
 
     // Calculate distance and tier
@@ -325,7 +363,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       tier: tierInfo.tier as Tier,
       points: tierInfo.points,
       color: tierInfo.color,
-      isEstimated: guessResult.isEstimated || targetResult.isEstimated
+      isEstimated: guessResult.isEstimated || targetResult.isEstimated,
+      validationSource,
+      message: validationSource === 'external'
+        ? `\"${guess}\" isn't in our internal dictionary yet, but it is a real word. Scoring uses an estimated position.`
+        : undefined
     });
 
   } catch (error) {

@@ -861,3 +861,8 @@ The all-time leaderboard system is now complete and ready for production. Future
   - Documented multi-source enrichment workflow and API key setup.
   - Added "Known Issues" section documenting the FK drop/restore manual steps.
 
+### 12.13: Runtime fallback existence check (dictionaryapi.dev)
+- [x] Add runtime fallback so real words missing from `public.dictionary` can still be validated
+  - Done
+  - Bonus-round guess validation now checks `dictionaryapi.dev` when internal lookup fails and proceeds with an estimated lex_rank.
+

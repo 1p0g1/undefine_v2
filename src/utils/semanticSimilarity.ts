@@ -16,6 +16,7 @@
  */
 
 import { testThemeScoring, THRESHOLDS } from './themeScoring';
+import { HF_API_BASE, MODELS } from './themeScoringConfig';
 
 // Re-export threshold for backward compatibility
 const THEME_SIMILARITY_THRESHOLD = THRESHOLDS.embedding;
@@ -33,6 +34,44 @@ export interface UsageStats {
   requestsThisMonth: number;
   estimatedCost: number;
   freeRemainingRequests: number;
+}
+
+/**
+ * Compute raw embedding similarity between two texts (for word matching).
+ * Used by advancedFuzzyMatcher for guess-vs-word similarity.
+ */
+export async function computeSemanticSimilarity(text1: string, text2: string): Promise<number> {
+  const apiKey = process.env.HF_API_KEY;
+  if (!apiKey) {
+    console.error('[semanticSimilarity] HF_API_KEY not set');
+    return 0;
+  }
+  const url = `${HF_API_BASE}/${MODELS.embedding}`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: {
+          source_sentence: text1.toLowerCase().trim(),
+          sentences: [text2.toLowerCase().trim()]
+        }
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn('[semanticSimilarity] Embedding API error:', response.status, errorText);
+      return 0;
+    }
+    const result = await response.json();
+    return result[0] ?? 0;
+  } catch (error) {
+    console.warn('[semanticSimilarity] computeSemanticSimilarity error:', error);
+    return 0;
+  }
 }
 
 /**

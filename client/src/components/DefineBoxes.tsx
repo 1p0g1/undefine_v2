@@ -21,14 +21,14 @@ const BONUS_TIER_COLORS: Record<string, { bg: string; border: string; text: stri
   miss: { bg: '#f3f4f6', border: '#d1d5db', text: '#6b7280' }
 };
 
-// Mapping of DEFINE keys to their hint descriptions
+// Mapping of DEFINE keys to their hover labels (short)
 const DEFINE_HINTS: Record<string, string> = {
-  'D': 'Definition: Guess to reveal hints',
-  'E': 'Equivalents: Guess to reveal hints',
-  'F': 'First Letter: Guess to reveal hints',
-  'I': 'In a Sentence: Guess to reveal hints',
-  'N': 'Number of Letters: Guess to reveal hints',
-  'E2': 'Etymology: Guess to reveal hints'
+  'D': 'Definition',
+  'E': 'Equivalents',
+  'F': 'First Letter',
+  'I': 'In a Sentence',
+  'N': 'Number of Letters',
+  'E2': 'Etymology'
 };
 
 const HINT_HIDE_DELAY_MS = 2000;
@@ -108,8 +108,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       justifyContent: 'center',
       position: 'relative'
     }}>
-      {/* Boxes with negative margin to overlap slightly for tighter look */}
-      <div style={{ display: 'flex' }}>
+      {/* Gap between DEFINE boxes */}
+      <div style={{ display: 'flex', gap: '0.2rem' }}>
         {letters.map((letter, index) => {
           const isRevealed = revealedClues.includes(letter as ShortClueKey);
           const status = guessStatus[gameState.guesses.length];
@@ -166,7 +166,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 setHintAnchorLeft(null);
               }}
               onClick={() => {
-                // Removed click functionality - hover hints are sufficient
+                onBoxClick?.('Guess to reveal clues');
               }}
               style={{
                 width: boxSize,
@@ -174,9 +174,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 position: 'relative',
                 cursor: isRevealed ? 'pointer' : 'default',
                 animation: isLoading ? `wave 1.2s ease-in-out ${index * 0.1}s infinite` : 'none',
-                zIndex: 1,
-                // Negative margin to pull boxes closer (overlapping slightly)
-                marginLeft: index === 0 ? '0' : '-0.35rem'
+                zIndex: 1
               }}
             >
               {/* Inner colored content - positioned to show through frame window */}

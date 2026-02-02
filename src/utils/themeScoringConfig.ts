@@ -217,6 +217,15 @@ export const SYNONYMS: Record<string, string[]> = {
   // Common theme patterns
   'words': ['terms', 'vocabulary'],
   'names': ['nouns', 'terms', 'labels'],
+
+  // Back-formation / pattern-style themes
+  'pattern': ['formation', 'structure', 'arrangement', 'design'],
+  'patterns': ['formations', 'structures', 'arrangements'],
+  'formation': ['pattern', 'structure', 'back-formation'],
+  'formations': ['patterns', 'structures', 'back-formations'],
+  'back': ['backward', 'backwards', 'reverse'],
+  'backward': ['back', 'backwards', 'reverse'],
+  'backwards': ['back', 'backward', 'reverse'],
 };
 
 // =============================================================================

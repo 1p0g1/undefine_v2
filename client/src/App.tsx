@@ -68,6 +68,8 @@ function App() {
   const pendingSummaryGameIdRef = useRef<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const summaryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const guessInputRef = useRef<HTMLInputElement>(null);
   const [showRules, setShowRules] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   
@@ -95,6 +97,9 @@ function App() {
   // Toast state
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+
+  // Guess input glow when user clicks DEFINE boxes
+  const [guessInputGlow, setGuessInputGlow] = useState(false);
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -561,6 +566,9 @@ function App() {
   const handleDefineBoxClick = (message: string) => {
     setToastMessage(message);
     setShowToast(true);
+    guessInputRef.current?.focus();
+    setGuessInputGlow(true);
+    setTimeout(() => setGuessInputGlow(false), 2500);
   };
 
   const handleToastClose = () => {
@@ -1409,6 +1417,7 @@ function App() {
               
               // The guess that revealed this clue (idx corresponds to guess number)
               const guessForThisClue = gameState.guesses[idx];
+              const guessStatusForThisClue = guessStatus[idx];
               
               // Only highlight clues after game completion, and only the winning clue
               let wasWinningClue = false;
@@ -1426,25 +1435,26 @@ function App() {
                   className="dictionary-hint-entry" 
                   key={clue.key}
                   style={{
-                    paddingBottom: isLastClue ? 0 : '0.6rem',
-                    marginBottom: isLastClue ? 0 : '0.6rem',
+                    paddingBottom: isLastClue ? 0 : '0.85rem',
+                    marginBottom: isLastClue ? 0 : '0.85rem',
                     borderBottom: isLastClue ? 'none' : '1px solid rgba(26, 35, 126, 0.1)',
-                    backgroundColor: wasWinningClue ? '#f0fdf4' : 'transparent',
-                    borderRadius: wasWinningClue ? '0.25rem' : 0,
-                    padding: wasWinningClue ? '0.5rem' : undefined,
-                    margin: wasWinningClue ? '-0.25rem -0.5rem 0.6rem -0.5rem' : undefined,
+                    backgroundColor: wasWinningClue ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
+                    borderRadius: wasWinningClue ? '0.35rem' : 0,
+                    padding: wasWinningClue ? '0.6rem 0.75rem' : undefined,
                     transition: 'background-color 0.2s ease',
-                    position: 'relative'
+                    position: 'relative',
+                    overflow: 'hidden',
+                    outline: wasWinningClue ? '1px solid rgba(34, 197, 94, 0.25)' : undefined
                   }}
                 >
                   {/* Section label - dictionary style */}
                   <div style={{
-                    fontSize: 'clamp(0.65rem, 1.8vw, 0.75rem)',
+                    fontSize: 'clamp(0.75rem, 2vw, 0.88rem)',
                     fontWeight: 600,
                     textTransform: 'lowercase',
                     fontStyle: 'italic',
                     color: wasWinningClue ? '#166534' : '#6b7280',
-                    marginBottom: '0.15rem',
+                    marginBottom: '0.25rem',
                     fontFamily: 'var(--font-primary)',
                     letterSpacing: '0.01em'
                   }}>
@@ -1473,18 +1483,45 @@ function App() {
                     </div>
                     {/* Guess that revealed this clue - bottom right */}
                     {guessForThisClue && (
+                      (() => {
+                        const isIncorrect = guessStatusForThisClue === 'incorrect';
+                        const isFuzzy = guessStatusForThisClue === 'fuzzy';
+                        const isCorrect = guessStatusForThisClue === 'correct' || wasWinningClue;
+
+                        const guessTextColor = isCorrect ? '#166534' : isFuzzy ? '#9a3412' : isIncorrect ? '#991b1b' : '#6b7280';
+                        const guessBg = isCorrect
+                          ? 'rgba(34, 197, 94, 0.12)'
+                          : isFuzzy
+                            ? 'rgba(249, 115, 22, 0.14)'
+                            : isIncorrect
+                              ? 'rgba(239, 68, 68, 0.14)'
+                              : 'rgba(156, 163, 175, 0.10)';
+
+                        const guessBorder = isCorrect
+                          ? 'rgba(34, 197, 94, 0.30)'
+                          : isFuzzy
+                            ? 'rgba(249, 115, 22, 0.30)'
+                            : isIncorrect
+                              ? 'rgba(239, 68, 68, 0.30)'
+                              : 'rgba(156, 163, 175, 0.20)';
+
+                        return (
                       <div style={{
-                        fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
-                        color: wasWinningClue ? '#166534' : '#9ca3af',
+                        fontSize: 'clamp(0.75rem, 2.1vw, 0.9rem)',
+                        color: guessTextColor,
                         fontStyle: 'italic',
                         fontFamily: 'var(--font-primary)',
                         whiteSpace: 'nowrap',
                         flexShrink: 0,
-                        paddingLeft: '0.5rem',
-                        borderLeft: '1px solid rgba(156, 163, 175, 0.3)'
+                        padding: '0.12rem 0.45rem',
+                        borderRadius: '0.5rem',
+                        background: guessBg,
+                        border: `1px solid ${guessBorder}`
                       }}>
-                        {wasWinningClue ? '✓ ' : ''}{guessForThisClue}
+                        {isCorrect ? '✓ ' : isFuzzy ? '≈ ' : isIncorrect ? '× ' : ''}{guessForThisClue}
                       </div>
+                        );
+                      })()
                     )}
                   </div>
                 </div>
@@ -1498,6 +1535,7 @@ function App() {
         <form onSubmit={handleGuessSubmit} style={{ width: '100%', maxWidth: 420, margin: '0.75rem auto' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
+              ref={guessInputRef}
               type="text"
               value={guess}
               onChange={(e) => setGuess(e.target.value)}
@@ -1507,12 +1545,13 @@ function App() {
                 flex: 1,
                 padding: '0.5rem',
                 borderRadius: '0.25rem',
-                border: '1px solid #e5e7eb',
+                border: `1px solid ${guessInputGlow ? '#1a237e' : '#e5e7eb'}`,
                 fontSize: '16px', // Prevents iOS zoom on focus
                 fontFamily: 'var(--font-primary)',
                 transition: 'all 0.2s ease',
                 backgroundColor: isSubmitting ? '#f3f4f6' : '#fff',
                 opacity: isSubmitting ? 0.7 : 1,
+                boxShadow: guessInputGlow ? '0 0 0 2px rgba(26, 35, 126, 0.25), 0 0 12px rgba(26, 35, 126, 0.15)' : undefined,
               }}
             />
             <button

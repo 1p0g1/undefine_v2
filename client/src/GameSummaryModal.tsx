@@ -407,8 +407,10 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           />
           <div style={{ 
             display: 'flex', 
-            gap: 'clamp(0.06rem, 0.2vw, 0.1rem)',
-            flex: '0 0 auto'
+            gap: 'clamp(0.08rem, 0.3vw, 0.15rem)',
+            flex: '0 0 auto',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
           {(() => {
             // Use guessesUsed prop when available; fall back to guessStatus for safety
@@ -752,7 +754,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                         {console.log('[Leaderboard Row]', entry.player_name, 'guesses_used:', entry.guesses_used, 'fuzzy_matches:', entry.fuzzy_matches, 'bonus_results:', entry.bonus_results)}
                         <div style={{
                           display: 'flex',
-                          gap: '2px'
+                          gap: '0.15rem'
                         }}>
                         {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, idx) => {
                           // Determine box color based on game state
