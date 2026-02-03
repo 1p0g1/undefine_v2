@@ -617,7 +617,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 textAlign: 'center',
                 fontFamily: 'var(--font-primary)',
                 fontWeight: 600,
-                marginBottom: shouldShowDailyKey ? '-0.15rem' : '0'
+                marginBottom: shouldShowDailyKey ? '0.75rem' : '0'
               }}>
                 Can you <span className="theme-semantic-shimmer">unlock the theme</span> that
               </div>
@@ -632,7 +632,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                     width: KEY_IMAGE_SIZE,
                     height: KEY_IMAGE_SIZE,
                     objectFit: 'contain',
-                    margin: '-0.5rem 0'
+                    margin: '0'
                   }}
                   draggable={false}
                 />
@@ -645,7 +645,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 textAlign: 'center',
                 fontFamily: 'var(--font-primary)',
                 fontWeight: 600,
-                marginTop: shouldShowDailyKey ? '-0.15rem' : '0'
+                marginTop: shouldShowDailyKey ? '0.75rem' : '0',
+                marginBottom: '1rem'
               }}>
                 connects this week's words?
               </div>
@@ -957,24 +958,30 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme && gameWon ? (
               <>
                 <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-                  <div style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#1a237e',
-                      fontSize: '1rem'
-                    }}>
-                      What connects this week's words?
-                    </label>
-                    
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold',
+                    color: '#1a237e',
+                    fontSize: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    What connects this week's words?
+                  </label>
+                  
+                  {/* Inline input + submit button */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    alignItems: 'stretch'
+                  }}>
                     <input
                       type="text"
                       value={guess}
                       onChange={(e) => setGuess(e.target.value)}
                       placeholder="Enter your theme guess..."
                       style={{
-                        width: '100%',
+                        flex: 1,
                         padding: '0.875rem',
                         borderRadius: '0.5rem',
                         border: '2px solid #c7d2fe',
@@ -993,31 +1000,32 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       }}
                       disabled={isSubmitting}
                     />
+                    <button
+                      type="submit"
+                      disabled={!guess.trim() || isSubmitting}
+                      style={{
+                        padding: '0.875rem 1.25rem',
+                        background: guess.trim() && !isSubmitting 
+                          ? 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)' 
+                          : '#9ca3af',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        fontSize: '1.25rem',
+                        cursor: guess.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
+                        boxShadow: guess.trim() && !isSubmitting 
+                          ? '0 4px 14px rgba(26, 35, 126, 0.35)' 
+                          : 'none',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      aria-label="Submit guess"
+                    >
+                      {isSubmitting ? '⏳' : '➜'}
+                    </button>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={!guess.trim() || isSubmitting}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem 1.5rem',
-                      background: guess.trim() && !isSubmitting 
-                        ? 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)' 
-                        : '#9ca3af',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      fontSize: '1.05rem',
-                      fontWeight: 'bold',
-                      cursor: guess.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
-                      boxShadow: guess.trim() && !isSubmitting 
-                        ? '0 4px 14px rgba(26, 35, 126, 0.35)' 
-                        : 'none',
-                      transition: 'all 0.2s ease',
-                      letterSpacing: '0.02em'
-                    }}
-                  >
-                    {isSubmitting ? 'Thinking...' : 'Submit Guess'}
-                  </button>
                 </form>
               </>
             ) : !themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme && !gameWon ? (

@@ -688,21 +688,56 @@ function App() {
   });
 
   return (
-    <div
-      className="flex flex-col items-center text-center w-full min-h-screen main-container"
-      style={{ 
-        paddingTop: 'clamp(1rem, 4vw, 2rem)',
-        paddingBottom: 'clamp(1rem, 4vw, 2rem)',
-        paddingLeft: 'clamp(0.5rem, 2vw, 1rem)',
-        paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
-        minHeight: '100dvh', // Dynamic viewport height for mobile
-        width: '100%',
-        maxWidth: 'min(100vw, 28rem)',
-        margin: '0 auto',
-        boxSizing: 'border-box',
-        overflowX: 'hidden' // Prevent horizontal scrolling
-      }}
-    >
+    <>
+      {/* Dark navy charcoal background with vignette effect */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(ellipse at center, #232a33 0%, #1e2228 50%, #14181d 100%),
+            linear-gradient(135deg, #1e2228 0%, #232a33 50%, #1e2228 100%)
+          `,
+          backgroundBlendMode: 'overlay',
+          zIndex: -1
+        }}
+      >
+        {/* Highlight flecks overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(43, 51, 64, 0.4) 0%, transparent 25%),
+              radial-gradient(circle at 80% 20%, rgba(43, 51, 64, 0.3) 0%, transparent 20%),
+              radial-gradient(circle at 40% 70%, rgba(43, 51, 64, 0.35) 0%, transparent 22%),
+              radial-gradient(circle at 70% 80%, rgba(43, 51, 64, 0.25) 0%, transparent 18%)
+            `,
+            pointerEvents: 'none'
+          }}
+        />
+      </div>
+      <div
+        className="flex flex-col items-center text-center w-full min-h-screen main-container"
+        style={{ 
+          paddingTop: 'clamp(1rem, 4vw, 2rem)',
+          paddingBottom: 'clamp(1rem, 4vw, 2rem)',
+          paddingLeft: 'clamp(0.5rem, 2vw, 1rem)',
+          paddingRight: 'clamp(0.5rem, 2vw, 1rem)',
+          minHeight: '100dvh', // Dynamic viewport height for mobile
+          width: '100%',
+          maxWidth: 'min(100vw, 28rem)',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          overflowX: 'hidden' // Prevent horizontal scrolling
+        }}
+      >
       {/* Archive Play Banner */}
       {gameState?.isArchivePlay && (
         <div style={{
@@ -1728,6 +1763,7 @@ function App() {
         }
       `}</style>
     </div>
+    </>
   );
 }
 
