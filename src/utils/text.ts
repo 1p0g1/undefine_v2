@@ -8,9 +8,12 @@
  * - Converting to lowercase
  * - Removing accents and diacritics
  * - Removing invisible Unicode characters and hyphens
+ * - Removing punctuation and special characters (keeps only letters)
+ * 
+ * This ensures that guesses like "chaotic]" match "chaotic" correctly.
  * 
  * @param text The text to normalize
- * @returns The normalized text
+ * @returns The normalized text (letters only, lowercase)
  */
 export const normalizeText = (text: string): string => {
   if (!text) return '';
@@ -20,7 +23,8 @@ export const normalizeText = (text: string): string => {
     .toLowerCase() // Convert to lowercase
     .normalize('NFD') // Decompose accented characters
     .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
-    .replace(/[\u200B\u200D\u200C\uFEFF-]/g, ''); // Remove zero-width spaces and hyphens
+    .replace(/[\u200B\u200D\u200C\uFEFF-]/g, '') // Remove zero-width spaces and hyphens
+    .replace(/[^a-z]/g, ''); // Remove all non-letter characters (punctuation, numbers, brackets, etc.)
 };
 
 /**

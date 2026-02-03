@@ -44,6 +44,7 @@ interface ThemeGuessModalProps {
   gameDate?: string;
   isArchivePlay?: boolean;
   gameComplete?: boolean; // To detect when game is finished for call-to-action
+  gameWon?: boolean; // Daily word solved (controls key visibility)
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
@@ -59,6 +60,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   gameDate,
   isArchivePlay = false,
   gameComplete = false,
+  gameWon = false,
   onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');
@@ -115,12 +117,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const HEADER_LINE_GAP_REM = 0.1;
   const KEY_REVEAL_DELAY_MS = 250;
   const KEY_IMAGE_SIZE = 'clamp(6.4rem, 20vw, 8.8rem)';
+  const KEY_STACK_GAP_REM = 0.075; // tighter, used for subtitle↔key↔weekly words
 
   const playerId = getPlayerId();
   const [showScoringTooltip, setShowScoringTooltip] = useState(false);
   const [themeKeyImage, setThemeKeyImage] = useState<string>(
     getThemeKeyImage({ hasGuessedToday: false })
   );
+  const shouldShowDailyKey = !isArchivePlay && gameWon;
 
   // Cleanup animation timeouts on unmount
   useEffect(() => {
@@ -287,7 +291,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       
       // If player hasn't completed any words this week, show a friendly message
       if (status.hasActiveTheme && status.progress.completedWords === 0) {
-        setError(isArchivePlay ? 'Win at least one word in this archive week to unlock theme guessing!' : 'Complete at least one word this week to unlock theme guessing!');
+        setError('Solve the secret word to unlock a theme guess');
       } else {
         setThemeStatus(status);
         setThemeStats(statsResult as ThemeStats);
@@ -424,12 +428,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
       // CRITICAL: For correct guesses, play animation FIRST, then update visual states
       // This creates suspense and makes the reveal more impactful
       if (response.isCorrect) {
-        setThemeKeyImage(getThemeKeyImage({
-          hasGuessedToday: true,
-          isCorrectGuess: response.isCorrect,
-          confidencePercentage: response.fuzzyMatch?.confidence || null
-        }));
-        await new Promise(resolve => setTimeout(resolve, KEY_REVEAL_DELAY_MS));
+        if (shouldShowDailyKey) {
+          setThemeKeyImage(getThemeKeyImage({
+            hasGuessedToday: true,
+            isCorrectGuess: response.isCorrect,
+            confidencePercentage: response.fuzzyMatch?.confidence || null
+          }));
+          await new Promise(resolve => setTimeout(resolve, KEY_REVEAL_DELAY_MS));
+        }
         // Play vault unlock animation BEFORE showing colors/results
         await playVaultUnlockAnimation();
         
@@ -437,11 +443,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setThemeGuessData(updatedThemeData);
         if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
       } else {
-        setThemeKeyImage(getThemeKeyImage({
-          hasGuessedToday: true,
-          isCorrectGuess: response.isCorrect,
-          confidencePercentage: response.fuzzyMatch?.confidence || null
-        }));
+        if (shouldShowDailyKey) {
+          setThemeKeyImage(getThemeKeyImage({
+            hasGuessedToday: true,
+            isCorrectGuess: response.isCorrect,
+            confidencePercentage: response.fuzzyMatch?.confidence || null
+          }));
+        }
         // For incorrect guesses, update immediately (no animation)
         setThemeGuessData(updatedThemeData);
         if (updatedThemeStatus) setThemeStatus(updatedThemeStatus);
@@ -612,17 +620,19 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               justifyContent: 'center',
               marginTop: '0.1rem'
             }}>
-              <img
-                src={themeKeyImage}
-                alt=""
-                aria-hidden="true"
-                style={{
-                  width: KEY_IMAGE_SIZE,
-                  height: KEY_IMAGE_SIZE,
-                  objectFit: 'contain'
-                }}
-                draggable={false}
-              />
+              {shouldShowDailyKey && (
+                <img
+                  src={themeKeyImage}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    width: KEY_IMAGE_SIZE,
+                    height: KEY_IMAGE_SIZE,
+                    objectFit: 'contain'
+                  }}
+                  draggable={false}
+                />
+              )}
             </div>
           </div>
           <button
@@ -650,64 +660,73 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         {/* Error State */}
         {error && (
           <div style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.5rem',
-            padding: '1rem',
             color: '#dc2626',
-            marginBottom: '1rem'
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 700,
+            textAlign: 'center',
+            margin: '0.75rem 0 0.5rem 0',
+            fontSize: 'clamp(1.05rem, 3.2vw, 1.25rem)'
           }}>
             {error}
           </div>
         )}
 
         {/* Main Content */}
-        {!isLoading && !error && themeStatus && themeStats && (
+        {!isLoading && themeStatus && themeStats && (
           <div>
             {/* Weekly Themed Words Section - shows words played this week */}
             {themeStatus.weeklyThemedWords.length > 0 && (
               <div style={{
-                backgroundColor: '#f8fffe',
-                border: '1px solid #d1fae5',
-                borderRadius: '0.5rem',
-                padding: '1rem',
+                marginTop: `${KEY_STACK_GAP_REM}rem`,
                 marginBottom: '1rem'
               }}>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-                  gap: '0.5rem'
-                }}>
-                  {themeStatus.weeklyThemedWords.map((wordInfo) => (
-                    <div 
-                      key={wordInfo.id}
-                      style={{
-                        backgroundColor: wordInfo.wasWon ? '#ecfdf5' : '#fef2f2',
-                        border: wordInfo.wasWon ? '1px solid #a7f3d0' : '1px solid #fecaca',
-                        borderRadius: '0.375rem',
-                        padding: '0.4rem',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <div style={{ 
-                        fontSize: '0.8rem', 
-                        fontWeight: '600',
-                        color: wordInfo.wasWon ? '#047857' : '#b91c1c'
-                      }}>
-                        {wordInfo.word}
-                      </div>
-                      <div style={{ 
-                        fontSize: '0.65rem', 
-                        color: wordInfo.wasWon ? '#059669' : '#dc2626',
-                        marginTop: '0.15rem'
-                      }}>
-                        {new Date(wordInfo.date).toLocaleDateString('en-US', { 
-                          weekday: 'short'
-                        })}
-                      </div>
+                {(() => {
+                  const weekdayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+                  const wonWordByDay = new Map<string, string>();
+                  for (const wordInfo of themeStatus.weeklyThemedWords) {
+                    if (!wordInfo.wasWon) continue;
+                    const day = new Date(wordInfo.date).toLocaleDateString('en-US', { weekday: 'short' });
+                    if (!wonWordByDay.has(day)) wonWordByDay.set(day, wordInfo.word);
+                  }
+
+                  return (
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                      gap: '0.75rem',
+                      padding: '0.25rem 0'
+                    }}>
+                      {weekdayOrder.map((day) => {
+                        const word = wonWordByDay.get(day) ?? null;
+                        return (
+                          <div key={day} style={{ textAlign: 'center', minWidth: '4.25rem' }}>
+                            <div style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.06em',
+                              textTransform: 'uppercase',
+                              color: '#6b7280',
+                              fontFamily: 'var(--font-primary)'
+                            }}>
+                              {day}
+                            </div>
+                            <div style={{
+                              fontSize: '1.05rem',
+                              fontWeight: 700,
+                              color: word ? '#047857' : '#9ca3af',
+                              fontFamily: 'var(--font-primary)',
+                              marginTop: '0.1rem',
+                              minHeight: '1.4em'
+                            }}>
+                              {word ?? '—'}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -918,7 +937,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             )}
 
             {/* Theme Guess Form or Status */}
-            {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme ? (
+            {/* ELIGIBILITY: Must have completed TODAY's word AND not guessed today AND canGuessTheme */}
+            {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme && gameWon ? (
               <>
                 <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
                   <div style={{ marginBottom: '0.75rem' }}>
@@ -984,6 +1004,30 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   </button>
                 </form>
               </>
+            ) : !themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme && !gameWon ? (
+              /* Player has earned theme guess rights this week, but hasn't solved TODAY's word yet */
+              <div style={{
+                textAlign: 'center',
+                padding: '1.5rem 1rem',
+                backgroundColor: '#fef3c7',
+                border: '2px solid #f59e0b',
+                borderRadius: '0.75rem'
+              }}>
+                <div style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+                  🔑 Solve Today's Word First
+                </div>
+                <div style={{ 
+                  color: '#92400e', 
+                  fontSize: '0.95rem',
+                  lineHeight: 1.5 
+                }}>
+                  Complete today's word to unlock your daily theme guess.
+                  <br />
+                  <span style={{ fontStyle: 'italic', fontSize: '0.85rem' }}>
+                    Each day, solving the word earns you one theme guess.
+                  </span>
+                </div>
+              </div>
             ) : !themeStatus.progress.hasGuessedToday ? (
               <div style={{
                 textAlign: 'center',

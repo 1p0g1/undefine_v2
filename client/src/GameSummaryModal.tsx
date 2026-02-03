@@ -472,6 +472,58 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               <>Today's Leaderboard</>
             )}
           </div>
+          
+          {/* NEW: Enhanced status section - Bonus Round & Theme Status */}
+          {playerRank && isGameComplete && (
+            <div style={{ 
+              fontSize: '0.9rem', 
+              marginTop: '0.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.3rem'
+            }}>
+              {/* Bonus Round Unlocked - Glowing gold text */}
+              {bonusRoundResults && bonusRoundResults.length > 0 && (
+                <div style={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)',
+                  backgroundSize: '200% auto',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'shimmerText 2s linear infinite',
+                  textShadow: '0 0 10px rgba(251, 191, 36, 0.5)'
+                }}>
+                  ✨ Bonus Round Unlocked ✨
+                </div>
+              )}
+              
+              {/* Theme Status */}
+              {themeGuessData?.isCorrectGuess ? (
+                <div style={{ color: '#059669', fontWeight: 600 }}>
+                  🔓 You unlocked the theme this week!
+                </div>
+              ) : themeGuessData?.hasGuessedToday ? (
+                <div style={{ color: '#f59e0b', fontWeight: 500 }}>
+                  🔒 Keep trying to unlock the theme
+                </div>
+              ) : (
+                <div style={{ color: '#6b7280', fontWeight: 500 }}>
+                  🔒 You haven't unlocked the theme yet
+                </div>
+              )}
+              
+              {/* Come back tomorrow message */}
+              <div style={{ 
+                color: '#6b7280', 
+                fontStyle: 'italic',
+                marginTop: '0.2rem'
+              }}>
+                Come back tomorrow to {playerRank === 1 ? 'reclaim' : 'claim'} top spot
+              </div>
+            </div>
+          )}
+          
           {!playerRank && isGameComplete && (
             <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
               Better luck tomorrow!
@@ -990,6 +1042,10 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+          }
+          @keyframes shimmerText {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
           }
         .loading-spinner {
           width: 24px;
