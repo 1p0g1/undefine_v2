@@ -371,15 +371,20 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary. They can come before or after alphabetically.
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary.
         </div>
 
-        {/* Compact scoring legend */}
-        <div style={styles.scoringLegend}>
-          <span><span style={{ color: '#b8860b' }}>🥇</span> ≤10</span>
-          <span><span style={{ color: '#6b7280' }}>🥈</span> ≤25</span>
-          <span><span style={{ color: '#92400e' }}>🥉</span> ≤50</span>
-          <span>❌ &gt;50</span>
+        {/* Scoring tiers - centered list */}
+        <div style={styles.scoringList}>
+          <div style={styles.scoringListItem}>
+            <span style={{ color: '#b8860b' }}>🥇</span> within 10 words (before or after)
+          </div>
+          <div style={styles.scoringListItem}>
+            <span style={{ color: '#6b7280' }}>🥈</span> within 25 words
+          </div>
+          <div style={styles.scoringListItem}>
+            <span style={{ color: '#92400e' }}>🥉</span> within 50 words
+          </div>
         </div>
 
         {/* Results list with success animation */}
@@ -557,16 +562,19 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '0.75rem',
     lineHeight: 1.4,
   },
-  scoringLegend: {
+  scoringList: {
     display: 'flex',
-    justifyContent: 'center',
-    gap: '0.75rem',
-    fontSize: '0.8rem',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.25rem',
+    fontSize: '0.85rem',
     color: '#78350f',
     marginBottom: '0.75rem',
-    padding: '0.5rem',
-    background: 'rgba(255, 255, 255, 0.5)',
-    borderRadius: '8px',
+  },
+  scoringListItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.4rem',
   },
   results: {
     display: 'flex',

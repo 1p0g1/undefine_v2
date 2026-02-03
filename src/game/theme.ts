@@ -791,4 +791,47 @@ export async function getPlayerWeeklyThemedWords(
     console.error('[getPlayerWeeklyThemedWords] Error:', error);
     return [];
   }
+}
+
+/**
+ * Get count of unique players who have correctly guessed the theme this week
+ */
+export async function getWeeklyThemeSolversCount(theme: string): Promise<number> {
+  try {
+    const today = new Date();
+    const weekStart = getWeekStart(today);
+    const weekEnd = getWeekEnd(today);
+
+    console.log('[getWeeklyThemeSolversCount] Counting solvers for theme:', {
+      theme,
+      weekStart: weekStart.toISOString().split('T')[0],
+      weekEnd: weekEnd.toISOString().split('T')[0]
+    });
+
+    // Count unique players with correct guesses for this theme this week
+    // Exclude archive attempts
+    const { data, error, count } = await supabase
+      .from('theme_attempts')
+      .select('player_id', { count: 'exact', head: false })
+      .eq('theme', theme)
+      .eq('is_correct', true)
+      .eq('is_archive_attempt', false)
+      .gte('attempt_date', weekStart.toISOString().split('T')[0])
+      .lte('attempt_date', weekEnd.toISOString().split('T')[0]);
+
+    if (error) {
+      console.error('[getWeeklyThemeSolversCount] Error:', error);
+      return 0;
+    }
+
+    // Get unique player count (data contains all rows, we need distinct players)
+    const uniquePlayers = new Set(data?.map(d => d.player_id) || []);
+    const solversCount = uniquePlayers.size;
+
+    console.log('[getWeeklyThemeSolversCount] Found solvers:', solversCount);
+    return solversCount;
+  } catch (error) {
+    console.error('[getWeeklyThemeSolversCount] Error:', error);
+    return 0;
+  }
 } 

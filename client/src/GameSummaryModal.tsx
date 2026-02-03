@@ -473,7 +473,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             )}
           </div>
           
-          {/* NEW: Enhanced status section - Bonus Round & Theme Status */}
+          {/* Enhanced status section - Order: Claim message → Theme Status */}
           {playerRank && isGameComplete && (
             <div style={{ 
               fontSize: '0.9rem', 
@@ -482,45 +482,37 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
               flexDirection: 'column',
               gap: '0.3rem'
             }}>
-              {/* Bonus Round Unlocked - Glowing gold text */}
-              {bonusRoundResults && bonusRoundResults.length > 0 && (
+              {/* Come back tomorrow message - FIRST */}
+              <div style={{ 
+                color: '#6b7280', 
+                fontStyle: 'italic'
+              }}>
+                Come back tomorrow to {playerRank === 1 ? 'reclaim' : 'claim'} top spot
+              </div>
+              
+              {/* Theme Status - SECOND with glowing effect for "not unlocked" */}
+              {themeGuessData?.isCorrectGuess ? (
+                <div style={{ 
+                  color: '#059669', 
+                  fontWeight: 600,
+                  marginTop: '0.3rem'
+                }}>
+                  🔓 You unlocked the theme this week!
+                </div>
+              ) : (
                 <div style={{
-                  fontWeight: 700,
-                  background: 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)',
+                  fontWeight: 600,
+                  marginTop: '0.3rem',
+                  background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #6366f1 100%)',
                   backgroundSize: '200% auto',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  animation: 'shimmerText 2s linear infinite',
-                  textShadow: '0 0 10px rgba(251, 191, 36, 0.5)'
+                  animation: 'shimmerText 2.5s linear infinite'
                 }}>
-                  ✨ Bonus Round Unlocked ✨
+                  ✨ You still have not unlocked the theme ✨
                 </div>
               )}
-              
-              {/* Theme Status */}
-              {themeGuessData?.isCorrectGuess ? (
-                <div style={{ color: '#059669', fontWeight: 600 }}>
-                  🔓 You unlocked the theme this week!
-                </div>
-              ) : themeGuessData?.hasGuessedToday ? (
-                <div style={{ color: '#f59e0b', fontWeight: 500 }}>
-                  🔒 Keep trying to unlock the theme
-                </div>
-              ) : (
-                <div style={{ color: '#6b7280', fontWeight: 500 }}>
-                  🔒 You haven't unlocked the theme yet
-                </div>
-              )}
-              
-              {/* Come back tomorrow message */}
-              <div style={{ 
-                color: '#6b7280', 
-                fontStyle: 'italic',
-                marginTop: '0.2rem'
-              }}>
-                Come back tomorrow to {playerRank === 1 ? 'reclaim' : 'claim'} top spot
-              </div>
             </div>
           )}
           

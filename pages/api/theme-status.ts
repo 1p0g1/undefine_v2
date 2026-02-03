@@ -20,7 +20,8 @@ import {
   getThemeForDate,
   getThemeProgress, 
   isThemeGuessCorrect, 
-  getPlayerWeeklyThemedWords 
+  getPlayerWeeklyThemedWords,
+  getWeeklyThemeSolversCount
 } from '../../src/game/theme';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
@@ -56,18 +57,35 @@ export default withCors(async function handler(
   try {
     const playerId = (req.headers['player-id'] as string) ?? req.query.player_id as string;
     const requestedDate = req.query.date as string | undefined;
-    
-    if (!playerId) {
-      return res.status(400).json({ error: 'Missing player_id' });
-    }
-
-    console.log('[/api/theme-status] Getting theme status for player:', playerId);
+    const statsOnly = req.query.stats_only === 'true';
 
     const today = new Date().toISOString().split('T')[0];
     const themeContextDate = requestedDate || today;
 
     // Get theme for requested date's week (archive-safe)
     const currentTheme = await getThemeForDate(themeContextDate);
+
+    // Handle stats_only request - returns solvers count without needing player_id
+    if (statsOnly) {
+      if (!currentTheme) {
+        return res.status(200).json({
+          solversCount: 0,
+          currentTheme: null
+        } as any);
+      }
+      const solversCount = await getWeeklyThemeSolversCount(currentTheme);
+      console.log('[/api/theme-status] Stats only - solvers count:', solversCount);
+      return res.status(200).json({
+        solversCount,
+        currentTheme: null // Don't reveal theme in stats-only mode
+      } as any);
+    }
+    
+    if (!playerId) {
+      return res.status(400).json({ error: 'Missing player_id' });
+    }
+
+    console.log('[/api/theme-status] Getting theme status for player:', playerId);
     console.log('[/api/theme-status] Theme context:', { requestedDate, today, themeContextDate, currentTheme });
     
     if (!currentTheme) {
