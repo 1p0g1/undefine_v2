@@ -602,24 +602,27 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </span>
             </div>
             
-            {/* Instructions */}
-            <div style={{
-              fontSize: '1.2rem',
-              color: '#6b7280',
-              textAlign: 'center',
-              lineHeight: '1.7',
-              fontFamily: 'var(--font-primary)',
-              marginTop: '0.1rem',
-              fontWeight: 600
-            }}>
-              Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
-            </div>
-
+            {/* Instructions with key sandwiched between lines */}
             <div style={{
               display: 'flex',
-              justifyContent: 'center',
-              marginTop: '0.1rem'
+              flexDirection: 'column',
+              alignItems: 'center',
+              marginTop: '0.1rem',
+              gap: '0'
             }}>
+              {/* Line 1 */}
+              <div style={{
+                fontSize: '1.2rem',
+                color: '#6b7280',
+                textAlign: 'center',
+                fontFamily: 'var(--font-primary)',
+                fontWeight: 600,
+                marginBottom: shouldShowDailyKey ? '-0.15rem' : '0'
+              }}>
+                Can you <span className="theme-semantic-shimmer">unlock the theme</span> that
+              </div>
+              
+              {/* Key image - sandwiched between text lines */}
               {shouldShowDailyKey && (
                 <img
                   src={themeKeyImage}
@@ -628,11 +631,24 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                   style={{
                     width: KEY_IMAGE_SIZE,
                     height: KEY_IMAGE_SIZE,
-                    objectFit: 'contain'
+                    objectFit: 'contain',
+                    margin: '-0.5rem 0'
                   }}
                   draggable={false}
                 />
               )}
+              
+              {/* Line 2 */}
+              <div style={{
+                fontSize: '1.2rem',
+                color: '#6b7280',
+                textAlign: 'center',
+                fontFamily: 'var(--font-primary)',
+                fontWeight: 600,
+                marginTop: shouldShowDailyKey ? '-0.15rem' : '0'
+              }}>
+                connects this week's words?
+              </div>
             </div>
           </div>
           <button

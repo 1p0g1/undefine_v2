@@ -226,6 +226,17 @@ export const SYNONYMS: Record<string, string[]> = {
   'back': ['backward', 'backwards', 'reverse'],
   'backward': ['back', 'backwards', 'reverse'],
   'backwards': ['back', 'backward', 'reverse'],
+
+  // Language origin terms (Greek, Latin, etc.)
+  'greek': ['hellenic', 'hellenistic', 'grecian', 'hellene'],
+  'hellenic': ['greek', 'grecian', 'hellene', 'hellenistic'],
+  'hellenistic': ['greek', 'hellenic', 'grecian'],
+  'grecian': ['greek', 'hellenic', 'hellenistic'],
+  'latin': ['roman', 'latinate', 'romance'],
+  'roman': ['latin', 'latinate'],
+  'etymology': ['origin', 'root', 'derivation', 'word history'],
+  'origin': ['etymology', 'root', 'source', 'derivation'],
+  'root': ['origin', 'etymology', 'base', 'stem'],
 };
 
 // =============================================================================

@@ -11,7 +11,7 @@
  * - Respects prefers-reduced-motion
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { getApiBaseUrl } from '../utils/apiHelpers';
 
 export interface BonusGuessResult {
@@ -174,6 +174,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [userFinished, setUserFinished] = useState(false);
   const [lastResultSuccess, setLastResultSuccess] = useState(false); // For success animation
+  const targetWordRef = useRef<HTMLDivElement>(null);
 
   const isComplete = currentAttempt >= remainingAttempts;
 
@@ -187,6 +188,16 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       document.head.appendChild(styleEl);
     }
   }, []);
+
+  // Scroll target word into view when nearby words list is shown
+  useEffect(() => {
+    if (showNearbyWords && nearbyWords && targetWordRef.current) {
+      // Small delay to allow DOM to render
+      setTimeout(() => {
+        targetWordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [showNearbyWords, nearbyWords]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,13 +382,13 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary.
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary (before or after).
         </div>
 
         {/* Scoring tiers - centered list */}
         <div style={styles.scoringList}>
           <div style={styles.scoringListItem}>
-            <span style={{ color: '#b8860b' }}>🥇</span> within 10 words (before or after)
+            <span style={{ color: '#b8860b' }}>🥇</span> within 10 words
           </div>
           <div style={styles.scoringListItem}>
             <span style={{ color: '#6b7280' }}>🥈</span> within 25 words
@@ -436,27 +447,16 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             )}
           </>
         ) : !userFinished ? (
-        // Complete state - show results with integrated answers toggle
+        // Complete state - show only answers toggle button (no summary box)
         <div style={styles.completeSection}>
-          {/* Summary box with integrated answers toggle */}
-          <div style={styles.summaryBox}>
-            <div style={styles.summaryTitle}>🎯 Your Results</div>
-            <div style={styles.summaryStats}>
-              <span style={styles.statGold}>🥇 {results.filter(r => r.tier === 'perfect').length}</span>
-              <span style={styles.statSilver}>🥈 {results.filter(r => r.tier === 'good').length}</span>
-              <span style={styles.statBronze}>🥉 {results.filter(r => r.tier === 'average').length}</span>
-              <span style={styles.statMiss}>❌ {results.filter(r => r.tier === 'miss').length}</span>
-            </div>
-            
-            {/* Integrated answers toggle */}
-            <button 
-              onClick={handleAnswersToggle} 
-              style={styles.answersToggle}
-              disabled={loadingNearby}
-            >
-              {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Answers' : '📖 See Answers'}
-            </button>
-          </div>
+          {/* Answers toggle button */}
+          <button 
+            onClick={handleAnswersToggle} 
+            style={styles.answersToggleStandalone}
+            disabled={loadingNearby}
+          >
+            {loadingNearby ? '🔍 Loading...' : showNearbyWords ? '📖 Hide Answers' : '📖 See Answers'}
+          </button>
 
           {/* Scrollable nearby words list */}
           {showNearbyWords && nearbyWords && (
@@ -471,7 +471,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                 ))}
                 
                 {/* Target word - highlighted */}
-                <div style={styles.targetWordHighlight}>
+                <div ref={targetWordRef} style={styles.targetWordHighlight}>
                   <span style={styles.targetWordStar}>★</span>
                   <span style={styles.targetWordText}>{(nearbyTargetWord || targetWord).toUpperCase()}</span>
                   <span style={styles.targetWordStar}>★</span>
@@ -557,10 +557,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-primary)',
   },
   explanation: {
-    fontSize: '0.9rem',
+    fontSize: '1rem',
     color: '#78350f',
     marginBottom: '0.75rem',
-    lineHeight: 1.4,
+    lineHeight: 1.5,
+    fontWeight: 500,
   },
   scoringList: {
     display: 'flex',
@@ -668,6 +669,18 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #10b981',
     borderRadius: '6px',
     cursor: 'pointer',
+  },
+  answersToggleStandalone: {
+    padding: '0.75rem 1.5rem',
+    fontSize: '1rem',
+    fontWeight: 700,
+    background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+    color: '#065f46',
+    border: '2px solid #10b981',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    width: '100%',
+    marginBottom: '0.5rem',
   },
   statGold: {
     color: '#b8860b',

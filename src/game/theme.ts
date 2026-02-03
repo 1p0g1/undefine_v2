@@ -809,13 +809,12 @@ export async function getWeeklyThemeSolversCount(theme: string): Promise<number>
     });
 
     // Count unique players with correct guesses for this theme this week
-    // Exclude archive attempts
-    const { data, error, count } = await supabase
+    // Note: is_archive_attempt may be NULL for older records, treat NULL as false
+    const { data, error } = await supabase
       .from('theme_attempts')
-      .select('player_id', { count: 'exact', head: false })
+      .select('player_id, is_archive_attempt')
       .eq('theme', theme)
       .eq('is_correct', true)
-      .eq('is_archive_attempt', false)
       .gte('attempt_date', weekStart.toISOString().split('T')[0])
       .lte('attempt_date', weekEnd.toISOString().split('T')[0]);
 
@@ -824,11 +823,13 @@ export async function getWeeklyThemeSolversCount(theme: string): Promise<number>
       return 0;
     }
 
-    // Get unique player count (data contains all rows, we need distinct players)
-    const uniquePlayers = new Set(data?.map(d => d.player_id) || []);
+    // Filter out archive attempts (treating NULL as not-archive)
+    // Then get unique player count
+    const nonArchiveAttempts = (data || []).filter(d => d.is_archive_attempt !== true);
+    const uniquePlayers = new Set(nonArchiveAttempts.map(d => d.player_id));
     const solversCount = uniquePlayers.size;
 
-    console.log('[getWeeklyThemeSolversCount] Found solvers:', solversCount);
+    console.log('[getWeeklyThemeSolversCount] Found solvers:', solversCount, 'from', data?.length, 'total attempts');
     return solversCount;
   } catch (error) {
     console.error('[getWeeklyThemeSolversCount] Error:', error);

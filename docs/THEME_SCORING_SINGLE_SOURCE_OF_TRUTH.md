@@ -106,3 +106,6 @@ The system also checks:
 
 - **Feb 2026**: Created single source of truth document
 - **Feb 2026**: Documented "etymology vs Greek Words" case as known limitation
+- **Feb 2026**: Added Greek/Hellenic and Latin/Roman synonyms to improve matching
+  - "hellenic" ↔ "greek" ↔ "grecian" now recognized as synonyms
+  - "etymology" ↔ "origin" ↔ "root" now connected
