@@ -78,13 +78,14 @@ async function handler(
 
     if (!entries || entries.length === 0) {
       // Fallback: derive leaderboard from scores if summary is empty
+      // Priority: fewer guesses → faster time
       const { data: scoreEntries, error: scoreError } = await supabase
         .from('scores')
         .select('player_id, guesses_used, completion_time_seconds')
         .eq('word_id', wordId)
         .eq('correct', true)
-        .order('completion_time_seconds', { ascending: true })
         .order('guesses_used', { ascending: true })
+        .order('completion_time_seconds', { ascending: true })
         .limit(10);
 
       if (scoreError) {

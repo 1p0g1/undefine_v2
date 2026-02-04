@@ -116,7 +116,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
   const HEADER_LINE_GAP_REM = 0.1;
   const KEY_REVEAL_DELAY_MS = 250;
-  const KEY_IMAGE_SIZE = 'clamp(6.4rem, 20vw, 8.8rem)';
+  const KEY_IMAGE_SIZE = 'clamp(4rem, 12vw, 5.5rem)'; // Smaller for bottom placement
   const KEY_STACK_GAP_REM = 0.075; // tighter, used for subtitle↔key↔weekly words
 
   const playerId = getPlayerId();
@@ -602,54 +602,17 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </span>
             </div>
             
-            {/* Instructions with key sandwiched between lines */}
+            {/* Single-line instruction (key moved below theme guess box) */}
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              fontSize: '1.2rem',
+              color: '#6b7280',
+              textAlign: 'center',
+              fontFamily: 'var(--font-primary)',
+              fontWeight: 600,
               marginTop: '0.1rem',
-              gap: '0'
+              marginBottom: '1rem'
             }}>
-              {/* Line 1 */}
-              <div style={{
-                fontSize: '1.2rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                fontFamily: 'var(--font-primary)',
-                fontWeight: 600,
-                marginBottom: shouldShowDailyKey ? '0.75rem' : '0'
-              }}>
-                Can you <span className="theme-semantic-shimmer">unlock the theme</span> that
-              </div>
-              
-              {/* Key image - sandwiched between text lines */}
-              {shouldShowDailyKey && (
-                <img
-                  src={themeKeyImage}
-                  alt=""
-                  aria-hidden="true"
-                  style={{
-                    width: KEY_IMAGE_SIZE,
-                    height: KEY_IMAGE_SIZE,
-                    objectFit: 'contain',
-                    margin: '0'
-                  }}
-                  draggable={false}
-                />
-              )}
-              
-              {/* Line 2 */}
-              <div style={{
-                fontSize: '1.2rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                fontFamily: 'var(--font-primary)',
-                fontWeight: 600,
-                marginTop: shouldShowDailyKey ? '0.75rem' : '0',
-                marginBottom: '1rem'
-              }}>
-                connects this week's words?
-              </div>
+              Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
             </div>
           </div>
           <button
@@ -957,7 +920,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             {/* ELIGIBILITY: Must have completed TODAY's word AND not guessed today AND canGuessTheme */}
             {!themeStatus.progress.hasGuessedToday && themeStatus.progress.canGuessTheme && gameWon ? (
               <>
-                <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+                <form onSubmit={handleSubmit} style={{ marginBottom: '0.5rem' }}>
                   <label style={{ 
                     display: 'block', 
                     marginBottom: '0.5rem',
@@ -1069,6 +1032,28 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 </div>
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* Key image at the very bottom of modal content */}
+        {shouldShowDailyKey && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '0.75rem',
+            marginBottom: '0.25rem'
+          }}>
+            <img
+              src={themeKeyImage}
+              alt=""
+              aria-hidden="true"
+              style={{
+                width: KEY_IMAGE_SIZE,
+                height: KEY_IMAGE_SIZE,
+                objectFit: 'contain'
+              }}
+              draggable={false}
+            />
           </div>
         )}
 
