@@ -482,8 +482,9 @@ export const apiClient = {
   },
 
   /**
-   * Get count of players who have solved this week's theme
-   * @returns Promise with the solvers count
+   * Get count of players who have solved this week's theme.
+   * Uses the weekly theme leaderboard endpoint (which is known to work correctly)
+   * instead of the stats_only theme-status endpoint.
    */
   async getWeeklyThemeSolvers(): Promise<{
     solversCount: number;
@@ -491,13 +492,12 @@ export const apiClient = {
   }> {
     try {
       const response = await fetchFromApi<{
-        solversCount?: number;
-        correctGuessCount?: number;
-        currentTheme?: string;
-      }>('/api/theme-status?stats_only=true');
+        totalPlayers?: number;
+        currentTheme?: string | null;
+      }>('/api/leaderboard/theme-weekly');
       return {
-        solversCount: response.solversCount || response.correctGuessCount || 0,
-        currentTheme: response.currentTheme
+        solversCount: response.totalPlayers || 0,
+        currentTheme: response.currentTheme ?? undefined
       };
     } catch (error) {
       console.log('[apiClient] Failed to get weekly theme solvers:', error);
