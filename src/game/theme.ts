@@ -800,23 +800,21 @@ export async function getWeeklyThemeSolversCount(theme: string): Promise<number>
   try {
     const today = new Date();
     const weekStart = getWeekStart(today);
-    const weekEnd = getWeekEnd(today);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
 
     console.log('[getWeeklyThemeSolversCount] Counting solvers for theme:', {
       theme,
-      weekStart: weekStart.toISOString().split('T')[0],
-      weekEnd: weekEnd.toISOString().split('T')[0]
+      weekStart: weekStartStr
     });
 
-    // Count unique players with correct guesses for this theme this week
+    // Query using week_start column which matches how attempts are stored
     // Note: is_archive_attempt may be NULL for older records, treat NULL as false
     const { data, error } = await supabase
       .from('theme_attempts')
       .select('player_id, is_archive_attempt')
       .eq('theme', theme)
       .eq('is_correct', true)
-      .gte('attempt_date', weekStart.toISOString().split('T')[0])
-      .lte('attempt_date', weekEnd.toISOString().split('T')[0]);
+      .eq('week_start', weekStartStr);
 
     if (error) {
       console.error('[getWeeklyThemeSolversCount] Error:', error);

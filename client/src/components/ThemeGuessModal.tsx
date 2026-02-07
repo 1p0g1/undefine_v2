@@ -116,7 +116,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
   const HEADER_LINE_GAP_REM = 0.1;
   const KEY_REVEAL_DELAY_MS = 250;
-  const KEY_IMAGE_SIZE = 'clamp(4rem, 12vw, 5.5rem)'; // Smaller for bottom placement
+  const KEY_IMAGE_SIZE = 'clamp(8rem, 24vw, 11rem)'; // 100% larger for visibility
   const KEY_STACK_GAP_REM = 0.075; // tighter, used for subtitle↔key↔weekly words
 
   const playerId = getPlayerId();
@@ -1040,8 +1040,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            marginTop: '0.75rem',
-            marginBottom: '0.25rem'
+            marginTop: '1.25rem',
+            marginBottom: '0.75rem'
           }}>
             <img
               src={themeKeyImage}

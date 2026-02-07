@@ -919,7 +919,7 @@ function App() {
                   fontStyle: 'italic',
                   fontSize: '1em',
                   color: '#059669',
-                  marginLeft: '-0.4rem'
+                  marginLeft: '0.15rem'
                 }}>
                   lock
                 </span>
@@ -1420,6 +1420,7 @@ function App() {
                     type="button"
                     onClick={handleThemeClick}
                     aria-label="Open theme guess"
+                    className="theme-key-jiggle"
                     style={{
                       all: 'unset',
                       cursor: 'pointer',
@@ -1725,6 +1726,26 @@ function App() {
         @keyframes shimmerText {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
+        }
+        
+        @keyframes keyJiggle {
+          0%, 100% { transform: rotate(0deg); }
+          15% { transform: rotate(-8deg); }
+          30% { transform: rotate(6deg); }
+          45% { transform: rotate(-4deg); }
+          60% { transform: rotate(2deg); }
+          75% { transform: rotate(-1deg); }
+        }
+        
+        .theme-key-jiggle {
+          animation: keyJiggle 2.5s ease-in-out infinite;
+          animation-delay: 0.5s;
+        }
+        
+        .theme-key-jiggle:hover {
+          animation: none;
+          transform: scale(1.1);
+          transition: transform 0.2s ease;
         }
       `}</style>
     </div>
