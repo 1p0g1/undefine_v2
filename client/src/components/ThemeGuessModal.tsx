@@ -116,8 +116,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const LOCK_TEXT_MARGIN_LEFT = '-0.6rem';
   const HEADER_LINE_GAP_REM = 0.1;
   const KEY_REVEAL_DELAY_MS = 250;
-  const KEY_IMAGE_SIZE = 'clamp(8rem, 24vw, 11rem)'; // 100% larger for visibility
-  const KEY_STACK_GAP_REM = 0.075; // tighter, used for subtitle↔key↔weekly words
+  // Key sits under instruction and before weekday words:
+  // keep large, but not so large it makes the modal tall.
+  const KEY_IMAGE_SIZE = 'clamp(6.4rem, 20vw, 8.8rem)';
 
   const playerId = getPlayerId();
   const [showScoringTooltip, setShowScoringTooltip] = useState(false);
@@ -602,7 +603,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </span>
             </div>
             
-            {/* Single-line instruction (key moved below theme guess box) */}
+            {/* Single-line instruction */}
             <div style={{
               fontSize: '1.2rem',
               color: '#6b7280',
@@ -610,7 +611,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               fontFamily: 'var(--font-primary)',
               fontWeight: 600,
               marginTop: '0.1rem',
-              marginBottom: '1rem'
+              // Keep close to key (no extra modal height)
+              marginBottom: '0.35rem'
             }}>
               Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
             </div>
@@ -654,10 +656,32 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         {/* Main Content */}
         {!isLoading && themeStatus && themeStats && (
           <div>
+            {/* Key image directly under instruction, before weekday words */}
+            {shouldShowDailyKey && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '0.15rem',
+                marginBottom: '0.35rem'
+              }}>
+                <img
+                  src={themeKeyImage}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    width: KEY_IMAGE_SIZE,
+                    height: KEY_IMAGE_SIZE,
+                    objectFit: 'contain'
+                  }}
+                  draggable={false}
+                />
+              </div>
+            )}
+
             {/* Weekly Themed Words Section - shows words played this week */}
             {themeStatus.weeklyThemedWords.length > 0 && (
               <div style={{
-                marginTop: `${KEY_STACK_GAP_REM}rem`,
+                marginTop: '0.25rem',
                 marginBottom: '1rem'
               }}>
                 {(() => {
@@ -1032,28 +1056,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                 </div>
               </div>
             ) : null}
-          </div>
-        )}
-
-        {/* Key image at the very bottom of modal content */}
-        {shouldShowDailyKey && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '1.25rem',
-            marginBottom: '0.75rem'
-          }}>
-            <img
-              src={themeKeyImage}
-              alt=""
-              aria-hidden="true"
-              style={{
-                width: KEY_IMAGE_SIZE,
-                height: KEY_IMAGE_SIZE,
-                objectFit: 'contain'
-              }}
-              draggable={false}
-            />
           </div>
         )}
 

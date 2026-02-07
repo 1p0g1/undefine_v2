@@ -919,7 +919,8 @@ function App() {
                   fontStyle: 'italic',
                   fontSize: '1em',
                   color: '#059669',
-                  marginLeft: '0.15rem'
+                  // Midpoint: closer than 0.15rem, but no overlap
+                  marginLeft: '-0.05rem'
                 }}>
                   lock
                 </span>
@@ -1420,7 +1421,6 @@ function App() {
                     type="button"
                     onClick={handleThemeClick}
                     aria-label="Open theme guess"
-                    className="theme-key-jiggle"
                     style={{
                       all: 'unset',
                       cursor: 'pointer',
@@ -1433,10 +1433,15 @@ function App() {
                       src={themeKeyImage}
                       alt=""
                       draggable={false}
+                      className="theme-key-jiggle"
                       style={{
                         width: 'clamp(3.2rem, 18vw, 4.2rem)',
                         height: 'auto',
-                        display: 'inline-block'
+                        display: 'inline-block',
+                        // Ensure consistent transform baseline for animation
+                        transform: 'rotate(0deg) scale(1)',
+                        transformOrigin: 'center',
+                        // Match VaultLogo CTA pulse timing (sync)
                       }}
                     />
                   </button>
@@ -1727,24 +1732,40 @@ function App() {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
-        
-        @keyframes keyJiggle {
-          0%, 100% { transform: rotate(0deg); }
-          15% { transform: rotate(-8deg); }
-          30% { transform: rotate(6deg); }
-          45% { transform: rotate(-4deg); }
-          60% { transform: rotate(2deg); }
-          75% { transform: rotate(-1deg); }
+
+        /* Match VaultLogo CTA animation exactly for sync */
+        @keyframes themeCtaPulse {
+          0%, 100% {
+            opacity: 1;
+            transform: rotate(var(--cta-rotation, 0deg)) scale(1);
+            filter: brightness(1);
+          }
+          25% {
+            opacity: 0.95;
+            transform: rotate(calc(var(--cta-rotation, 0deg) + 5deg)) scale(1.04);
+            filter: brightness(1.08);
+          }
+          50% {
+            opacity: 0.9;
+            transform: rotate(var(--cta-rotation, 0deg)) scale(1.08);
+            filter: brightness(1.12);
+          }
+          75% {
+            opacity: 0.95;
+            transform: rotate(calc(var(--cta-rotation, 0deg) - 5deg)) scale(1.04);
+            filter: brightness(1.08);
+          }
         }
-        
+
         .theme-key-jiggle {
-          animation: keyJiggle 2.5s ease-in-out infinite;
-          animation-delay: 0.5s;
+          animation: themeCtaPulse 2s ease-in-out infinite;
+          will-change: transform, filter, opacity;
+          --cta-rotation: 0deg;
         }
-        
+
         .theme-key-jiggle:hover {
           animation: none;
-          transform: scale(1.1);
+          transform: rotate(0deg) scale(1.1);
           transition: transform 0.2s ease;
         }
       `}</style>

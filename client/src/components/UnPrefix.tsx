@@ -537,7 +537,8 @@ export const UnPrefix: React.FC<UnPrefixProps> = ({
       {showTooltip && onClick && !isCelebrating && (
         <div style={{
           position: 'absolute',
-          bottom: `calc(100% + ${TOOLTIP_OFFSET_REM}rem)`,
+          // Render below to avoid clipping at top of viewport
+          top: `calc(100% + ${TOOLTIP_OFFSET_REM}rem)`,
           left: '50%',
           transform: 'translateX(-50%)',
           backgroundColor: 'rgba(26, 35, 126, 0.9)',
