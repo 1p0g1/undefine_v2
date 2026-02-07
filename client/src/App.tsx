@@ -985,7 +985,7 @@ function App() {
                 }}>
                   {weeklyThemeSolvers}
                 </span>
-                {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved the theme this week
+                {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved this week's theme
               </div>
             </div>
 
@@ -1758,7 +1758,7 @@ function App() {
         }
 
         .theme-key-jiggle {
-          animation: themeCtaPulse 2s ease-in-out infinite;
+          animation: themeCtaPulse 1.2s ease-in-out infinite;
           will-change: transform, filter, opacity;
           --cta-rotation: 0deg;
         }

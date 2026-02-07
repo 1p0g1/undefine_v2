@@ -180,7 +180,7 @@ async function handler(
       return res.status(500).json({ error: 'Failed to fetch player data' });
     }
 
-    const playerNameMap = new Map(players?.map(p => [p.id, p.display_name || 'Anonymous']) || []);
+    const playerNameMap = new Map(players?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []);
 
     // Step 5: Build leaderboard entries with calculated stats
     const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -202,7 +202,7 @@ async function handler(
         return {
           rank: 0, // Will be assigned after sorting
           playerId: pid,
-          displayName: playerNameMap.get(pid) || 'Anonymous',
+          displayName: playerNameMap.get(pid) || `Player ${pid.slice(-4)}`,
           themesUnlocked: stats.themesUnlocked.size,
           avgDayGuessed: roundedAvgDay,
           avgDayName: dayNames[avgDayIndex],

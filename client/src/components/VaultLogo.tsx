@@ -587,11 +587,10 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
           )}
         </div>
 
-        {/* Tooltip for 'Theme of the week' */}
+        {/* Tooltip for theme status */}
         {showTooltip && onClick && !isCelebrating && (
           <div style={{
             position: 'absolute',
-            // Render below to avoid clipping at top of viewport
             top: `calc(100% + ${TOOLTIP_OFFSET_REM}rem)`,
             left: '50%',
             transform: 'translateX(-50%)',
@@ -609,7 +608,7 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
             letterSpacing: '0.01em',
             pointerEvents: 'none'
           }}>
-            Theme of the week
+            {themeGuessData?.isCorrectGuess ? 'Theme Unlocked' : 'Theme Locked'}
           </div>
         )}
       </div>

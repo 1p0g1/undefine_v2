@@ -157,10 +157,19 @@ async function handler(
       return res.status(500).json({ error: 'Failed to fetch player data' });
     }
 
-    const playerMap = new Map(players?.map(p => [p.id, p.display_name || 'Anonymous']) || []);
+    // Show Player XXXX instead of Anonymous when no display_name set
+    const playerMap = new Map(players?.map(p => [p.id, p.display_name || `Player ${p.id.slice(-4)}`]) || []);
+
+    // Step 4b: Deduplicate - keep only the FIRST correct attempt per player
+    const seenPlayers = new Set<string>();
+    const uniqueAttempts = attempts.filter(a => {
+      if (seenPlayers.has(a.player_id)) return false;
+      seenPlayers.add(a.player_id);
+      return true;
+    });
 
     // Step 5: Build leaderboard entries
-    const leaderboardEntries: WeeklyThemeLeaderboardEntry[] = attempts.map((attempt, index) => {
+    const leaderboardEntries: WeeklyThemeLeaderboardEntry[] = uniqueAttempts.map((attempt, index) => {
       // Calculate day number (1-7 where 1 = Monday)
       const attemptDate = new Date(attempt.attempt_date);
       const themeStart = new Date(themeStartDate);
@@ -180,7 +189,7 @@ async function handler(
       return {
         rank: index + 1,
         playerId: attempt.player_id,
-        displayName: playerMap.get(attempt.player_id) || 'Anonymous',
+        displayName: playerMap.get(attempt.player_id) || `Player ${attempt.player_id.slice(-4)}`,
         dayNumber,
         dayName,
         timeGuessed,

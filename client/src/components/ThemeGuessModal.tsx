@@ -610,9 +610,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               textAlign: 'center',
               fontFamily: 'var(--font-primary)',
               fontWeight: 600,
-              marginTop: '0.1rem',
-              // Keep close to key (no extra modal height)
-              marginBottom: '0.35rem'
+              marginTop: '0',
+              marginBottom: '0'
             }}>
               Can you <span className="theme-semantic-shimmer">unlock the theme</span> that connects this week's words?
             </div>
@@ -661,8 +660,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
-                marginTop: '0.15rem',
-                marginBottom: '0.35rem'
+                marginTop: '0.1rem',
+                marginBottom: '0.1rem'
               }}>
                 <img
                   src={themeKeyImage}
@@ -681,8 +680,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             {/* Weekly Themed Words Section - shows words played this week */}
             {themeStatus.weeklyThemedWords.length > 0 && (
               <div style={{
-                marginTop: '0.25rem',
-                marginBottom: '1rem'
+                marginTop: '0.1rem',
+                marginBottom: '0.5rem'
               }}>
                 {(() => {
                   const weekdayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;

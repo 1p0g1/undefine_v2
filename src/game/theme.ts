@@ -794,37 +794,30 @@ export async function getPlayerWeeklyThemedWords(
 }
 
 /**
- * Get count of unique players who have correctly guessed the theme this week
+ * Get count of unique players who have correctly guessed the theme this week.
+ * 
+ * Uses the SAME approach as theme-weekly.ts leaderboard (which works correctly):
+ * query by theme name + is_correct only, no date/week_start filtering.
+ * Since themes are unique per week, filtering by theme name IS the week filter.
  */
 export async function getWeeklyThemeSolversCount(theme: string): Promise<number> {
   try {
-    const today = new Date();
-    const weekStart = getWeekStart(today);
-    const weekStartStr = weekStart.toISOString().split('T')[0];
+    console.log('[getWeeklyThemeSolversCount] Counting solvers for theme:', theme);
 
-    console.log('[getWeeklyThemeSolversCount] Counting solvers for theme:', {
-      theme,
-      weekStart: weekStartStr
-    });
-
-    // Query using week_start column which matches how attempts are stored
-    // Note: is_archive_attempt may be NULL for older records, treat NULL as false
+    // Match theme-weekly.ts: query by theme + is_correct, no date filtering
     const { data, error } = await supabase
       .from('theme_attempts')
-      .select('player_id, is_archive_attempt')
+      .select('player_id')
       .eq('theme', theme)
-      .eq('is_correct', true)
-      .eq('week_start', weekStartStr);
+      .eq('is_correct', true);
 
     if (error) {
       console.error('[getWeeklyThemeSolversCount] Error:', error);
       return 0;
     }
 
-    // Filter out archive attempts (treating NULL as not-archive)
-    // Then get unique player count
-    const nonArchiveAttempts = (data || []).filter(d => d.is_archive_attempt !== true);
-    const uniquePlayers = new Set(nonArchiveAttempts.map(d => d.player_id));
+    // Deduplicate by player_id
+    const uniquePlayers = new Set((data || []).map(d => d.player_id));
     const solversCount = uniquePlayers.size;
 
     console.log('[getWeeklyThemeSolversCount] Found solvers:', solversCount, 'from', data?.length, 'total attempts');
