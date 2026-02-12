@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import useGame from './hooks/useGame';
-import { DefineBoxes } from './components/DefineBoxes';
+import { DefineBoxes, StaticDefineBoxesInline } from './components/DefineBoxes';
 import { getVisibleClues, getAllClues } from './hooks/useGame';
 import { GameSummaryModal } from './GameSummaryModal';
 import confetti from 'canvas-confetti';
@@ -959,33 +959,29 @@ function App() {
                 , guess what connects this week's words
               </div>
               
-              {/* Player count with glowing effect - inside the box */}
+              {/* Player count - golden font to stand out (bonus round style) */}
               <div 
                 className="theme-solvers-glow"
                 style={{ 
                   marginTop: '0.75rem',
                   fontSize: 'clamp(0.8rem, 2.2vw, 0.9rem)',
                   fontWeight: '600',
-                  color: '#059669',
                   textAlign: 'center',
                   padding: '0.4rem 0.75rem',
-                  background: 'rgba(5, 150, 105, 0.08)',
+                  background: 'rgba(255, 215, 0, 0.08)',
                   borderRadius: '0.375rem',
                   animation: 'subtleGlow 3s ease-in-out infinite'
                 }}
               >
                 <span style={{ 
                   fontWeight: '700',
-                  background: 'linear-gradient(90deg, #059669 0%, #34d399 50%, #059669 100%)',
-                  backgroundSize: '200% auto',
+                  background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  animation: 'shimmerText 3s linear infinite'
+                  backgroundClip: 'text'
                 }}>
-                  {weeklyThemeSolvers}
+                  {weeklyThemeSolvers} player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved this week's theme
                 </span>
-                {' '}player{weeklyThemeSolvers !== 1 ? 's have' : ' has'} solved this week's theme
               </div>
             </div>
 
@@ -1007,81 +1003,18 @@ function App() {
                 marginBottom: '0.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                flexWrap: 'wrap'
               }}>
                 Today:
-                {/* Inline DEFINE boxes */}
-                <div style={{
-                  display: 'flex',
-                  gap: '0.08rem',
-                  alignItems: 'center'
-                }}>
-                  {['D', 'E', 'F', 'I', 'N', 'E'].map((letter, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        width: 'clamp(1.4rem, 4vw, 1.6rem)',
-                        height: 'clamp(1.4rem, 4vw, 1.6rem)',
-                        border: '2px solid var(--color-primary)',
-                        borderRadius: '0.25rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: 'var(--font-primary)',
-                        fontWeight: 700,
-                        fontSize: 'clamp(0.75rem, 2.5vw, 0.9rem)',
-                        color: 'var(--color-primary)',
-                        backgroundColor: 'white',
-                        flexShrink: 0
-                      }}
-                    >
-                      {letter}
-                    </div>
-                  ))}
-                </div>
+                <StaticDefineBoxesInline
+                  boxSize="clamp(1.8rem, 4.5vw, 2.2rem)"
+                  gap="0.35rem"
+                />
               </div>
-              <div style={{ color: '#374151', fontSize: '0.85em', marginBottom: '0.5rem' }}>
-                Guess today's word in 6 guesses or less. Clues revealed after each guess:
-              </div>
-              
-              {/* Single column clue list with boxes */}
-              <div style={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.25rem',
-                fontSize: '0.8em',
-                color: '#374151',
-                marginBottom: '0.75rem'
-              }}>
-                {[
-                  { letter: 'D', label: 'efinition' },
-                  { letter: 'E', label: 'quivalents' },
-                  { letter: 'F', label: 'irst Letter' },
-                  { letter: 'I', label: 'n a Sentence' },
-                  { letter: 'N', label: 'umber of Letters' },
-                  { letter: 'E', label: 'tymology' }
-                ].map((clue, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ color: '#9ca3af', fontSize: '0.85em', width: '1rem' }}>{idx + 1}.</span>
-                    <div style={{
-                      width: '1.4rem',
-                      height: '1.4rem',
-                      border: '2px solid var(--color-primary)',
-                      borderRadius: '0.2rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      flexShrink: 0
-                    }}>
-                      {clue.letter}
-                    </div>
-                    <span style={{ color: 'var(--color-primary)' }}>{clue.label}</span>
-                  </div>
-                ))}
+              <div style={{ color: '#374151', fontSize: '0.85em', lineHeight: '1.5' }}>
+                Guess today's word in 6 guesses or less. Clues revealed after each guess in a{' '}
+                <em>fixed</em> order (click on them to see what they are).
               </div>
               
               {/* Daily solvers count + mini leaderboard */}

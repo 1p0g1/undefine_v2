@@ -264,6 +264,132 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
   );
 };
 
+/**
+ * Inline static DEFINE boxes for homepage Today box - matches top-of-page styling:
+ * BoxCover.png overlay + hover tooltips (Definition, Equivalents, etc.)
+ * Use where space is constrained (e.g. next to "Today:") - slightly smaller, spaced for PNGs.
+ */
+export const StaticDefineBoxesInline: React.FC<{
+  boxSize?: string;
+  gap?: string;
+}> = ({ boxSize = 'clamp(1.8rem, 4.5vw, 2.2rem)', gap = '0.35rem' }) => {
+  const letters = ['D', 'E', 'F', 'I', 'N', 'E'] as const;
+  const [showHint, setShowHint] = useState<string | null>(null);
+  const [hintTimer, setHintTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hintAnchorLeft, setHintAnchorLeft] = useState<number | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const handleBoxHover = (clueKey: string, hoveredElement: HTMLDivElement) => {
+    if (hintTimer) clearTimeout(hintTimer);
+    setShowHint(DEFINE_HINTS[clueKey]);
+    const wrapperElement = wrapperRef.current;
+    if (wrapperElement) {
+      const wrapperRect = wrapperElement.getBoundingClientRect();
+      const hoveredRect = hoveredElement.getBoundingClientRect();
+      setHintAnchorLeft(hoveredRect.left + hoveredRect.width / 2 - wrapperRect.left);
+    } else setHintAnchorLeft(null);
+    const timer = setTimeout(() => {
+      setShowHint(null);
+      setHintAnchorLeft(null);
+    }, HINT_HIDE_DELAY_MS);
+    setHintTimer(timer);
+  };
+
+  useEffect(() => () => { if (hintTimer) clearTimeout(hintTimer); }, [hintTimer]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={{ display: 'flex', gap, alignItems: 'center', position: 'relative' }}
+    >
+      {letters.map((letter, index) => {
+        const clueKey = letter === 'E' && index === 5 ? 'E2' : letter;
+        return (
+          <div
+            key={`${letter}-${index}`}
+            onMouseEnter={(e) => handleBoxHover(clueKey, e.currentTarget)}
+            onMouseLeave={() => {
+              if (hintTimer) clearTimeout(hintTimer);
+              setShowHint(null);
+              setHintAnchorLeft(null);
+            }}
+            style={{
+              width: boxSize,
+              height: boxSize,
+              position: 'relative',
+              cursor: 'pointer',
+              zIndex: 1
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '18%',
+                left: '15%',
+                right: '15%',
+                bottom: '18%',
+                borderRadius: '0.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'clamp(0.85rem, 2.2vw, 1rem)',
+                fontWeight: 700,
+                color: 'var(--color-primary, #1a237e)',
+                backgroundColor: '#fef6e9',
+                fontFamily: 'var(--font-primary)',
+                zIndex: 1
+              }}
+            >
+              {letter}
+            </div>
+            <img
+              src="/BoxCover.png?v=2"
+              alt=""
+              draggable={false}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 2,
+                objectFit: 'fill'
+              }}
+            />
+          </div>
+        );
+      })}
+      {showHint && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: `calc(100% + ${HINT_TOOLTIP_OFFSET_REM}rem)`,
+            left: hintAnchorLeft !== null ? `${hintAnchorLeft}px` : '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '0.75rem',
+            color: 'white',
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 500,
+            opacity: 0.95,
+            textAlign: 'center',
+            backgroundColor: 'rgba(26, 35, 126, 0.9)',
+            backdropFilter: 'blur(4px)',
+            padding: '0.4rem 0.75rem',
+            borderRadius: '0.375rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}
+        >
+          {showHint}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Static version for How to Play
 export const StaticDefineBoxes = () => {
   const letters = ['D', 'E', 'F', 'I', 'N', 'E'];
