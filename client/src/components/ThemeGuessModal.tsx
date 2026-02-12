@@ -544,7 +544,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           style={{
             background: 'linear-gradient(180deg, #fdfbf6 0%, #f8f4ee 100%)',
             borderRadius: '1rem',
-            padding: 'clamp(1rem, 4vw, 2rem)',
+            padding: 'clamp(0.5rem, 2vw, 1rem) clamp(1rem, 4vw, 2rem)',
             width: '100%',
             maxWidth: 'min(480px, 90vw)',
             maxHeight: 'min(90vh, calc(100vh - 2rem))',
@@ -561,14 +561,14 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'flex-start', 
-          marginBottom: '2px',
-          paddingTop: '0.5rem' // Add more spacing from top
+          marginBottom: '0.1rem',
+          paddingTop: '0.15rem'
         }}>
           <div style={{ 
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
-            gap: '0.3rem',
+            gap: '0.15rem',
             flex: '1',
             textAlign: 'center'
           }}>
@@ -660,8 +660,8 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
-                marginTop: '0.1rem',
-                marginBottom: '0.1rem'
+                marginTop: '0.05rem',
+                marginBottom: '0.05rem'
               }}>
                 <img
                   src={themeKeyImage}
@@ -680,7 +680,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
             {/* Weekly Themed Words Section - shows words played this week */}
             {themeStatus.weeklyThemedWords.length > 0 && (
               <div style={{
-                marginTop: '0.1rem',
+                marginTop: '0.05rem',
                 marginBottom: '0.5rem'
               }}>
                 {(() => {
