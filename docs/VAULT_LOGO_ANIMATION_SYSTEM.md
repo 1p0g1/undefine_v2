@@ -45,6 +45,14 @@ All images are located in `client/public/` and are designed to be **exactly the 
 | 🔴 Red Left | `RedLeft.png` | Shake animation - tilted left |
 | 🔴 Red Right | `RedRight.png` | Shake animation - tilted right |
 
+## PNG Loading & Fallback
+
+**Will PNGs appear on all versions?** PNGs in `client/public/` are served from the same origin as the app and will load for virtually all users. Edge cases (offline, ad-blockers, very slow networks) are rare. As a precaution:
+
+- **BoxCover.png** and **ClosedVault.png** use `onError` handlers; if the image fails to load, the element is hidden and the underlying content (letter box, text) remains visible
+- The game remains fully playable without PNGs (letter boxes show borders, vault areas show text fallbacks)
+- No external CDN is used—all assets are bundled with the deployment
+
 ## Current Placement (Pre-Implementation)
 
 The original "Un" diamond sits in the `define-header` container in `App.tsx`:

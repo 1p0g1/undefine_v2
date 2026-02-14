@@ -202,11 +202,12 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                 {letter}
               </div>
               
-              {/* BoxCover frame overlay - positioned to wrap around the colored box */}
+              {/* BoxCover frame overlay - onError hides so letter+background still show */}
               <img
                 src="/BoxCover.png?v=2"
                 alt=""
                 draggable={false}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -272,7 +273,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
 export const StaticDefineBoxesInline: React.FC<{
   boxSize?: string;
   gap?: string;
-}> = ({ boxSize = 'clamp(1.8rem, 4.5vw, 2.2rem)', gap = '0.35rem' }) => {
+  tooltipPosition?: 'above' | 'below';
+}> = ({ boxSize = 'clamp(1.8rem, 4.5vw, 2.2rem)', gap = '0.35rem', tooltipPosition = 'below' }) => {
   const letters = ['D', 'E', 'F', 'I', 'N', 'E'] as const;
   const [showHint, setShowHint] = useState<string | null>(null);
   const [hintTimer, setHintTimer] = useState<NodeJS.Timeout | null>(null);
@@ -346,6 +348,7 @@ export const StaticDefineBoxesInline: React.FC<{
               src="/BoxCover.png?v=2"
               alt=""
               draggable={false}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -364,7 +367,9 @@ export const StaticDefineBoxesInline: React.FC<{
         <div
           style={{
             position: 'absolute',
-            bottom: `calc(100% + ${HINT_TOOLTIP_OFFSET_REM}rem)`,
+            ...(tooltipPosition === 'below'
+              ? { top: `calc(100% + ${HINT_TOOLTIP_OFFSET_REM}rem)` }
+              : { bottom: `calc(100% + ${HINT_TOOLTIP_OFFSET_REM}rem)` }),
             left: hintAnchorLeft !== null ? `${hintAnchorLeft}px` : '50%',
             transform: 'translateX(-50%)',
             fontSize: '0.75rem',

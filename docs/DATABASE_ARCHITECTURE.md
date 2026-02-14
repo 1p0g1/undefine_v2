@@ -1,7 +1,7 @@
 # UnDEFINE Database Architecture
 
 > **🔴 SINGLE SOURCE OF TRUTH** - This document supersedes all other database references.  
-> Last Updated: 2025-12-31  
+> Last Updated: 2026-02-14  
 > Source: Supabase Dashboard exports
 
 ---
@@ -21,8 +21,11 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 |--------|------|----------|---------|-------------|
 | `id` | text | NO | - | **PRIMARY KEY** - UUID string |
 | `created_at` | timestamptz | YES | CURRENT_TIMESTAMP | When player first played |
-| `updated_at` | timestamptz | YES | CURRENT_TIMESTAMP | Last activity |
-| `nickname` | text | YES | NULL | Optional display name |
+| `last_active` | timestamptz | YES | CURRENT_TIMESTAMP | Last activity timestamp |
+| `display_name` | text | YES | NULL | Player display name |
+| `is_anonymous` | boolean | YES | false | Whether player has set a name |
+| `metadata` | jsonb | YES | NULL | Additional player metadata |
+| `last_nickname_change` | timestamptz | YES | NULL | When name was last changed |
 
 **Primary Key**: `players_pkey` on `(id)`
 
@@ -116,7 +119,7 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 ---
 
 ### 5. `leaderboard_summary`
-**Purpose**: Daily leaderboard rankings for winning players.
+**Purpose**: Daily leaderboard rankings for winning players. Ranking uses all four columns in order.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
@@ -128,7 +131,13 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 | `best_time` | integer | YES | NULL | Completion time (seconds) |
 | `guesses_used` | integer | YES | NULL | Number of guesses |
 | `date` | date | YES | NULL | Date of play |
-| `fuzzy_matches` | integer | YES | 0 | Count of fuzzy matches |
+| `bonus_score` | integer | YES | 0 | Aggregated bonus round score (for ranking tiebreaker) |
+| `fuzzy_matches` | integer | YES | 0 | Count of fuzzy matches (for ranking tiebreaker) |
+
+**Ranking Algorithm** (applied by trigger):
+```sql
+ORDER BY guesses_used ASC, best_time ASC, bonus_score DESC, fuzzy_matches DESC
+```
 
 **Primary Key**: `leaderboard_summary_pkey` on `(id)`  
 **Unique Constraints**:
@@ -138,7 +147,7 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 - `fk_leaderboard_player_to_players` → `players(id)` ON DELETE NO ACTION
 - `leaderboard_summary_word_id_fkey` → `words(id)` ON DELETE CASCADE
 
-**Note**: Only contains WINNING games. Updated by trigger on `game_sessions`.
+**Note**: Only contains WINNING games. Initial insert by trigger on `game_sessions`. `fuzzy_matches` synced by `guess.ts`, `bonus_score` synced by `finalize-score.ts`.
 
 ---
 
@@ -152,14 +161,16 @@ UnDEFINE uses **Supabase** (PostgreSQL) as its primary database. All game state,
 | `word_id` | uuid | YES | NULL | FK to words.id |
 | `game_session_id` | uuid | YES | NULL | FK to game_sessions.id |
 | `guesses_used` | integer | YES | NULL | Number of guesses |
+| `used_hint` | boolean | YES | false | Whether hint was used |
 | `completion_time_seconds` | integer | YES | NULL | Time to complete |
 | `correct` | boolean | YES | NULL | Won? |
 | `score` | integer | YES | NULL | Final calculated score |
 | `base_score` | integer | YES | NULL | Score before penalties |
-| `guess_penalty` | integer | YES | 0 | (Deprecated) |
-| `fuzzy_bonus` | integer | YES | 0 | Bonus for fuzzy matches |
+| `guess_penalty` | integer | YES | 0 | (Deprecated - always 0) |
+| `fuzzy_bonus` | integer | YES | 0 | Bonus for fuzzy matches (+50 each) |
 | `time_penalty` | integer | YES | 0 | Penalty for slow completion |
 | `hint_penalty` | integer | YES | 0 | Penalty for using hints |
+| `bonus_score` | integer | YES | 0 | Aggregated bonus round score |
 | `submitted_at` | timestamptz | YES | NULL | - |
 
 **Primary Key**: `scores_pkey` on `(id)`  
@@ -399,6 +410,13 @@ To standardize constraint hygiene without changing live gameplay behavior, apply
 
 ### Applied Changes Log
 
+- **2026-02-14**: Applied `supabase/migrations/20260214000001_add_bonus_score_to_leaderboard_ranking.sql`
+  - Added `bonus_score INTEGER DEFAULT 0` column to `leaderboard_summary`
+  - Added `fuzzy_matches INTEGER DEFAULT 0` column to `leaderboard_summary`
+  - Updated ranking algorithm: guesses ASC → time ASC → bonus_score DESC → fuzzy_matches DESC
+  - Backfilled existing data from `scores` table
+  - Bonus round score now acts as 3rd tiebreaker, fuzzy matches as 4th
+
 - **2025-12-31**: Applied `supabase/migrations/20251231000001_add_week_start_and_archive_columns_to_theme_attempts.sql`
   - Added `week_start` DATE column to `theme_attempts`
   - Added `is_archive_attempt` BOOLEAN column to `theme_attempts`
@@ -454,13 +472,22 @@ game_sessions (id)
 
 ### 1. `update_leaderboard_from_game`
 **Table**: `game_sessions`  
-**When**: After INSERT/UPDATE  
+**When**: After UPDATE of `is_complete, is_won`  
+**Condition**: `OLD.is_complete = FALSE AND NEW.is_complete = TRUE AND NEW.is_won = TRUE`  
 **Logic**:
-- Skips if `is_archive_play = true`
 - Only processes completed, winning games
-- Inserts/updates `leaderboard_summary`
+- Inserts/updates `leaderboard_summary` (player_id, word_id, best_time, guesses_used, date)
+- Sets initial rank=1 (recalculated by ranking trigger)
 
-### 2. `update_player_streaks_on_game_completion`
+### 2. `update_leaderboard_rankings`
+**Table**: `leaderboard_summary`  
+**When**: After INSERT/UPDATE/DELETE  
+**Logic**:
+- Recalculates ranks for all players on the affected word
+- **Ranking order**: guesses_used ASC → best_time ASC → bonus_score DESC → fuzzy_matches DESC
+- Updates `was_top_10` flag
+
+### 3. `update_player_streaks_on_game_completion`
 **Table**: `game_sessions`  
 **When**: After INSERT/UPDATE  
 **Logic**:
@@ -489,8 +516,14 @@ All tables have RLS enabled with policies:
 1. Player starts game → `game_sessions` INSERT
 2. Player guesses → `game_sessions` UPDATE (guesses array)
 3. Game completes → `game_sessions` UPDATE (is_complete, is_won)
-4. Trigger fires → Updates `leaderboard_summary` and `player_streaks` (live only)
-5. Score calculated → `scores` INSERT
+4. Trigger fires → `leaderboard_summary` INSERT + `player_streaks` UPDATE (live only)
+5. Score calculated → `scores` INSERT (includes fuzzy_bonus)
+6. `guess.ts` syncs → `leaderboard_summary.fuzzy_matches` UPDATE
+7. Ranking trigger fires → All ranks recalculated for that word
+8. If won in < 6 guesses → Bonus round starts
+9. Player makes bonus guesses → `bonus_round_guesses` INSERT (per guess)
+10. Bonus round finalizes → `scores.bonus_score` + `leaderboard_summary.bonus_score` UPDATE
+11. Ranking trigger fires again → Ranks recalculated with bonus_score tiebreaker
 
 ### Theme Guessing
 1. Player guesses theme → `theme_attempts` INSERT
@@ -516,5 +549,6 @@ See `supabase/migrations/` folder for full history.
 
 ---
 
-*This document is the authoritative reference for UnDEFINE's database structure.*
+*This document is the authoritative reference for UnDEFINE's database structure.*  
+*Cross-reference: Game logic rules are documented in `docs/GAME_LOGIC_AND_RULES.md`*
 

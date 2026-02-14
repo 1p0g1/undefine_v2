@@ -123,6 +123,21 @@ async function handler(
       }
 
       console.log(`[finalize-score] Updated score: ${existingScore.score} -> ${newTotalScore} (bonus: ${bonusScore})`);
+
+      // Also update leaderboard_summary.bonus_score so it feeds into ranking
+      // Ranking order: 1) guesses, 2) time, 3) bonus_score, 4) fuzzy_matches
+      const { error: leaderboardUpdateError } = await supabase
+        .from('leaderboard_summary')
+        .update({ bonus_score: bonusScore })
+        .eq('player_id', playerId)
+        .eq('word_id', wordId);
+
+      if (leaderboardUpdateError) {
+        // Non-fatal: bonus score is stored in scores table regardless
+        console.warn('[finalize-score] Failed to update leaderboard_summary.bonus_score:', leaderboardUpdateError);
+      } else {
+        console.log(`[finalize-score] Updated leaderboard_summary.bonus_score = ${bonusScore}`);
+      }
     } else {
       // No existing score record - this shouldn't happen normally
       // but we can create one if needed

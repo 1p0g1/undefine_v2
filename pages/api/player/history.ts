@@ -82,6 +82,22 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
       return res.status(500).json({ error: 'Failed to fetch play history' });
     }
 
+    // Get theme attempts for "Un" column (theme guessed correctly per week)
+    const { data: themeAttemptsData } = await supabase
+      .from('theme_attempts')
+      .select('week_start, is_correct')
+      .eq('player_id', player_id)
+      .eq('is_archive_attempt', false)
+      .gte('week_start', startDateStr)
+      .lte('week_start', endDateStr);
+
+    const themeCorrectByWeek = new Map<string, boolean>();
+    themeAttemptsData?.forEach(attempt => {
+      if (attempt.week_start && attempt.is_correct) {
+        themeCorrectByWeek.set(attempt.week_start, true);
+      }
+    });
+
     // Also get leaderboard data for ranks (wins only)
     const { data: leaderboardData, error: leaderboardError } = await supabase
       .from('leaderboard_summary')
@@ -128,8 +144,12 @@ export default withCors(async function handler(req: NextApiRequest, res: NextApi
 
     console.log(`[/api/player/history] Found ${history.length} play records (${history.filter(h => h.won).length} wins, ${history.filter(h => !h.won).length} losses)`);
 
+    const themeCorrectByWeekObj: Record<string, boolean> = {};
+    themeCorrectByWeek.forEach((v, k) => { themeCorrectByWeekObj[k] = v; });
+
     return res.status(200).json({
       history,
+      themeCorrectByWeek: themeCorrectByWeekObj,
       dateRange: {
         start: startDateStr,
         end: endDateStr

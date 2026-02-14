@@ -1,29 +1,31 @@
 # Un·Define Game Logic and Rules Documentation
 
-**Date**: December 2024  
+**Date**: February 2026  
 **Status**: Comprehensive Reference  
-**Purpose**: Single source of truth for game mechanics, win logic, scoring, and future enhancements
+**Purpose**: Single source of truth for game mechanics, win logic, scoring, ranking, and bonus round
 
 ---
 
 ## 🎮 **CORE GAME MECHANICS**
 
 ### **Objective**
-Players must correctly guess the daily word within 6 attempts using revealed clues.
+Un·Define is a daily word + weekly theme guessing game. Each day has a secret word, the seven words each week are connected by a secret theme. Players must correctly guess the daily word within 6 attempts using revealed clues.
 
 ### **Game Flow**
 1. **Daily Word**: New word released each day at midnight UTC
-2. **Clue Revelation**: Each incorrect guess reveals the next clue in sequence
+2. **Clue Revelation**: Each guess reveals the next clue in fixed order
 3. **Win Condition**: Successfully guess the word within 6 attempts
 4. **Loss Condition**: Exhaust all 6 guesses without correct answer
+5. **Bonus Round**: Players who solve in fewer than 6 guesses unlock the bonus round
+6. **Theme Guess**: After completing any daily word, players can guess the weekly theme
 
-### **Clue Sequence** (Fixed Order)
-1. **Definition** (D) - Word definition
-2. **Equivalents** (E) - Synonyms or related terms  
-3. **First Letter** (F) - First letter of the word
-4. **In a Sentence** (I) - Example usage in context
-5. **Number of Letters** (N) - Word length
-6. **Etymology** (E2) - Word origin and history
+### **Clue Sequence** (Fixed Order - D.E.F.I.N.E)
+1. **D** - Definition of the word
+2. **E** - Equivalents (Synonyms)
+3. **F** - First Letter
+4. **I** - In a Sentence example
+5. **N** - Number of Letters
+6. **E** - Etymology (word origin)
 
 ---
 
@@ -76,10 +78,18 @@ const message = didWin
 
 ## 📊 **SCORING SYSTEM**
 
-### **Current Formula** (December 2024)
+### **Current Formula** (February 2026)
 ```
-Final Score = base_score_for_guess + fuzzy_bonus - time_penalty - hint_penalty
+Final Score = PERFECT_SCORE - guess_penalty + fuzzy_bonus - time_penalty
 ```
+
+**Source of truth**: `shared-types/src/scoring.ts`
+
+### **Constants** (`SCORING` object)
+- **PERFECT_SCORE**: 1,000
+- **GUESS_PENALTY**: 100 per guess after the first
+- **FUZZY_BONUS**: 50 points per fuzzy match
+- **TIME_PENALTY_PER_10_SECONDS**: 1 point per 10 seconds
 
 ### **Base Scores by Guess Number**
 - **Guess 1**: 1,000 points (perfect game)
@@ -90,25 +100,25 @@ Final Score = base_score_for_guess + fuzzy_bonus - time_penalty - hint_penalty
 - **Guess 6**: 500 points
 
 ### **Bonuses & Penalties**
-- **Fuzzy Bonus**: +25 points per fuzzy match (rewards close attempts)
+- **Fuzzy Bonus**: +50 points per fuzzy match (rewards close attempts)
 - **Time Penalty**: -1 point per 10 seconds  
-- **Hint Penalty**: -200 points if hints used (future feature)
+- **Hint Penalty**: -200 points if hints used (not currently active)
 
 ### **Scoring Examples**
 ```
-Perfect Game: 1 guess, 30s = 1000 + 0 - 3 = 997 points
-Good Game: 2 guesses (1 fuzzy), 30s = 900 + 25 - 3 = 922 points  
-Average Game: 3 guesses, 60s = 800 + 0 - 6 = 794 points
+Perfect Game: 1 guess, 30s = 1000 - 0 + 0 - 3 = 997 points
+Good Game: 2 guesses (1 fuzzy), 30s = 1000 - 100 + 50 - 3 = 947 points  
+Average Game: 3 guesses, 60s = 1000 - 200 + 0 - 6 = 794 points
 ```
 
 ### **Fuzzy Matching Logic**
-Players get bonus points for "close" guesses that don't match exactly but show understanding:
+Players get bonus points for "close" guesses that don't match exactly but show understanding.
+Uses smart local fuzzy matching (`src/utils/smartLocalFuzzy.ts`) with legacy fallback.
 
-#### **Fuzzy Match Criteria** (All must be met)
+#### **Fuzzy Match Criteria** (legacy fallback, all must be met)
 - **Minimum 40% character similarity**
 - **At least 2 shared characters**  
-- **At least 1 character in correct position**
-- **Length within 50% tolerance**
+- **Length within tolerance**
 
 #### **Examples**
 - Target: "DEFINE" → Guess: "REFINE" = ✅ FUZZY (5/6 chars match)
@@ -117,14 +127,73 @@ Players get bonus points for "close" guesses that don't match exactly but show u
 
 ---
 
+## 🎯 **BONUS ROUND**
+
+### **Eligibility**
+Players who solve the daily word in **fewer than 6 guesses** unlock the Dictionary Neighbours Bonus Round.
+
+### **How It Works**
+1. Player wins in < 6 guesses → Bonus round triggered
+2. Player guesses a dictionary neighbour word → API checks `dictionary.lex_rank`
+3. Distance calculated (absolute difference in `lex_rank`)
+4. Tier assigned based on distance → `bonus_round_guesses` INSERT
+5. After all guesses → `finalize-score` calculates total bonus score
+
+### **Scoring Tiers**
+| Tier | Max Distance | Points | Display |
+|------|-------------|--------|---------|
+| **Gold** (perfect) | ≤ 10 words | 100 | 🥇 Gold box |
+| **Silver** (good) | ≤ 25 words | 50 | 🥈 Silver box |
+| **Bronze** (average) | ≤ 50 words | 25 | 🥉 Bronze box |
+| **Miss** | > 50 words | 0 | Gray box |
+
+### **Bonus Score Calculation**
+```
+bonus_score = SUM(tier_points for each bonus guess)
+```
+Example: Gold + Silver + Bronze = 100 + 50 + 25 = 175 bonus points
+
+### **Data Storage**
+- Individual guesses: `bonus_round_guesses` table (tier, distance, attempt_number)
+- Aggregated score: `scores.bonus_score` column
+- Ranking data: `leaderboard_summary.bonus_score` column (synced by `finalize-score` API)
+
+### **Source of truth**: 
+- Tier definitions: `pages/api/bonus/check-guess.ts`
+- Score aggregation: `pages/api/bonus/finalize-score.ts`
+- Dictionary: `dictionary` table (~115,000 words, OPTED/Webster's 1913)
+
+---
+
 ## 🏅 **LEADERBOARD & RANKING**
 
 ### **Daily Leaderboard Logic**
-Players ranked by performance among **winners only**:
+Players ranked by performance among **winners only**.
 
-1. **Final Score** (primary factor - higher is better)
-2. **Completion Time** (tiebreaker - faster is better)  
-3. **Guess Count** (secondary tiebreaker - fewer is better)
+**Ranking Order (priority):**
+
+| Priority | Factor | Direction | Description |
+|----------|--------|-----------|-------------|
+| **1st** | Fewer Guesses | ASC | Solve the word in fewer attempts to rank higher |
+| **2nd** | Faster Time | ASC | If tied on guesses, faster completion time wins |
+| **3rd** | Bonus Round Score | DESC | If tied on guesses + time, higher bonus round score wins |
+| **4th** | Fuzzy Matches | DESC | If tied on all above, more fuzzy matches wins |
+
+**Source of truth**: `supabase/migrations/20260214000001_add_bonus_score_to_leaderboard_ranking.sql`
+
+```sql
+ORDER BY 
+  guesses_used ASC,
+  best_time ASC,
+  COALESCE(bonus_score, 0) DESC,
+  COALESCE(fuzzy_matches, 0) DESC
+```
+
+### **Ranking Data Flow**
+1. Player wins → `game_sessions` trigger → `leaderboard_summary` INSERT (guesses_used, best_time)
+2. Score created → `guess.ts` → updates `leaderboard_summary.fuzzy_matches`
+3. Bonus round finishes → `finalize-score.ts` → updates `leaderboard_summary.bonus_score`
+4. Any leaderboard_summary change → ranking trigger recalculates all ranks for that word
 
 ### **All-Time Statistics**
 
@@ -162,14 +231,18 @@ win_rate = (successful_completions / total_attempts) * 100
   - **Win Rate**: `(wins / total_attempts) * 100`
 
 ### **Data Sources Summary**
-- **Current Method**: `game_sessions` table (✅ Complete - tracks wins + losses)
-- **Legacy Method**: `leaderboard_summary` table (❌ Deprecated - wins only)
+- **Primary**: `game_sessions` table (tracks wins + losses, all game state)
+- **Leaderboard**: `leaderboard_summary` table (winners only, used for ranking display)
+- **Scores**: `scores` table (detailed scoring breakdown including fuzzy_bonus, bonus_score)
+- **Bonus**: `bonus_round_guesses` table (individual bonus round guess results)
 
 ### **Data Flow Triggers**
 1. **Game completion** updates `game_sessions`
-2. **Trigger 1** populates `leaderboard_summary` (winners only)
-3. **Trigger 2** recalculates rankings for all players on that word
-4. **Result**: Real-time leaderboard updates
+2. **Trigger 1** (`update_leaderboard_from_game`) populates `leaderboard_summary` (winners only)
+3. **Trigger 2** (`update_leaderboard_rankings`) recalculates rankings for all players on that word
+4. **Score creation** in `guess.ts` syncs `fuzzy_matches` to `leaderboard_summary`
+5. **Bonus finalization** in `finalize-score.ts` syncs `bonus_score` to `leaderboard_summary`
+6. **Result**: Real-time leaderboard updates with full tiebreaker data
 
 ---
 
@@ -186,11 +259,12 @@ win_rate = (successful_completions / total_attempts) * 100
 ```
 
 #### **Key Tables**
-- **`game_sessions`**: Primary game state tracking
-- **`leaderboard_summary`**: Winners only (successful completions)
-- **`scores`**: Detailed scoring information  
-- **`user_stats`**: ⚠️ **FK-ONLY** - Not used for statistics (empty table)
+- **`game_sessions`**: Primary game state tracking (wins + losses)
+- **`leaderboard_summary`**: Winners only - ranked with bonus_score + fuzzy_matches
+- **`scores`**: Detailed scoring breakdown (base_score, fuzzy_bonus, bonus_score, time_penalty)
+- **`bonus_round_guesses`**: Individual bonus round guess results (tier, distance)
 - **`player_streaks`**: Win streak tracking
+- **`theme_attempts`**: Weekly theme guess tracking
 
 #### **Critical Logic**
 ```sql
@@ -199,63 +273,43 @@ SELECT COUNT(*) as total_wins
 FROM leaderboard_summary 
 WHERE player_id = 'player-id';
 
--- Loss tracking: Currently not implemented
--- Would need separate table or game_sessions tracking
+-- Full game history (wins + losses)
+SELECT is_won, COUNT(*) 
+FROM game_sessions 
+WHERE player_id = 'player-id' AND is_complete = true
+GROUP BY is_won;
 ```
-
-### **Data Flow Triggers**
-1. **Game completion** updates `game_sessions`
-2. **Trigger 1** populates `leaderboard_summary` (winners only)
-3. **Trigger 2** recalculates rankings for all players on that word
-4. **Result**: Real-time leaderboard updates
 
 ---
 
-## 🔮 **FUTURE ENHANCEMENTS**
+## 🔮 **IMPLEMENTED FEATURES**
 
-### **Approved for Implementation**
-1. **Enhanced Streak System** ✅ (Completed)
-2. **All-Time Leaderboard** ✅ (Completed)  
-3. **Performance Optimizations** (In Progress)
+1. **Enhanced Streak System** ✅
+2. **All-Time Leaderboard** ✅
+3. **End-of-Day Leaderboard Snapshots** ✅
+4. **Win Rate Tracking** ✅ (via game_sessions)
+5. **Bonus Round** ✅ (Dictionary Neighbours)
+6. **Bonus Round as Ranking Tiebreaker** ✅ (bonus_score on leaderboard_summary)
+7. **Theme Guessing** ✅ (semantic scoring with HuggingFace API)
+8. **Archive Play** ✅ (historical word replays, separate from live stats)
 
-### **Under Consideration**
-1. **True Win Rate Tracking**
-   - Track unsuccessful attempts separately
-   - Calculate meaningful win rates (not 100%)
-   - Add loss statistics to player profiles
+---
 
-2. **Multiple Game Modes**
-   - Daily Challenge (current)
-   - Practice Mode (replay old words)
-   - Hard Mode (fewer clues)
-   - Speed Mode (time pressure)
+## 📦 **BOX COLORS REFERENCE**
 
-3. **Achievement System**
-   - Streak milestones (7-day, 30-day, 100-day)
-   - Score achievements (perfect games, high scores)
-   - Discovery achievements (first player to guess)
+### **Game Guess Boxes**
+| Color | Status | CSS Background | CSS Border |
+|-------|--------|---------------|------------|
+| Green | Correct guess | `#4ade80` | `#22c55e` |
+| Orange/Yellow | Fuzzy match | `#f4c430` | `#ff9800` |
+| Red | Wrong guess | `#ffb3b3` | `#dc2626` |
 
-4. **Advanced Statistics**
-   - Personal analytics dashboard
-   - Word difficulty ratings
-   - Performance trends over time
-   - Category-specific statistics
-
-### **Technical Improvements Needed**
-1. **End-of-Day Leaderboard Snapshots**
-   - Preserve historical leaderboard states
-   - Fix `was_top_10` inconsistency issues
-   - Enable "leaderboard at time X" queries
-
-2. **Loss Attempt Tracking**  
-   - Track games where players don't guess correctly
-   - Enable true win rate calculations
-   - Add comprehensive game statistics
-
-3. **Enhanced Fuzzy Logic**
-   - Smarter similarity algorithms
-   - Category-aware fuzzy matching
-   - User-customizable fuzzy sensitivity
+### **Bonus Round Boxes**
+| Color | Tier | CSS Background | CSS Border |
+|-------|------|---------------|------------|
+| Gold | Perfect (≤10) | `linear-gradient(135deg, #FFD700, #FFA500)` | `#B8860B` |
+| Silver | Good (≤25) | `linear-gradient(135deg, #C0C0C0, #A8A8A8)` | `#808080` |
+| Bronze | Average (≤50) | `linear-gradient(135deg, #CD7F32, #A05A2C)` | `#8B4513` |
 
 ---
 
@@ -263,7 +317,7 @@ WHERE player_id = 'player-id';
 
 ### **Skill vs. Luck Balance**
 - **90% Skill**: Word knowledge, strategic thinking, vocabulary
-- **8% Strategy**: Fuzzy match utilization, clue interpretation  
+- **8% Strategy**: Fuzzy match utilization, clue interpretation, bonus round
 - **2% Speed**: Time management (minimal penalty)
 
 ### **Accessibility Principles**
@@ -274,54 +328,25 @@ WHERE player_id = 'player-id';
 
 ### **Competitive Integrity**
 - **Consistent scoring**: Predictable, transparent point system
-- **Clear hierarchy**: Better players consistently rank higher
+- **Clear hierarchy**: Better players consistently rank higher (guesses → time → bonus → fuzzy)
 - **Merit-based**: Success tied to game knowledge, not luck
 - **Fair outcomes**: System rewards strategy over speed
 
 ---
 
-## 🚨 **KNOWN ISSUES & LIMITATIONS**
+## 📋 **CROSS-REFERENCES**
 
-### **Current System Limitations**
-1. **100% Win Rates**: Only winners tracked, creating false statistics
-2. **Real-time Top 10**: `was_top_10` changes throughout day
-3. **No Loss Data**: Cannot calculate true win percentages
-4. **Past Leaderboard Changes**: Historical rankings not preserved
-
-### **Data Consistency Issues**
-1. **Trigger Dependencies**: Foreign key relationships can cause failures
-2. **Player Name Lookup**: Separate queries required (no direct FK)
-3. **Streak Calculation**: Requires careful date handling across timezones
-
-### **Performance Considerations**
-1. **Ranking Recalculation**: Happens on every game completion
-2. **All-Player Updates**: `was_top_10` updates affect entire word's players
-3. **API Query Complexity**: Multiple table queries for statistics
+| Topic | Source of Truth |
+|-------|----------------|
+| Database schema | `docs/DATABASE_ARCHITECTURE.md` |
+| Scoring constants | `shared-types/src/scoring.ts` |
+| Ranking SQL | `supabase/migrations/20260214000001_add_bonus_score_to_leaderboard_ranking.sql` |
+| Bonus round tiers | `pages/api/bonus/check-guess.ts` |
+| Bonus score finalization | `pages/api/bonus/finalize-score.ts` |
+| Theme scoring | `src/utils/themeScoring.ts` + `src/utils/themeScoringConfig.ts` |
+| Fuzzy matching | `src/utils/smartLocalFuzzy.ts` |
 
 ---
 
-## 📋 **DEVELOPMENT GUIDELINES**
-
-### **When Adding New Features**
-1. **Check Implementation Plan**: Follow `implementation-plan.mdc` process
-2. **Maintain Data Consistency**: Ensure triggers and tables stay aligned
-3. **Preserve Win Logic**: Don't change core win/loss definitions without discussion
-4. **Test Edge Cases**: Consider timezone, tie-breaker, and performance scenarios
-
-### **Code Quality Standards**
-1. **Type Safety**: Full TypeScript coverage
-2. **Error Handling**: Robust error recovery mechanisms  
-3. **Documentation**: Update this document for logic changes
-4. **Testing**: Include unit tests for scoring and ranking logic
-
-### **Future Compatibility**
-- **Schema Evolution**: Plan for additional game modes
-- **Backwards Compatibility**: Preserve existing player statistics
-- **Migration Strategy**: Document any breaking changes to logic
-- **API Versioning**: Consider versioning for major logic changes
-
----
-
-**Last Updated**: December 2024  
-**Next Review**: When implementing loss tracking or game mode expansion  
-**Status**: ✅ Complete Reference - Ready for Development 
+**Last Updated**: February 2026  
+**Status**: ✅ Complete Reference - Single Source of Truth for Game Logic

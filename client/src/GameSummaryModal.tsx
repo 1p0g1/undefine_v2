@@ -794,8 +794,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                           );
                         })()}
                         
-                        {/* DEFINE boxes - Debug: log data for each row */}
-                        {console.log('[Leaderboard Row]', entry.player_name, 'guesses_used:', entry.guesses_used, 'fuzzy_matches:', entry.fuzzy_matches, 'bonus_results:', entry.bonus_results)}
+                        {/* DEFINE boxes */}
                         <div style={{
                           display: 'flex',
                           gap: '0.15rem'
@@ -808,27 +807,37 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                           let useGradient = false;
                           let gradientBg = '';
                           
-                          // Check if this box was reached
-                          if (idx < entry.guesses_used) {
-                            // Box was revealed
+                          // CURRENT PLAYER + guess boxes: Use guessStatus directly (source of truth)
+                          if (entry.is_current_player && guessStatus && idx < entry.guesses_used) {
+                            const status = guessStatus[idx];
+                            if (status === 'correct') {
+                              bgColor = '#22c55e';
+                              textColor = '#fff';
+                              borderColor = '#22c55e';
+                            } else if (status === 'fuzzy') {
+                              bgColor = '#f97316';
+                              textColor = '#fff';
+                              borderColor = '#f97316';
+                            } else if (status === 'incorrect') {
+                              bgColor = '#ef4444';
+                              textColor = '#fff';
+                              borderColor = '#ef4444';
+                            }
+                          }
+                          // OTHER PLAYERS: Infer from guesses_used + fuzzy_matches (fuzzy_bonus/50)
+                          else if (idx < entry.guesses_used) {
                             if (idx === entry.guesses_used - 1) {
-                              // Winning box (green)
                               bgColor = '#22c55e';
                               textColor = '#fff';
                               borderColor = '#22c55e';
                             } else {
-                              // Previous guess boxes (wrong guesses before winning)
-                              // Fuzzy matches should be at the END (closest to winning guess)
-                              // E.g., 4 guesses with 1 fuzzy: D=red, E=red, F=orange, I=green
                               const fuzzyCount = entry.fuzzy_matches || 0;
                               const fuzzyStartIdx = entry.guesses_used - 1 - fuzzyCount;
                               if (idx >= fuzzyStartIdx) {
-                                // Orange (fuzzy match - close but not exact)
                                 bgColor = '#f97316';
                                 textColor = '#fff';
                                 borderColor = '#f97316';
                               } else {
-                                // Red (wrong - not close)
                                 bgColor = '#ef4444';
                                 textColor = '#fff';
                                 borderColor = '#ef4444';

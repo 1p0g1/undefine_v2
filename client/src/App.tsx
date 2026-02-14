@@ -1013,8 +1013,8 @@ function App() {
                 />
               </div>
               <div style={{ color: '#374151', fontSize: '0.85em', lineHeight: '1.5' }}>
-                Guess today's word in 6 guesses or less. Clues revealed after each guess in a{' '}
-                <em>fixed</em> order (click on them to see what they are).
+                Guess today's word in 6 guesses or less. Clues (D, E, F, I, N & E) revealed after each guess
+                — click on them to learn more.
               </div>
               
               {/* Daily solvers count + mini leaderboard */}
@@ -1131,35 +1131,36 @@ function App() {
       
       {showRules && (
         <div className="modal-overlay" onClick={() => setShowRules(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxHeight: '85vh', overflowY: 'auto' }}>
             <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>How to Play</h2>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
-              Un·Define is a clue-based word guessing game. Look at the boxes above - each letter reveals a new hint to help you guess the word:
+            <p style={{ marginBottom: '0.75rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Un·Define is a daily word + weekly theme guessing game. Each day has a secret word, the seven words this week are connected by a secret theme.
+            </p>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              You have a maximum of 6 guesses to solve the daily word. D, E, F, I, N, E clues are revealed in a fixed order after each guess:
             </p>
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'auto 1fr',
               gap: '0.5rem 1rem',
               marginBottom: '1.5rem',
-              fontSize: '1.1rem',
+              fontSize: '1rem',
               lineHeight: '1.6'
             }}>
-              <strong>D</strong><span>Definition of the word</span>
-              <strong>E</strong><span>Equivalents (Synonyms)</span>
-              <strong>F</strong><span>First Letter</span>
-              <strong>I</strong><span>In a Sentence example</span>
-              <strong>N</strong><span>Number of Letters</span>
-              <strong>E</strong><span>Etymology (word origin)</span>
+              <strong style={{ color: '#1a237e' }}>D</strong><span>Definition of the word</span>
+              <strong style={{ color: '#1a237e' }}>E</strong><span>Equivalents (Synonyms)</span>
+              <strong style={{ color: '#1a237e' }}>F</strong><span>First Letter</span>
+              <strong style={{ color: '#1a237e' }}>I</strong><span>In a Sentence example</span>
+              <strong style={{ color: '#1a237e' }}>N</strong><span>Number of Letters</span>
+              <strong style={{ color: '#1a237e' }}>E</strong><span>Etymology (word origin)</span>
             </div>
-            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
-              New hints are revealed after each incorrect guess. Try to guess the word within 6 attempts!
-            </p>
             
+            {/* How Rankings Work */}
             <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
               🏆 How Rankings Work
             </h3>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
-              Your daily ranking is determined by three factors in order of importance:
+            <p style={{ marginBottom: '0.75rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Your daily ranking is determined by four factors in order of importance:
             </p>
             <div style={{ 
               marginBottom: '1.5rem',
@@ -1173,21 +1174,47 @@ function App() {
                 <strong>2. Faster Time</strong> - If tied on guesses, faster completion time wins
               </div>
               <div style={{ marginBottom: '0.5rem' }}>
-                <strong>3. More "Fuzzy" Matches</strong> - If still tied, more partial matches (orange highlights) wins
+                <strong>3. Bonus Round</strong> - If tied on guesses + time, best bonus round score wins
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>4. Fuzzy Match</strong> - If tied on all the above, player who got the most fuzzy matches (similar spelling/typos of the word of the day) wins
               </div>
             </div>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.9rem', fontStyle: 'italic', color: '#666' }}>
-              💡 A "fuzzy" match occurs when your guess is similar to the target word - look for orange highlights in your guesses!
-            </p>
             
-            {/* Colored Box Examples */}
+            {/* Bonus Round */}
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+              🎯 Bonus Round
+            </h3>
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Players that solve the word in fewer than 6 guesses unlock the Dictionary Neighbours Bonus Round! The objective is to guess words that are closest in proximity to today's word in the dictionary. Scored as below:
+            </p>
+            <div style={{ 
+              backgroundColor: '#fef3c7',
+              border: '2px solid #fcd34d',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem',
+                lineHeight: '1.8',
+                color: '#92400e'
+              }}>
+                <div>🥇 <strong>Gold</strong> - Within 10 words (Perfect!)</div>
+                <div>🥈 <strong>Silver</strong> - Within 25 words (Good!)</div>
+                <div>🥉 <strong>Bronze</strong> - Within 50 words (Average)</div>
+              </div>
+            </div>
+            
+            {/* Box Colors Explained */}
             <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
               📦 Box Colors Explained
             </h3>
+            {/* Row 1: Correct, Fuzzy, Wrong */}
             <div style={{ 
               display: 'flex', 
               gap: '0.5rem', 
-              marginBottom: '1rem',
+              marginBottom: '0.75rem',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
@@ -1206,7 +1233,7 @@ function App() {
                 fontSize: '1.1rem',
                 fontFamily: 'var(--font-primary)'
               }}>D</div>
-              <span style={{ fontSize: '0.9rem', color: '#059669', fontWeight: 600 }}>Correct</span>
+              <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 600, minWidth: '3.5rem' }}>Correct</span>
               
               {/* Fuzzy - Orange */}
               <div style={{
@@ -1222,9 +1249,9 @@ function App() {
                 fontWeight: 700,
                 fontSize: '1.1rem',
                 fontFamily: 'var(--font-primary)',
-                marginLeft: '1rem'
+                marginLeft: '0.75rem'
               }}>D</div>
-              <span style={{ fontSize: '0.9rem', color: '#ea580c', fontWeight: 600 }}>Fuzzy</span>
+              <span style={{ fontSize: '0.85rem', color: '#ea580c', fontWeight: 600, minWidth: '2.5rem' }}>Fuzzy</span>
               
               {/* Incorrect - Red */}
               <div style={{
@@ -1240,61 +1267,84 @@ function App() {
                 fontWeight: 700,
                 fontSize: '1.1rem',
                 fontFamily: 'var(--font-primary)',
-                marginLeft: '1rem'
+                marginLeft: '0.75rem'
               }}>D</div>
-              <span style={{ fontSize: '0.9rem', color: '#dc2626', fontWeight: 600 }}>Wrong</span>
+              <span style={{ fontSize: '0.85rem', color: '#dc2626', fontWeight: 600 }}>Wrong</span>
+            </div>
+            
+            {/* Row 2: Gold, Silver, Bronze (Bonus Round colors) */}
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#92400e', fontWeight: 600, marginBottom: '0.5rem' }}>Bonus Score</p>
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.5rem', 
+              marginBottom: '1.5rem',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Gold */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                border: '2px solid #B8860B',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)'
+              }}>D</div>
+              <span style={{ fontSize: '0.85rem', color: '#B8860B', fontWeight: 600, minWidth: '2.5rem' }}>Gold</span>
+              
+              {/* Silver */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)',
+                border: '2px solid #808080',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)',
+                marginLeft: '0.75rem'
+              }}>D</div>
+              <span style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 600, minWidth: '2.5rem' }}>Silver</span>
+              
+              {/* Bronze */}
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #CD7F32 0%, #A05A2C 100%)',
+                border: '2px solid #8B4513',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                fontFamily: 'var(--font-primary)',
+                marginLeft: '0.75rem'
+              }}>D</div>
+              <span style={{ fontSize: '0.85rem', color: '#92400E', fontWeight: 600 }}>Bronze</span>
             </div>
             
             {/* Theme Explanation */}
             <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
               🎭 Unlock the Theme of the Week
             </h3>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
-              Each week, all 7 daily words are connected by a hidden theme. After completing any daily word, you can guess the weekly theme for bonus points and leaderboard glory!
+            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              Each week, all 7 daily words are connected by a hidden theme. After completing any daily word you gain a key to unlock the theme of the week, fastest player to guess the theme wins.
             </p>
-            <div style={{ 
-              backgroundColor: '#f0fdf4',
-              border: '2px solid #d1fae5',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-              marginBottom: '1.5rem'
-            }}>
-              <div style={{ 
-                fontSize: '0.9rem',
-                lineHeight: '1.5',
-                color: '#059669'
-              }}>
-                <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>🔓 Theme Benefits:</div>
-                <div>• Compete on weekly and all-time theme leaderboards</div>
-                <div>• Track your theme-guessing streak and statistics</div>
-                <div>• Unlock themes early in the week for maximum points</div>
-              </div>
-            </div>
             
-            {/* Bonus Round Explanation */}
-            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>
-              🎯 Bonus Round
-            </h3>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
-              Solve the word in fewer than 6 guesses? You've unlocked the Bonus Round! Guess words that are <strong>close to today's word in the dictionary</strong> to earn bonus medals:
-            </p>
-            <div style={{ 
-              backgroundColor: '#fef3c7',
-              border: '2px solid #fcd34d',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-              marginBottom: '1rem'
-            }}>
-              <div style={{ 
-                fontSize: '0.9rem',
-                lineHeight: '1.5',
-                color: '#92400e'
-              }}>
-                <div><span style={{ color: '#fbbf24' }}>🥇</span> <strong>Gold</strong> - Within 10 words (Perfect!)</div>
-                <div><span style={{ color: '#9ca3af' }}>🥈</span> <strong>Silver</strong> - Within 25 words (Good!)</div>
-                <div><span style={{ color: '#d97706' }}>🥉</span> <strong>Bronze</strong> - Within 50 words (Average)</div>
-              </div>
-            </div>
+            {/* Dictionary Attribution */}
+            <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '1rem' }} />
             <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.85rem', fontStyle: 'italic', color: '#666' }}>
               Our dictionary is based on{' '}
               <a 
@@ -1305,7 +1355,7 @@ function App() {
               >
                 OPTED (Online Plain Text English Dictionary)
               </a>
-              , derived from Webster's 1913 Unabridged Dictionary. Both British and American English spellings are accepted!
+              , derived from Webster's 1913 Unabridged Dictionary.
             </p>
             
             <button 

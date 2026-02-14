@@ -185,9 +185,26 @@ async function updateLeaderboardSummary(
 
     // REMOVED: user_stats upsert - table dropped, FK now points to players.id
 
-    // No need to manually update leaderboard_summary anymore
-    // The trigger on game_sessions will handle this automatically
-    console.log('[/api/guess] Leaderboard will be updated by database trigger');
+    // The trigger on game_sessions handles the initial leaderboard_summary INSERT.
+    // We update fuzzy_matches here so it feeds into ranking tiebreakers.
+    // Ranking order: 1) guesses, 2) time, 3) bonus_score, 4) fuzzy_matches
+    const fuzzyMatchCount = Math.floor((scoreResult.fuzzyBonus || 0) / 50);
+    if (fuzzyMatchCount > 0) {
+      const { error: fuzzyUpdateError } = await supabase
+        .from('leaderboard_summary')
+        .update({ fuzzy_matches: fuzzyMatchCount })
+        .eq('player_id', playerId)
+        .eq('word_id', wordId);
+
+      if (fuzzyUpdateError) {
+        // Non-fatal: fuzzy data is stored in scores table regardless
+        console.warn('[/api/guess] Failed to update leaderboard_summary.fuzzy_matches:', fuzzyUpdateError);
+      } else {
+        console.log(`[/api/guess] Updated leaderboard_summary.fuzzy_matches = ${fuzzyMatchCount}`);
+      }
+    }
+
+    console.log('[/api/guess] Leaderboard updated by database trigger + fuzzy_matches synced');
   } catch (error) {
     console.error('[/api/guess] Error in leaderboard update:', {
       error,

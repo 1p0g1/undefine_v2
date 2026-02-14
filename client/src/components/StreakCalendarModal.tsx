@@ -10,6 +10,7 @@ interface DayHistory {
 
 interface HistoryResponse {
   history: DayHistory[];
+  themeCorrectByWeek?: Record<string, boolean>;
   dateRange: {
     start: string;
     end: string;
@@ -38,6 +39,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
   onSelectArchiveDate 
 }) => {
   const [history, setHistory] = useState<DayHistory[]>([]);
+  const [themeCorrectByWeek, setThemeCorrectByWeek] = useState<Record<string, boolean>>({});
   const [availableDates, setAvailableDates] = useState<Map<string, AvailableDateInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -77,6 +79,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
       
       const data = await safeFetch<HistoryResponse>(url);
       setHistory(data.history || []);
+      setThemeCorrectByWeek(data.themeCorrectByWeek || {});
       
       console.log(`[StreakCalendarModal] Loaded ${data.history?.length || 0} history records`);
       console.log('[StreakCalendarModal] Sample history data:', data.history?.slice(0, 3));
@@ -99,6 +102,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
       
       // Set empty history instead of throwing - calendar should still show
       setHistory([]);
+      setThemeCorrectByWeek({});
     }
   };
 
@@ -133,19 +137,27 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
     }
   };
 
+  // getDay(): 0=Sun, 1=Mon, ... 6=Sat. We want Mon=0 so use (d+6)%7
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Mon=0
 
     return { daysInMonth, startingDayOfWeek, year, month };
   };
 
   const getDateString = (year: number, month: number, day: number) => {
     return new Date(year, month, day).toISOString().split('T')[0];
+  };
+
+  const getWeekStart = (dateString: string): string => {
+    const d = new Date(dateString);
+    const dow = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - dow);
+    return d.toISOString().split('T')[0];
   };
 
   const getDayData = (dateString: string): DayHistory | null => {
@@ -303,7 +315,8 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Mon first to match theme weeks (Monday–Sunday)
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <div style={{
@@ -413,12 +426,13 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
           </button>
         </div>
 
-        {/* Calendar Grid */}
+        {/* Calendar Grid - 8 columns: Mon-Sun + Un (theme) */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          gridTemplateColumns: 'repeat(7, 1fr) auto',
           gap: '4px',
-          marginBottom: '1rem'
+          marginBottom: '1rem',
+          alignItems: 'center'
         }}>
           {/* Day headers */}
           {dayNames.map(day => (
@@ -435,16 +449,55 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               {day}
             </div>
           ))}
+          {/* Un vault column header */}
+          <div
+            style={{
+              padding: '0.5rem',
+              textAlign: 'center',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Theme guessed this week"
+          >
+            <img src="/ClosedVault.png" alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ width: '1.25rem', height: '1.25rem', objectFit: 'contain' }} />
+          </div>
 
-          {/* Empty cells for days before month starts */}
-          {Array.from({ length: startingDayOfWeek }, (_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-
-          {/* Calendar days */}
-          {Array.from({ length: daysInMonth }, (_, i) => 
-            renderCalendarDay(i + 1, month, year)
-          )}
+          {/* Calendar body: empty cells + day cells + Un cell per row */}
+          {(() => {
+            const totalDaySlots = startingDayOfWeek + daysInMonth;
+            const numRows = Math.ceil(totalDaySlots / 7);
+            const cells: React.ReactNode[] = [];
+            for (let r = 0; r < numRows; r++) {
+              for (let c = 0; c < 7; c++) {
+                const pos = r * 7 + c;
+                if (pos < startingDayOfWeek) {
+                  cells.push(<div key={`pad-${pos}`} />);
+                } else {
+                  const dayNum = pos - startingDayOfWeek + 1;
+                  if (dayNum <= daysInMonth) {
+                    cells.push(renderCalendarDay(dayNum, month, year));
+                  } else {
+                    cells.push(<div key={`empty-${pos}`} />);
+                  }
+                }
+              }
+              const firstDayInRow = r * 7 - startingDayOfWeek + 1;
+              const dayNum = Math.max(1, Math.min(daysInMonth, firstDayInRow));
+              const dateStr = getDateString(year, month, dayNum);
+              const weekStart = getWeekStart(dateStr);
+              const gotTheme = themeCorrectByWeek[weekStart];
+              cells.push(
+                <div key={`un-${r}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40px', fontSize: '1rem' }} title={gotTheme ? 'Theme guessed this week' : ''}>
+                  {gotTheme ? '✅' : ''}
+                </div>
+              );
+            }
+            return cells;
+          })()}
         </div>
 
         {/* Legend - Compact */}
@@ -476,6 +529,10 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               backgroundColor: '#eff6ff'
             }} />
             <span>Available</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <img src="/ClosedVault.png" alt="Theme" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+            <span>Theme</span>
           </div>
         </div>
 

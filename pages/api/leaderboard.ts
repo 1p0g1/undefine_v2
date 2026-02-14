@@ -156,7 +156,7 @@ async function getCurrentDayLeaderboard(
       score.player_id, 
       {
         fuzzy_bonus: score.fuzzy_bonus || 0,
-        fuzzy_matches: Math.floor((score.fuzzy_bonus || 0) / 25)
+        fuzzy_matches: Math.floor((score.fuzzy_bonus || 0) / 50)
       }
     ])
   );
