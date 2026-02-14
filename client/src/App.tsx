@@ -1013,8 +1013,7 @@ function App() {
                 />
               </div>
               <div style={{ color: '#374151', fontSize: '0.85em', lineHeight: '1.5' }}>
-                Guess today's word in 6 guesses or less. Clues (D, E, F, I, N & E) revealed after each guess
-                — click on them to learn more.
+                Guess today's word in 6 guesses or less. DEFINE clues revealed after each guess, click on them to learn more.
               </div>
               
               {/* Daily solvers count + mini leaderboard */}
