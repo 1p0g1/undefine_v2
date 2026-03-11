@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../env.server';
 import { normalizeText } from '../utils/text';
+import { tryPatternMatch } from '../utils/patternThemeMatcher';
 
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -106,6 +107,18 @@ export async function isThemeGuessCorrect(guess: string, actualTheme: string): P
       method: 'exact',
       confidence: 100,
       similarity: 1.0
+    };
+  }
+
+  // Pattern theme detection (e.g. "____fish", "re____", "word contains X")
+  // Rule-based, instant, no API calls — runs before semantic scoring
+  const patternResult = tryPatternMatch(guess, actualTheme);
+  if (patternResult !== null) {
+    return {
+      isCorrect: patternResult.isMatch,
+      method: patternResult.isMatch ? 'exact' : 'semantic',
+      confidence: patternResult.confidence,
+      similarity: patternResult.confidence / 100,
     };
   }
 

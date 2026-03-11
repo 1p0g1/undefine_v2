@@ -13,6 +13,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { withAdminCors } from '@/lib/withAdminAuth';
 import { testThemeScoring, type ThemeTestResult } from '@/src/utils/themeScoring';
+import { tryPatternMatch, detectThemePattern } from '@/src/utils/patternThemeMatcher';
 
 interface ThemeTestRequest {
   theme: string;
@@ -174,7 +175,12 @@ async function handler(
       options
     });
 
+    // Check for pattern theme FIRST (instant, no API calls)
+    const detectedPattern = detectThemePattern(trimmedTheme);
+    const patternResult = detectedPattern ? tryPatternMatch(trimmedGuess, trimmedTheme) : null;
+
     // Run the theme scoring with requested methods (default to recommended embeddingOnly approach)
+    // We still run semantic scoring even for pattern themes so the Lab shows full breakdowns
     const result = await testThemeScoring(trimmedGuess, trimmedTheme, {
       methods: options?.methods || ['embedding', 'keywords', 'length', 'embeddingOnly'],
       themeTemplate: options?.themeTemplate,
@@ -184,11 +190,19 @@ async function handler(
 
     const processingTimeMs = Date.now() - startTime;
 
+    // If pattern matcher detected a match, it takes priority over semantic scoring
+    const patternOverrides = patternResult ? {
+      similarity: patternResult.confidence / 100,
+      isMatch: patternResult.isMatch,
+      method: patternResult.isMatch ? 'pattern' : (result.hybrid ? 'hybrid' : 'embedding'),
+      confidence: patternResult.isMatch ? patternResult.confidence : Math.round((result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0) * 100),
+    } : null;
+
     const response: ThemeTestResponse = {
-      similarity: result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0,
-      isMatch: result.hybrid?.isMatch ?? result.embedding?.isMatch ?? false,
-      method: result.hybrid ? 'hybrid' : 'embedding',
-      confidence: Math.round((result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0) * 100),
+      similarity: patternOverrides?.similarity ?? result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0,
+      isMatch: patternOverrides?.isMatch ?? result.hybrid?.isMatch ?? result.embedding?.isMatch ?? false,
+      method: patternOverrides?.method ?? (result.hybrid ? 'hybrid' : 'embedding'),
+      confidence: patternOverrides?.confidence ?? Math.round((result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0) * 100),
       details: {
         embedding: result.embedding ? {
           similarity: result.embedding.similarity,
@@ -263,7 +277,20 @@ async function handler(
         guessUsed: trimmedGuess,
         templatesUsed: result.templatesUsed,
         inputsUsed: result.inputsUsed,
-        processingTimeMs
+        processingTimeMs,
+        ...(detectedPattern && {
+          patternDetected: {
+            type: detectedPattern.type,
+            coreWord: detectedPattern.coreWord,
+          },
+        }),
+        ...(patternResult && {
+          patternMatch: {
+            isMatch: patternResult.isMatch,
+            confidence: patternResult.confidence,
+            matchReason: patternResult.matchReason,
+          },
+        }),
       },
       ...(result.error && { error: result.error })
     };
