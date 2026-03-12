@@ -14,6 +14,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { withAdminCors } from '@/lib/withAdminAuth';
 import { testThemeScoring, type ThemeTestResult } from '@/src/utils/themeScoring';
 import { tryPatternMatch, detectThemePattern } from '@/src/utils/patternThemeMatcher';
+import { tryAliasMatch } from '@/src/utils/themeAliases';
 
 interface ThemeTestRequest {
   theme: string;
@@ -179,6 +180,9 @@ async function handler(
     const detectedPattern = detectThemePattern(trimmedTheme);
     const patternResult = detectedPattern ? tryPatternMatch(trimmedGuess, trimmedTheme) : null;
 
+    // Check alias matches (instant, no API calls)
+    const aliasResult = tryAliasMatch(trimmedGuess, trimmedTheme);
+
     // Run the theme scoring with requested methods (default to recommended embeddingOnly approach)
     // We still run semantic scoring even for pattern themes so the Lab shows full breakdowns
     const result = await testThemeScoring(trimmedGuess, trimmedTheme, {
@@ -190,12 +194,17 @@ async function handler(
 
     const processingTimeMs = Date.now() - startTime;
 
-    // If pattern matcher detected a match, it takes priority over semantic scoring
+    // Priority: pattern match > alias match > semantic scoring
     const patternOverrides = patternResult ? {
       similarity: patternResult.confidence / 100,
       isMatch: patternResult.isMatch,
       method: patternResult.isMatch ? 'pattern' : (result.hybrid ? 'hybrid' : 'embedding'),
       confidence: patternResult.isMatch ? patternResult.confidence : Math.round((result.hybrid?.finalScore ?? result.embedding?.similarity ?? 0) * 100),
+    } : aliasResult ? {
+      similarity: aliasResult.confidence / 100,
+      isMatch: aliasResult.isMatch,
+      method: 'alias',
+      confidence: aliasResult.confidence,
     } : null;
 
     const response: ThemeTestResponse = {
@@ -289,6 +298,13 @@ async function handler(
             isMatch: patternResult.isMatch,
             confidence: patternResult.confidence,
             matchReason: patternResult.matchReason,
+          },
+        }),
+        ...(aliasResult && {
+          aliasMatch: {
+            isMatch: aliasResult.isMatch,
+            confidence: aliasResult.confidence,
+            matchedAlias: aliasResult.alias,
           },
         }),
       },

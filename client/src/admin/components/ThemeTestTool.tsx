@@ -131,6 +131,20 @@ interface ThemeTestResult {
       processedGuess: string;
     };
     processingTimeMs: number;
+    patternDetected?: {
+      type: string;
+      coreWord: string;
+    };
+    patternMatch?: {
+      isMatch: boolean;
+      confidence: number;
+      matchReason: string;
+    };
+    aliasMatch?: {
+      isMatch: boolean;
+      confidence: number;
+      matchedAlias: string;
+    };
   };
   error?: string;
 }
@@ -464,6 +478,69 @@ export const ThemeTestTool: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Pattern Detection (shown prominently when detected) */}
+          {result.debug.patternDetected && (
+            <div style={{
+              backgroundColor: result.debug.patternMatch?.isMatch ? '#ecfdf5' : '#fef3c7',
+              border: `2px solid ${result.debug.patternMatch?.isMatch ? '#10b981' : '#f59e0b'}`,
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem', color: '#1a237e' }}>
+                🧩 Pattern Theme Detected
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.25rem 0.75rem', fontSize: '0.85rem' }}>
+                <strong>Type:</strong>
+                <span style={{ textTransform: 'uppercase', fontFamily: 'monospace' }}>{result.debug.patternDetected.type}</span>
+                <strong>Core Word:</strong>
+                <span style={{ fontFamily: 'monospace', color: '#7c3aed' }}>"{result.debug.patternDetected.coreWord}"</span>
+                <strong>Result:</strong>
+                <span style={{ 
+                  fontWeight: 600, 
+                  color: result.debug.patternMatch?.isMatch ? '#059669' : '#d97706' 
+                }}>
+                  {result.debug.patternMatch?.isMatch 
+                    ? `✓ MATCH (${result.debug.patternMatch.confidence}%)` 
+                    : `✗ No pattern match`}
+                </span>
+                {result.debug.patternMatch?.matchReason && (
+                  <>
+                    <strong>Reason:</strong>
+                    <span style={{ fontStyle: 'italic' }}>{result.debug.patternMatch.matchReason}</span>
+                  </>
+                )}
+              </div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                Pattern matching is rule-based (instant, no API calls). Semantic scoring below still runs for comparison.
+              </div>
+            </div>
+          )}
+
+          {/* Alias Match (shown when alias was matched) */}
+          {result.debug.aliasMatch && (
+            <div style={{
+              backgroundColor: '#ecfdf5',
+              border: '2px solid #10b981',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem', color: '#065f46' }}>
+                📖 Alias Match
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.25rem 0.75rem', fontSize: '0.85rem' }}>
+                <strong>Matched Alias:</strong>
+                <span style={{ fontFamily: 'monospace', color: '#7c3aed' }}>"{result.debug.aliasMatch.matchedAlias}"</span>
+                <strong>Confidence:</strong>
+                <span style={{ fontWeight: 600, color: '#059669' }}>{result.debug.aliasMatch.confidence}%</span>
+              </div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                Curated alias from the synonym dictionary (instant, no API calls).
+              </div>
+            </div>
+          )}
 
           {/* Method Breakdown */}
           <div style={styles.methodBreakdown}>

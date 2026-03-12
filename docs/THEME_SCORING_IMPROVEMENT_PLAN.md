@@ -1,6 +1,6 @@
 # Theme Scoring Improvement Plan
 
-**Last Updated:** 2026-03-11  
+**Last Updated:** 2026-03-12  
 **Status:** Active  
 **Single Source of Truth for theme scoring roadmap**
 
@@ -11,8 +11,9 @@
 ```
 Player guess → isThemeGuessCorrect()
   ├─ 1. Exact match (instant, free)
-  ├─ 2. Pattern match (instant, free) ← NEW
-  └─ 3. Semantic scoring (HuggingFace API)
+  ├─ 2. Pattern match (instant, free)
+  ├─ 3. Alias match (instant, free) ← NEW (Phase 2)
+  └─ 4. Semantic scoring (HuggingFace API)
        ├─ Embedding similarity (sentence-transformers/all-MiniLM-L6-v2)
        ├─ Keyword overlap (weighted: exact/stem/synonym/substring)
        ├─ Specificity/triviality gating
@@ -25,6 +26,7 @@ Player guess → isThemeGuessCorrect()
 |------|------|
 | `src/game/theme.ts` | Entry point: `isThemeGuessCorrect()` |
 | `src/utils/patternThemeMatcher.ts` | Pattern theme detection + rule-based matching |
+| `src/utils/themeAliases.ts` | Curated alias dictionary for descriptive themes |
 | `src/utils/themeScoring.ts` | Semantic scoring engine (embedding + keywords + penalties) |
 | `src/utils/themeScoringConfig.ts` | Centralised configuration (thresholds, weights, synonyms) |
 | `src/utils/semanticSimilarity.ts` | Thin wrapper delegating to themeScoring.ts |
@@ -61,7 +63,7 @@ Themes that describe a linguistic property of the words. Players often paraphras
 | Back-Formations | "back-formed words", "reverse derivation" | Obscure concept |
 | collective nouns for animal groups | "animal group names", "collective nouns" | Partial match |
 
-**Status:** Partially working. Embedding catches some paraphrases but misses others. Needs Phase 2 (synonym expansion) and Phase 3 (theme aliases).
+**Status:** ✅ Phase 2 done. 30+ themes have curated aliases in `themeAliases.ts`. Embedding handles remaining paraphrases.
 
 ### Type C: Structural/Pattern (needs pattern matcher)
 Themes where the connection is a morphological pattern, not a semantic concept.
@@ -100,22 +102,16 @@ Themes referencing specific cultural domains.
 - Integrated into production scoring flow (runs before semantic scoring)
 - Integrated into admin Theme Lab API (shows pattern detection in debug output)
 
-### Phase 2: Synonym & Alias Expansion (NEXT)
-**Goal:** Improve matching for Type B (descriptive phrase) themes.
+### Phase 2: Synonym & Alias Expansion ✅ DONE
+**Files:** `src/utils/themeAliases.ts`, `src/game/theme.ts`, `pages/api/admin/theme-test.ts`
 
-**Approach:**
-1. **Theme-specific aliases** — pre-defined alternative phrasings stored per theme:
-   ```
-   "Words With Silent Letters" → aliases: ["silent letters", "unpronounced letters", "mute letters"]
-   "Back-Formations" → aliases: ["back-formed words", "reverse derivation", "stripped suffix words"]
-   ```
-   
-2. **Expanded synonym dictionary** — add more entries to `SYNONYMS` in `themeScoringConfig.ts`:
-   - "silent" ↔ "mute", "unpronounced", "quiet"
-   - "hidden" ↔ "concealed", "embedded", "buried"
-   - "changed" ↔ "shifted", "evolved", "transformed"
-
-3. **Implementation:** Add alias check to `isThemeGuessCorrect()` between exact match and pattern match. O(1) lookup, no API calls.
+- Curated alias dictionary covering 30+ themes across all categories
+- O(1) case-insensitive lookup, no API calls
+- 98% confidence for alias matches (just below exact match at 100%)
+- Integrated into production scoring flow (runs after pattern match, before semantic scoring)
+- Integrated into admin Theme Lab API (shows alias match in debug output)
+- 13 unit tests passing (`src/utils/__tests__/themeAliases.test.ts`)
+- Aliases cover: language/etymology themes, wordplay themes, cultural themes, thematic categories
 
 **Data science opportunity:** Use embeddings to auto-suggest aliases for new themes by finding the nearest neighbours of the theme text in a pre-computed embedding space. Admins approve/reject suggestions in the Theme Wizard.
 
@@ -176,3 +172,4 @@ All themes should be tested against these guess categories:
 | `docs/GAME_LOGIC_AND_RULES.md` | Overall game rules |
 | `docs/DATABASE_ARCHITECTURE.md` | Database schema |
 | `src/utils/__tests__/patternThemeMatcher.test.ts` | Pattern matcher unit tests |
+| `src/utils/__tests__/themeAliases.test.ts` | Alias matcher unit tests |

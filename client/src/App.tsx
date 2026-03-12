@@ -1338,9 +1338,23 @@ function App() {
             <h3 style={{ marginBottom: '0.75rem', fontSize: '1.2rem', fontWeight: 'bold', color: '#1a237e' }}>
               🎭 Unlock the Theme of the Week
             </h3>
-            <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
+            <p style={{ marginBottom: '0.75rem', lineHeight: '1.6', fontSize: '0.95rem' }}>
               Each week, all 7 daily words are connected by a hidden theme. After completing any daily word you gain a key to unlock the theme of the week, fastest player to guess the theme wins.
             </p>
+            <p style={{ marginBottom: '0.5rem', lineHeight: '1.6', fontSize: '0.85rem', color: '#555' }}>
+              Theme guesses are scored using AI-powered matching — you don't need to guess the exact wording. Paraphrases, synonyms, and descriptions of the theme are all accepted. For pattern themes (e.g. compound words), describing the pattern works too.
+            </p>
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.75rem', 
+              marginBottom: '1.5rem', 
+              fontSize: '0.8rem',
+              color: '#666'
+            }}>
+              <span>🟢 85%+ Match</span>
+              <span>🟠 70-84%</span>
+              <span>🔴 &lt;70%</span>
+            </div>
             
             {/* Dictionary Attribution */}
             <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '1rem' }} />
