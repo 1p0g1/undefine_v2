@@ -12,6 +12,7 @@ import { StatsPanel } from './components/StatsPanel';
 import { DictionarySearch } from './components/DictionarySearch';
 import { ThemeWizard } from './components/ThemeWizard';
 import { ThemeTestTool } from './components/ThemeTestTool';
+import { NearMissesPanel } from './components/NearMissesPanel';
 import { WordsSearch } from './components/WordsSearch';
 
 interface AdminDashboardProps {
@@ -57,6 +58,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [showWordsSearch, setShowWordsSearch] = useState(false);
   const [showThemeWizard, setShowThemeWizard] = useState(false);
   const [showThemeTestTool, setShowThemeTestTool] = useState(false);
+  const [showNearMisses, setShowNearMisses] = useState(false);
   const [wizardStartDate, setWizardStartDate] = useState<string | null>(null);
 
   // Load data
@@ -269,6 +271,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             >
               🧪 {showThemeTestTool ? 'Hide' : 'Show'} Theme Test Lab
             </button>
+            <button 
+              style={styles.actionBtn}
+              onClick={() => setShowNearMisses(!showNearMisses)}
+            >
+              🎯 {showNearMisses ? 'Hide' : 'Show'} Near Misses
+            </button>
           </div>
         </div>
 
@@ -291,6 +299,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         {showThemeTestTool && (
           <div style={styles.themeTestSection}>
             <ThemeTestTool />
+          </div>
+        )}
+
+        {/* Near Misses Panel */}
+        {showNearMisses && (
+          <div style={styles.themeTestSection}>
+            <NearMissesPanel />
           </div>
         )}
       </main>

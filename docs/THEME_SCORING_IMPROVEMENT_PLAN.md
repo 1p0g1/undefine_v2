@@ -142,14 +142,15 @@ Themes referencing specific cultural domains.
 - Con: Adds latency (~200ms), requires model hosting or API calls
 - Recommendation: Phase 4 is optional — only implement if Phase 2+3 leave significant gaps
 
-### Phase 5: Feedback Loop & Auto-Calibration
-**Goal:** Use actual player guess data to improve scoring over time.
+### Phase 5: Feedback Loop & Auto-Calibration ✅ DONE (v1)
+**Files:** `pages/api/admin/theme-near-misses.ts`, `client/src/admin/components/NearMissesPanel.tsx`
 
-**Approach:**
-1. Track all theme attempts with similarity scores (already captured in `theme_attempts` table)
-2. Identify "near-miss" guesses (high confidence but rejected) → candidates for alias expansion
-3. Admin dashboard widget showing most common rejected guesses per theme
-4. Auto-suggest threshold adjustments based on acceptance/rejection patterns
+- Admin API endpoint `/api/admin/theme-near-misses` queries `theme_attempts` for rejected guesses in configurable confidence range (default 50-77%)
+- Groups by theme + normalized guess, aggregates player count and attempt count
+- Highlights "top candidates for alias" (65%+ confidence AND 2+ unique players)
+- Admin dashboard widget with filters (theme, min/max confidence), summary stats, and sortable table
+- Data feeds back into alias expansion: admins review near-misses and add confirmed aliases to `themeAliases.ts`
+- Future: auto-suggest aliases based on near-miss data patterns
 
 ---
 
