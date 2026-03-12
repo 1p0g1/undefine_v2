@@ -344,6 +344,8 @@ GROUP BY is_won;
 | Bonus round tiers | `pages/api/bonus/check-guess.ts` |
 | Bonus score finalization | `pages/api/bonus/finalize-score.ts` |
 | Theme scoring | `src/utils/themeScoring.ts` + `src/utils/themeScoringConfig.ts` |
+| Pattern theme matching | `src/utils/patternThemeMatcher.ts` (suffix/prefix/contains) |
+| Theme scoring roadmap | `docs/THEME_SCORING_IMPROVEMENT_PLAN.md` |
 | Fuzzy matching | `src/utils/smartLocalFuzzy.ts` |
 
 ---

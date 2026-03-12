@@ -47,11 +47,15 @@ All scoring parameters are centralized in:
 ```
 1. User submits guess
 2. Exact match check (100% if identical)
-3. Semantic similarity via HuggingFace API
+3. Pattern theme detection (____fish, re____, "word contains X")
+   - Rule-based, instant, zero API calls
+   - Accepts: core word, pattern notation, relationship phrases
+   - Returns result immediately if theme is a pattern type
+4. Semantic similarity via HuggingFace API (for non-pattern themes)
    - Guess and theme are embedded
    - Cosine similarity computed
    - Result: 0.0 to 1.0 (displayed as 0-100%)
-4. Final score determines UI feedback
+5. Final score determines UI feedback
 ```
 
 ## Known Limitations
@@ -92,18 +96,20 @@ The system also checks:
 ## Code References
 
 - **Main Entry Point**: `src/game/theme.ts` → `isThemeGuessCorrect()`
+- **Pattern Matcher**: `src/utils/patternThemeMatcher.ts` → `tryPatternMatch()`
 - **Scoring Logic**: `src/utils/themeScoring.ts` → `testThemeScoring()`
 - **API Wrapper**: `src/utils/semanticSimilarity.ts` → `matchThemeWithFuzzy()`
 - **Config**: `src/utils/themeScoringConfig.ts`
+- **Tests**: `src/utils/__tests__/patternThemeMatcher.test.ts`
 
 ## Related Documentation
 
-- `THEME_SCORING_IMPROVEMENT_ROADMAP.md` - Future improvements planned
-- `THEME_MATCHING_IMPROVEMENT_PLAN.md` - Detailed matching algorithms
+- `THEME_SCORING_IMPROVEMENT_PLAN.md` - **5-phase roadmap** (pattern matcher, synonym expansion, word-aware scoring, LLM classification, feedback loop)
 - `THEME_GUESS_COLOR_SYSTEM.md` - UI color logic
 
 ## Changelog
 
+- **Mar 2026**: Added pattern theme matcher (Phase 1 of improvement plan) — handles `____fish`, `re____`, `word contains X` themes with rule-based matching
 - **Feb 2026**: Created single source of truth document
 - **Feb 2026**: Documented "etymology vs Greek Words" case as known limitation
 - **Feb 2026**: Added Greek/Hellenic and Latin/Roman synonyms to improve matching
