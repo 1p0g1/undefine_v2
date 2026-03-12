@@ -197,12 +197,20 @@ export interface LengthPenaltyResult {
   isShort: boolean;          // True if guess is significantly shorter
 }
 
+export interface WordContextResult {
+  wordsSentence: string;
+  similarity: number;
+  boost: number;
+  wordCount: number;
+}
+
 export interface ThemeTestResult {
   embedding?: EmbeddingResult;
   paraphrase?: ParaphraseResult;  // Paraphrase model result
   nli?: NLIResult & { forward?: NLITriplet; reverse?: NLITriplet };  // NLI with bidirectional details
   hybrid?: HybridResult;
   keywords?: KeywordResult;
+  wordContext?: WordContextResult;  // Phase 3: Word-aware contextual scoring
   lengthPenalty?: LengthPenaltyResult;  // DEPRECATED: Use specificity
   specificity?: SpecificityResult;  // NEW: Triviality-gated specificity
   negation?: NegationResult;  // Negation/qualifier detection
@@ -319,6 +327,56 @@ async function computeParaphraseSimilarity(
   } catch (error) {
     console.error('[themeScoring] Paraphrase error:', error);
     throw error;
+  }
+}
+
+// =============================================================================
+// WORD-CONTEXT SCORING (Phase 3)
+// =============================================================================
+
+const WORD_CONTEXT_BOOST_THRESHOLD = 0.45;
+const WORD_CONTEXT_MAX_BOOST = 0.08;
+
+/**
+ * Compute similarity between guess and the weekly words (as a joined sentence).
+ * 
+ * The words are joined into a single sentence and embedded together, creating
+ * a "centroid" that captures the collective meaning of the weekly words.
+ * This gives a scoring signal independent of the theme text itself.
+ * 
+ * Cost: 1 additional HuggingFace API call (same model as theme embedding).
+ * 
+ * @returns similarity (0-1) and computed boost value
+ */
+async function computeWordContextSimilarity(
+  guess: string,
+  words: string[]
+): Promise<WordContextResult> {
+  if (words.length === 0) {
+    return { wordsSentence: '', similarity: 0, boost: 0, wordCount: 0 };
+  }
+
+  const wordsSentence = words.join(', ').toLowerCase();
+  
+  try {
+    const similarity = await computeEmbeddingSimilarity(guess, wordsSentence);
+    
+    // Boost formula: only kicks in above threshold, caps at MAX_BOOST
+    // - similarity < 0.45 → no boost
+    // - similarity = 0.6  → boost of (0.6 - 0.45) * (0.08 / 0.55) ≈ 0.022 (2.2%)
+    // - similarity = 0.8  → boost of (0.8 - 0.45) * (0.08 / 0.55) ≈ 0.051 (5.1%)
+    // - similarity = 1.0  → boost capped at 0.08 (8%)
+    const rawBoost = similarity > WORD_CONTEXT_BOOST_THRESHOLD
+      ? (similarity - WORD_CONTEXT_BOOST_THRESHOLD) * (WORD_CONTEXT_MAX_BOOST / (1 - WORD_CONTEXT_BOOST_THRESHOLD))
+      : 0;
+    const boost = Math.min(rawBoost, WORD_CONTEXT_MAX_BOOST);
+    
+    console.log(`[themeScoring] Word-context: guess vs [${words.slice(0, 3).join(', ')}${words.length > 3 ? '...' : ''}]: sim=${(similarity*100).toFixed(1)}%, boost=${(boost*100).toFixed(1)}%`);
+    
+    return { wordsSentence, similarity, boost, wordCount: words.length };
+  } catch (error) {
+    console.warn('[themeScoring] Word-context scoring failed (non-fatal):', error);
+    return { wordsSentence, similarity: 0, boost: 0, wordCount: words.length };
   }
 }
 
@@ -1098,6 +1156,11 @@ export async function testThemeScoring(
       console.log(`[themeScoring] Negation/qualifier mismatch detected: ${result.negation.reason}`);
     }
 
+    // 0d. Word-context scoring (Phase 3) - 1 API call if words provided
+    if (inputs.raw.words.length > 0) {
+      result.wordContext = await computeWordContextSimilarity(inputs.raw.guess, inputs.raw.words);
+    }
+
     // =========================================================================
     // SEMANTIC CHECKS (use PROCESSED inputs - templates add helpful context)
     // =========================================================================
@@ -1282,6 +1345,16 @@ export async function testThemeScoring(
       // 5. Any remaining keyword penalty
       else if (result.keywords?.penalty && result.keywords.penalty > 0) {
         finalScore = embScore * (1 - result.keywords.penalty * 0.3);
+      }
+      
+      // 6. Word-context boost (Phase 3): if guess is semantically close to the
+      // weekly words, apply a small additive boost. Only applied when not in a
+      // penalty state (negation/severe mismatch) to avoid lifting clearly wrong guesses.
+      const wordContextBoost = result.wordContext?.boost ?? 0;
+      if (wordContextBoost > 0 && strategy === 'embedding_with_penalties') {
+        finalScore = Math.min(finalScore + wordContextBoost, 1.0);
+        strategy = 'embedding_with_word_context_boost';
+        console.log(`[themeScoring] Word-context boost applied: +${(wordContextBoost*100).toFixed(1)}% → ${(finalScore*100).toFixed(1)}%`);
       }
       
       const isMatch = finalScore >= effectiveThresholds.embedding;

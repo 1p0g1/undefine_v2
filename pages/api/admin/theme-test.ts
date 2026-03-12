@@ -307,6 +307,14 @@ async function handler(
             matchedAlias: aliasResult.alias,
           },
         }),
+        ...(result.wordContext && result.wordContext.wordCount > 0 && {
+          wordContext: {
+            similarity: result.wordContext.similarity,
+            boost: result.wordContext.boost,
+            wordCount: result.wordContext.wordCount,
+            wordsSentence: result.wordContext.wordsSentence,
+          },
+        }),
       },
       ...(result.error && { error: result.error })
     };

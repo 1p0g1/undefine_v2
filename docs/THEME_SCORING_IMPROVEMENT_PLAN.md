@@ -9,15 +9,16 @@
 ## Current Architecture
 
 ```
-Player guess → isThemeGuessCorrect()
+Player guess → isThemeGuessCorrect(guess, theme, words)
   ├─ 1. Exact match (instant, free)
   ├─ 2. Pattern match (instant, free)
-  ├─ 3. Alias match (instant, free) ← NEW (Phase 2)
+  ├─ 3. Alias match (instant, free)
   └─ 4. Semantic scoring (HuggingFace API)
        ├─ Embedding similarity (sentence-transformers/all-MiniLM-L6-v2)
        ├─ Keyword overlap (weighted: exact/stem/synonym/substring)
        ├─ Specificity/triviality gating
        ├─ Negation/qualifier detection
+       ├─ Word-context boost (guess vs weekly words centroid) ← NEW (Phase 3)
        └─ EmbeddingOnly mode (production default, no NLI)
 ```
 
@@ -115,15 +116,18 @@ Themes referencing specific cultural domains.
 
 **Data science opportunity:** Use embeddings to auto-suggest aliases for new themes by finding the nearest neighbours of the theme text in a pre-computed embedding space. Admins approve/reject suggestions in the Theme Wizard.
 
-### Phase 3: Word-Aware Contextual Scoring
-**Goal:** Use the weekly words themselves as scoring signals.
+### Phase 3: Word-Aware Contextual Scoring ✅ DONE
+**Files:** `src/utils/themeScoring.ts`, `src/game/theme.ts`, `src/utils/semanticSimilarity.ts`, `pages/api/admin/theme-test.ts`
 
-**Approach:**
-1. Pass weekly words to the scoring pipeline (already supported via `words` parameter in `testThemeScoring`)
-2. Compute similarity between guess and the set of weekly words
-3. If a guess has high similarity to the words collectively (e.g. "fish" is semantically close to catfish, sunfish, dogfish), boost the score
+- Weekly words joined into a single sentence and embedded as a "centroid"
+- Guess embedding compared against word centroid (1 additional API call)
+- Additive boost applied when similarity > 45%: up to +8% max
+- Boost ONLY applied when no penalty is active (negation/keyword mismatch)
+- Integrated into production scoring flow via `submitThemeAttempt()` → `isThemeGuessCorrect()`
+- Integrated into admin Theme Lab API and UI (shows word-context panel)
+- Scoring chain: weekly words fetched from DB → passed through `isThemeGuessCorrect(words)` → `matchThemeWithFuzzy(words)` → `testThemeScoring(words)` → `computeWordContextSimilarity()`
 
-**Data science opportunity:** Use word embeddings to compute a "centroid" of the weekly words. Compare the guess embedding against this centroid. This provides a second signal independent of the theme text itself.
+**Data science**: This IS the centroid approach — the embedding model naturally averages the token embeddings of the joined words, creating an effective centroid representation. The boost formula: `max(0, (sim - 0.45)) * (0.08 / 0.55)` capped at 8%.
 
 ### Phase 4: Lightweight LLM Classification (Optional)
 **Goal:** Handle edge cases where rule-based and embedding methods fail.

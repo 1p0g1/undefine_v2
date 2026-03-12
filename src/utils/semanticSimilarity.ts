@@ -84,7 +84,8 @@ export async function computeSemanticSimilarity(text1: string, text2: string): P
  */
 export async function matchThemeWithFuzzy(
   guess: string, 
-  theme: string
+  theme: string,
+  words?: string[]
 ): Promise<SemanticSimilarityResult> {
   const normalizedGuess = guess.toLowerCase().trim();
   const normalizedTheme = theme.toLowerCase().trim();
@@ -103,7 +104,8 @@ export async function matchThemeWithFuzzy(
   // This matches EXACTLY what the admin Theme Lab uses
   try {
     const result = await testThemeScoring(guess, theme, {
-      methods: ['embedding', 'keywords', 'length', 'embeddingOnly']
+      methods: ['embedding', 'keywords', 'length', 'embeddingOnly'],
+      words,
     });
     
     // Extract the hybrid result (embeddingOnly stores its result there)

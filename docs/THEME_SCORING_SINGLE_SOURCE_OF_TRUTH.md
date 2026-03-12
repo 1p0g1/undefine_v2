@@ -56,6 +56,7 @@ All scoring parameters are centralized in:
    - 98% confidence (just below exact match)
    - e.g. "silent letters" matches "Words With Silent Letters"
 5. Semantic similarity via HuggingFace API (for non-pattern themes)
+   + Word-context boost: guess vs weekly words centroid (+0-8%)
    - Guess and theme are embedded
    - Cosine similarity computed
    - Result: 0.0 to 1.0 (displayed as 0-100%)
@@ -114,6 +115,7 @@ The system also checks:
 
 ## Changelog
 
+- **Mar 2026**: Phase 3 — Word-context scoring: guess vs weekly words centroid boost (+0-8%)
 - **Mar 2026**: Phase 2 — Alias matcher (`themeAliases.ts`) with 30+ themes and 13 unit tests
 - **Mar 2026**: Phase 1 — Pattern theme matcher (`patternThemeMatcher.ts`) — handles `____fish`, `re____`, `word contains X` themes with rule-based matching
 - **Feb 2026**: Created single source of truth document

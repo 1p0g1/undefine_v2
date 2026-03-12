@@ -145,6 +145,12 @@ interface ThemeTestResult {
       confidence: number;
       matchedAlias: string;
     };
+    wordContext?: {
+      similarity: number;
+      boost: number;
+      wordCount: number;
+      wordsSentence: string;
+    };
   };
   error?: string;
 }
@@ -538,6 +544,46 @@ export const ThemeTestTool: React.FC = () => {
               </div>
               <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
                 Curated alias from the synonym dictionary (instant, no API calls).
+              </div>
+            </div>
+          )}
+
+          {/* Word-Context Scoring (Phase 3) */}
+          {result.debug.wordContext && result.debug.wordContext.wordCount > 0 && (
+            <div style={{
+              backgroundColor: result.debug.wordContext.boost > 0 ? '#eff6ff' : '#f9fafb',
+              border: `2px solid ${result.debug.wordContext.boost > 0 ? '#3b82f6' : '#d1d5db'}`,
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem', color: '#1e40af' }}>
+                🧠 Word-Context Scoring (Phase 3)
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.25rem 0.75rem', fontSize: '0.85rem' }}>
+                <strong>Words Used:</strong>
+                <span style={{ fontFamily: 'monospace', color: '#6b7280', fontSize: '0.8rem' }}>
+                  {result.debug.wordContext.wordsSentence.length > 80 
+                    ? result.debug.wordContext.wordsSentence.slice(0, 80) + '...' 
+                    : result.debug.wordContext.wordsSentence}
+                  {' '}({result.debug.wordContext.wordCount} words)
+                </span>
+                <strong>Guess↔Words Similarity:</strong>
+                <span style={{ fontWeight: 600, color: result.debug.wordContext.similarity >= 0.45 ? '#2563eb' : '#6b7280' }}>
+                  {(result.debug.wordContext.similarity * 100).toFixed(1)}%
+                </span>
+                <strong>Score Boost:</strong>
+                <span style={{ 
+                  fontWeight: 600, 
+                  color: result.debug.wordContext.boost > 0 ? '#059669' : '#6b7280' 
+                }}>
+                  {result.debug.wordContext.boost > 0 
+                    ? `+${(result.debug.wordContext.boost * 100).toFixed(1)}%` 
+                    : 'None (similarity below 45% threshold)'}
+                </span>
+              </div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                Compares guess embedding against the weekly words (joined). Adds small boost when guess is semantically close to the words themselves. Costs 1 API call.
               </div>
             </div>
           )}

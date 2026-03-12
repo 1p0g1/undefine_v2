@@ -83,7 +83,7 @@ export async function getWordsForTheme(theme: string): Promise<Array<{
  * - Tier 2: Synonym database (free, curated)
  * - Tier 3: Semantic AI (HuggingFace API)
  */
-export async function isThemeGuessCorrect(guess: string, actualTheme: string): Promise<{
+export async function isThemeGuessCorrect(guess: string, actualTheme: string, words?: string[]): Promise<{
   isCorrect: boolean;
   method: 'exact' | 'semantic' | 'error';
   confidence: number;
@@ -144,7 +144,7 @@ export async function isThemeGuessCorrect(guess: string, actualTheme: string): P
     
     const { matchThemeWithFuzzy } = await Promise.race([importPromise, timeoutPromise]) as any;
     
-    const result = await matchThemeWithFuzzy(guess, actualTheme);
+    const result = await matchThemeWithFuzzy(guess, actualTheme, words);
     
     return {
       isCorrect: result.isMatch,
@@ -264,8 +264,19 @@ export async function submitThemeAttempt(
     const totalWordGuesses = totalGuessStats?.reduce((sum, session) => 
       sum + (session.guesses?.length || 0), 0) || 0;
 
+    // Fetch weekly words for word-context scoring (Phase 3)
+    const contextDateObj = new Date(effectiveContextDate);
+    const { monday, sunday } = getThemeWeekBoundaries(contextDateObj);
+    const { data: weeklyWordRows } = await supabase
+      .from('words')
+      .select('word')
+      .eq('theme', theme)
+      .gte('date', monday.toISOString().split('T')[0])
+      .lte('date', sunday.toISOString().split('T')[0]);
+    const weeklyWords = weeklyWordRows?.map(w => w.word) || [];
+
     // Validate the guess using AI-powered fuzzy matching
-    const guessResult = await isThemeGuessCorrect(guess, theme);
+    const guessResult = await isThemeGuessCorrect(guess, theme, weeklyWords);
     const isCorrect = guessResult.isCorrect;
 
     // Log the matching method for analytics
