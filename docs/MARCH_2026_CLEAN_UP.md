@@ -445,6 +445,68 @@ Debug logging for all database triggers.
 
 ---
 
+## PWA & Native App Feasibility
+
+### PWA (Progressive Web App) — Implemented
+
+Un·Define is now a PWA. Players can "Add to Home Screen" on both iOS and Android and it will behave like a native app — full-screen, custom icon (the closed vault with "Un"), and cached static assets for faster repeat loads.
+
+| Component | File |
+|-----------|------|
+| Web App Manifest | `client/public/manifest.json` |
+| Service Worker | `client/public/sw.js` |
+| Icons (192, 384, 512, Apple Touch) | `client/public/icon-*.png`, `apple-touch-icon.png` |
+| Registration | `client/src/main.tsx` |
+| HTML meta tags | `client/index.html` |
+
+**What players get now:**
+- "Add to Home Screen" prompt on Android (automatic after engagement criteria met)
+- "Add to Home Screen" via Share menu on iOS Safari
+- Standalone window (no browser chrome) with the vault icon
+- Cached images/fonts for faster loads
+- Network-first for API calls (always fresh game data), cache-first for static assets
+
+### Native App — Feasibility Assessment
+
+| Approach | Effort | Pros | Cons |
+|----------|--------|------|------|
+| **PWA (current)** | Done | Zero app store friction, instant updates, single codebase | No push notifications on iOS <17, no App Store presence |
+| **Capacitor wrapper** | 1-2 weeks | Reuses 100% of existing React code, produces real .ipa/.apk, App Store listing, native push notifications | Requires Apple Developer ($99/yr) + Google Play ($25 one-time), app review process, need Xcode for iOS builds |
+| **React Native rewrite** | 2-4 months | True native performance, native animations, full device API access | Complete rewrite of all UI, separate codebase to maintain, ~zero code reuse from current React web app |
+| **Flutter/Swift/Kotlin** | 3-6 months | Best native experience, platform-specific UX | Completely new languages/frameworks, no code reuse at all |
+
+**Recommendation: Capacitor (if App Store presence is wanted)**
+
+Capacitor (by the Ionic team) wraps the existing web app in a native shell. The process:
+
+1. `npm install @capacitor/core @capacitor/cli` in the `client/` folder
+2. `npx cap init` — configure app ID (e.g. `io.undefine.app`)
+3. `npx cap add ios && npx cap add android`
+4. `npm run build && npx cap sync` — copies the built web app into native projects
+5. Open in Xcode / Android Studio, configure signing, submit to stores
+
+**What Capacitor adds over PWA:**
+- Push notifications (via `@capacitor/push-notifications`)
+- App Store / Play Store presence (discoverability, reviews)
+- Haptic feedback for correct guesses / celebrations
+- Share sheet integration
+- Badge count on app icon (e.g. streak count)
+
+**What Capacitor does NOT require:**
+- No React Native rewrite
+- No new programming language
+- No separate codebase — it literally wraps your Vite build output
+
+**Cost:**
+- Apple Developer Program: $99/year
+- Google Play Console: $25 one-time
+- Development time: ~1-2 weeks for initial setup + store submission
+- Ongoing: Rebuild + `cap sync` after each web update, then push to stores (can be automated with Appflow or GitHub Actions)
+
+**Verdict:** For a word game that's fundamentally web-based with no need for camera/GPS/Bluetooth, the PWA is the right default. Capacitor is the natural next step if you want App Store presence or push notifications, with minimal additional effort.
+
+---
+
 ## Key File References
 
 | Area | Files |
