@@ -192,6 +192,14 @@ const useGame = () => {
     }
   }, []);
 
+  const resetStartTime = useCallback(() => {
+    gameService.resetStartTime();
+    const updatedState = gameService.getCurrentState();
+    if (updatedState) {
+      setGameState(updatedState);
+    }
+  }, []);
+
   const submitGuess = useCallback(
     async (guess: string) => {
       try {
@@ -244,7 +252,8 @@ const useGame = () => {
     gameState,
     startNewGame,
     forceNewGame,
-    startArchiveGame, // NEW: Archive game support
+    startArchiveGame,
+    resetStartTime,
     submitGuess,
     guessStatus,
     fuzzyMatchCount,
@@ -255,7 +264,7 @@ const useGame = () => {
     leaderboardError,
     scoreDetails,
     fetchLeaderboard,
-    isRestoredGame, // Add this to the return value
+    isRestoredGame,
     wasCompletedInSession: () => gameService.wasCompletedInSession()
   };
 };

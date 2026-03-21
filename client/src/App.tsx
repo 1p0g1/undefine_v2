@@ -31,7 +31,8 @@ function App() {
     gameState,
     startNewGame,
     forceNewGame,
-    startArchiveGame, // NEW: Archive game support
+    startArchiveGame,
+    resetStartTime,
     submitGuess,
     guessStatus,
     fuzzyMatchCount,
@@ -592,11 +593,11 @@ function App() {
     setShowToast(false);
   };
 
-  // Handle game start
+  // Handle game start — reset timer so it counts from when the player clicks Ready
   const handleStartGame = () => {
+    resetStartTime();
     setGameStarted(true);
-    setImmediateStreakData(null); // Clear any previous immediate streak data
-    // Reset celebration/bonus state for fresh game
+    setImmediateStreakData(null);
     setCelebrateDiamond(false);
     setPendingBonusRound(false);
   };

@@ -409,6 +409,14 @@ class GameService {
     }
   }
 
+  public resetStartTime(): void {
+    if (this.currentState && !this.currentState.isComplete) {
+      this.currentState.startTime = new Date().toISOString();
+      this.saveState();
+      console.log('[GameService] Start time reset to:', this.currentState.startTime);
+    }
+  }
+
   public getCurrentState(): GameSessionState | null {
     return this.currentState;
   }
