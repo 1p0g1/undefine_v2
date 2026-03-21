@@ -26,87 +26,99 @@ export function getThemeFeedbackMessage(
   method?: 'exact' | 'semantic' | 'error'
 ): ThemeMessage {
   
-  // Handle different matching methods
   if (method === 'exact') {
     return {
-      message: `BANG ON! It's "${actualTheme}"`,
+      message: `Perfect! The theme is "${actualTheme}"`,
       isCorrect: true,
       showActualTheme: true,
-      emoji: '🎯'
+      emoji: ''
     };
   }
-  
   
   if (method === 'error') {
     return {
-      message: "Hmm, something went wrong with the matching system",
+      message: "Something went wrong with the matching system",
       isCorrect: false,
       showActualTheme: false,
-      emoji: '❌'
+      emoji: ''
     };
   }
   
-  // Semantic similarity scoring (0-100)
-  if (confidence >= 90) {
+  // 95%+ — near-perfect, reveal theme
+  if (confidence >= 95) {
     return {
       message: `Fair play, that's pretty much "${actualTheme}"`,
       isCorrect: true,
       showActualTheme: true,
-      emoji: '🔥'
+      emoji: ''
     };
   }
   
+  // 90-94% — very close but encourage perfection
+  if (confidence >= 90) {
+    return {
+      message: "So, so close to perfect",
+      isCorrect: true,
+      showActualTheme: false,
+      emoji: ''
+    };
+  }
+  
+  // 85-89% — correct but not perfect, encourage retry
   if (confidence >= 85) {
     return {
-      message: `Nice, I've got you, it was "${actualTheme}"`,
+      message: "You're pretty much right, but not yet perfect",
       isCorrect: true,
-      showActualTheme: true,
-      emoji: '👏'
+      showActualTheme: false,
+      emoji: ''
     };
   }
   
+  // 70-84% — close but not correct
   if (confidence >= 70) {
     return {
       message: "Very, very close...",
       isCorrect: false,
       showActualTheme: false,
-      emoji: '🎯'
+      emoji: ''
     };
   }
   
+  // 60-69%
   if (confidence >= 60) {
     return {
       message: "Fairly warm now",
       isCorrect: false,
       showActualTheme: false,
-      emoji: '🌡️'
+      emoji: ''
     };
   }
   
+  // 40-59%
   if (confidence >= 40) {
     return {
       message: "I mean, I guess, sort of?",
       isCorrect: false,
       showActualTheme: false,
-      emoji: '🤔'
+      emoji: ''
     };
   }
   
+  // 20-39%
   if (confidence >= 20) {
     return {
       message: "Hmm, don't think so",
       isCorrect: false,
       showActualTheme: false,
-      emoji: '🤷'
+      emoji: ''
     };
   }
   
-  // Below 20%
   return {
-    message: "lol nope",
+    message: "Nope",
     isCorrect: false,
     showActualTheme: false,
-    emoji: '😂'
+    emoji: ''
   };
 }
 
@@ -143,7 +155,7 @@ export function getUnDiamondColor(confidence: number | null, isCorrect: boolean)
   return '#059669'; // Green for 85%+
 }
 
-const THEME_KEY_SCORE_THRESHOLD_GREEN = 80;
+const THEME_KEY_SCORE_THRESHOLD_GREEN = 85;
 const THEME_KEY_SCORE_THRESHOLD_ORANGE = 70;
 const THEME_KEY_IMAGE_DEFAULT = '/Key.png';
 const THEME_KEY_IMAGE_GREEN = '/GreenKey.png';

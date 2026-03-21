@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withCors } from '@/lib/withCors';
 import { supabase } from '../../src/lib/supabase';
+import { getThemeWeekBoundaries } from '../../src/game/theme';
 
 interface SimpleThemeHistoryEntry {
   guess: string;
@@ -22,32 +23,50 @@ export default withCors(async function handler(
 
   try {
     const playerId = (req.headers['player-id'] as string) ?? req.query.player_id as string;
-    const theme = req.query.theme as string;
+    let theme = req.query.theme as string | undefined;
+    const date = req.query.date as string | undefined;
     
     if (!playerId) {
       return res.status(400).json({ error: 'Missing player_id' });
     }
 
+    // Resolve theme from date if theme not provided directly
+    if (!theme && date) {
+      const contextDate = new Date(date);
+      const { monday, sunday } = getThemeWeekBoundaries(contextDate);
+
+      const { data: wordRow } = await supabase
+        .from('words')
+        .select('theme')
+        .gte('date', monday.toISOString().split('T')[0])
+        .lte('date', sunday.toISOString().split('T')[0])
+        .not('theme', 'is', null)
+        .limit(1)
+        .single();
+
+      if (wordRow?.theme) {
+        theme = wordRow.theme;
+      }
+    }
+
     if (!theme) {
-      return res.status(400).json({ error: 'Missing theme parameter' });
+      return res.status(400).json({ error: 'Missing theme or date parameter' });
     }
 
     console.log('[/api/theme-history-simple] Getting simple theme history for player:', { playerId, theme });
 
-    // Get all theme attempts for this player and theme, ordered by attempt date
     const { data: attempts, error } = await supabase
       .from('theme_attempts')
       .select('guess, confidence_percentage')
       .eq('player_id', playerId)
       .eq('theme', theme)
-      .order('attempt_date', { ascending: true }); // Chronological order
+      .order('attempt_date', { ascending: true });
 
     if (error) {
       console.error('[/api/theme-history-simple] Database error:', error);
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Transform data for simple display
     const guesses: SimpleThemeHistoryEntry[] = (attempts || []).map(attempt => ({
       guess: attempt.guess,
       confidencePercentage: attempt.confidence_percentage

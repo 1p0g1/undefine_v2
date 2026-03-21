@@ -88,6 +88,8 @@ export interface DayInfo {
   wordId: string | null;
   hasWord: boolean;
   theme: string | null;
+  clueCount: number;
+  missingClues: string[];
 }
 
 export interface WeekInfo {

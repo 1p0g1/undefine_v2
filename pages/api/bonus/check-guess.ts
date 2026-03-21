@@ -54,8 +54,13 @@ interface BonusGuessResponse {
   color?: string;
   error?: string;
   message?: string;
-  isEstimated?: boolean; // True if lex_rank was estimated (word not in dictionary)
+  isEstimated?: boolean;
   validationSource?: 'internal' | 'external';
+  placement?: {
+    guess: string;
+    before: string | null;
+    after: string | null;
+  };
 }
 
 /**
@@ -269,7 +274,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       return res.status(400).json({
         valid: false,
         error: 'same_word',
-        message: "You already guessed today's word! Try a nearby word."
+        message: "That was today's word. Guess a nearby word"
       });
     }
 
@@ -283,11 +288,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse<BonusGuessRespo
       const existsExternally = await externalDictionaryExists(normalized);
 
       if (!existsExternally) {
-        // Word not in dictionary - reject it (no made-up words allowed)
+        // Word not in dictionary — return neighbor words for placement visualization
+        const normalizedReject = normalizeWord(guess);
+        const { data: prevNeighbor } = await supabase
+          .from('dictionary')
+          .select('word')
+          .lt('normalized_word', normalizedReject)
+          .order('normalized_word', { ascending: false })
+          .limit(1)
+          .single();
+        const { data: nextNeighbor } = await supabase
+          .from('dictionary')
+          .select('word')
+          .gt('normalized_word', normalizedReject)
+          .order('normalized_word', { ascending: true })
+          .limit(1)
+          .single();
+
         return res.status(400).json({
           valid: false,
           error: 'not_in_dictionary',
-          message: `"${guess}" is not in our dictionary. Try a real word!`
+          message: `"${guess}" is not in our dictionary (OPTED — Webster's 1913 Unabridged). Try a real word!`,
+          placement: {
+            guess: guess,
+            before: prevNeighbor?.word || null,
+            after: nextNeighbor?.word || null,
+          },
         });
       }
 

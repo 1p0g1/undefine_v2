@@ -7,6 +7,7 @@
   --color-danger: #dc2626;
   --color-fuzzy: #f4c430;
   --color-success: #4ade80;
+  color-scheme: light only;
 }
 
 *,
@@ -667,4 +668,23 @@ h6 {
 /* Remove tooltip styles if present */
 .tooltip {
   display: none !important;
+}
+
+/* Force light mode on devices that override color-scheme meta tag */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: var(--color-bg) !important;
+    color: var(--color-primary) !important;
+    color-scheme: light !important;
+  }
+  .modal-content {
+    background-color: #fdfbf6 !important;
+    color: #1a237e !important;
+  }
+  .modal-overlay {
+    background: rgba(10, 10, 10, 0.4) !important;
+  }
+  input, textarea, select, button {
+    color-scheme: light !important;
+  }
 }

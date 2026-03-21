@@ -57,8 +57,8 @@ export const MODELS = {
 // =============================================================================
 
 export const THRESHOLDS = {
-  // Embedding similarity threshold
-  embedding: 0.78,
+  // Embedding similarity threshold — 85% = correct, consistent with UI color system
+  embedding: 0.85,
   
   // NLI thresholds
   nli: {
@@ -75,7 +75,7 @@ export const THRESHOLDS = {
   // Hybrid decision thresholds
   hybrid: {
     // Minimum final score for a match
-    finalMin: 0.78,
+    finalMin: 0.85,
     // Embedding threshold below which we rely more on NLI
     embeddingMinForNliBoost: 0.7,
   },

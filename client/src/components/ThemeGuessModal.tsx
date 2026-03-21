@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { getPlayerId } from '../utils/player';
-import { getSimilarityBarColor, getUnDiamondColor, getThemeKeyImage } from '../utils/themeMessages';
+import { getSimilarityBarColor, getUnDiamondColor, getThemeKeyImage, getThemeFeedbackMessage } from '../utils/themeMessages';
 import { VaultLogo, VAULT_UNLOCK_SEQUENCE } from './VaultLogo';
 
 interface ThemeStatus {
@@ -84,11 +84,19 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     highestConfidencePercentage?: number | null;
   } | undefined>(undefined);
 
-  // NEW: Simple theme history state
+  // Simple theme history state
   const [simpleHistory, setSimpleHistory] = useState<Array<{
     guess: string;
     confidencePercentage: number | null;
   }>>([]);
+
+  // Feedback message after latest guess submission
+  const [latestFeedback, setLatestFeedback] = useState<{
+    message: string;
+    emoji: string;
+    isCorrect: boolean;
+    confidence: number;
+  } | null>(null);
 
   // NEW: Sunday failure revelation state
   const [sundayRevelation, setSundayRevelation] = useState<{
@@ -271,10 +279,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
           });
         }
 
-        // NEW: Load simple theme history (don't block on this)
-        if (status.currentTheme) {
-          loadSimpleHistory(status.currentTheme);
-        }
+        // Load simple theme history (don't block on this)
+        // Uses theme if available, otherwise falls back to date-based lookup
+        loadSimpleHistory(status.currentTheme);
         
         // Cache the data for 2 minutes
         setDataCache({
@@ -292,25 +299,46 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     }
   };
 
-  // NEW: Load simple theme history for display
-  const loadSimpleHistory = async (theme: string) => {
-    if (!playerId || !theme) return;
+  // Load simple theme history for display — can use theme string or date fallback
+  const loadSimpleHistory = async (theme?: string | null) => {
+    if (!playerId) return;
 
     try {
-      console.log('[ThemeGuessModal] Loading simple theme history for:', { theme, playerId });
+      let url: string;
+      if (theme) {
+        url = `/api/theme-history-simple?player_id=${playerId}&theme=${encodeURIComponent(theme)}`;
+      } else {
+        const dateParam = gameDate || new Date().toISOString().split('T')[0];
+        url = `/api/theme-history-simple?player_id=${playerId}&date=${dateParam}`;
+      }
       
-      const response = await fetch(`/api/theme-history-simple?player_id=${playerId}&theme=${encodeURIComponent(theme)}`);
+      console.log('[ThemeGuessModal] Loading simple theme history:', { theme, playerId });
+      
+      const response = await fetch(url);
       
       if (response.ok) {
         const data = await response.json();
         setSimpleHistory(data.guesses || []);
+
+        // Restore feedback from last guess if we don't have one in state
+        if (!latestFeedback && data.guesses?.length > 0) {
+          const lastGuess = data.guesses[data.guesses.length - 1];
+          if (lastGuess.confidencePercentage !== null) {
+            const feedback = getThemeFeedbackMessage(lastGuess.confidencePercentage);
+            setLatestFeedback({
+              message: feedback.message,
+              emoji: feedback.emoji,
+              isCorrect: feedback.isCorrect,
+              confidence: lastGuess.confidencePercentage,
+            });
+          }
+        }
         console.log('[ThemeGuessModal] Simple theme history loaded:', data);
       } else {
         console.warn('[ThemeGuessModal] Failed to load simple theme history:', response.status);
       }
     } catch (err) {
       console.error('[ThemeGuessModal] Error loading simple theme history:', err);
-      // Don't show error to user - this is optional data
     }
   };
 
@@ -382,11 +410,22 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         }
       } : null;
 
-      // NEW: Add guess to simple history
+      // Add guess to simple history
       setSimpleHistory(prev => [...prev, {
         guess: guess.trim(),
         confidencePercentage: response.fuzzyMatch?.confidence || null
       }]);
+
+      // Generate feedback message
+      const confidence = response.fuzzyMatch?.confidence || 0;
+      const method = response.fuzzyMatch?.method as 'exact' | 'semantic' | 'error' | undefined;
+      const feedback = getThemeFeedbackMessage(confidence, response.actualTheme, method);
+      setLatestFeedback({
+        message: feedback.message,
+        emoji: feedback.emoji,
+        isCorrect: feedback.isCorrect,
+        confidence,
+      });
 
       // Clear the guess input
       setGuess('');
@@ -698,6 +737,35 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
               </div>
             )}
 
+            {/* Feedback message after latest guess */}
+            {latestFeedback && (
+              <div style={{
+                backgroundColor: latestFeedback.isCorrect ? '#ecfdf5' : latestFeedback.confidence >= 70 ? '#fffbeb' : '#fef2f2',
+                border: `1px solid ${latestFeedback.isCorrect ? '#a7f3d0' : latestFeedback.confidence >= 70 ? '#fde68a' : '#fecaca'}`,
+                borderRadius: '0.375rem',
+                padding: '0.4rem 0.6rem',
+                marginBottom: '0.5rem',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: latestFeedback.isCorrect ? '#065f46' : latestFeedback.confidence >= 70 ? '#92400e' : '#991b1b',
+                  lineHeight: 1.3,
+                }}>
+                  {latestFeedback.message}
+                  <span style={{
+                    fontSize: '0.7rem',
+                    color: '#6b7280',
+                    fontWeight: 400,
+                    marginLeft: '0.4rem',
+                  }}>
+                    {latestFeedback.confidence}%
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Previous Theme Guesses History - show past guesses with scores */}
             {simpleHistory.length > 0 && (
               <div style={{
@@ -759,10 +827,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
                       width: '14rem',
                       zIndex: 5
                     }}>
-                      0-69% = Red (incorrect/far)<br />
-                      70-85% = Orange (very close)<br />
-                      85%+ = Green (effectively correct)<br />
-                      Correct guesses always show green
+                      0-69% = Red<br />
+                      70-84% = Orange<br />
+                      85%+ = Green (correct)
                     </div>
                   )}
                 </div>

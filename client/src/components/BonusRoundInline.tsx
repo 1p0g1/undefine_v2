@@ -168,6 +168,11 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [results, setResults] = useState<BonusGuessResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [notInDictPlacement, setNotInDictPlacement] = useState<{
+    guess: string;
+    before: string | null;
+    after: string | null;
+  } | null>(null);
   const [showNearbyWords, setShowNearbyWords] = useState(false);
   const [nearbyWords, setNearbyWords] = useState<{ above: string[]; below: string[] } | null>(null);
   const [nearbyTargetWord, setNearbyTargetWord] = useState<string | null>(null);
@@ -205,6 +210,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setNotInDictPlacement(null);
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -222,9 +228,14 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
       const data = await response.json();
 
-      // If word not in dictionary, show error but don't advance attempt
+      // If word not in dictionary, show error with placement info
       if (data.error === 'not_in_dictionary' || data.error === 'word_not_found') {
-        setErrorMessage(data.message || 'Word not in dictionary. Try a real word!');
+        setErrorMessage(data.message || 'Word not in our dictionary. Try a real word!');
+        if (data.placement) {
+          setNotInDictPlacement(data.placement);
+        } else {
+          setNotInDictPlacement(null);
+        }
         setGuess('');
         setIsSubmitting(false);
         return;
@@ -232,7 +243,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       
       // If it's the same as today's word
       if (data.error === 'same_word') {
-        setErrorMessage(data.message || "That's today's word! Try a nearby word.");
+        setErrorMessage(data.message || "That was today's word. Guess a nearby word");
         setGuess('');
         setIsSubmitting(false);
         return;
@@ -382,7 +393,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} closest to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary (before or after).
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearest alphabetically (coming before or after) to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary.
         </div>
 
         {/* Scoring tiers - centered list */}
@@ -443,7 +454,57 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
               </button>
             </form>
             {errorMessage && (
-              <div style={styles.error}>{errorMessage}</div>
+              <div style={styles.error}>
+                <div>{errorMessage}</div>
+                {notInDictPlacement && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ 
+                      fontSize: '0.7rem', 
+                      color: '#6b7280', 
+                      marginBottom: '0.4rem' 
+                    }}>
+                      Our dictionary is{' '}
+                      <a
+                        href="https://www.mso.anu.edu.au/~ralph/OPTED/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#1a237e', textDecoration: 'underline' }}
+                      >
+                        OPTED (Online Plain Text English Dictionary)
+                      </a>
+                      , derived from Webster's 1913 Unabridged Dictionary.
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2px',
+                      fontSize: '0.75rem',
+                      fontFamily: 'monospace',
+                      padding: '0.4rem',
+                      backgroundColor: 'rgba(0,0,0,0.03)',
+                      borderRadius: '0.375rem',
+                    }}>
+                      {notInDictPlacement.before && (
+                        <span style={{ color: '#6b7280' }}>{notInDictPlacement.before}</span>
+                      )}
+                      <span style={{
+                        fontWeight: 700,
+                        color: '#dc2626',
+                        padding: '0.15rem 0.5rem',
+                        backgroundColor: '#fef2f2',
+                        borderRadius: '0.25rem',
+                        border: '1px dashed #fca5a5',
+                      }}>
+                        → {notInDictPlacement.guess.toUpperCase()} ←
+                      </span>
+                      {notInDictPlacement.after && (
+                        <span style={{ color: '#6b7280' }}>{notInDictPlacement.after}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </>
         ) : !userFinished ? (
@@ -523,6 +584,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '1rem',
     textAlign: 'center',
     overflow: 'hidden',
+    colorScheme: 'light',
+    color: '#1a1a1a',
+    WebkitTextFillColor: 'initial',
   },
   closeButton: {
     position: 'absolute',

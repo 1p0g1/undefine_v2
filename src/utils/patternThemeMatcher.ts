@@ -8,10 +8,12 @@
  * 
  * Theme types detected automatically from theme text:
  * 
- *   "____fish"              → SUFFIX   (catfish, sunfish, dogfish)
- *   "re____"                → PREFIX   (rewind, rebuild, return)
- *   "word contains [X]"     → CONTAINS (hidden word inside each word)
- *   "Words With Hidden [X]" → CONTAINS (same pattern, alternate phrasing)
+ *   "____fish"              → SUFFIX     (catfish, sunfish, dogfish)
+ *   "re____"                → PREFIX     (rewind, rebuild, return)
+ *   "word contains [X]"     → CONTAINS   (hidden word inside each word)
+ *   "Words With Hidden [X]" → CONTAINS   (same pattern, alternate phrasing)
+ *   "[word]-"               → HYPHENATED (words form hyphenated compounds)
+ *   "self-[word]"           → HYPHENATED (self-aware, self-made, etc.)
  * 
  * For pattern themes, matching is RULE-BASED (no API calls, instant):
  *   - Core word extraction + normalisation
@@ -28,7 +30,7 @@
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PatternType = 'suffix' | 'prefix' | 'contains' | 'hidden';
+export type PatternType = 'suffix' | 'prefix' | 'contains' | 'hidden' | 'hyphenated';
 
 export interface DetectedPattern {
   type: PatternType;
@@ -52,6 +54,12 @@ const UNDERSCORE_SUFFIX_RE = /^[_*]+\s*(.+)$/;       // "____fish"  → fish
 const UNDERSCORE_PREFIX_RE = /^(.+?)\s*[_*]+$/;       // "fish____"  → fish
 const DASH_SUFFIX_RE       = /^-\s*(.+)$/;            // "-fish"     → fish
 const DASH_PREFIX_RE       = /^(.+?)\s*-$/;           // "re-"       → re
+
+// Hyphenated word patterns
+const HYPHEN_PREFIX_RE     = /^(.+?)-\[?word\]?$/i;   // "self-[word]"  → self
+const HYPHEN_SUFFIX_RE     = /^\[?word\]?-(.+)$/i;    // "[word]-proof" → proof
+const HYPHEN_GENERIC_RE    = /^\[?word\]?\s*-\s*$/i;  // "[word]-"      → generic hyphenated
+const HYPHENATED_WORDS_RE  = /^hyphenated\s+words?$/i; // "hyphenated words"
 
 const CONTAINS_PHRASES = [
   /\bword\s+contains?\s+(.+)/i,                       // "word contains vegetable"
@@ -92,7 +100,23 @@ export function detectThemePattern(theme: string): DetectedPattern | null {
     return { type: 'prefix', coreWord: dashPrefixMatch[1].trim().toLowerCase(), originalTheme: trimmed };
   }
 
-  // 5. Contains/hidden phrasing
+  // 5. Hyphenated word patterns
+  // "self-[word]" or "self-____" → hyphenated prefix
+  const hyphenPrefixMatch = trimmed.match(HYPHEN_PREFIX_RE);
+  if (hyphenPrefixMatch) {
+    return { type: 'hyphenated', coreWord: hyphenPrefixMatch[1].trim().toLowerCase(), originalTheme: trimmed };
+  }
+  // "[word]-proof" → hyphenated suffix
+  const hyphenSuffixMatch = trimmed.match(HYPHEN_SUFFIX_RE);
+  if (hyphenSuffixMatch) {
+    return { type: 'hyphenated', coreWord: hyphenSuffixMatch[1].trim().toLowerCase(), originalTheme: trimmed };
+  }
+  // "[word]-" or "hyphenated words" → generic hyphenated
+  if (HYPHEN_GENERIC_RE.test(trimmed) || HYPHENATED_WORDS_RE.test(trimmed)) {
+    return { type: 'hyphenated', coreWord: 'hyphenated', originalTheme: trimmed };
+  }
+
+  // 6. Contains/hidden phrasing
   for (const re of CONTAINS_PHRASES) {
     const containsMatch = trimmed.match(re);
     if (containsMatch) {
@@ -230,7 +254,6 @@ const DESCRIPTIVE_CONTEXT_WORDS = new Set([
  */
 function matchesPatternNotation(norm: string, pattern: DetectedPattern): boolean {
   const core = pattern.coreWord;
-  const escaped = escapeRegex(core);
 
   if (pattern.type === 'suffix') {
     return /^[_*-]+/.test(norm) && norm.endsWith(core);
@@ -238,7 +261,12 @@ function matchesPatternNotation(norm: string, pattern: DetectedPattern): boolean
   if (pattern.type === 'prefix') {
     return /[_*-]+$/.test(norm) && norm.startsWith(core);
   }
-  // "contains" patterns generally aren't expressed with underscores
+  if (pattern.type === 'hyphenated') {
+    if (core === 'hyphenated') {
+      return /^(?:\[?word\]?\s*-|hyphenated)/.test(norm);
+    }
+    return norm.includes(core) && norm.includes('-');
+  }
   return false;
 }
 
@@ -294,6 +322,31 @@ function matchRelationshipPhrase(
       { re: re(`${core} (?:is |are )?(?:embedded|buried|concealed)`), confidence: 85, reason: `"${core} embedded"` },
       { re: re(`words? with (?:a )?${core} in (?:them|it)`), confidence: 90, reason: `"words with ${core} in them"` },
     );
+  }
+
+  if (pattern.type === 'hyphenated') {
+    if (core === 'hyphenated') {
+      phrases.push(
+        { re: re(`hyphenated`), confidence: 95, reason: `"hyphenated words"` },
+        { re: re(`words? with (?:a )?hyphen`), confidence: 95, reason: `"words with a hyphen"` },
+        { re: re(`compound.?hyphen`), confidence: 90, reason: `"compound-hyphenated"` },
+        { re: re(`hyphen.?compound`), confidence: 90, reason: `"hyphen compound"` },
+        { re: re(`words? (?:joined|connected|linked) (?:by |with )?(?:a )?(?:hyphen|dash)`), confidence: 90, reason: `"words joined by hyphen"` },
+        { re: re(`two.?part words?`), confidence: 80, reason: `"two-part words"` },
+        { re: re(`dash(?:ed)? words?`), confidence: 85, reason: `"dashed words"` },
+        { re: re(`words? with (?:a )?dash`), confidence: 85, reason: `"words with a dash"` },
+      );
+    } else {
+      phrases.push(
+        { re: re(`(?:start|begin)(?:s|ning)? with ${core}`), confidence: 90, reason: `"starts with ${core}-"` },
+        { re: re(`end(?:s|ing)? (?:in|with) ${core}`), confidence: 90, reason: `"ends with -${core}"` },
+        { re: re(`${core}.?(?:hyphen|dash|prefix)`), confidence: 90, reason: `"${core}- prefix"` },
+        { re: re(`(?:hyphen|dash|prefix).?${core}`), confidence: 90, reason: `"hyphen-${core}"` },
+        { re: re(`${core} words?`), confidence: 85, reason: `"${core} words"` },
+        { re: re(`words? (?:starting|beginning) with ${core}`), confidence: 90, reason: `"words starting with ${core}"` },
+        { re: re(`words? ending (?:in|with) ${core}`), confidence: 90, reason: `"words ending in ${core}"` },
+      );
+    }
   }
 
   for (const { re: pattern_re, confidence, reason } of phrases) {

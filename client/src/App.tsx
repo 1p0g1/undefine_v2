@@ -1412,35 +1412,38 @@ function App() {
 
               {/* Key reward - only for successful solves */}
               {shouldShowThemeKey && (
-                <div style={{ marginTop: '0.45rem' }}>
-                  <button
-                    type="button"
-                    onClick={handleThemeClick}
-                    aria-label="Open theme guess"
+                <div
+                  onClick={handleThemeClick}
+                  style={{
+                    marginTop: '0.5rem',
+                    marginBottom: '0.5rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <img
+                    src={themeKeyImage}
+                    alt=""
+                    draggable={false}
+                    className="theme-key-jiggle"
                     style={{
-                      all: 'unset',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      width: 'clamp(3.2rem, 18vw, 4.2rem)',
+                      height: 'auto',
+                      display: 'inline-block',
+                      transform: 'rotate(0deg) scale(1)',
+                      transformOrigin: 'center',
                     }}
-                  >
-                    <img
-                      src={themeKeyImage}
-                      alt=""
-                      draggable={false}
-                      className="theme-key-jiggle"
-                      style={{
-                        width: 'clamp(3.2rem, 18vw, 4.2rem)',
-                        height: 'auto',
-                        display: 'inline-block',
-                        // Ensure consistent transform baseline for animation
-                        transform: 'rotate(0deg) scale(1)',
-                        transformOrigin: 'center',
-                        // Match VaultLogo CTA pulse timing (sync)
-                      }}
-                    />
-                  </button>
+                  />
+                  <div style={{
+                    fontSize: 'clamp(0.78rem, 2.5vw, 0.88rem)',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-primary)',
+                    color: '#1a237e',
+                    lineHeight: 1.4,
+                    marginTop: '0.35rem',
+                  }}>
+                    Do you have the <span className="theme-unlock-glow">key to unlock this week's theme</span>?
+                  </div>
                 </div>
               )}
             </div>
@@ -1763,6 +1766,20 @@ function App() {
           animation: none;
           transform: rotate(0deg) scale(1.1);
           transition: transform 0.2s ease;
+        }
+
+        .theme-unlock-glow {
+          background: linear-gradient(90deg, #1a237e 0%, #3b82f6 35%, #1a237e 70%, #0f172a 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmerText 2.6s linear infinite;
+          font-weight: 700;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .theme-unlock-glow { animation: none !important; }
         }
       `}</style>
     </div>

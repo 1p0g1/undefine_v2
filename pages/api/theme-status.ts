@@ -126,7 +126,8 @@ export default withCors(async function handler(
       weeklyThemedWords
     };
 
-    // Only reveal the actual theme if player guessed correctly
+    // Only reveal the actual theme string if player guessed correctly
+    // (prevents cheating by inspecting network tab)
     if (isCorrectGuess) {
       response.currentTheme = currentTheme;
     }

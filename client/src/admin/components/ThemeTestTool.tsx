@@ -946,22 +946,78 @@ export const ThemeTestTool: React.FC = () => {
           </p>
         </div>
 
-        {/* Roadmap Reference */}
+        {/* Rule-Based Matchers (Pre-Semantic) */}
         <div style={{
           marginTop: '1rem',
+          padding: '1rem',
+          background: '#e8f5e9',
+          borderRadius: '8px',
+          border: '1px solid #c8e6c9'
+        }}>
+          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#2e7d32' }}>
+            🎯 Rule-Based Matchers (Instant, No API)
+          </h4>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#374151', lineHeight: 1.6 }}>
+            These run BEFORE semantic scoring — instant and free:
+          </p>
+          <div style={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.7 }}>
+            <strong>Pattern Matcher:</strong> Detects structural themes from notation:<br/>
+            &nbsp;&nbsp;• <code>____fish</code> → suffix (catfish, sunfish)<br/>
+            &nbsp;&nbsp;• <code>re____</code> → prefix (rewind, rebuild)<br/>
+            &nbsp;&nbsp;• <code>self-[word]</code> / <code>[word]-</code> → hyphenated (self-aware, well-being)<br/>
+            &nbsp;&nbsp;• <code>Words With Hidden Animals</code> → contains (hidden word inside)<br/>
+            &nbsp;&nbsp;Accepts: exact notation, core word, relationship phrases ("ends in fish", "can add fish", "hyphenated words")<br/>
+            <br/>
+            <strong>Alias Matcher:</strong> Curated dictionary of alternative phrasings for ~40+ themes.<br/>
+            &nbsp;&nbsp;e.g. "silent letters" → "Words With Silent Letters" (98% confidence)<br/>
+            <br/>
+            <strong>Word-Context Boost:</strong> Computes similarity between guess and weekly word centroid.<br/>
+            &nbsp;&nbsp;Applies up to +8% boost when guess aligns with the week's actual words.
+          </div>
+        </div>
+
+        {/* Scoring Flow */}
+        <div style={{
+          marginTop: '0.75rem',
           padding: '1rem',
           background: '#e8eaf6',
           borderRadius: '8px',
           border: '1px solid #c5cae9'
         }}>
           <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1a237e' }}>
-            📋 Improvement Roadmap Summary
+            📋 Scoring Flow (Priority Order)
           </h4>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#374151', lineHeight: 1.6 }}>
-            <strong>Phase 1 (Current):</strong> Remove NLI from production, rely on Embedding + Keyword overlap + Length penalty.<br/>
-            <strong>Phase 2 (Future):</strong> Add paraphrase model for same-meaning detection, negation handling.<br/>
-            <strong>Phase 3 (Future):</strong> Custom fine-tuned model or LLM-based judge for ultimate accuracy.
-          </p>
+          <div style={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.8 }}>
+            <strong>1. Exact Match</strong> → 100% (case-insensitive string comparison)<br/>
+            <strong>2. Pattern Match</strong> → 60-100% (rule-based, suffix/prefix/hyphenated/contains)<br/>
+            <strong>3. Alias Match</strong> → 98% (curated alternative phrasings)<br/>
+            <strong>4. Semantic Scoring</strong> → Embedding + Keywords + Specificity + Negation + Word-Context Boost<br/>
+            &nbsp;&nbsp;• Embedding similarity (HuggingFace all-MiniLM-L6-v2)<br/>
+            &nbsp;&nbsp;• Keyword overlap (weighted: exact, stem, synonym, substring)<br/>
+            &nbsp;&nbsp;• Specificity/triviality gating (short/vague guess penalty)<br/>
+            &nbsp;&nbsp;• Negation/qualifier mismatch detection<br/>
+            &nbsp;&nbsp;• Word-context boost (up to +8% from weekly word alignment)
+          </div>
+        </div>
+
+        {/* Implementation Status */}
+        <div style={{
+          marginTop: '0.75rem',
+          padding: '1rem',
+          background: '#fff3e0',
+          borderRadius: '8px',
+          border: '1px solid #ffe0b2'
+        }}>
+          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#e65100' }}>
+            ✅ Implementation Status
+          </h4>
+          <div style={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.7 }}>
+            <strong>Phase 1:</strong> Pattern Matcher — suffix, prefix, contains, hyphenated ✅<br/>
+            <strong>Phase 2:</strong> Alias Expansion — curated theme alias dictionary ✅<br/>
+            <strong>Phase 3:</strong> Word-Context Scoring — weekly word centroid boost ✅<br/>
+            <strong>Phase 4:</strong> Lightweight LLM Classification — optional, deferred<br/>
+            <strong>Phase 5:</strong> Near-Miss Feedback Loop — admin dashboard tool ✅
+          </div>
         </div>
       </div>
     </div>

@@ -321,6 +321,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           background: 'var(--color-bg)',
           color: 'var(--color-primary)',
           backgroundColor: 'white',
+          colorScheme: 'light',
           borderRadius: '0.5rem',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
           padding: 'clamp(1rem, 4vw, 2rem)',

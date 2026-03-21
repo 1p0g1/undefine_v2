@@ -619,7 +619,7 @@ export async function getThemeProgress(
 /**
  * Get current theme week boundaries (Monday-Sunday)
  */
-function getThemeWeekBoundaries(date: Date = new Date()) {
+export function getThemeWeekBoundaries(date: Date = new Date()) {
   const monday = getWeekStart(date);
   const sunday = getWeekEnd(date);
   return { monday, sunday };

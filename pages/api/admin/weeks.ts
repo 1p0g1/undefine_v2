@@ -43,6 +43,8 @@ interface DayInfo {
   wordId: string | null;
   hasWord: boolean;
   theme: string | null;
+  clueCount: number;
+  missingClues: string[];
 }
 
 interface WeekInfo {
@@ -102,10 +104,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse<WeeksResponse |
       end: formatDate(weekEnd)
     });
 
-    // Fetch all words in date range
+    // Fetch all words in date range (include clue fields for completeness checking)
     const { data: words, error } = await supabase
       .from('words')
-      .select('id, word, date, theme')
+      .select('id, word, date, theme, definition, etymology, first_letter, in_a_sentence, number_of_letters, equivalents')
       .gte('date', formatDate(weekStart))
       .lte('date', formatDate(weekEnd))
       .order('date', { ascending: true });
@@ -116,10 +118,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse<WeeksResponse |
     }
 
     // Build word lookup by date
-    const wordsByDate = new Map<string, { id: string; word: string; theme: string | null }>();
+    const wordsByDate = new Map<string, {
+      id: string;
+      word: string;
+      theme: string | null;
+      clueCount: number;
+      missingClues: string[];
+    }>();
     for (const w of words || []) {
       if (w.date) {
-        wordsByDate.set(w.date, { id: w.id, word: w.word, theme: w.theme });
+        const missing: string[] = [];
+        if (!w.definition) missing.push('definition');
+        if (!w.etymology) missing.push('etymology');
+        if (!w.first_letter) missing.push('first_letter');
+        if (!w.in_a_sentence) missing.push('in_a_sentence');
+        if (w.number_of_letters == null) missing.push('number_of_letters');
+        if (!w.equivalents || (Array.isArray(w.equivalents) && w.equivalents.length === 0)) missing.push('equivalents');
+        wordsByDate.set(w.date, {
+          id: w.id,
+          word: w.word,
+          theme: w.theme,
+          clueCount: 6 - missing.length,
+          missingClues: missing,
+        });
       }
     }
 
@@ -141,7 +162,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<WeeksResponse |
           word: wordInfo?.word || null,
           wordId: wordInfo?.id || null,
           hasWord: !!wordInfo,
-          theme: wordInfo?.theme || null
+          theme: wordInfo?.theme || null,
+          clueCount: wordInfo?.clueCount ?? 0,
+          missingClues: wordInfo?.missingClues ?? [],
         });
 
         if (wordInfo?.theme) {

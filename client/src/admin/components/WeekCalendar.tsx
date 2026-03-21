@@ -3,8 +3,9 @@
  * 
  * Displays a calendar view of scheduled words by week.
  * Color coding:
- * - Green: Has word + theme
- * - Yellow: Has word, no theme
+ * - Green: Has word + theme + all 6 clues
+ * - Orange: Has word but incomplete clues (missing definition, etymology, etc.)
+ * - Yellow: Has word + all clues but no theme
  * - Red: Missing word
  * - Gray: Future date (not yet needed)
  */
@@ -30,30 +31,29 @@ function formatDayLabel(dateStr: string): string {
   return date.getDate().toString();
 }
 
-function getDayStatus(day: DayInfo): 'complete' | 'partial' | 'missing' | 'future' {
-  const today = new Date().toISOString().split('T')[0];
-  const dayDate = day.date;
-  
-  // Future dates (more than 2 weeks out) are gray
+function getDayStatus(day: DayInfo): 'complete' | 'incomplete' | 'partial' | 'missing' | 'future' {
   const twoWeeksFromNow = new Date();
   twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
-  if (dayDate > twoWeeksFromNow.toISOString().split('T')[0]) {
-    if (day.hasWord && day.theme) return 'complete';
-    if (day.hasWord) return 'partial';
-    return 'future';
+  const isFuture = day.date > twoWeeksFromNow.toISOString().split('T')[0];
+
+  if (!day.hasWord) {
+    return isFuture ? 'future' : 'missing';
   }
-  
-  if (day.hasWord && day.theme) return 'complete';
-  if (day.hasWord) return 'partial';
-  return 'missing';
+
+  const cluesComplete = (day.clueCount ?? 0) >= 6;
+
+  if (!cluesComplete) return 'incomplete';
+  if (!day.theme) return 'partial';
+  return 'complete';
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'complete': return '#4caf50'; // Green
-    case 'partial': return '#ff9800';  // Orange
-    case 'missing': return '#f44336';  // Red
-    case 'future': return '#e0e0e0';   // Gray
+    case 'complete': return '#4caf50';    // Green
+    case 'incomplete': return '#ef4444';  // Red — clues missing is critical
+    case 'partial': return '#ff9800';     // Orange — word OK but no theme
+    case 'missing': return '#f44336';     // Red
+    case 'future': return '#e0e0e0';      // Gray
     default: return '#e0e0e0';
   }
 }
@@ -61,6 +61,7 @@ function getStatusColor(status: string): string {
 function getStatusBg(status: string): string {
   switch (status) {
     case 'complete': return '#e8f5e9';
+    case 'incomplete': return '#fef2f2';  // Light red
     case 'partial': return '#fff3e0';
     case 'missing': return '#ffebee';
     case 'future': return '#fafafa';
@@ -118,7 +119,9 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                   }
                 }}
                 title={day.hasWord 
-                  ? `${day.date}: ${day.word} (already scheduled)` 
+                  ? status === 'incomplete'
+                    ? `${day.date}: ${day.word} — INCOMPLETE (${day.clueCount}/6 clues, missing: ${day.missingClues?.join(', ')})`
+                    : `${day.date}: ${day.word} (${day.clueCount}/6 clues)`
                   : `${day.date}: Click to add word`
                 }
               >
@@ -131,7 +134,17 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                 {!day.hasWord && status !== 'future' && (
                   <span style={styles.addIcon}>+</span>
                 )}
-                {day.hasWord && (
+                {day.hasWord && status === 'incomplete' && (
+                  <span style={{
+                    fontSize: '0.6rem',
+                    color: '#dc2626',
+                    fontWeight: 700,
+                    marginTop: '1px',
+                  }}>
+                    ⚠ {day.clueCount}/6
+                  </span>
+                )}
+                {day.hasWord && status !== 'incomplete' && (
                   <span style={styles.doneIndicator}>✓</span>
                 )}
               </div>

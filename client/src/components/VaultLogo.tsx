@@ -28,9 +28,9 @@ const RED_SHAKE_SEQUENCE = [
   { image: '/Red.png', duration: 0 } // Final state
 ];
 
-// Score thresholds
-const SCORE_THRESHOLD_GREEN = 80; // 80%+ = successful unlock (green)
-const SCORE_THRESHOLD_ORANGE = 70; // 70-79% = close (orange)
+// Score thresholds — consistent with backend (85%+ = correct)
+const SCORE_THRESHOLD_GREEN = 85; // 85%+ = successful unlock (green)
+const SCORE_THRESHOLD_ORANGE = 70; // 70-84% = close (orange)
 
 interface VaultLogoProps {
   scaled?: boolean; // For use in modals with transform scale (smaller)
