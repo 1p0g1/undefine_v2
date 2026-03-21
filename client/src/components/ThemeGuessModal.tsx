@@ -125,7 +125,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const KEY_REVEAL_DELAY_MS = 250;
   // Key sits under instruction and before weekday words:
   // keep large, but not so large it makes the modal tall.
-  const KEY_IMAGE_SIZE = 'clamp(6.4rem, 20vw, 8.8rem)';
+  const KEY_IMAGE_SIZE = 'clamp(4rem, 14vw, 5.5rem)';
 
   const playerId = getPlayerId();
   const [showScoringTooltip, setShowScoringTooltip] = useState(false);

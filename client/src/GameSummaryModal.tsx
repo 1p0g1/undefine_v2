@@ -233,12 +233,11 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
     const bonusRoundPlayed = bonusRoundResults.length > 0;
     const bonusLine = bonusRoundPlayed ? '\n✨ Bonus Round Unlocked ✨' : '';
     
-    // Theme lock status: 🔓 if 80%+ theme score, 🔒 otherwise
     const themeConfidence = themeGuessData?.confidencePercentage || 0;
-    const themeLockEmoji = themeConfidence >= 80 ? '🔓' : '🔒';
+    const themeLockEmoji = themeConfidence >= 85 ? '🔓' : '🔒';
     const themeLine = themeGuessData?.hasGuessedToday ? `\n${themeLockEmoji} Theme ${themeConfidence}%` : '';
     
-    return `I ranked #${playerRank || '?'} in today's Un·Define!${bonusLine}${themeLine}\n${allEmojis.join('')}\n${time}\nhttps://undefine-v2-front.vercel.app`;
+    return `I'm currently ranked #${playerRank || '?'} in Un·Define!${bonusLine}${themeLine}\n${allEmojis.join('')}\n${time}\nCan you beat me?\nhttps://undefine.io`;
   };
 
   const handleCopy = () => {

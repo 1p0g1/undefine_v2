@@ -393,7 +393,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
         {/* Explanation */}
         <div style={styles.explanation}>
-          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearest alphabetically (coming before or after) to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary.
+          Guess <strong style={{ color: '#b8860b' }}>{remainingAttempts - currentAttempt}</strong> word{remainingAttempts - currentAttempt !== 1 ? 's' : ''} nearest alphabetically (before or after) to "<strong style={{ color: '#b8860b' }}>{targetWord}</strong>" in the dictionary.
         </div>
 
         {/* Scoring tiers - centered list */}

@@ -27,7 +27,7 @@ interface WeeklyThemeLeaderboardEntry {
   displayName: string;
   dayNumber: number;        // 1-7 (Mon-Sun)
   dayName: string;          // "Monday", "Tuesday", etc.
-  timeGuessed: string;      // "14:23" (24-hour format)
+  timeGuessed: string;      // "2:23pm" (12-hour format)
   confidencePercent: number; // Best confidence % for this week's theme
   createdAt: string;        // Full ISO timestamp for precise sorting
   isCurrentPlayer?: boolean;
@@ -180,11 +180,13 @@ async function handler(
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const dayName = dayNames[attemptDate.getDay()];
 
-      // Extract time in HH:MM format (24-hour)
+      // Extract time in 12-hour format with AM/PM
       const createdDate = new Date(attempt.created_at);
-      const hours = String(createdDate.getHours()).padStart(2, '0');
+      const rawHours = createdDate.getHours();
+      const period = rawHours >= 12 ? 'pm' : 'am';
+      const displayHours = rawHours % 12 || 12;
       const minutes = String(createdDate.getMinutes()).padStart(2, '0');
-      const timeGuessed = `${hours}:${minutes}`;
+      const timeGuessed = `${displayHours}:${minutes}${period}`;
 
       return {
         rank: index + 1,

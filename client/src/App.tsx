@@ -1415,12 +1415,22 @@ function App() {
                 <div
                   onClick={handleThemeClick}
                   style={{
-                    marginTop: '0.5rem',
-                    marginBottom: '0.5rem',
+                    marginTop: '0.35rem',
+                    marginBottom: '0.35rem',
                     textAlign: 'center',
                     cursor: 'pointer',
                   }}
                 >
+                  <div style={{
+                    fontSize: 'clamp(0.78rem, 2.5vw, 0.88rem)',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-primary)',
+                    color: '#1a237e',
+                    lineHeight: 1.4,
+                    marginBottom: '0.3rem',
+                  }}>
+                    Can you <span className="theme-unlock-glow">unlock this week's theme</span>?
+                  </div>
                   <img
                     src={themeKeyImage}
                     alt=""
@@ -1434,16 +1444,6 @@ function App() {
                       transformOrigin: 'center',
                     }}
                   />
-                  <div style={{
-                    fontSize: 'clamp(0.78rem, 2.5vw, 0.88rem)',
-                    fontWeight: 600,
-                    fontFamily: 'var(--font-primary)',
-                    color: '#1a237e',
-                    lineHeight: 1.4,
-                    marginTop: '0.35rem',
-                  }}>
-                    Do you have the <span className="theme-unlock-glow">key to unlock this week's theme</span>?
-                  </div>
                 </div>
               )}
             </div>

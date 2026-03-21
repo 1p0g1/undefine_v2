@@ -169,27 +169,18 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
     const dateObj = new Date(dateString);
     const todayObj = new Date(today);
     
-    // Future date
     if (dateObj > todayObj) return 'future';
     
-    // Today
-    if (dateString === today) return 'today';
-    
-    // Check if played
+    // Check played status first — even for today
     const dayData = getDayData(dateString);
     if (dayData?.played) {
-      const state = dayData.won ? 'won' : 'lost';
-      // Debug logging for first few dates
-      if (dateString.endsWith('-01') || dateString.endsWith('-15')) {
-        console.log('[getDateState] Date', dateString, ':', state, dayData);
-      }
-      return state;
+      return dayData.won ? 'won' : 'lost';
     }
     
-    // Check if word exists for this date
-    if (availableDates.has(dateString)) return 'available';
+    // Today but not yet played
+    if (dateString === today) return 'today';
     
-    // No word
+    if (availableDates.has(dateString)) return 'available';
     return 'no-word';
   };
 
