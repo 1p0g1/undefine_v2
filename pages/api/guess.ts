@@ -552,18 +552,6 @@ export default withCors(async function handler(
           return res.status(400).json({ error: 'Game session is already complete' });
         }
 
-        // Validate start_time matches
-        if (combinedSession.start_time !== start_time) {
-          console.error('[/api/guess] Start time mismatch:', {
-            session: combinedSession.start_time,
-            request: start_time
-          });
-          return res.status(400).json({ 
-            error: 'Invalid start time',
-            details: 'Start time does not match game session'
-          });
-        }
-
         const result = await submitGuess({
           guess,
           gameId,
@@ -832,18 +820,6 @@ export default withCors(async function handler(
 
     if (gameSession.is_complete) {
       return res.status(400).json({ error: 'Game session is already complete' });
-    }
-
-    // Validate start_time matches
-    if (gameSession.start_time !== start_time) {
-      console.error('[/api/guess] Start time mismatch:', {
-        session: gameSession.start_time,
-        request: start_time
-      });
-      return res.status(400).json({ 
-        error: 'Invalid start time',
-        details: 'Start time does not match game session'
-      });
     }
 
     const result = await submitGuess({
