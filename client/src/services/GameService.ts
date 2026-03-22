@@ -409,11 +409,19 @@ class GameService {
     }
   }
 
-  public resetStartTime(): void {
-    if (this.currentState && !this.currentState.isComplete) {
-      this.currentState.startTime = new Date().toISOString();
+  public async resetStartTime(): Promise<void> {
+    if (!this.currentState || this.currentState.isComplete) return;
+
+    try {
+      const playerId = getPlayerId() || '';
+      const response = await apiClient.resetTimer(this.currentState.gameId, playerId);
+      this.currentState.startTime = response.start_time;
       this.saveState();
       console.log('[GameService] Start time reset to:', this.currentState.startTime);
+    } catch (err) {
+      console.error('[GameService] Failed to reset start time on server, using local fallback:', err);
+      this.currentState.startTime = new Date().toISOString();
+      this.saveState();
     }
   }
 

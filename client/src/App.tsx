@@ -594,8 +594,8 @@ function App() {
   };
 
   // Handle game start — reset timer so it counts from when the player clicks Ready
-  const handleStartGame = () => {
-    resetStartTime();
+  const handleStartGame = async () => {
+    await resetStartTime();
     setGameStarted(true);
     setImmediateStreakData(null);
     setCelebrateDiamond(false);

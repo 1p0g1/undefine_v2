@@ -105,6 +105,15 @@ export const THEME_ALIASES: Record<string, string[]> = {
     'words containing vegetables', 'vegetable in the word',
   ],
 
+  'hidden fruit': [
+    'hidden fruits', 'fruit hidden in words', 'words contain fruit',
+    'words contain fruits', 'words containing fruit', 'words containing fruits',
+    'fruit inside words', 'concealed fruit', 'concealed fruits',
+    'fruit in the word', 'fruits in the word', 'secret fruit',
+    'words with hidden fruit', 'words with hidden fruits',
+    'fruit names hidden in words', 'hidden fruit names',
+  ],
+
   'Chemical elements with double meanings': [
     'chemical elements', 'elements', 'periodic table elements',
     'elements with other meanings', 'dual meaning elements',

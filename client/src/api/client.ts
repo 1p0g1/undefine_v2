@@ -299,6 +299,14 @@ export const apiClient = {
     }
   },
 
+  async resetTimer(gameId: string, playerId: string): Promise<{ start_time: string }> {
+    return fetchFromApi<{ start_time: string }>('/api/game/reset-timer', {
+      method: 'POST',
+      body: JSON.stringify({ gameId }),
+      headers: { 'player-id': playerId },
+    });
+  },
+
   /**
    * Get leaderboard data for a word
    * @param wordId The word ID to get leaderboard for

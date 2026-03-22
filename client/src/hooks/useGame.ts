@@ -192,8 +192,8 @@ const useGame = () => {
     }
   }, []);
 
-  const resetStartTime = useCallback(() => {
-    gameService.resetStartTime();
+  const resetStartTime = useCallback(async () => {
+    await gameService.resetStartTime();
     const updatedState = gameService.getCurrentState();
     if (updatedState) {
       setGameState(updatedState);
