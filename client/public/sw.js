@@ -1,4 +1,4 @@
-const CACHE_NAME = 'undefine-v1';
+const CACHE_NAME = 'undefine-v2';
 const STATIC_ASSETS = [
   '/',
   '/ClosedVault.png',
@@ -36,10 +36,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
+  // Only intercept GET requests — let POST/PUT/DELETE pass through untouched
+  if (request.method !== 'GET') return;
+
   // Network-first for API calls and navigation
   if (request.url.includes('/api/') || request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request).catch(() => caches.match(request).then((r) => r || Response.error()))
     );
     return;
   }

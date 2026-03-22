@@ -1,6 +1,6 @@
 # March 2026 Clean-Up: Game Logic, Database & Roadmap
 
-> **Last Updated:** 24 January 2026  
+> **Last Updated:** 22 March 2026  
 > **Branch:** `main`  
 > **Purpose:** One-stop reference for understanding the full game, critical logic, Supabase schema, scoring, leaderboards, and planned improvements.
 
