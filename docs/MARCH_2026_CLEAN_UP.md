@@ -1,6 +1,6 @@
 # March 2026 Clean-Up: Game Logic, Database & Roadmap
 
-> **Last Updated:** 21 March 2026  
+> **Last Updated:** 24 January 2026  
 > **Branch:** `main`  
 > **Purpose:** One-stop reference for understanding the full game, critical logic, Supabase schema, scoring, leaderboards, and planned improvements.
 
@@ -61,6 +61,14 @@
 ### Pattern Matcher — Hyphenated Words
 - New `'hyphenated'` PatternType for themes like `self-[word]`, `[word]-`, `hyphenated words`
 - Rule-based matching for relationship phrases ("words with a hyphen", "dashed words")
+
+### Pattern Matcher — `[prefix]-words` (scheduled themes)
+- **Stored labels:** `pro-words`, `para-words`, `ab-words`, `sub-words`, `pur-words` (weeks from April–July 2026)
+- **Idea:** Base words become other valid words when a fixed prefix is added (e.g. tract → protract; cure → procure)
+- **Detection:** Regex `PREFIX_WORDS_RE` (`/^([a-z]{2,6})-words?$/i`) maps each label to `PatternType: 'prefix'` with `coreWord` = the prefix (`pro`, `para`, `ab`, `sub`, `pur`)
+- **Matching:** Reuses prefix phrase rules (e.g. "starts with pro", "add pro to the front") plus extra phrases for "become new words with [prefix]" / "prefixed with [prefix]"; exact label `pro-words` scores 100% via exact theme-label match in the pattern matcher
+- **Aliases:** `themeAliases.ts` entries per theme for short phrasings (`pro prefix`, `pro words`, `words starting with pro`, etc.)
+- **Generic guesses** ("words with prefixes", no specific prefix named): pattern matcher returns no hit → **semantic scoring** applies (embeddings); avoids awarding 85%+ for vague paraphrases
 
 ### Previous Theme Guesses — Fixed Loading Bug
 - `theme-history-simple` API now accepts `date` param as fallback (resolves theme server-side)
@@ -158,8 +166,8 @@ Enforced by trigger `update_leaderboard_rankings()` on `leaderboard_summary`.
 ### Scoring Flow (Priority Order)
 ```
 1. Exact Match → 100% (case-insensitive string comparison)
-2. Pattern Match → 60-100% (rule-based: suffix/prefix/hyphenated/contains)
-3. Alias Match → 98% (curated alternative phrasings, ~40+ themes)
+2. Pattern Match → 60-100% (rule-based: suffix/prefix/hyphenated/contains; includes [prefix]-words e.g. pro-words)
+3. Alias Match → 98% (curated alternative phrasings, ~40+ themes; includes per-prefix themes)
 4. Semantic Scoring → Embedding + Keywords + Specificity + Negation + Word-Context
    ├─ Embedding similarity (HuggingFace all-MiniLM-L6-v2)
    ├─ Keyword overlap (weighted: exact=1.0, stem=0.9, synonym=0.6, substring=0.3)
