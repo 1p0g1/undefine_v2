@@ -190,6 +190,38 @@ export const THEME_ALIASES: Record<string, string[]> = {
     'place names', 'eponyms', 'toponyms', 'words from places',
     'words that were places', 'named after places',
   ],
+
+  // ─── Prefix-word themes ────────────────────────────────────────────────
+
+  'pro-words': [
+    'pro prefix', 'pro words', 'words starting with pro',
+    'add pro', 'pro at the start', 'words that become new words with pro',
+    'words you can add pro to', 'pro-', 'prefix pro',
+  ],
+
+  'para-words': [
+    'para prefix', 'para words', 'words starting with para',
+    'add para', 'para at the start', 'words that become new words with para',
+    'words you can add para to', 'para-', 'prefix para',
+  ],
+
+  'ab-words': [
+    'ab prefix', 'ab words', 'words starting with ab',
+    'add ab', 'ab at the start', 'words that become new words with ab',
+    'words you can add ab to', 'ab-', 'prefix ab',
+  ],
+
+  'sub-words': [
+    'sub prefix', 'sub words', 'words starting with sub',
+    'add sub', 'sub at the start', 'words that become new words with sub',
+    'words you can add sub to', 'sub-', 'prefix sub',
+  ],
+
+  'pur-words': [
+    'pur prefix', 'pur words', 'words starting with pur',
+    'add pur', 'pur at the start', 'words that become new words with pur',
+    'words you can add pur to', 'pur-', 'prefix pur',
+  ],
 };
 
 /**

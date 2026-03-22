@@ -10,6 +10,7 @@
  * 
  *   "____fish"              → SUFFIX     (catfish, sunfish, dogfish)
  *   "re____"                → PREFIX     (rewind, rebuild, return)
+ *   "pro-words"             → PREFIX     (tract→protract, cure→procure)
  *   "word contains [X]"     → CONTAINS   (hidden word inside each word)
  *   "Words With Hidden [X]" → CONTAINS   (same pattern, alternate phrasing)
  *   "[word]-"               → HYPHENATED (words form hyphenated compounds)
@@ -54,6 +55,9 @@ const UNDERSCORE_SUFFIX_RE = /^[_*]+\s*(.+)$/;       // "____fish"  → fish
 const UNDERSCORE_PREFIX_RE = /^(.+?)\s*[_*]+$/;       // "fish____"  → fish
 const DASH_SUFFIX_RE       = /^-\s*(.+)$/;            // "-fish"     → fish
 const DASH_PREFIX_RE       = /^(.+?)\s*-$/;           // "re-"       → re
+
+// "[prefix]-words" convention: "pro-words", "sub-words", "para-words"
+const PREFIX_WORDS_RE      = /^([a-z]{2,6})-words?$/i;
 
 // Hyphenated word patterns
 const HYPHEN_PREFIX_RE     = /^(.+?)-\[?word\]?$/i;   // "self-[word]"  → self
@@ -100,7 +104,13 @@ export function detectThemePattern(theme: string): DetectedPattern | null {
     return { type: 'prefix', coreWord: dashPrefixMatch[1].trim().toLowerCase(), originalTheme: trimmed };
   }
 
-  // 5. Hyphenated word patterns
+  // 5. "[prefix]-words" convention: "pro-words" → prefix:pro, "sub-words" → prefix:sub
+  const prefixWordsMatch = trimmed.match(PREFIX_WORDS_RE);
+  if (prefixWordsMatch) {
+    return { type: 'prefix', coreWord: prefixWordsMatch[1].trim().toLowerCase(), originalTheme: trimmed };
+  }
+
+  // 6. Hyphenated word patterns
   // "self-[word]" or "self-____" → hyphenated prefix
   const hyphenPrefixMatch = trimmed.match(HYPHEN_PREFIX_RE);
   if (hyphenPrefixMatch) {
@@ -116,7 +126,7 @@ export function detectThemePattern(theme: string): DetectedPattern | null {
     return { type: 'hyphenated', coreWord: 'hyphenated', originalTheme: trimmed };
   }
 
-  // 6. Contains/hidden phrasing
+  // 7. Contains/hidden phrasing
   for (const re of CONTAINS_PHRASES) {
     const containsMatch = trimmed.match(re);
     if (containsMatch) {
@@ -157,6 +167,11 @@ export function matchPatternTheme(
   // ── 1. Exact pattern notation match (highest confidence) ──────────────
   if (matchesPatternNotation(norm, pattern)) {
     return hit(100, `Exact pattern notation match`, pattern);
+  }
+
+  // ── 1b. Exact theme label match (e.g. guess "pro-words" for theme "pro-words")
+  if (norm === pattern.originalTheme.toLowerCase()) {
+    return hit(100, `Exact theme label match`, pattern);
   }
 
   // ── 2. Core word only ("fish") ────────────────────────────────────────
@@ -247,6 +262,8 @@ const DESCRIPTIVE_CONTEXT_WORDS = new Set([
   'contain', 'contains', 'containing', 'hidden', 'inside', 'within',
   'combine', 'combined', 'combining', 'attached', 'appended',
   'before', 'after', 'front', 'back',
+  'become', 'becomes', 'form', 'forms', 'create', 'creates',
+  'prefixed', 'prefixable', 'prepend', 'prepended',
 ]);
 
 /**
@@ -310,6 +327,12 @@ function matchRelationshipPhrase(
       { re: re(`${core} (?:followed by |before |precedes? )`), confidence: 85, reason: `"${core} followed by..."` },
       { re: re(`${core} blank`), confidence: 85, reason: `"${core} blank"` },
       { re: re(`${core} something`), confidence: 80, reason: `"${core} something"` },
+      { re: re(`(?:become|form|create|make)s? (?:new |other )?words? (?:with |when (?:you )?(?:add|prefix) )${core}`), confidence: 92, reason: `"become new words with ${core}"` },
+      { re: re(`words? that (?:become|form|create|make) (?:new |other )?words? (?:with |when (?:prefixed|you add) )${core}`), confidence: 92, reason: `"words that become new words with ${core}"` },
+      { re: re(`${core} (?:can be )?(?:added|prefixed|attached) (?:to )?(?:make|form|create)`), confidence: 88, reason: `"${core} added to make..."` },
+      { re: re(`prefix(?:able|ed)? (?:with )?${core}`), confidence: 90, reason: `"prefixed with ${core}"` },
+      { re: re(`${core} prefix(?:able|ed)?`), confidence: 88, reason: `"${core} prefixable"` },
+      { re: re(`(?:add|put|stick) ${core} (?:in |on |to )?(?:the )?front`), confidence: 90, reason: `"add ${core} to the front"` },
     );
   }
 
