@@ -96,12 +96,14 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
   const callbackFiredRef = useRef(false);
   const scoreAnimationFiredRef = useRef<number | null>(null);
   
-  // Determine current vault color state (for hover shake) - MUST be defined before getCurrentImage
+  // Vault door = best answer THIS WEEK (persists); Key = resets daily
   const getVaultColorState = useCallback((): 'closed' | 'green' | 'orange' | 'red' => {
-    if (!themeGuessData?.hasGuessedToday) return 'closed';
-    const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
-    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) return 'green';
-    if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) return 'orange';
+    const bestScore = themeGuessData?.highestConfidencePercentage;
+    const todayScore = themeGuessData?.confidencePercentage;
+    const effectiveScore = bestScore ?? todayScore;
+    if (effectiveScore === null || effectiveScore === undefined) return 'closed';
+    if (effectiveScore >= SCORE_THRESHOLD_GREEN) return 'green';
+    if (effectiveScore >= SCORE_THRESHOLD_ORANGE) return 'orange';
     return 'red';
   }, [themeGuessData]);
 
@@ -266,24 +268,17 @@ export const VaultLogo: React.FC<VaultLogoProps> = ({
       }
     }
     
-    // Theme-based state for main page (persistent after guess)
-    if (themeGuessData?.hasGuessedToday) {
-      // Use highest confidence if available, otherwise current
-      const effectiveScore = themeGuessData.highestConfidencePercentage ?? themeGuessData.confidencePercentage;
-      
-      if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_GREEN) {
-        // Green/successful - open vault
-        return '/OpenVault.png';
-      } else if (effectiveScore !== null && effectiveScore >= SCORE_THRESHOLD_ORANGE) {
-        // Orange - close but not quite
-        return '/Orange.png';
-      } else {
-        // Red - incorrect
-        return '/Red.png';
-      }
+    // Vault door reflects BEST score this week (persists across days)
+    const bestScore = themeGuessData?.highestConfidencePercentage;
+    const todayScore = themeGuessData?.confidencePercentage;
+    const effectiveScore = bestScore ?? todayScore;
+    
+    if (effectiveScore !== null && effectiveScore !== undefined) {
+      if (effectiveScore >= SCORE_THRESHOLD_GREEN) return '/OpenVault.png';
+      if (effectiveScore >= SCORE_THRESHOLD_ORANGE) return '/Orange.png';
+      return '/Red.png';
     }
     
-    // Default: closed vault
     return '/ClosedVault.png';
   }, [currentAnimationFrame, isCelebrating, internalAnimating, animationFrameIndex, themeGuessData, currentAnimationSequence, isHoverShaking, hoverShakeFrameIndex, getVaultColorState]);
   

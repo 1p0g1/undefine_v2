@@ -132,7 +132,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   const KEY_REVEAL_DELAY_MS = 250;
   // Key sits under instruction and before weekday words:
   // keep large, but not so large it makes the modal tall.
-  const KEY_IMAGE_SIZE = 'clamp(4rem, 14vw, 5.5rem)';
+  const KEY_IMAGE_SIZE = 'clamp(2.5rem, 10vw, 3.5rem)';
 
   const playerId = getPlayerId();
   const [showScoringTooltip, setShowScoringTooltip] = useState(false);
@@ -204,7 +204,6 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setThemeStatus(preloadedData.themeStatus);
         setThemeStats(preloadedData.themeStats);
         
-        // Update theme guess data for Un diamond coloring
         if (preloadedData.themeStatus?.progress) {
           setThemeGuessData({
             hasGuessedToday: preloadedData.themeStatus.progress.hasGuessedToday,
@@ -216,20 +215,20 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         setIsLoading(false);
         setError(null);
         
-        // Clear the pre-loaded data after use
+        // Always load history even with preloaded data
+        loadSimpleHistory(preloadedData.themeStatus?.currentTheme);
+        
         if (typeof window !== 'undefined') {
           delete (window as any).__themeDataCache;
         }
         return;
       }
       
-      // Use cached data if available and recent (within 2 minutes)
       if (dataCache && (now - dataCache.timestamp < 120000) && dataCache.contextDate === (gameDate ?? null)) {
         console.log('[ThemeGuessModal] Using cached theme data');
         setThemeStatus(dataCache.themeStatus);
         setThemeStats(dataCache.themeStats);
         
-        // Update theme guess data for Un diamond coloring
         if (dataCache.themeStatus?.progress) {
           setThemeGuessData({
             hasGuessedToday: dataCache.themeStatus.progress.hasGuessedToday,
@@ -240,6 +239,9 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
         
         setIsLoading(false);
         setError(null);
+        
+        // Always load history even with cached data
+        loadSimpleHistory(dataCache.themeStatus?.currentTheme);
       } else {
       loadThemeData();
       }

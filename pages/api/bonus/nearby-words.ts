@@ -18,6 +18,7 @@ interface NearbyWordsResponse {
   below: string[];
   targetWord?: string;
   targetLexRank?: number;
+  targetNotInDictionary?: boolean;
   error?: string;
 }
 
@@ -96,22 +97,30 @@ async function handler(
       }
     }
 
-    if (!dictEntry) {
-      return res.status(200).json({
-        above: [],
-        below: [],
-        targetWord: wordData.word,
-        error: 'No nearby words available for this entry yet.'
-      });
-    }
+    const targetNotInDictionary = !dictEntry;
+    let targetLexRank: number;
 
-    const targetLexRank = dictEntry.lex_rank;
+    if (dictEntry) {
+      targetLexRank = dictEntry.lex_rank;
+    } else {
+      // Word not in dictionary — find where it WOULD sit alphabetically
+      const normalized = normalizeWord(wordData.word);
+      const { data: nextWord } = await supabase
+        .from('dictionary')
+        .select('lex_rank')
+        .gt('normalized_word', normalized)
+        .order('normalized_word', { ascending: true })
+        .limit(1)
+        .single();
+
+      targetLexRank = nextWord ? nextWord.lex_rank - 0.5 : 999999;
+    }
 
     // Get 10 words ABOVE (lower lex_rank)
     const { data: aboveWords, error: aboveError } = await supabase
       .from('dictionary')
       .select('normalized_word')
-      .lt('lex_rank', targetLexRank)
+      .lt('lex_rank', Math.ceil(targetLexRank))
       .order('lex_rank', { ascending: false })
       .limit(10);
 
@@ -123,7 +132,7 @@ async function handler(
     const { data: belowWords, error: belowError } = await supabase
       .from('dictionary')
       .select('normalized_word')
-      .gt('lex_rank', targetLexRank)
+      .gte('lex_rank', Math.ceil(targetLexRank))
       .order('lex_rank', { ascending: true })
       .limit(10);
 
@@ -131,7 +140,6 @@ async function handler(
       console.error('[nearby-words] Error fetching below words:', belowError);
     }
 
-    // Format response - reverse above words so closest is last
     const above = (aboveWords || []).map(w => w.normalized_word).reverse();
     const below = (belowWords || []).map(w => w.normalized_word);
 
@@ -139,7 +147,8 @@ async function handler(
       above,
       below,
       targetWord: wordData.word,
-      targetLexRank
+      targetLexRank,
+      ...(targetNotInDictionary && { targetNotInDictionary: true }),
     });
 
   } catch (error) {

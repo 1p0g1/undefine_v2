@@ -670,20 +670,13 @@ h6 {
   display: none !important;
 }
 
-/* Force light mode on devices that override color-scheme meta tag */
+/* Force light mode on devices with dark mode — targeted overrides only */
 @media (prefers-color-scheme: dark) {
   html, body {
     background-color: var(--color-bg) !important;
     color: var(--color-primary) !important;
     color-scheme: light !important;
-    -webkit-text-fill-color: initial !important;
   }
-
-  *, *::before, *::after {
-    color-scheme: light !important;
-    -webkit-text-fill-color: initial !important;
-  }
-
   .modal-content {
     background-color: #fdfbf6 !important;
     color: #1a237e !important;
@@ -691,46 +684,14 @@ h6 {
   .modal-overlay {
     background: rgba(10, 10, 10, 0.4) !important;
   }
-
-  input, textarea, select, button {
+  input, textarea, select {
     color-scheme: light !important;
     background-color: #ffffff !important;
     color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
   }
-
-  /* Bonus round — force golden theme even in dark mode */
-  .bonus-round-container {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%) !important;
-    color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
-  }
-  .bonus-round-container * {
-    color: inherit !important;
-    -webkit-text-fill-color: inherit !important;
-  }
-  .bonus-round-container .bonus-input {
-    background-color: #ffffff !important;
-    color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
-  }
-
-  /* Result rows — ensure tier colors remain visible */
-  .bonus-result-row {
-    color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
-  }
-
-  /* Guess input on main game */
   .guess-input {
     color: #1a237e !important;
-    -webkit-text-fill-color: #1a237e !important;
     border-color: #1a237e !important;
-  }
-
-  /* All divs that might have inline dark text */
-  div, span, p, h1, h2, h3, h4, h5, h6, label, a {
-    -webkit-text-fill-color: initial !important;
   }
 }
 

@@ -608,20 +608,23 @@ function App() {
     setShowSummary(false); // Close summary modal when opening theme modal
   };
   
-  // NEW: Handler for when diamond celebration completes
-  // FLOW: Celebration → Bonus Round (if eligible) → Theme Modal → Leaderboard
+  // FLOW: Celebration → Bonus Round (if eligible) → Leaderboard (key opens theme)
   const handleCelebrationComplete = () => {
     console.log('[App] Diamond celebration complete');
     setCelebrateDiamond(false);
     
-    // If bonus round is pending, let it show inline (don't show theme modal yet)
     if (pendingBonusRound) {
       console.log('[App] Bonus round pending - showing inline bonus round first');
-      return; // Bonus round will show inline, then trigger theme modal when complete
+      return;
     }
     
-    // No bonus round, go straight to theme modal
-    setShowThemeModal(true);
+    // No bonus round — go straight to leaderboard
+    const pendingGameId = pendingSummaryGameIdRef.current;
+    if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
+      setPendingSummaryAfterTheme(false);
+      pendingSummaryGameIdRef.current = null;
+      showLeaderboardModal();
+    }
   };
 
   const handleCloseThemeModal = (updatedThemeData?: {
@@ -664,17 +667,20 @@ function App() {
     }
   };
 
-  // Bonus round completion handler (for inline UI)
-  // FLOW: After bonus round → Show theme modal → Then leaderboard
+  // FLOW: Game → Bonus Round → Leaderboard (with key to theme modal)
   const handleBonusRoundComplete = (results: BonusGuessResult[]) => {
     console.log('[App] Bonus round complete:', results);
     setBonusRoundResults(results);
     setBonusRoundComplete(true);
     setPendingBonusRound(false);
     
-    // Theme modal no longer auto-opens after bonus round
-    // Instead, the "Un" diamond pulsates with twist animation to attract clicks
-    console.log('[App] Bonus round done - diamond will animate to attract theme guess click');
+    // Go straight to leaderboard — key in the modal opens theme
+    const pendingGameId = pendingSummaryGameIdRef.current;
+    if (pendingSummaryAfterTheme && pendingGameId && pendingGameId === gameState.gameId) {
+      setPendingSummaryAfterTheme(false);
+      pendingSummaryGameIdRef.current = null;
+      showLeaderboardModal();
+    }
   };
 
   // Calculate bonus attempts (unused guesses) - only for early wins
@@ -1416,8 +1422,8 @@ function App() {
                 <div
                   onClick={handleThemeClick}
                   style={{
-                    marginTop: '0.35rem',
-                    marginBottom: '0.35rem',
+                    marginTop: '0.2rem',
+                    marginBottom: '0',
                     textAlign: 'center',
                     cursor: 'pointer',
                   }}
@@ -1427,8 +1433,8 @@ function App() {
                     fontWeight: 600,
                     fontFamily: 'var(--font-primary)',
                     color: '#1a237e',
-                    lineHeight: 1.4,
-                    marginBottom: '0.3rem',
+                    lineHeight: 1.3,
+                    marginBottom: '0.1rem',
                   }}>
                     Can you <span className="theme-unlock-glow">unlock this week's theme</span>?
                   </div>
@@ -1438,11 +1444,11 @@ function App() {
                     draggable={false}
                     className="theme-key-jiggle"
                     style={{
-                      width: 'clamp(3.2rem, 18vw, 4.2rem)',
+                      width: 'clamp(2.5rem, 12vw, 3.5rem)',
                       height: 'auto',
                       display: 'inline-block',
-                      transform: 'rotate(0deg) scale(1)',
-                      transformOrigin: 'center',
+                      padding: '0',
+                      margin: '0',
                     }}
                   />
                 </div>

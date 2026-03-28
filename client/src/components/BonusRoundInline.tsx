@@ -169,7 +169,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [results, setResults] = useState<BonusGuessResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [notInDictPlacement, setNotInDictPlacement] = useState<{
+  const [_notInDictPlacement, setNotInDictPlacement] = useState<{
     guess: string;
     before: string | null;
     after: string | null;
@@ -177,6 +177,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
   const [showNearbyWords, setShowNearbyWords] = useState(false);
   const [nearbyWords, setNearbyWords] = useState<{ above: string[]; below: string[] } | null>(null);
   const [nearbyTargetWord, setNearbyTargetWord] = useState<string | null>(null);
+  const [targetNotInDict, setTargetNotInDict] = useState(false);
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [userFinished, setUserFinished] = useState(false);
   const [lastResultSuccess, setLastResultSuccess] = useState(false); // For success animation
@@ -229,14 +230,10 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
 
       const data = await response.json();
 
-      // If word not in dictionary, show error with placement info
+      // Player's guess not in dictionary — simple error, no placement reveal
       if (data.error === 'not_in_dictionary' || data.error === 'word_not_found') {
-        setErrorMessage(data.message || 'Word not in our dictionary. Try a real word!');
-        if (data.placement) {
-          setNotInDictPlacement(data.placement);
-        } else {
-          setNotInDictPlacement(null);
-        }
+        setErrorMessage(`"${guess.trim()}" is not in our dictionary (OPTED — Webster's 1913 Unabridged). Try a real word!`);
+        setNotInDictPlacement(null);
         setGuess('');
         setIsSubmitting(false);
         return;
@@ -343,6 +340,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       if (data && Array.isArray(data.above) && Array.isArray(data.below)) {
         setNearbyWords({ above: data.above, below: data.below });
         setNearbyTargetWord(data.targetWord || targetWord);
+        setTargetNotInDict(!!data.targetNotInDictionary);
         setShowNearbyWords(true);
         return;
       }
@@ -463,54 +461,22 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
             {errorMessage && (
               <div style={styles.error}>
                 <div>{errorMessage}</div>
-                {notInDictPlacement && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <div style={{ 
-                      fontSize: '0.7rem', 
-                      color: '#6b7280', 
-                      marginBottom: '0.4rem' 
-                    }}>
-                      Our dictionary is{' '}
-                      <a
-                        href="https://www.mso.anu.edu.au/~ralph/OPTED/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#1a237e', textDecoration: 'underline' }}
-                      >
-                        OPTED (Online Plain Text English Dictionary)
-                      </a>
-                      , derived from Webster's 1913 Unabridged Dictionary.
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '2px',
-                      fontSize: '0.75rem',
-                      fontFamily: 'monospace',
-                      padding: '0.4rem',
-                      backgroundColor: 'rgba(0,0,0,0.03)',
-                      borderRadius: '0.375rem',
-                    }}>
-                      {notInDictPlacement.before && (
-                        <span style={{ color: '#6b7280' }}>{notInDictPlacement.before}</span>
-                      )}
-                      <span style={{
-                        fontWeight: 700,
-                        color: '#dc2626',
-                        padding: '0.15rem 0.5rem',
-                        backgroundColor: '#fef2f2',
-                        borderRadius: '0.25rem',
-                        border: '1px dashed #fca5a5',
-                      }}>
-                        → {notInDictPlacement.guess.toUpperCase()} ←
-                      </span>
-                      {notInDictPlacement.after && (
-                        <span style={{ color: '#6b7280' }}>{notInDictPlacement.after}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <div style={{ 
+                  fontSize: '0.7rem', 
+                  color: '#6b7280', 
+                  marginTop: '0.3rem' 
+                }}>
+                  Our dictionary is{' '}
+                  <a
+                    href="https://www.mso.anu.edu.au/~ralph/OPTED/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#1a237e', textDecoration: 'underline' }}
+                  >
+                    OPTED (Online Plain Text English Dictionary)
+                  </a>
+                  , derived from Webster's 1913 Unabridged Dictionary.
+                </div>
               </div>
             )}
           </>
@@ -529,8 +495,24 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
           {/* Scrollable nearby words list */}
           {showNearbyWords && nearbyWords && (
             <div style={styles.nearbyScrollContainer}>
+              {targetNotInDict && (
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#92400e', 
+                  backgroundColor: '#fef3c7',
+                  padding: '0.4rem 0.6rem',
+                  borderRadius: '0.375rem',
+                  marginBottom: '0.5rem',
+                  lineHeight: 1.4,
+                }}>
+                  "{(nearbyTargetWord || targetWord)}" is not in our{' '}
+                  <a href="https://www.mso.anu.edu.au/~ralph/OPTED/" target="_blank" rel="noopener noreferrer" style={{ color: '#1a237e', textDecoration: 'underline' }}>
+                    OPTED dictionary
+                  </a>
+                  . Showing where it would sit alphabetically.
+                </div>
+              )}
               <div style={styles.nearbyScrollList}>
-                {/* Words above (reversed so closest to target is at bottom) */}
                 {nearbyWords.above.map((word, idx) => (
                   <div key={`above-${idx}`} style={styles.nearbyListItem}>
                     <span style={styles.nearbyListRank}>-{nearbyWords.above.length - idx}</span>
@@ -538,14 +520,15 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                   </div>
                 ))}
                 
-                {/* Target word - highlighted */}
-                <div ref={targetWordRef} style={styles.targetWordHighlight}>
-                  <span style={styles.targetWordStar}>★</span>
+                <div ref={targetWordRef} style={{
+                  ...styles.targetWordHighlight,
+                  ...(targetNotInDict ? { border: '2px dashed #fca5a5', backgroundColor: '#fef2f2' } : {}),
+                }}>
+                  <span style={styles.targetWordStar}>{targetNotInDict ? '→' : '★'}</span>
                   <span style={styles.targetWordText}>{(nearbyTargetWord || targetWord).toUpperCase()}</span>
-                  <span style={styles.targetWordStar}>★</span>
+                  <span style={styles.targetWordStar}>{targetNotInDict ? '←' : '★'}</span>
                 </div>
                 
-                {/* Words below */}
                 {nearbyWords.below.map((word, idx) => (
                   <div key={`below-${idx}`} style={styles.nearbyListItem}>
                     <span style={styles.nearbyListRank}>+{idx + 1}</span>
@@ -560,7 +543,6 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                 )}
               </div>
               
-              {/* Dictionary attribution */}
               <div style={styles.dictionaryAttribution}>
                 📚 <a 
                   href="https://www.gutenberg.org/files/669/669-h/669-h.htm" 

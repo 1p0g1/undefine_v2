@@ -78,8 +78,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
   // Get player stats including streak data
   const { stats: playerStats } = usePlayer();
   
-  // State for managing nickname prompt dismissal
-  const [showNicknamePrompt, setShowNicknamePrompt] = useState(true);
+  const [_showNicknamePrompt, setShowNicknamePrompt] = useState(true);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -473,40 +472,52 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
             )}
           </div>
           
-          {/* Enhanced status section - Order: Claim message → Theme Status */}
+          {/* Theme Status with key */}
           {playerRank && isGameComplete && (
             <div style={{ 
               fontSize: '0.9rem', 
-              marginTop: '0.5rem',
+              marginTop: '0.3rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.3rem'
+              alignItems: 'center',
+              gap: '0.15rem'
             }}>
-              {/* Come back tomorrow message - FIRST */}
-              <div style={{ 
-                color: '#6b7280', 
-                fontStyle: 'italic'
-              }}>
-                Come back tomorrow to {playerRank === 1 ? 'reclaim' : 'claim'} top spot
-              </div>
-              
-              {/* Theme Status - SECOND with glowing effect for "not unlocked" */}
               {themeGuessData?.isCorrectGuess ? (
                 <div style={{ 
                   color: '#059669', 
                   fontWeight: 600,
-                  marginTop: '0.3rem'
                 }}>
                   🔓 You unlocked the theme this week!
                 </div>
               ) : (
-                <div style={{
-                  fontWeight: 600,
-                  marginTop: '0.3rem',
-                  color: '#6366f1',
-                }}>
-                  ✨ You still have not unlocked the theme ✨
-                </div>
+                <>
+                  <div style={{
+                    fontWeight: 600,
+                    background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #6366f1 100%)',
+                    backgroundSize: '200% auto',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    animation: 'shimmerText 2.5s linear infinite'
+                  }}>
+                    ✨ You still have not unlocked the theme ✨
+                  </div>
+                  {onOpenThemeModal && (
+                    <img
+                      src="/Key.png"
+                      alt="Unlock theme"
+                      className="theme-key-jiggle"
+                      onClick={() => onOpenThemeModal()}
+                      style={{
+                        width: 'clamp(2.5rem, 12vw, 3.5rem)',
+                        height: 'auto',
+                        cursor: 'pointer',
+                        margin: '0',
+                        padding: '0',
+                      }}
+                    />
+                  )}
+                </>
               )}
             </div>
           )}
@@ -965,8 +976,8 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
           )}
         </div>
         
-        {/* Nickname Prompt - shows if user hasn't set custom nickname and hasn't skipped */}
-        {showNicknamePrompt && currentDisplayName && (
+        {/* Homescreen + Nickname prompt */}
+        {currentDisplayName && (
           <FirstGamePrompt
             currentDisplayName={currentDisplayName}
             onSetNickname={handleSetNickname}
@@ -1054,7 +1065,21 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
-          }
+        }
+        @keyframes jiggle {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-8deg); }
+          50% { transform: rotate(8deg); }
+          75% { transform: rotate(-4deg); }
+        }
+        .theme-key-jiggle {
+          animation: jiggle 2s ease-in-out infinite;
+          transition: transform 0.2s;
+        }
+        .theme-key-jiggle:hover {
+          transform: scale(1.15);
+          animation-play-state: paused;
+        }
         `}</style>
     </div>,
     document.body
