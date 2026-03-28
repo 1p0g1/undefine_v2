@@ -46,7 +46,7 @@ export const FirstGamePrompt: React.FC<FirstGamePromptProps> = ({
             backgroundColor: '#f0f7ff',
             border: '2px solid #3b82f6',
             borderRadius: '0.75rem',
-            padding: '0.75rem 1rem',
+            padding: '0.75rem 1rem 0.75rem',
             textAlign: 'center',
             position: 'relative',
           }}
@@ -66,17 +66,21 @@ export const FirstGamePrompt: React.FC<FirstGamePromptProps> = ({
           >
             &times;
           </button>
-          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-primary, #1a237e)', marginBottom: '0.3rem' }}>
-            Save Un·Define to your homescreen
+          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-primary, #1a237e)', marginBottom: '0.4rem' }}>
+            Save Un·Define to your homescreen 📲
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#4b5563', lineHeight: '1.4' }}>
-            {isIOS ? (
-              <>Tap <strong>Share</strong> (the square with an arrow) then <strong>"Add to Home Screen"</strong></>
-            ) : isAndroid ? (
-              <>Tap the <strong>menu (⋮)</strong> then <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></>
+          <div style={{ fontSize: '0.78rem', color: '#4b5563', lineHeight: '1.6' }}>
+            {isAndroid ? (
+              <>On Android, tap the menu <strong>⋮</strong> and on iPhone, tap Share <strong>⎋</strong>.</>
+            ) : isIOS ? (
+              <>On Android, tap the menu <strong>⋮</strong> and on iPhone, tap Share <strong>⎋</strong>.</>
             ) : (
-              <>In your browser menu, look for <strong>"Install"</strong> or <strong>"Add to Home Screen"</strong></>
+              <>On Android, tap the menu <strong>⋮</strong> and on iPhone, tap Share <strong>⎋</strong>.</>
             )}
+            <br />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '0.15rem' }}>
+              Then <strong>Add to Home Screen ➕</strong>
+            </span>
           </div>
         </div>
       )}
@@ -84,15 +88,19 @@ export const FirstGamePrompt: React.FC<FirstGamePromptProps> = ({
       {isUsingDefaultName && (
         <div
           style={{
+            backgroundColor: '#f0f7ff',
+            border: '2px solid #3b82f6',
+            borderRadius: '0.75rem',
+            padding: '0.5rem 1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.5rem',
             fontSize: '0.8rem',
-            color: '#6b7280',
+            color: '#4b5563',
           }}
         >
-          <span>You're "{currentDisplayName}" — </span>
+          <span>You're shown as "{currentDisplayName}"</span>
           <button
             onClick={onSetNickname}
             style={{
@@ -104,6 +112,7 @@ export const FirstGamePrompt: React.FC<FirstGamePromptProps> = ({
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
+              flexShrink: 0,
             }}
           >
             Set Nickname

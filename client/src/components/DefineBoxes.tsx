@@ -31,7 +31,7 @@ const DEFINE_HINTS: Record<string, string> = {
   'E2': 'Etymology'
 };
 
-const HINT_HIDE_DELAY_MS = 2000;
+const HINT_HIDE_DELAY_MS = 800;
 const HINT_TOOLTIP_OFFSET_REM = 0.35;
 
 interface DefineBoxesProps {
@@ -106,7 +106,8 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'visible'
     }}>
       {/* Gap between DEFINE boxes */}
       <div style={{ display: 'flex', gap: '0.2rem' }}>
@@ -193,7 +194,7 @@ export const DefineBoxes: React.FC<DefineBoxesProps> = ({
                   fontWeight: 700,
                   color: textColor,
                   backgroundColor: bonusColors ? undefined : backgroundColor,
-                  transition: 'all 0.3s ease',
+                  transition: 'background-color 0.1s ease-out',
                   fontFamily: 'var(--font-primary)',
                   zIndex: 1,
                   ...backgroundStyle

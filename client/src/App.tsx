@@ -795,7 +795,7 @@ function App() {
           justifyContent: 'center',
           overflow: 'visible',
           whiteSpace: 'nowrap',
-          gap: 'clamp(0.1rem, 0.4vw, 0.2rem)',
+          gap: '0',
           width: '100%',
           maxWidth: '100vw',
           marginTop: '0',
@@ -824,7 +824,8 @@ function App() {
           flex: '0 0 auto',
           flexShrink: 0,
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          marginLeft: '-0.15rem'
         }}>
           <DefineBoxes
             gameState={gameState}

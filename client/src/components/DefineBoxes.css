@@ -44,7 +44,7 @@ html {
   white-space: nowrap;
   flex-wrap: nowrap;
   gap: 0.25rem;
-  overflow-x: auto;
+  overflow: visible;
   width: 100%;
   /* Ensure adequate spacing on mobile */
   padding-top: clamp(0.5rem, 2vw, 1rem);
@@ -86,14 +86,14 @@ html {
   font-size: 1.05rem;
   color: var(--color-primary);
   text-align: center;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.1s ease-out;
   box-shadow: 0 2px 6px rgba(26, 35, 126, 0.1);
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
 .define-box:hover:not(.incorrect):not(.correct) {
-  background-color: rgba(26, 35, 126, 0.1);
+  background-color: rgba(26, 35, 126, 0.05);
 }
 
 .define-box.active {
