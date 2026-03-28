@@ -43,8 +43,14 @@ interface ThemeGuessModalProps {
   gameId: string;
   gameDate?: string;
   isArchivePlay?: boolean;
-  gameComplete?: boolean; // To detect when game is finished for call-to-action
-  gameWon?: boolean; // Daily word solved (controls key visibility)
+  gameComplete?: boolean;
+  gameWon?: boolean;
+  initialThemeGuessData?: {
+    hasGuessedToday: boolean;
+    isCorrectGuess: boolean;
+    confidencePercentage: number | null;
+    highestConfidencePercentage?: number | null;
+  };
   onThemeDataUpdate?: (themeData: {
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
@@ -61,6 +67,7 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
   isArchivePlay = false,
   gameComplete = false,
   gameWon = false,
+  initialThemeGuessData,
   onThemeDataUpdate
 }) => {
   const [guess, setGuess] = useState('');
@@ -76,13 +83,13 @@ export const ThemeGuessModal: React.FC<ThemeGuessModalProps> = ({
     contextDate: string | null;
   } | null>(null);
 
-  // Theme data state for UN diamond coloring
+  // Theme data state for UN diamond coloring — initialized from parent's cached data
   const [themeGuessData, setThemeGuessData] = useState<{
     hasGuessedToday: boolean;
     isCorrectGuess: boolean;
     confidencePercentage: number | null;
     highestConfidencePercentage?: number | null;
-  } | undefined>(undefined);
+  } | undefined>(initialThemeGuessData);
 
   // Simple theme history state
   const [simpleHistory, setSimpleHistory] = useState<Array<{

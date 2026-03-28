@@ -503,12 +503,7 @@ export const GameSummaryModal: React.FC<GameSummaryModalProps> = ({
                 <div style={{
                   fontWeight: 600,
                   marginTop: '0.3rem',
-                  background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #6366f1 100%)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  animation: 'shimmerText 2.5s linear infinite'
+                  color: '#6366f1',
                 }}>
                   ✨ You still have not unlocked the theme ✨
                 </div>

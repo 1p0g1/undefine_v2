@@ -245,19 +245,20 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
         key={`${month}-${day}`}
         onClick={() => isClickable && handleDateClick(dateString)}
         style={{
-          minHeight: '40px',
+          minHeight: '34px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           border: borderStyle,
-          borderRadius: '6px',
+          borderRadius: '5px',
           backgroundColor,
           color: textColor,
           fontWeight: state === 'today' ? 600 : 400,
-          fontSize: '0.9rem',
+          fontSize: '0.8rem',
           position: 'relative',
-          gap: '2px',
+          gap: '1px',
+          padding: '2px',
           cursor,
           opacity,
           transition: 'all 0.2s ease',
@@ -282,7 +283,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
         }}
       >
         <span>{day}</span>
-        {emoji && <span style={{ fontSize: '0.7rem' }}>{emoji}</span>}
+        {emoji && <span style={{ fontSize: '0.6rem', lineHeight: 1 }}>{emoji}</span>}
       </div>
     );
   };
@@ -420,9 +421,9 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
         {/* Calendar Grid - 8 columns: Mon-Sun + Un (theme) */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr) auto',
-          gap: '4px',
-          marginBottom: '1rem',
+          gridTemplateColumns: 'repeat(7, 1fr) 2rem',
+          gap: '2px',
+          marginBottom: '0.5rem',
           alignItems: 'center'
         }}>
           {/* Day headers */}
@@ -430,9 +431,9 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
             <div
               key={day}
               style={{
-                padding: '0.5rem',
+                padding: '0.25rem',
                 textAlign: 'center',
-                fontSize: '0.8rem',
+                fontSize: '0.7rem',
                 fontWeight: 600,
                 color: '#6b7280'
               }}
@@ -443,9 +444,9 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
           {/* Un vault column header */}
           <div
             style={{
-              padding: '0.5rem',
+              padding: '0.15rem',
               textAlign: 'center',
-              fontSize: '0.7rem',
+              fontSize: '0.65rem',
               fontWeight: 600,
               color: '#6b7280',
               display: 'flex',
@@ -454,7 +455,7 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
             }}
             title="Theme guessed this week"
           >
-            <img src="/ClosedVault.png" alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ width: '1.25rem', height: '1.25rem', objectFit: 'contain' }} />
+            <img src="/ClosedVault.png" alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ width: '1rem', height: '1rem', objectFit: 'contain' }} />
           </div>
 
           {/* Calendar body: empty cells + day cells + Un cell per row */}
@@ -481,9 +482,19 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
               const dateStr = getDateString(year, month, dayNum);
               const weekStart = getWeekStart(dateStr);
               const gotTheme = themeCorrectByWeek[weekStart];
+              // Show ❓ for past weeks where theme wasn't gotten (encourage replay)
+              const weekEndDate = new Date(weekStart);
+              weekEndDate.setDate(weekEndDate.getDate() + 6);
+              const isPastWeek = weekEndDate < new Date();
+              const hasAnyDayPlayed = history.some(h => {
+                const hDate = new Date(h.date);
+                const ws = new Date(weekStart);
+                return hDate >= ws && hDate <= weekEndDate && h.played;
+              });
+              const showQuestion = !gotTheme && (isPastWeek || hasAnyDayPlayed);
               cells.push(
-                <div key={`un-${r}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40px', fontSize: '1rem' }} title={gotTheme ? 'Theme guessed this week' : ''}>
-                  {gotTheme ? '✅' : ''}
+                <div key={`un-${r}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '36px', fontSize: '0.9rem' }} title={gotTheme ? 'Theme unlocked!' : showQuestion ? 'Can you unlock this week\'s theme?' : ''}>
+                  {gotTheme ? '✅' : showQuestion ? '❓' : ''}
                 </div>
               );
             }
@@ -495,11 +506,11 @@ export const StreakCalendarModal: React.FC<StreakCalendarModalProps> = ({
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '1rem',
-          padding: '0.75rem',
+          gap: '0.6rem',
+          padding: '0.5rem',
           backgroundColor: '#f9fafb',
           borderRadius: '0.5rem',
-          fontSize: '0.8rem',
+          fontSize: '0.7rem',
           color: '#374151',
           flexWrap: 'wrap'
         }}>

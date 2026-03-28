@@ -19,6 +19,7 @@ export interface BonusGuessResult {
   valid: boolean;
   tier?: 'perfect' | 'good' | 'average' | 'miss';
   distance?: number;
+  direction?: 'before' | 'after';
   error?: string;
   message?: string;
 }
@@ -265,11 +266,17 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
       }
 
       // Valid guess - record result
+      const direction: 'before' | 'after' | undefined =
+        data.guessLexRank != null && data.targetLexRank != null
+          ? (data.guessLexRank < data.targetLexRank ? 'before' : 'after')
+          : undefined;
+
       const result: BonusGuessResult = {
         guess: guess.trim(),
         valid: data.valid,
         tier: data.tier,
         distance: data.distance,
+        direction,
         error: data.error,
         message: data.message
       };
@@ -423,7 +430,7 @@ export const BonusRoundInline: React.FC<BonusRoundInlineProps> = ({
                 >
                   <span style={styles.resultEmoji}>{tier.emoji}</span>
                   <span style={styles.resultWord}>{r.guess}</span>
-                  <span style={styles.resultDistance}>{r.distance} away</span>
+                  <span style={styles.resultDistance}>{r.direction === 'before' ? '⬆️' : r.direction === 'after' ? '⬇️' : ''} {r.distance} away</span>
                 </div>
               );
             })}
@@ -583,7 +590,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '1rem',
     marginBottom: '1rem',
     textAlign: 'center',
-    overflow: 'hidden',
+    overflow: 'visible',
     colorScheme: 'light',
     color: '#1a1a1a',
     WebkitTextFillColor: 'initial',

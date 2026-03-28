@@ -1710,6 +1710,7 @@ function App() {
         isArchivePlay={gameState.isArchivePlay === true}
         gameComplete={gameState.isComplete}
         gameWon={gameState.isWon}
+        initialThemeGuessData={themeGuessData}
         onThemeDataUpdate={(themeData) => handleCloseThemeModal(themeData)}
       />
 
